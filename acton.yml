@@ -1,0 +1,5 @@
+name: 'Stainless README Action'
+description: 'Generate "decorated" openapi spec for README.com'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

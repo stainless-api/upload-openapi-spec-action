@@ -2,9 +2,21 @@
   "name": "readme-action",
   "version": "1.0.0",
   "description": "Generate \"decorated\" openapi spec for README.com",
-  "main": "index.js",
+  "main": "index.ts",
   "repository": "https://github.com/stainless-api/readme-action.git",
   "author": "Matt Gleich <git@mattglei.ch>",
   "license": "MIT",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@actions/core": "^1.9.0",
+    "@actions/github": "^5.0.3"
+  },
+  "scripts": {
+    "build": "ncc build index.ts --license licenses.txt"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^4.7.4",
+    "@vercel/ncc": "^0.34.0"
+  }
 }
