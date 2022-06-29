@@ -1,0 +1,10 @@
+{
+  "name": "readme-action",
+  "version": "1.0.0",
+  "description": "Generate \"decorated\" openapi spec for README.com",
+  "main": "index.js",
+  "repository": "https://github.com/stainless-api/readme-action.git",
+  "author": "Matt Gleich <git@mattglei.ch>",
+  "license": "MIT",
+  "private": true
+}
