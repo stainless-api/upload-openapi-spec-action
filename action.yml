@@ -1,5 +1,8 @@
-name: 'Stainless README Action'
-description: 'Generate "decorated" openapi spec for README.com'
+name: Stainless README Action
+description: Generate "decorated" openapi spec for README.com
+branding:
+  icon: book-open
+  color: green
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: node16
+  main: dist/index.js
