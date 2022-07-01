@@ -3131,7 +3131,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.decorateSpec = exports.cloneDummyRepos = exports.moveSpec = exports.main = void 0;
+exports.copyUpdatedSpec = exports.decorateSpec = exports.cloneDummyRepos = exports.moveSpec = exports.main = void 0;
 const util_1 = __nccwpck_require__(380);
 const os_1 = __nccwpck_require__(37);
 const fs_1 = __nccwpck_require__(147);
@@ -3151,6 +3151,7 @@ function main() {
         yield moveSpec(customer, cwd, specsFolder);
         yield cloneDummyRepos(customer, distFolder);
         yield decorateSpec(customer, specsFolder, distFolder);
+        yield copyUpdatedSpec(customer, specsFolder, cwd);
     });
 }
 exports.main = main;
@@ -3167,11 +3168,7 @@ function moveSpec(customer, cwd, specsFolder) {
                 console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
             }
         });
-        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, config), (err) => {
-            if (err) {
-                console.error(`Failed to copy ${spec} (stainless config) to ${specsFolder}:`, err);
-            }
-        });
+        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, config));
     });
 }
 exports.moveSpec = moveSpec;
@@ -3181,20 +3178,15 @@ function cloneDummyRepos(customer, distFolder) {
             yield (0, fs_extra_1.rm)(distFolder, { recursive: true });
         }
         yield (0, fs_extra_1.mkdir)(distFolder);
-        (0, util_1.runCmd)('git', ['clone', `https://github.com/stainless-sdks/${customer}-node`], { cwd: distFolder });
-        // runCmd(
-        //   'git',
-        //   ['clone', `https://github.com/stainless-sdks/${customer}-python`],
-        //   { cwd: distFolder }
-        // );
+        yield (0, util_1.runCmd)('git', ['clone', `https://github.com/stainless-sdks/${customer}-node`], { cwd: distFolder });
     });
 }
 exports.cloneDummyRepos = cloneDummyRepos;
 function decorateSpec(customer, specsFolder, distFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         const imageName = 'ghcr.io/stainless-sdks/stainless';
-        // runCmd('docker', ['pull', imageName]);
-        (0, util_1.runCmd)('docker', [
+        yield (0, util_1.runCmd)('docker', ['pull', imageName]);
+        yield (0, util_1.runCmd)('docker', [
             'run',
             '-v',
             `${specsFolder}:/specs`,
@@ -3211,6 +3203,11 @@ function decorateSpec(customer, specsFolder, distFolder) {
     });
 }
 exports.decorateSpec = decorateSpec;
+function copyUpdatedSpec(customer, specsFolder, cwd) {
+    const updatedSpec = `${customer}-openapi.documented.json`;
+    (0, fs_extra_1.copy)(path_1.default.join(specsFolder, updatedSpec), path_1.default.join(cwd, updatedSpec));
+}
+exports.copyUpdatedSpec = copyUpdatedSpec;
 if (require.main === require.cache[eval('__filename')]) {
     main().catch((err) => {
         console.error(err);

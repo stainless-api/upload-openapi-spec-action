@@ -7,8 +7,7 @@ import path from 'path';
 export async function main() {
   const cwd = process.cwd();
   const home = homedir();
-  // const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
-  const customer = 'lithic';
+  const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
   if (customer === undefined) {
@@ -18,6 +17,7 @@ export async function main() {
   await moveSpec(customer, cwd, specsFolder);
   await cloneDummyRepos(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
+  copyUpdatedSpec(customer, specsFolder, cwd);
 }
 
 export async function moveSpec(
@@ -39,14 +39,7 @@ export async function moveSpec(
       );
     }
   });
-  copy(path.join(cwd, config), path.join(specsFolder, config), (err) => {
-    if (err) {
-      console.error(
-        `Failed to copy ${spec} (stainless config) to ${specsFolder}:`,
-        err
-      );
-    }
-  });
+  copy(path.join(cwd, config), path.join(specsFolder, config));
 }
 
 export async function cloneDummyRepos(customer: string, distFolder: string) {
@@ -54,7 +47,7 @@ export async function cloneDummyRepos(customer: string, distFolder: string) {
     await rm(distFolder, { recursive: true });
   }
   await mkdir(distFolder);
-  runCmd(
+  await runCmd(
     'git',
     ['clone', `https://github.com/stainless-sdks/${customer}-node`],
     { cwd: distFolder }
@@ -67,8 +60,8 @@ export async function decorateSpec(
   distFolder: string
 ) {
   const imageName = 'ghcr.io/stainless-sdks/stainless';
-  runCmd('docker', ['pull', imageName]);
-  runCmd('docker', [
+  await runCmd('docker', ['pull', imageName]);
+  await runCmd('docker', [
     'run',
     '-v',
     `${specsFolder}:/specs`,
@@ -82,6 +75,15 @@ export async function decorateSpec(
     '--languages',
     'node',
   ]);
+}
+
+export function copyUpdatedSpec(
+  customer: string,
+  specsFolder: string,
+  cwd: string
+) {
+  const updatedSpec = `${customer}-openapi.documented.json`;
+  copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
 }
 
 if (require.main === module) {
