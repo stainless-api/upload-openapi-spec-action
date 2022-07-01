@@ -3131,8 +3131,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.moveSpec = exports.cloneMonorepo = exports.main = void 0;
-const until_1 = __nccwpck_require__(81);
+exports.decorateSpec = exports.cloneDummyRepos = exports.moveSpec = exports.main = void 0;
+const util_1 = __nccwpck_require__(380);
 const os_1 = __nccwpck_require__(37);
 const fs_1 = __nccwpck_require__(147);
 const fs_extra_1 = __nccwpck_require__(630);
@@ -3141,39 +3141,76 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const cwd = process.cwd();
         const home = (0, os_1.homedir)();
-        const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+        // const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+        const customer = 'lithic';
+        const specsFolder = path_1.default.join(home, 'specs');
+        const distFolder = path_1.default.join(home, 'dist');
         if (customer === undefined) {
             throw new Error('Failed to get customer name');
         }
-        yield cloneMonorepo(home);
-        yield moveSpec(customer, cwd, home);
+        yield moveSpec(customer, cwd, specsFolder);
+        yield cloneDummyRepos(customer, distFolder);
+        yield decorateSpec(customer, specsFolder, distFolder);
     });
 }
 exports.main = main;
-function cloneMonorepo(home) {
+function moveSpec(customer, cwd, specsFolder) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log('Cloning monorepo');
-        const location = path_1.default.join(home, 'stainless');
-        if ((0, fs_1.existsSync)(location)) {
-            yield (0, fs_extra_1.remove)(location);
+        const spec = `${customer}-openapi.yml`;
+        const config = `${customer}.stainless.yml`;
+        if ((0, fs_1.existsSync)(specsFolder)) {
+            yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }
-        yield (0, until_1.runCmd)('git', ['clone', 'https://github.com/stainless-api/stainless'], {
-            cwd: home,
-        });
-        console.log('Finished cloning monorepo');
-    });
-}
-exports.cloneMonorepo = cloneMonorepo;
-function moveSpec(customer, cwd, home) {
-    return __awaiter(this, void 0, void 0, function* () {
-        (0, fs_extra_1.copy)(path_1.default.join(cwd, `${customer}-openapi.json`), path_1.default.join(home, 'stainless', 'specs', `${customer}-openapi.json`), (err) => {
+        yield (0, fs_extra_1.mkdir)(specsFolder);
+        (0, fs_extra_1.copy)(path_1.default.join(cwd, spec), path_1.default.join(specsFolder, spec), (err) => {
             if (err) {
-                console.error('Failed to move openapi spec to monorepo:', err);
+                console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
+            }
+        });
+        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, config), (err) => {
+            if (err) {
+                console.error(`Failed to copy ${spec} (stainless config) to ${specsFolder}:`, err);
             }
         });
     });
 }
 exports.moveSpec = moveSpec;
+function cloneDummyRepos(customer, distFolder) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if ((0, fs_1.existsSync)(distFolder)) {
+            yield (0, fs_extra_1.rm)(distFolder, { recursive: true });
+        }
+        yield (0, fs_extra_1.mkdir)(distFolder);
+        (0, util_1.runCmd)('git', ['clone', `https://github.com/stainless-sdks/${customer}-node`], { cwd: distFolder });
+        // runCmd(
+        //   'git',
+        //   ['clone', `https://github.com/stainless-sdks/${customer}-python`],
+        //   { cwd: distFolder }
+        // );
+    });
+}
+exports.cloneDummyRepos = cloneDummyRepos;
+function decorateSpec(customer, specsFolder, distFolder) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const imageName = 'ghcr.io/stainless-sdks/stainless';
+        // runCmd('docker', ['pull', imageName]);
+        (0, util_1.runCmd)('docker', [
+            'run',
+            '-v',
+            `${specsFolder}:/specs`,
+            '-v',
+            `${distFolder}:/dist`,
+            imageName,
+            'node',
+            'stainless.js',
+            '--customers',
+            customer,
+            '--languages',
+            'node',
+        ]);
+    });
+}
+exports.decorateSpec = decorateSpec;
 if (require.main === require.cache[eval('__filename')]) {
     main().catch((err) => {
         console.error(err);
@@ -3184,7 +3221,7 @@ if (require.main === require.cache[eval('__filename')]) {
 
 /***/ }),
 
-/***/ 81:
+/***/ 380:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -3200,7 +3237,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.runCmd = void 0;
-const child_process_1 = __nccwpck_require__(493);
+const child_process_1 = __nccwpck_require__(81);
 function runCmd(cmd, args, options = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
@@ -3244,7 +3281,7 @@ module.exports = require("assert");
 
 /***/ }),
 
-/***/ 493:
+/***/ 81:
 /***/ ((module) => {
 
 "use strict";
