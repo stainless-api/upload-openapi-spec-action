@@ -1,4 +1,4 @@
-name: Stainless README Action
+name: decorate-spec
 description: Generate "decorated" openapi spec for README.com
 branding:
   icon: book-open
