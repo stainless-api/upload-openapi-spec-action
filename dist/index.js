@@ -5155,7 +5155,6 @@ const os_1 = __nccwpck_require__(2037);
 const fs_1 = __nccwpck_require__(7147);
 const fs_extra_1 = __nccwpck_require__(5630);
 const path_1 = __importDefault(__nccwpck_require__(1017));
-const child_process_1 = __nccwpck_require__(2081);
 const core_1 = __nccwpck_require__(2186);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -5212,9 +5211,11 @@ function decorateSpec(customer, specsFolder, distFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('Decorating spec');
         const imageName = 'ghcr.io/stainless-sdks/stainless';
-        (0, child_process_1.spawnSync)('docker login ghcr.io -u stainless-sdks --password-stdin', {
-            input: (0, core_1.getInput)('token', { required: true }),
-        });
+        yield (0, util_1.runCmd)('docker', [
+            'login',
+            '-p',
+            (0, core_1.getInput)('token', { required: true }),
+        ]);
         yield (0, util_1.runCmd)('docker', ['pull', imageName]);
         yield (0, util_1.runCmd)('docker', [
             'run',
