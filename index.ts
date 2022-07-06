@@ -49,7 +49,7 @@ export async function cloneDummyRepos(customer: string, distFolder: string) {
   await mkdir(distFolder);
   await runCmd(
     'git',
-    ['clone', `https://github.com/stainless-sdks/${customer}-node.git`],
+    ['clone', `git@github.com:stainless-sdks/${customer}-node.git`],
     { cwd: distFolder }
   );
 }
