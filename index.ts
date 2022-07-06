@@ -26,7 +26,7 @@ export async function moveSpec(
   specsFolder: string
 ) {
   const spec = `${customer}-openapi.yml`;
-  const config = `${customer}.stainless.yml`;
+  const config = `${customer}-stainless.yml`;
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
@@ -49,7 +49,7 @@ export async function cloneDummyRepos(customer: string, distFolder: string) {
   await mkdir(distFolder);
   await runCmd(
     'git',
-    ['clone', `https://github.com/stainless-sdks/${customer}-node`],
+    ['clone', `https://github.com/stainless-sdks/${customer}-node.git`],
     { cwd: distFolder }
   );
 }
