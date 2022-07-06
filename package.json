@@ -5,7 +5,7 @@
   "main": "index.ts",
   "repository": "https://github.com/stainless-api/readme-action.git",
   "author": "Matt Gleich <git@mattglei.ch>",
-  "license": "MIT",
+  "license": "Copyright Stainless 2022",
   "private": true,
   "dependencies": {
     "@actions/core": "^1.9.0",
