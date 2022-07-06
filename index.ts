@@ -3,13 +3,11 @@ import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { copy, mkdir, rm } from 'fs-extra';
 import path from 'path';
-import { getInput } from '@actions/core';
 
 export async function main() {
   const cwd = process.cwd();
   const home = homedir();
-  // const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
-  const customer = 'lithic';
+  const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
   if (customer === undefined) {
@@ -65,13 +63,6 @@ export async function decorateSpec(
 ) {
   console.log('Decorating spec');
   const imageName = 'ghcr.io/stainless-sdks/stainless';
-  await runCmd('docker', [
-    'login',
-    '-p',
-    getInput('token', { required: true }),
-    '-u',
-    'stainless-sdk',
-  ]);
   await runCmd('docker', ['pull', imageName]);
   await runCmd('docker', [
     'run',
