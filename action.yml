@@ -9,3 +9,4 @@ runs:
 inputs:
   token:
     description: GitHub token for cloning the repo
+    required: true

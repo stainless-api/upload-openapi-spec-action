@@ -3,6 +3,8 @@ import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { copy, mkdir, rm } from 'fs-extra';
 import path from 'path';
+import { spawnSync } from 'child_process';
+import { getInput } from '@actions/core';
 
 export async function main() {
   const cwd = process.cwd();
@@ -64,6 +66,9 @@ export async function decorateSpec(
 ) {
   console.log('Decorating spec');
   const imageName = 'ghcr.io/stainless-sdks/stainless';
+  spawnSync('docker login ghcr.io -u stainless-sdks --password-stdin', {
+    input: getInput('token', { required: true }),
+  });
   await runCmd('docker', ['pull', imageName]);
   await runCmd('docker', [
     'run',
