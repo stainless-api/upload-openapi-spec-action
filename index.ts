@@ -3,13 +3,12 @@ import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { copy, mkdir, rm } from 'fs-extra';
 import path from 'path';
-import { getInput } from '@actions/core';
 
 export async function main() {
-  const token = getInput('token', { required: true });
   const cwd = process.cwd();
   const home = homedir();
-  const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+  // const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+  const customer = 'lithic';
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
   if (customer === undefined) {
@@ -17,7 +16,7 @@ export async function main() {
   }
 
   await moveSpec(customer, cwd, specsFolder);
-  await cloneDummyRepo(customer, distFolder, token);
+  // await initDummyRepo(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }
@@ -29,7 +28,7 @@ export async function moveSpec(
 ) {
   console.log('Moving spec');
   const spec = `${customer}-openapi.yml`;
-  const config = `${customer}-stainless.yml`;
+  const config = `${customer}.stainless.yml`;
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
@@ -45,24 +44,17 @@ export async function moveSpec(
   copy(path.join(cwd, config), path.join(specsFolder, config));
 }
 
-export async function cloneDummyRepo(
-  customer: string,
-  distFolder: string,
-  token: string
-) {
-  console.log('Cloning dummy repo');
+export async function initDummyRepo(customer: string, distFolder: string) {
+  console.log('Initiating dummy repo');
+  const repoFolder = path.join(distFolder, customer + '-node');
   if (existsSync(distFolder)) {
     await rm(distFolder, { recursive: true });
   }
-  await mkdir(distFolder);
-  await runCmd(
-    'git',
-    [
-      'clone',
-      `https://stainless-sdks:${token}@github.com/stainless-sdks/${customer}-node.git`,
-    ],
-    { cwd: distFolder }
-  );
+  await mkdir(repoFolder, { recursive: true });
+  await runCmd('git', ['init'], { cwd: repoFolder });
+  await runCmd('yarn', ['init', '--yes', '.'], {
+    cwd: repoFolder,
+  });
 }
 
 export async function decorateSpec(
