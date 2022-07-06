@@ -9,14 +9,14 @@ export async function main() {
   const home = homedir();
   // const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
   const customer = 'lithic';
-  const specsFolder = path.join('/', 'specs');
-  const distFolder = path.join('/', 'dist');
+  const specsFolder = path.join(home, 'specs');
+  const distFolder = path.join(home, 'dist');
   if (customer === undefined) {
     throw new Error('Failed to get customer name');
   }
 
   await moveSpec(customer, cwd, specsFolder);
-  // await initDummyRepo(customer, distFolder);
+  await initDummyRepo(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }

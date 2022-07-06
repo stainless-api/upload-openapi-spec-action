@@ -3149,7 +3149,7 @@ function main() {
             throw new Error('Failed to get customer name');
         }
         yield moveSpec(customer, cwd, specsFolder);
-        // await initDummyRepo(customer, distFolder);
+        yield initDummyRepo(customer, distFolder);
         yield decorateSpec(customer, specsFolder, distFolder);
         yield copyUpdatedSpec(customer, specsFolder, cwd);
     });
