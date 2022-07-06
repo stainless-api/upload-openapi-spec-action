@@ -69,6 +69,8 @@ export async function decorateSpec(
     'login',
     '-p',
     getInput('token', { required: true }),
+    '-u',
+    'stainless-sdk',
   ]);
   await runCmd('docker', ['pull', imageName]);
   await runCmd('docker', [

@@ -5215,6 +5215,8 @@ function decorateSpec(customer, specsFolder, distFolder) {
             'login',
             '-p',
             (0, core_1.getInput)('token', { required: true }),
+            '-u',
+            'stainless-sdk',
         ]);
         yield (0, util_1.runCmd)('docker', ['pull', imageName]);
         yield (0, util_1.runCmd)('docker', [
