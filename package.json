@@ -1,5 +1,5 @@
 {
-  "name": "readme-action",
+  "name": "decorate-spec",
   "version": "1.0.0",
   "description": "Generate \"decorated\" openapi spec for README.com",
   "main": "index.ts",

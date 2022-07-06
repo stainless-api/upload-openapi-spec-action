@@ -1,5 +1,5 @@
 name: decorate-spec
-description: Generate "decorated" openapi spec for README.com
+description: Generate "decorated" openapi spec for readme.com
 branding:
   icon: book-open
   color: green
