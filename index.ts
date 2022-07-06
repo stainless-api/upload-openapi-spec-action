@@ -17,7 +17,7 @@ export async function main() {
   await moveSpec(customer, cwd, specsFolder);
   await cloneDummyRepos(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
-  copyUpdatedSpec(customer, specsFolder, cwd);
+  await copyUpdatedSpec(customer, specsFolder, cwd);
 }
 
 export async function moveSpec(
@@ -77,13 +77,13 @@ export async function decorateSpec(
   ]);
 }
 
-export function copyUpdatedSpec(
+export async function copyUpdatedSpec(
   customer: string,
   specsFolder: string,
   cwd: string
 ) {
   const updatedSpec = `${customer}-openapi.documented.json`;
-  copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
+  await copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
 }
 
 if (require.main === module) {
