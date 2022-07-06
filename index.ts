@@ -3,8 +3,10 @@ import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { copy, mkdir, rm } from 'fs-extra';
 import path from 'path';
+import { getInput } from '@actions/core';
 
 export async function main() {
+  const token = getInput('token', { required: true });
   const cwd = process.cwd();
   const home = homedir();
   const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
@@ -15,7 +17,7 @@ export async function main() {
   }
 
   await moveSpec(customer, cwd, specsFolder);
-  await cloneDummyRepos(customer, distFolder);
+  await cloneDummyRepo(customer, distFolder, token);
   await decorateSpec(customer, specsFolder, distFolder);
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }
@@ -25,6 +27,7 @@ export async function moveSpec(
   cwd: string,
   specsFolder: string
 ) {
+  console.log('Moving spec');
   const spec = `${customer}-openapi.yml`;
   const config = `${customer}-stainless.yml`;
   if (existsSync(specsFolder)) {
@@ -42,14 +45,22 @@ export async function moveSpec(
   copy(path.join(cwd, config), path.join(specsFolder, config));
 }
 
-export async function cloneDummyRepos(customer: string, distFolder: string) {
+export async function cloneDummyRepo(
+  customer: string,
+  distFolder: string,
+  token: string
+) {
+  console.log('Cloning dummy repo');
   if (existsSync(distFolder)) {
     await rm(distFolder, { recursive: true });
   }
   await mkdir(distFolder);
   await runCmd(
     'git',
-    ['clone', `git@github.com:stainless-sdks/${customer}-node.git`],
+    [
+      'clone',
+      `https://stainless-sdks:${token}@github.com/stainless-sdks/${customer}-node.git`,
+    ],
     { cwd: distFolder }
   );
 }
@@ -59,6 +70,7 @@ export async function decorateSpec(
   specsFolder: string,
   distFolder: string
 ) {
+  console.log('Decorating spec');
   const imageName = 'ghcr.io/stainless-sdks/stainless';
   await runCmd('docker', ['pull', imageName]);
   await runCmd('docker', [
@@ -82,6 +94,7 @@ export async function copyUpdatedSpec(
   specsFolder: string,
   cwd: string
 ) {
+  console.log('Copying updated spec');
   const updatedSpec = `${customer}-openapi.documented.json`;
   await copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
 }
