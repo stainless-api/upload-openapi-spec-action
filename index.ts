@@ -73,11 +73,11 @@ export async function decorateSpec(
     imageName,
     'node',
     'stainless.js',
+    '--only-decorate',
     '--customers',
     customer,
     '--languages',
     'node',
-    '--only-decorate',
   ]);
 }
 
