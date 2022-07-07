@@ -8,6 +8,7 @@ export async function main() {
   const cwd = process.cwd();
   const home = homedir();
   const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+  console.log('Detected customer name:', customer);
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
   if (customer === undefined) {
