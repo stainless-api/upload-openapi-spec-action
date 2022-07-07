@@ -50,8 +50,8 @@ export async function initDummyRepo(customer: string, distFolder: string) {
     await rm(distFolder, { recursive: true });
   }
   await mkdir(repoFolder, { recursive: true });
-  await runCmd('git', ['init'], { cwd: repoFolder });
-  await runCmd('yarn', ['init', '--yes', '.'], {
+  await runCmd('git', ['init', '--initial-branch=master'], { cwd: repoFolder });
+  await runCmd('yarn', ['init', '--yes', '-s', '.'], {
     cwd: repoFolder,
   });
 }
