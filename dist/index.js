@@ -3142,6 +3142,7 @@ function main() {
         const cwd = process.cwd();
         const home = (0, os_1.homedir)();
         const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
+        console.log('Detected customer name:', customer);
         const specsFolder = path_1.default.join(home, 'specs');
         const distFolder = path_1.default.join(home, 'dist');
         if (customer === undefined) {
@@ -3180,8 +3181,8 @@ function initDummyRepo(customer, distFolder) {
             yield (0, fs_extra_1.rm)(distFolder, { recursive: true });
         }
         yield (0, fs_extra_1.mkdir)(repoFolder, { recursive: true });
-        yield (0, util_1.runCmd)('git', ['init'], { cwd: repoFolder });
-        yield (0, util_1.runCmd)('yarn', ['init', '--yes', '.'], {
+        yield (0, util_1.runCmd)('git', ['init', '--initial-branch=master'], { cwd: repoFolder });
+        yield (0, util_1.runCmd)('yarn', ['init', '--yes', '-s', '.'], {
             cwd: repoFolder,
         });
     });
@@ -3201,6 +3202,7 @@ function decorateSpec(customer, specsFolder, distFolder) {
             imageName,
             'node',
             'stainless.js',
+            '--only-decorate',
             '--customers',
             customer,
             '--languages',
