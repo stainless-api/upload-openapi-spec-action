@@ -77,6 +77,7 @@ export async function decorateSpec(
     customer,
     '--languages',
     'node',
+    '--only-decorate',
   ]);
 }
 
