@@ -16,13 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      # docker login required for stainless-api/decorate-specs
+      # docker login required for stainless-api/decorate-spec
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: stainless-api/decorate-specs@main
+      - uses: stainless-api/decorate-spec@main
       - uses: readmeio/rdme
         with:
           rdme: openapi CUSTOMER-openapi.documented.json --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
