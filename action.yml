@@ -6,3 +6,7 @@ branding:
 runs:
   using: node16
   main: dist/index.js
+inputs:
+  customer:
+    description: 'Name of the customer'
+    require: true

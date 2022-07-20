@@ -3,15 +3,12 @@ import { homedir } from 'os';
 import { existsSync } from 'fs';
 import { copy, mkdir, rm } from 'fs-extra';
 import path from 'path';
+import { getInput } from '@actions/core';
 
 export async function main() {
   const cwd = process.cwd();
   const home = homedir();
-  const customer = cwd.substring(cwd.lastIndexOf('/') + 1).split('-')[0];
-  if (customer === undefined) {
-    throw new Error('Failed to get customer name');
-  }
-  console.log('Detected customer name:', customer);
+  const customer = getInput('customer', { required: true });
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
 
