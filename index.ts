@@ -26,8 +26,6 @@ export async function moveSpec(
   console.log('Moving spec');
   const spec = getInput('openapi_path', { required: true });
   const config = getInput('stainless_path', { required: true });
-  console.log('spec', spec);
-  console.log('config', config);
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }

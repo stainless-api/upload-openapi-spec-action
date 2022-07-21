@@ -5175,8 +5175,6 @@ function moveSpec(customer, cwd, specsFolder) {
         console.log('Moving spec');
         const spec = (0, core_1.getInput)('openapi_path', { required: true });
         const config = (0, core_1.getInput)('stainless_path', { required: true });
-        console.log('spec', spec);
-        console.log('config', config);
         if ((0, fs_1.existsSync)(specsFolder)) {
             yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }
