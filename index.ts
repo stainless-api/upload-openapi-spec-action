@@ -7,7 +7,7 @@ import { getInput } from '@actions/core';
 
 export async function main() {
   const cwd = process.cwd();
-  const home = homedir();
+  const home = '/';
   const customer = getInput('customer', { required: true });
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');

@@ -5151,7 +5151,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.copyUpdatedSpec = exports.decorateSpec = exports.initDummyRepo = exports.moveSpec = exports.main = void 0;
 const util_1 = __nccwpck_require__(7380);
-const os_1 = __nccwpck_require__(2037);
 const fs_1 = __nccwpck_require__(7147);
 const fs_extra_1 = __nccwpck_require__(5630);
 const path_1 = __importDefault(__nccwpck_require__(1017));
@@ -5159,7 +5158,7 @@ const core_1 = __nccwpck_require__(2186);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const cwd = process.cwd();
-        const home = (0, os_1.homedir)();
+        const home = '/';
         const customer = (0, core_1.getInput)('customer', { required: true });
         const specsFolder = path_1.default.join(home, 'specs');
         const distFolder = path_1.default.join(home, 'dist');
