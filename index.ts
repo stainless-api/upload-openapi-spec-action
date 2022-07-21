@@ -12,13 +12,17 @@ export async function main() {
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
 
-  await moveSpec(cwd, specsFolder);
+  await moveSpec(customer, cwd, specsFolder);
   await initDummyRepo(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }
 
-export async function moveSpec(cwd: string, specsFolder: string) {
+export async function moveSpec(
+  customer: string,
+  cwd: string,
+  specsFolder: string
+) {
   console.log('Moving spec');
   const spec = getInput('openapi_path', { required: true });
   const config = getInput('stainless_path', { required: true });
@@ -28,15 +32,31 @@ export async function moveSpec(cwd: string, specsFolder: string) {
     await rm(specsFolder, { recursive: true });
   }
   await mkdir(specsFolder);
-  copy(path.join(cwd, spec), path.join(specsFolder, spec), (err) => {
-    if (err) {
-      console.error(
-        `Failed to copy ${spec} (openapi spec) to ${specsFolder}:`,
-        err
-      );
+  copy(
+    path.join(cwd, spec),
+    path.join(specsFolder, `${customer}-openapi.yml`),
+    (err) => {
+      if (err) {
+        console.error(
+          `Failed to copy ${spec} (openapi spec) to ${specsFolder}:`,
+          err
+        );
+        process.exit(1);
+      }
     }
-  });
-  copy(path.join(cwd, config), path.join(specsFolder, config));
+  );
+  copy(
+    path.join(cwd, config),
+    path.join(specsFolder, `${customer}.stainless.yml`),
+    (err) => {
+      if (err) {
+        console.error(
+          `Failed to copy ${config} (stainless config) to ${specsFolder}`
+        );
+        process.exit(1);
+      }
+    }
+  );
 }
 
 export async function initDummyRepo(customer: string, distFolder: string) {

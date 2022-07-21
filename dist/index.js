@@ -5163,14 +5163,14 @@ function main() {
         const customer = (0, core_1.getInput)('customer', { required: true });
         const specsFolder = path_1.default.join(home, 'specs');
         const distFolder = path_1.default.join(home, 'dist');
-        yield moveSpec(cwd, specsFolder);
+        yield moveSpec(customer, cwd, specsFolder);
         yield initDummyRepo(customer, distFolder);
         yield decorateSpec(customer, specsFolder, distFolder);
         yield copyUpdatedSpec(customer, specsFolder, cwd);
     });
 }
 exports.main = main;
-function moveSpec(cwd, specsFolder) {
+function moveSpec(customer, cwd, specsFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('Moving spec');
         const spec = (0, core_1.getInput)('openapi_path', { required: true });
@@ -5181,12 +5181,18 @@ function moveSpec(cwd, specsFolder) {
             yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }
         yield (0, fs_extra_1.mkdir)(specsFolder);
-        (0, fs_extra_1.copy)(path_1.default.join(cwd, spec), path_1.default.join(specsFolder, spec), (err) => {
+        (0, fs_extra_1.copy)(path_1.default.join(cwd, spec), path_1.default.join(specsFolder, `${customer}-openapi.yml`), (err) => {
             if (err) {
                 console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
+                process.exit(1);
             }
         });
-        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, config));
+        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, `${customer}.stainless.yml`), (err) => {
+            if (err) {
+                console.error(`Failed to copy ${config} (stainless config) to ${specsFolder}`);
+                process.exit(1);
+            }
+        });
     });
 }
 exports.moveSpec = moveSpec;
