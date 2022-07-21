@@ -25,7 +25,6 @@ export async function moveSpec(
 ) {
   console.log('Moving spec');
   const spec = getInput('openapi_path', { required: true });
-  const config = getInput('stainless_path', { required: true });
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
@@ -38,18 +37,6 @@ export async function moveSpec(
         console.error(
           `Failed to copy ${spec} (openapi spec) to ${specsFolder}:`,
           err
-        );
-        process.exit(1);
-      }
-    }
-  );
-  copy(
-    path.join(cwd, config),
-    path.join(specsFolder, `${customer}.stainless.yml`),
-    (err) => {
-      if (err) {
-        console.error(
-          `Failed to copy ${config} (stainless config) to ${specsFolder}`
         );
         process.exit(1);
       }

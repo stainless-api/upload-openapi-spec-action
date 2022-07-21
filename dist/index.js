@@ -5174,7 +5174,6 @@ function moveSpec(customer, cwd, specsFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('Moving spec');
         const spec = (0, core_1.getInput)('openapi_path', { required: true });
-        const config = (0, core_1.getInput)('stainless_path', { required: true });
         if ((0, fs_1.existsSync)(specsFolder)) {
             yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }
@@ -5182,12 +5181,6 @@ function moveSpec(customer, cwd, specsFolder) {
         (0, fs_extra_1.copy)(path_1.default.join(cwd, spec), path_1.default.join(specsFolder, `${customer}-openapi.yml`), (err) => {
             if (err) {
                 console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
-                process.exit(1);
-            }
-        });
-        (0, fs_extra_1.copy)(path_1.default.join(cwd, config), path_1.default.join(specsFolder, `${customer}.stainless.yml`), (err) => {
-            if (err) {
-                console.error(`Failed to copy ${config} (stainless config) to ${specsFolder}`);
                 process.exit(1);
             }
         });
