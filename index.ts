@@ -12,20 +12,18 @@ export async function main() {
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
 
-  await moveSpec(customer, cwd, specsFolder);
+  await moveSpec(cwd, specsFolder);
   await initDummyRepo(customer, distFolder);
   await decorateSpec(customer, specsFolder, distFolder);
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }
 
-export async function moveSpec(
-  customer: string,
-  cwd: string,
-  specsFolder: string
-) {
+export async function moveSpec(cwd: string, specsFolder: string) {
   console.log('Moving spec');
   const spec = getInput('openapi_path', { required: true });
   const config = getInput('stainless_path', { required: true });
+  console.log('spec', spec);
+  console.log('config', config);
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }

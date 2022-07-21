@@ -5163,18 +5163,20 @@ function main() {
         const customer = (0, core_1.getInput)('customer', { required: true });
         const specsFolder = path_1.default.join(home, 'specs');
         const distFolder = path_1.default.join(home, 'dist');
-        yield moveSpec(customer, cwd, specsFolder);
+        yield moveSpec(cwd, specsFolder);
         yield initDummyRepo(customer, distFolder);
         yield decorateSpec(customer, specsFolder, distFolder);
         yield copyUpdatedSpec(customer, specsFolder, cwd);
     });
 }
 exports.main = main;
-function moveSpec(customer, cwd, specsFolder) {
+function moveSpec(cwd, specsFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('Moving spec');
         const spec = (0, core_1.getInput)('openapi_path', { required: true });
         const config = (0, core_1.getInput)('stainless_path', { required: true });
+        console.log('spec', spec);
+        console.log('config', config);
         if ((0, fs_1.existsSync)(specsFolder)) {
             yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }
