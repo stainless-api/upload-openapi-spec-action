@@ -69,7 +69,7 @@ export async function decorateSpec(
   await runCmd('docker', [
     'run',
     '-v',
-    `${specsFolder}:/specs`,
+    `${specsFolder}:/host-specs`,
     '-v',
     `${distFolder}:/dist`,
     imageName,
@@ -79,7 +79,7 @@ export async function decorateSpec(
     '--customers',
     customer,
     '--languages',
-    'node',
+    `mv host-specs/${customer}-openapi.yml /specs && node`,
   ]);
 }
 

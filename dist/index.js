@@ -5211,7 +5211,7 @@ function decorateSpec(customer, specsFolder, distFolder) {
         yield (0, util_1.runCmd)('docker', [
             'run',
             '-v',
-            `${specsFolder}:/specs`,
+            `${specsFolder}:/host-specs`,
             '-v',
             `${distFolder}:/dist`,
             imageName,
@@ -5221,7 +5221,7 @@ function decorateSpec(customer, specsFolder, distFolder) {
             '--customers',
             customer,
             '--languages',
-            'node',
+            `mv host-specs/${customer}-openapi.yml /specs && node`,
         ]);
     });
 }
