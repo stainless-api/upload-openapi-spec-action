@@ -5173,8 +5173,8 @@ exports.main = main;
 function moveSpec(customer, cwd, specsFolder) {
     return __awaiter(this, void 0, void 0, function* () {
         console.log('Moving spec');
-        const spec = `${customer}-openapi.yml`;
-        const config = `${customer}.stainless.yml`;
+        const spec = (0, core_1.getInput)('openapi_path', { required: true });
+        const config = (0, core_1.getInput)('stainless_path', { required: true });
         if ((0, fs_1.existsSync)(specsFolder)) {
             yield (0, fs_extra_1.rm)(specsFolder, { recursive: true });
         }

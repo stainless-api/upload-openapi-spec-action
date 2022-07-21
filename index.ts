@@ -24,8 +24,8 @@ export async function moveSpec(
   specsFolder: string
 ) {
   console.log('Moving spec');
-  const spec = `${customer}-openapi.yml`;
-  const config = `${customer}.stainless.yml`;
+  const spec = getInput('openapi_path', { required: true });
+  const config = getInput('stainless_path', { required: true });
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
