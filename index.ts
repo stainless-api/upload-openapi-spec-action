@@ -1,13 +1,14 @@
 import { runCmd } from './util';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
-import { copy, mkdir, rm } from 'fs-extra';
+import { copy, mkdir, readdir, rm } from 'fs-extra';
 import path from 'path';
 import { getInput } from '@actions/core';
 
 export async function main() {
   const cwd = process.cwd();
-  const home = '/';
+  const home = homedir();
+  console.log(await readdir(homedir()));
   const customer = getInput('customer', { required: true });
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
