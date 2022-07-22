@@ -1,7 +1,7 @@
 import { runCmd } from './util';
 import { homedir } from 'os';
 import { existsSync } from 'fs';
-import { copy, mkdir, readdir, rm } from 'fs-extra';
+import { copy, createFile, mkdir, readdir, rm } from 'fs-extra';
 import path from 'path';
 import { getInput } from '@actions/core';
 
@@ -9,7 +9,8 @@ export async function main() {
   const cwd = process.cwd();
   const home = homedir();
   console.log(await readdir(homedir()));
-  const customer = getInput('customer', { required: true });
+  // const customer = getInput('customer', { required: true });
+  const customer = 'lithic';
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
 
@@ -25,7 +26,8 @@ export async function moveSpec(
   specsFolder: string
 ) {
   console.log('Moving spec');
-  const spec = getInput('openapi_path', { required: true });
+  // const spec = getInput('openapi_path', { required: true });
+  const spec = 'lithic-openapi.yml';
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
@@ -66,12 +68,14 @@ export async function decorateSpec(
   console.log('Decorating spec');
   const imageName = 'ghcr.io/stainless-sdks/stainless';
   await runCmd('docker', ['pull', imageName]);
+  const decoratedSpecPath = `${specsFolder}/${customer}-openapi.documented.json`;
+  createFile(decoratedSpecPath);
   await runCmd('docker', [
     'run',
     '-v',
     `${specsFolder}/${customer}-openapi.yml:/specs/${customer}-openapi.yml`,
     '-v',
-    `${specsFolder}/${customer}-openapi.decorated.json:/specs/${customer}-openapi.decorated.json:rw`,
+    `${decoratedSpecPath}:/specs/${customer}-openapi.documented.json:rw`,
     '-v',
     `${distFolder}:/dist`,
     imageName,
