@@ -9,8 +9,7 @@ export async function main() {
   const cwd = process.cwd();
   const home = homedir();
   console.log(await readdir(homedir()));
-  // const customer = getInput('customer', { required: true });
-  const customer = 'lithic';
+  const customer = getInput('customer', { required: true });
   const specsFolder = path.join(home, 'specs');
   const distFolder = path.join(home, 'dist');
 
@@ -26,8 +25,7 @@ export async function moveSpec(
   specsFolder: string
 ) {
   console.log('Moving spec');
-  // const spec = getInput('openapi_path', { required: true });
-  const spec = 'lithic-openapi.yml';
+  const spec = getInput('openapi_path', { required: true });
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
