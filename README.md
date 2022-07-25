@@ -1,6 +1,6 @@
 # decorate-spec
 
-A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and stainless config and generate a file in the current working directory called `CUSTOMER-openapi.documented.json`, where `CUSTOMER` is your name.
+A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and generate a file in the current working directory called `CUSTOMER-openapi.documented.json`, where `CUSTOMER` is your name.
 
 ## Setup
 
