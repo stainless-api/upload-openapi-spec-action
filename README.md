@@ -32,7 +32,7 @@ jobs:
           password: ${{ secrets.STAINLESS_CONTAINER_TOKEN }}
       - uses: stainless-api/decorate-spec@main
         with:
-          MY_COMPANY_NAME: MY_COMPANY_NAME
+          customer: MY_COMPANY_NAME
           openapi_path: PATH_TO_SPEC
       - uses: readmeio/rdme
         with:
