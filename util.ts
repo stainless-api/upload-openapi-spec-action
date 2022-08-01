@@ -1,10 +1,6 @@
 import { spawn, SpawnOptions } from 'child_process';
 
-export async function runCmd(
-  cmd: string,
-  args: string[],
-  options: SpawnOptions = {}
-): Promise<string> {
+export async function runCmd(cmd: string, args: string[], options: SpawnOptions = {}): Promise<string> {
   return new Promise((resolve, reject) => {
     const proc = spawn(cmd, args, options);
 
