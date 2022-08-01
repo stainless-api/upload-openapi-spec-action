@@ -1,10 +1,18 @@
 # decorate-spec
 
-A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and stainless config and generate a file in the current working directory called `CUSTOMER-openapi.documented.json`, where `CUSTOMER` is your name.
+A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and generate a file in the current working directory called `MY_COMPANY_NAME-openapi.documented.json`, where `MY_COMPANY_NAME` is your name.
 
-## Example Usage
+## Setup
 
-Here is an example GitHub action workflow that will use this action to generate the decorated openapi spec and then upload it to readme.com. This file should be stored in `.github/workflows/`
+1. Copy the example from below into a GitHub workflow file (e.g. `.github/workflows/decorate.yml`)
+2. Replace `MY_COMPANY_NAME` with your company's name
+3. Replace `PATH_TO_SPEC` with the path to your openapi spec (relative to the root of the repo).
+4. Add [GitHub actions secrets storing your credentials](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+   - `secrets.STAINLESS_CONTAINER_TOKEN`: This is the GitHub token we gave you (e.g. `ghp_123abc`). If you did not receive one, reach out to your contact at Stainless.
+   - `secrets.README_TOKEN`: Your API token for ReadMe.com. Only sent to readme's servers.
+   - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document), this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to readme's servers.
+
+## Example
 
 ```yaml
 name: Decorate Specs
@@ -20,12 +28,13 @@ jobs:
       - uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: stainless-bot
+          password: ${{ secrets.STAINLESS_CONTAINER_TOKEN }}
       - uses: stainless-api/decorate-spec@main
+        with:
+          MY_COMPANY_NAME: MY_COMPANY_NAME
+          openapi_path: PATH_TO_SPEC
       - uses: readmeio/rdme
         with:
-          rdme: openapi CUSTOMER-openapi.documented.json --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
+          rdme: openapi MY_COMPANY_NAME-openapi.documented.json --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
 ```
-
-Once you replace `CUSTOMER` with your name you are going to want to add the required secrets. The `GITHUB_TOKEN` secret is already provided so you only need to add the `README_TOKEN` and `README_DEFINITION_ID` secrets. `README_TOKEN` is simply going to be a token that allows for open API spec uploads to readme.com. `README_DEFINITION_ID`, according to readme's documentation, can be obtained by "clicking edit on the API definition on your project API definitions page". More information on adding secrets can be found in [Github's documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets).
