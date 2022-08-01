@@ -1,0 +1,16 @@
+name: lint
+
+on: push
+
+jobs:
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+          node-version: '16'
+      - run: yarn install
+      - run: yarn run lint

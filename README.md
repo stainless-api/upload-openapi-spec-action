@@ -1,5 +1,7 @@
 # decorate-spec
 
+[![lint](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml)
+
 A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and generate a file in the current working directory called `MY_COMPANY_NAME-openapi.documented.json`, where `MY_COMPANY_NAME` is your name.
 
 ## Setup

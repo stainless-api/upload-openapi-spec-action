@@ -19,30 +19,19 @@ export async function main() {
   await copyUpdatedSpec(customer, specsFolder, cwd);
 }
 
-export async function moveSpec(
-  customer: string,
-  cwd: string,
-  specsFolder: string
-) {
+export async function moveSpec(customer: string, cwd: string, specsFolder: string) {
   console.log('Moving spec');
   const spec = getInput('openapi_path', { required: true });
   if (existsSync(specsFolder)) {
     await rm(specsFolder, { recursive: true });
   }
   await mkdir(specsFolder);
-  copy(
-    path.join(cwd, spec),
-    path.join(specsFolder, `${customer}-openapi.yml`),
-    (err) => {
-      if (err) {
-        console.error(
-          `Failed to copy ${spec} (openapi spec) to ${specsFolder}:`,
-          err
-        );
-        process.exit(1);
-      }
+  copy(path.join(cwd, spec), path.join(specsFolder, `${customer}-openapi.yml`), (err) => {
+    if (err) {
+      console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
+      process.exit(1);
     }
-  );
+  });
 }
 
 export async function initDummyRepo(customer: string, distFolder: string) {
@@ -58,11 +47,7 @@ export async function initDummyRepo(customer: string, distFolder: string) {
   });
 }
 
-export async function decorateSpec(
-  customer: string,
-  specsFolder: string,
-  distFolder: string
-) {
+export async function decorateSpec(customer: string, specsFolder: string, distFolder: string) {
   console.log('Decorating spec');
   const imageName = 'ghcr.io/stainless-sdks/stainless';
   await runCmd('docker', ['pull', imageName]);
@@ -87,11 +72,7 @@ export async function decorateSpec(
   ]);
 }
 
-export async function copyUpdatedSpec(
-  customer: string,
-  specsFolder: string,
-  cwd: string
-) {
+export async function copyUpdatedSpec(customer: string, specsFolder: string, cwd: string) {
   console.log('Copying updated spec');
   const updatedSpec = `${customer}-openapi.documented.json`;
   await copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
