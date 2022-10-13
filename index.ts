@@ -1,15 +1,35 @@
 import { getInput } from '@actions/core';
 import { readFile } from 'fs-extra';
+import fetch from 'node-fetch';
 
 export async function main() {
-  const raw_spec = await loadSpec();
+  const token = getInput('api_token', { required: true });
+  const raw_spec_path = getInput('openapi_path', { required: true });
+  const raw_spec = await loadSpec(raw_spec_path);
+  const decoratedSpec = await decorateSpec(raw_spec, token);
 }
 
-async function loadSpec(): Promise<string> {
-  const raw_spec_path = getInput('openapi_path', { required: true });
-  const raw_spec = await readFile(raw_spec_path);
-  console.log('Loaded spec from', raw_spec_path);
+async function loadSpec(path: string): Promise<string> {
+  const raw_spec = await readFile(path);
+  console.log('Loaded spec from', path);
   return raw_spec.toString();
+}
+
+async function decorateSpec(raw_spec: string, token: string): Promise<string> {
+  console.log('Decorating spec...');
+  const response = await fetch('https:/api.stainlessapi.com/api/spec', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+    body: raw_spec,
+  });
+  if (!response.ok) {
+    console.log('Failed to decorate spec:', response.statusText, response.text);
+  }
+  console.log('Decorated spec');
+  return response.text.toString();
 }
 
 if (require.main === module) {
