@@ -7,12 +7,12 @@ runs:
   using: node16
   main: dist/index.js
 inputs:
-  customer:
-    description: 'Name of the customer'
-    require: true
-  api_token:
-    description: 'Stainless API token'
-    require: true
   openapi_path:
-    description: 'Path of the openapi file'
+    description: 'Path to the openapi file'
+    require: true
+  stainless_api_key:
+    description: 'Stainless API key'
+    require: true
+  output_path:
+    description: 'Output path for the decorated openapi spec'
     require: true

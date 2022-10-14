@@ -5,15 +5,14 @@ import fetch from 'node-fetch';
 
 export async function main() {
   // inputs
-  const token = getInput('api_token', { required: true });
-  const raw_spec_path = getInput('openapi_path', { required: true });
-  const customer = getInput('customer', { required: true });
+  const stainless_api_key = getInput('stainless_api_key', { required: true });
+  const input_path = getInput('input_path', { required: true });
+  const output_path = getInput('output_path', { required: true });
 
-  const raw_spec = await loadSpec(raw_spec_path);
-  const decoratedSpec = await decorateSpec(raw_spec, token);
-  const filename = `${customer}-openapi.documented.json`;
-  writeFile(filename, decoratedSpec);
-  info('Wrote spec to', filename);
+  const raw_spec = await loadSpec(input_path);
+  const decoratedSpec = await decorateSpec(raw_spec, stainless_api_key);
+  writeFile(output_path, decoratedSpec);
+  info('Wrote spec to', output_path);
 }
 
 async function loadSpec(path: string): Promise<string> {

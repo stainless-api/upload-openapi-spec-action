@@ -8,10 +8,10 @@ A GitHub action for generating a "decorated" openapi spec for readme.com. Will t
 ## Setup
 
 1. Copy the example from below into a GitHub workflow file (e.g. `.github/workflows/decorate.yml`)
-2. Replace `MY_COMPANY_NAME` with your company's name
-3. Replace `PATH_TO_SPEC` with the path to your openapi spec (relative to the root of the repo).
+2. Replace `INPUT_PATH` with the path to your openapi spec (relative to the root of the repo).
+3. Replace `OUTPUT_PATH` with where you want the documented spec to be written (relative to the root of the repo), e.g., `my-company-openapi.documented.json`.
 4. Add [GitHub actions secrets storing your credentials](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-   - `secrets.STAINLESS_TOKEN`: Your Stainless API token.
+   - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
    - `secrets.README_TOKEN`: Your API token for ReadMe.com. Only sent to readme's servers.
    - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document), this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to readme's servers.
 
@@ -29,10 +29,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: stainless-api/decorate-spec@main
         with:
-          customer: MY_COMPANY_NAME
-          openapi_path: PATH_TO_SPEC
-          api_token: ${{ secrets.STAINLESS_TOKEN }}
+          input_path: PATH_TO_OPENAPI_SPEC
+          output_path: PATH_TO_DECORATED_SPEC
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
       - uses: readmeio/rdme
         with:
-          rdme: openapi MY_COMPANY_NAME-openapi.documented.json --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
+          rdme: openapi PATH_TO_DECORATED_SPEC --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
 ```
