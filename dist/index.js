@@ -9429,7 +9429,9 @@ function decorateSpec(raw_spec, token) {
             body: raw_spec,
         });
         if (!response.ok) {
-            (0, console_1.error)('Failed to decorate spec:', response.statusText, response.text);
+            const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
+            (0, console_1.error)(errorMsg);
+            throw Error(errorMsg);
         }
         (0, console_1.info)('Decorated spec');
         return response.text();

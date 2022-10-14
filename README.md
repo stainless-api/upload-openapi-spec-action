@@ -11,7 +11,7 @@ A GitHub action for generating a "decorated" openapi spec for readme.com. Will t
 2. Replace `MY_COMPANY_NAME` with your company's name
 3. Replace `PATH_TO_SPEC` with the path to your openapi spec (relative to the root of the repo).
 4. Add [GitHub actions secrets storing your credentials](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-   - `secrets.STAINLESS_TOKEn`: Your Stainless API token.
+   - `secrets.STAINLESS_TOKEN`: Your Stainless API token.
    - `secrets.README_TOKEN`: Your API token for ReadMe.com. Only sent to readme's servers.
    - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document), this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to readme's servers.
 

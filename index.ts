@@ -33,7 +33,9 @@ async function decorateSpec(raw_spec: string, token: string): Promise<string> {
     body: raw_spec,
   });
   if (!response.ok) {
-    error('Failed to decorate spec:', response.statusText, response.text);
+    const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
+    error(errorMsg);
+    throw Error(errorMsg);
   }
   info('Decorated spec');
   return response.text();

@@ -8,7 +8,7 @@ runs:
   main: dist/index.js
 inputs:
   customer:
-    description: 'Name of teh customer'
+    description: 'Name of the customer'
     require: true
   api_token:
     description: 'Stainless API token'
