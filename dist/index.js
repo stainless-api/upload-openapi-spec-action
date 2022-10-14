@@ -9400,9 +9400,9 @@ function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // inputs
         const stainless_api_key = (0, core_1.getInput)('stainless_api_key', { required: true });
-        const raw_spec_path = (0, core_1.getInput)('input_path', { required: true });
+        const input_path = (0, core_1.getInput)('input_path', { required: true });
         const output_path = (0, core_1.getInput)('output_path', { required: true });
-        const raw_spec = yield loadSpec(raw_spec_path);
+        const raw_spec = yield loadSpec(input_path);
         const decoratedSpec = yield decorateSpec(raw_spec, stainless_api_key);
         (0, fs_extra_1.writeFile)(output_path, decoratedSpec);
         (0, console_1.info)('Wrote spec to', output_path);

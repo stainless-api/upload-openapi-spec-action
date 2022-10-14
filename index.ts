@@ -6,10 +6,10 @@ import fetch from 'node-fetch';
 export async function main() {
   // inputs
   const stainless_api_key = getInput('stainless_api_key', { required: true });
-  const raw_spec_path = getInput('input_path', { required: true });
+  const input_path = getInput('input_path', { required: true });
   const output_path = getInput('output_path', { required: true });
 
-  const raw_spec = await loadSpec(raw_spec_path);
+  const raw_spec = await loadSpec(input_path);
   const decoratedSpec = await decorateSpec(raw_spec, stainless_api_key);
   writeFile(output_path, decoratedSpec);
   info('Wrote spec to', output_path);
