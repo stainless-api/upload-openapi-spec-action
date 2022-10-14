@@ -9393,11 +9393,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.main = void 0;
 const core_1 = __nccwpck_require__(2186);
+const console_1 = __nccwpck_require__(6206);
 const fs_extra_1 = __nccwpck_require__(5630);
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
-        // actions inputs
+        // inputs
         const token = (0, core_1.getInput)('api_token', { required: true });
         const raw_spec_path = (0, core_1.getInput)('openapi_path', { required: true });
         const customer = (0, core_1.getInput)('customer', { required: true });
@@ -9405,20 +9406,20 @@ function main() {
         const decoratedSpec = yield decorateSpec(raw_spec, token);
         const filename = `${customer}-openapi.documented.json`;
         (0, fs_extra_1.writeFile)(filename, decoratedSpec);
-        console.log('Wrote spec to', filename);
+        (0, console_1.info)('Wrote spec to', filename);
     });
 }
 exports.main = main;
 function loadSpec(path) {
     return __awaiter(this, void 0, void 0, function* () {
         const raw_spec = yield (0, fs_extra_1.readFile)(path);
-        console.log('Loaded spec from', path);
+        (0, console_1.info)('Loaded spec from', path);
         return raw_spec.toString();
     });
 }
 function decorateSpec(raw_spec, token) {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log('Decorating spec...');
+        (0, console_1.info)('Decorating spec...');
         const response = yield (0, node_fetch_1.default)('https:/api.stainlessapi.com/api/spec', {
             method: 'POST',
             headers: {
@@ -9428,10 +9429,10 @@ function decorateSpec(raw_spec, token) {
             body: raw_spec,
         });
         if (!response.ok) {
-            console.log('Failed to decorate spec:', response.statusText, response.text);
+            (0, console_1.error)('Failed to decorate spec:', response.statusText, response.text);
         }
-        console.log('Decorated spec');
-        return response.text.toString();
+        (0, console_1.info)('Decorated spec');
+        return response.text();
     });
 }
 if (require.main === require.cache[eval('__filename')]) {
@@ -9457,6 +9458,14 @@ module.exports = require("assert");
 
 "use strict";
 module.exports = require("buffer");
+
+/***/ }),
+
+/***/ 6206:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("console");
 
 /***/ }),
 
