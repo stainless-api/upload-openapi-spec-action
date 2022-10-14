@@ -7,7 +7,7 @@ runs:
   using: node16
   main: dist/index.js
 inputs:
-  openapi_path:
+  input_path:
     description: 'Path to the openapi file'
     require: true
   stainless_api_key:
