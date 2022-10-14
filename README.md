@@ -1,27 +1,34 @@
-# decorate-spec
+# upload-spec
 
 [![lint](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml)
 [![build](https://github.com/stainless-api/readme-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-api/readme-action/actions/workflows/build.yml)
 
-A GitHub action for generating a "decorated" openapi spec for readme.com. Will take your openapi spec and generate a file in the current working directory called `MY_COMPANY_NAME-openapi.documented.json`, where `MY_COMPANY_NAME` is your name.
+A GitHub action for pushing your OpenAPI spec to Stainless to trigger regeneration of your SDKs. 
 
-## Setup
+Note that there is currently a manual step in between this action and automatic creation of your PR's, 
+and more manual steps before they are merged and released.
 
-1. Copy the example from below into a GitHub workflow file (e.g. `.github/workflows/decorate.yml`)
-2. Replace `INPUT_PATH` with the path to your openapi spec (relative to the root of the repo).
-3. Replace `OUTPUT_PATH` with where you want the documented spec to be written (relative to the root of the repo), e.g., `my-company-openapi.documented.json`.
-4. Add [GitHub actions secrets storing your credentials](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
-   - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
-   - `secrets.README_TOKEN`: Your API token for ReadMe.com. Only sent to readme's servers.
-   - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document), this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to readme's servers.
+If your account is configured to do so, this action can also output a copy of your OpenAPI spec decorated with sample code snippets,
+so that your API reference documentation can show examples of making each request with the user's chosen SDK 
+(e.g., show `client.items.list()` instead of `curl https://api.my-company.com/items`). 
 
-## Example
+## Example usage
+
+First, obtain an API Key from Stainless, and [add it to your GitHub actions secrets](https://docs.github.com/actions/security-guides/encrypted-secrets%23creating-encrypted-secrets-for-a-repository?tool=cli#creating-encrypted-secrets-for-a-repository) as `STAINLESS_API_KEY`:
+
+```sh
+gh secret set STAINLESS_API_KEY
+```
+
+Then, add a new workflow file, or add the action to an existing workflow:
 
 ```yaml
-name: Decorate Specs
+name: Upload OpenAPI spec to Stainless
 
-on: [push]
-
+on:
+  push:
+    branches: [main]
+      
 jobs:
   stainless:
     runs-on: ubuntu-latest
@@ -29,10 +36,41 @@ jobs:
       - uses: actions/checkout@v3
       - uses: stainless-api/decorate-spec@main
         with:
-          input_path: PATH_TO_OPENAPI_SPEC
-          output_path: PATH_TO_DECORATED_SPEC
+          input_path: "path/to/my-company-openapi.json"
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+```
+
+## Usage with ReadMe.com
+
+If you use ReadMe's OpenAPI support for your API reference documentation, 
+ask your contact at Stainless to configure sample code decoration for ReadMe, 
+and then:
+
+```yaml
+name: Upload OpenAPI spec to Stainless and ReadMe
+
+on:
+  push:
+    branches: [main]
+      
+jobs:
+  stainless:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: stainless-api/decorate-spec@main
+        with:
+          input_path: "path/to/my-company-openapi.json"
+          output_path: "path/to/my-company-openapi.documented.json"
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
       - uses: readmeio/rdme
         with:
-          rdme: openapi PATH_TO_DECORATED_SPEC --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
+          rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
 ```
+
+This assumes the following secrets have been [uploaded to your Github Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
+
+   - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
+   - `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
+   - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document), 
+      this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
