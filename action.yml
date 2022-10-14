@@ -1,4 +1,4 @@
-name: decorate-spec
+name: upload-openapi-spec-action
 description: Generate "decorated" openapi spec for readme.com
 branding:
   icon: book-open
