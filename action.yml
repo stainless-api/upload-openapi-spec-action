@@ -1,5 +1,9 @@
-name: upload-openapi-spec-action
-description: Generate "decorated" openapi spec for readme.com
+name: upload-openapi-spec
+description: |
+  Upload your OpenAPI spec to trigger regeneration of your SDKs.
+
+  Can also output a copy of your OpenAPI spec decorated with sample code
+  for passing along to API documentation providers like ReadMe.
 branding:
   icon: book-open
   color: green
@@ -7,12 +11,11 @@ runs:
   using: node16
   main: dist/index.js
 inputs:
-  input_path:
-    description: 'Path to the openapi file'
-    require: true
   stainless_api_key:
-    description: 'Stainless API key'
-    require: true
+    description: 'Stainless API key.'
+    required: true
+  input_path:
+    description: 'Path to the OpenAPI file.'
+    required: true
   output_path:
-    description: 'Output path for the decorated openapi spec'
-    require: true
+    description: 'Output path for the decorated OpenAPI spec.'
