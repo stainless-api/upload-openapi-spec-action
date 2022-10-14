@@ -1,7 +1,7 @@
 # upload-spec
 
-[![lint](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/readme-action/actions/workflows/lint.yml)
-[![build](https://github.com/stainless-api/readme-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-api/readme-action/actions/workflows/build.yml)
+[![lint](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml)
+[![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-apiupload-openapi-spec-action/actions/workflows/build.yml)
 
 A GitHub action for pushing your OpenAPI spec to Stainless to trigger regeneration of your SDKs. 
 
@@ -16,7 +16,7 @@ so that your API reference documentation can show examples of making each reques
 
 First, obtain an API Key from Stainless, and [add it to your GitHub actions secrets](https://docs.github.com/actions/security-guides/encrypted-secrets%23creating-encrypted-secrets-for-a-repository?tool=cli#creating-encrypted-secrets-for-a-repository) as `STAINLESS_API_KEY`:
 
-```sh
+```
 gh secret set STAINLESS_API_KEY
 ```
 
