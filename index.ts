@@ -1,81 +1,44 @@
-import { runCmd } from './util';
-import { homedir } from 'os';
-import { existsSync } from 'fs';
-import { copy, createFile, mkdir, readdir, rm } from 'fs-extra';
-import path from 'path';
 import { getInput } from '@actions/core';
+import { error, info } from 'console';
+import { readFile, writeFile } from 'fs-extra';
+import fetch from 'node-fetch';
 
 export async function main() {
-  const cwd = process.cwd();
-  const home = homedir();
-  console.log(await readdir(homedir()));
+  // inputs
+  const token = getInput('api_token', { required: true });
+  const raw_spec_path = getInput('openapi_path', { required: true });
   const customer = getInput('customer', { required: true });
-  const specsFolder = path.join(home, 'specs');
-  const distFolder = path.join(home, 'dist');
 
-  await moveSpec(customer, cwd, specsFolder);
-  await initDummyRepo(customer, distFolder);
-  await decorateSpec(customer, specsFolder, distFolder);
-  await copyUpdatedSpec(customer, specsFolder, cwd);
+  const raw_spec = await loadSpec(raw_spec_path);
+  const decoratedSpec = await decorateSpec(raw_spec, token);
+  const filename = `${customer}-openapi.documented.json`;
+  writeFile(filename, decoratedSpec);
+  info('Wrote spec to', filename);
 }
 
-export async function moveSpec(customer: string, cwd: string, specsFolder: string) {
-  console.log('Moving spec');
-  const spec = getInput('openapi_path', { required: true });
-  if (existsSync(specsFolder)) {
-    await rm(specsFolder, { recursive: true });
-  }
-  await mkdir(specsFolder);
-  copy(path.join(cwd, spec), path.join(specsFolder, `${customer}-openapi.yml`), (err) => {
-    if (err) {
-      console.error(`Failed to copy ${spec} (openapi spec) to ${specsFolder}:`, err);
-      process.exit(1);
-    }
+async function loadSpec(path: string): Promise<string> {
+  const raw_spec = await readFile(path);
+  info('Loaded spec from', path);
+  return raw_spec.toString();
+}
+
+async function decorateSpec(raw_spec: string, token: string): Promise<string> {
+  info('Decorating spec...');
+  const response = await fetch('https:/api.stainlessapi.com/api/spec', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+    body: raw_spec,
   });
-}
-
-export async function initDummyRepo(customer: string, distFolder: string) {
-  console.log('Initiating dummy repo');
-  const repoFolder = path.join(distFolder, customer + '-node');
-  if (existsSync(distFolder)) {
-    await rm(distFolder, { recursive: true });
+  if (!response.ok) {
+    const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
+    error(errorMsg);
+    throw Error(errorMsg);
   }
-  await mkdir(repoFolder, { recursive: true });
-  await runCmd('git', ['init', '--initial-branch=master'], { cwd: repoFolder });
-  await runCmd('yarn', ['init', '--yes', '-s', '.'], {
-    cwd: repoFolder,
-  });
-}
-
-export async function decorateSpec(customer: string, specsFolder: string, distFolder: string) {
-  console.log('Decorating spec');
-  const imageName = 'ghcr.io/stainless-sdks/stainless';
-  await runCmd('docker', ['pull', imageName]);
-  const decoratedSpecPath = `${specsFolder}/${customer}-openapi.documented.json`;
-  createFile(decoratedSpecPath);
-  await runCmd('docker', [
-    'run',
-    '-v',
-    `${specsFolder}/${customer}-openapi.yml:/specs/${customer}-openapi.yml`,
-    '-v',
-    `${decoratedSpecPath}:/specs/${customer}-openapi.documented.json:rw`,
-    '-v',
-    `${distFolder}:/dist`,
-    imageName,
-    'node',
-    'stainless.js',
-    '--only-decorate',
-    '--customers',
-    customer,
-    '--languages',
-    `node`,
-  ]);
-}
-
-export async function copyUpdatedSpec(customer: string, specsFolder: string, cwd: string) {
-  console.log('Copying updated spec');
-  const updatedSpec = `${customer}-openapi.documented.json`;
-  await copy(path.join(specsFolder, updatedSpec), path.join(cwd, updatedSpec));
+  info('Decorated spec');
+  return response.text();
 }
 
 if (require.main === module) {

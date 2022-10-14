@@ -9,7 +9,8 @@
   "private": true,
   "dependencies": {
     "@actions/core": "^1.9.0",
-    "fs-extra": "^10.1.0"
+    "fs-extra": "^10.1.0",
+    "node-fetch": "^3.2.10"
   },
   "scripts": {
     "build": "ncc build index.ts --license licenses.txt",

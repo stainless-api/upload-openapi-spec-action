@@ -10,6 +10,9 @@ inputs:
   customer:
     description: 'Name of the customer'
     require: true
+  api_token:
+    description: 'Stainless API token'
+    require: true
   openapi_path:
     description: 'Path of the openapi file'
     require: true
