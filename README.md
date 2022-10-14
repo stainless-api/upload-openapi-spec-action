@@ -9,7 +9,7 @@ A GitHub action for generating a "decorated" openapi spec for readme.com. Will t
 
 1. Copy the example from below into a GitHub workflow file (e.g. `.github/workflows/decorate.yml`)
 2. Replace `INPUT_PATH` with the path to your openapi spec (relative to the root of the repo).
-3. Replace `OUTPUT_PATH` with where you want the documented spec to be written (relative to the root of the repo). This file will be created for you.
+3. Replace `OUTPUT_PATH` with where you want the documented spec to be written (relative to the root of the repo), e.g., `my-company-openapi.documented.json`.
 4. Add [GitHub actions secrets storing your credentials](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
    - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
    - `secrets.README_TOKEN`: Your API token for ReadMe.com. Only sent to readme's servers.
