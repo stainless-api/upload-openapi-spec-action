@@ -9397,10 +9397,15 @@ const fs_extra_1 = __nccwpck_require__(5630);
 const node_fetch_1 = __importDefault(__nccwpck_require__(4429));
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
+        // actions inputs
         const token = (0, core_1.getInput)('api_token', { required: true });
         const raw_spec_path = (0, core_1.getInput)('openapi_path', { required: true });
+        const customer = (0, core_1.getInput)('customer', { required: true });
         const raw_spec = yield loadSpec(raw_spec_path);
         const decoratedSpec = yield decorateSpec(raw_spec, token);
+        const filename = `${customer}-openapi.documented.json`;
+        (0, fs_extra_1.writeFile)(filename, decoratedSpec);
+        console.log('Wrote spec to', filename);
     });
 }
 exports.main = main;

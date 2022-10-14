@@ -7,6 +7,9 @@ runs:
   using: node16
   main: dist/index.js
 inputs:
+  customer:
+    description: 'Name of teh customer'
+    require: true
   api_token:
     description: 'Stainless API token'
     require: true

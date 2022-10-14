@@ -1,12 +1,18 @@
 import { getInput } from '@actions/core';
-import { readFile } from 'fs-extra';
+import { readFile, writeFile } from 'fs-extra';
 import fetch from 'node-fetch';
 
 export async function main() {
+  // actions inputs
   const token = getInput('api_token', { required: true });
   const raw_spec_path = getInput('openapi_path', { required: true });
+  const customer = getInput('customer', { required: true });
+
   const raw_spec = await loadSpec(raw_spec_path);
   const decoratedSpec = await decorateSpec(raw_spec, token);
+  const filename = `${customer}-openapi.documented.json`;
+  writeFile(filename, decoratedSpec);
+  console.log('Wrote spec to', filename);
 }
 
 async function loadSpec(path: string): Promise<string> {
