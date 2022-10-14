@@ -40,7 +40,7 @@ jobs:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
 ```
 
-## Usage with ReadMe.com
+## Usage with ReadMe for docs with example snippets
 
 If you use ReadMe's OpenAPI support for your API reference documentation, 
 ask your contact at Stainless to configure sample code decoration for ReadMe, 
