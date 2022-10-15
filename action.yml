@@ -1,9 +1,5 @@
 name: upload-openapi-spec
-description: |
-  Upload your OpenAPI spec to trigger regeneration of your SDKs.
-
-  Can also output a copy of your OpenAPI spec decorated with sample code
-  for passing along to API documentation providers like ReadMe.
+description: Upload your OpenAPI spec to update your SDKs (and, if configured, add example snippets to your API docs). stainlessapi.com
 branding:
   icon: book-open
   color: green
