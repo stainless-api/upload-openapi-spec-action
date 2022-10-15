@@ -11,7 +11,7 @@ export async function main() {
 
   const raw_spec = await loadSpec(input_path);
   const decoratedSpec = await decorateSpec(raw_spec, stainless_api_key);
-  if ((output_path == undefined || output_path == null) && output_path != '') {
+  if (!output_path) {
     return;
   }
   writeFile(output_path, decoratedSpec);

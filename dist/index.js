@@ -10073,7 +10073,7 @@ function main() {
         const output_path = (0, core_1.getInput)('output_path');
         const raw_spec = yield loadSpec(input_path);
         const decoratedSpec = yield decorateSpec(raw_spec, stainless_api_key);
-        if ((output_path == undefined || output_path == null) && output_path != '') {
+        if (!output_path) {
             return;
         }
         (0, fs_extra_1.writeFile)(output_path, decoratedSpec);
