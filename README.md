@@ -7,7 +7,7 @@ stainless-api/upload-openapi-spec
 [![lint](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml)
 [![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-apiupload-openapi-spec-action/actions/workflows/build.yml)
 
-A GitHub action for pushing your OpenAPI spec to Stainless to trigger regeneration of your SDKs.
+A GitHub action for pushing your OpenAPI spec to [Stainless](https://stainlessapi.com/) to trigger regeneration of your SDKs.
 
 Note that there is currently a manual step in between this action and automatic creation of your PR's,
 and more manual steps before they are merged and released.
