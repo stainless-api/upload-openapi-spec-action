@@ -38,10 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: stainless-api/upload-openapi-spec@main
+      - uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: "path/to/my-company-openapi.json"
+          input_path: 'path/to/my-company-openapi.json'
 ```
 
 ## Usage with ReadMe for docs with example snippets
@@ -62,11 +62,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: stainless-api/upload-openapi-spec@main
+      - uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: "path/to/my-company-openapi.json"
-          output_path: "path/to/my-company-openapi.documented.json"
+          input_path: 'path/to/my-company-openapi.json'
+          output_path: 'path/to/my-company-openapi.documented.json'
       - uses: readmeio/rdme
         with:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
@@ -74,7 +74,7 @@ jobs:
 
 This assumes the following secrets have been [uploaded to your Github Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
 
-   - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
-   - `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
-   - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document),
-      this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
+- `secrets.STAINLESS_API_KEY`: Your Stainless API key.
+- `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
+- `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document),
+  this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
