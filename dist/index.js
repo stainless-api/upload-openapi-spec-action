@@ -11582,78 +11582,49 @@ function main() {
         // inputs
         const stainless_api_key = (0, core_1.getInput)('stainless_api_key', { required: true });
         const inputPath = (0, core_1.getInput)('input_path', { required: true });
+        const configPath = (0, core_1.getInput)('config_path', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
-        const decoratedSpec = yield decorateSpec(inputPath, stainless_api_key);
+        (0, console_1.info)('Uploading spec and config files...');
+        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
+        if (!response.ok) {
+            const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${response.text}`;
+            (0, console_1.error)(errorMsg);
+            throw Error(errorMsg);
+        }
         if (outputPath) {
+            const decoratedSpec = response.text();
             (0, fs_extra_1.writeFile)(outputPath, decoratedSpec);
-            (0, console_1.info)('Wrote spec to', outputPath);
+            (0, console_1.info)('Wrote decorated spec to', outputPath);
         }
     });
 }
 exports.main = main;
-function createSignedUpload(token) {
+function uploadSpecAndConfig(specPath, configPath, token) {
     return __awaiter(this, void 0, void 0, function* () {
-        const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec/upload', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        if (!response.ok) {
-            const errorMsg = `Failed to create a signed upload: ${response.statusText} ${response.text}`;
-            (0, console_1.error)(errorMsg);
-            throw Error(errorMsg);
-        }
-        return response.json();
-    });
-}
-function uploadSpec(specPath, upload) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { fields, url } = upload;
         const formData = new form_data_1.default();
-        // Add the required fields for S3 upload
-        Object.entries(fields).forEach(([key, value]) => {
-            formData.append(key, value);
+        // append a spec file
+        const specStats = fs_1.default.statSync(specPath);
+        formData.append('oasSpec', fs_1.default.createReadStream(specPath), {
+            contentType: 'text/plain',
+            knownLength: specStats.size,
         });
-        // Attach the actual spec file
-        const stats = fs_1.default.statSync(specPath);
-        formData.append('file', fs_1.default.createReadStream(specPath), { knownLength: stats.size });
-        const response = yield (0, node_fetch_1.default)(url, {
-            method: 'POST',
-            body: formData,
-        });
-        if (!response.ok) {
-            const errorMsg = `Failed to upload spec: ${response.statusText} ${response.text}`;
-            (0, console_1.error)(errorMsg);
-            throw Error(errorMsg);
+        // append a config file, if present
+        if (configPath) {
+            const configStats = fs_1.default.statSync(configPath);
+            formData.append('stainlessConfig', fs_1.default.createReadStream(specPath), {
+                contentType: 'text/plain',
+                knownLength: configStats.size,
+            });
         }
-    });
-}
-function decorateSpec(specPath, token) {
-    return __awaiter(this, void 0, void 0, function* () {
-        (0, console_1.info)('Getting a signed upload URL...');
-        const signedUpload = yield createSignedUpload(token);
-        (0, console_1.info)('Uploading the spec file...');
-        yield uploadSpec(specPath, signedUpload);
-        (0, console_1.info)('Decorating spec...');
         const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
             method: 'POST',
+            body: formData,
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
+                'Content-Type': 'multipart/form-data',
             },
-            body: JSON.stringify({
-                uploadedFileKey: signedUpload.fileKey,
-            }),
         });
-        if (!response.ok) {
-            const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
-            (0, console_1.error)(errorMsg);
-            throw Error(errorMsg);
-        }
-        (0, console_1.info)('Decorated spec');
-        return response.text();
+        return response;
     });
 }
 if (require.main === require.cache[eval('__filename')]) {

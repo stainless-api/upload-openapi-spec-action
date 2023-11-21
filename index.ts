@@ -9,97 +9,52 @@ export async function main() {
   // inputs
   const stainless_api_key = getInput('stainless_api_key', { required: true });
   const inputPath = getInput('input_path', { required: true });
+  const configPath = getInput('config_path', { required: false });
   const outputPath = getInput('output_path');
 
-  const decoratedSpec = await decorateSpec(inputPath, stainless_api_key);
+  info('Uploading spec and config files...');
+  const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
+  if (!response.ok) {
+    const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${response.text}`;
+    error(errorMsg);
+    throw Error(errorMsg);
+  }
 
   if (outputPath) {
+    const decoratedSpec = response.text();
     writeFile(outputPath, decoratedSpec);
-    info('Wrote spec to', outputPath);
+    info('Wrote decorated spec to', outputPath);
   }
 }
 
-type SignedUploadResponse = {
-  // Which key the upload is going to
-  fileKey: string;
-
-  // Which URL to POST an upload to
-  url: string;
-
-  // Which fields to include in the POST
-  fields: { [key: string]: string };
-};
-
-async function createSignedUpload(token: string): Promise<SignedUploadResponse> {
-  const response = await fetch('https://api.stainlessapi.com/api/spec/upload', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to create a signed upload: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
-  }
-
-  return response.json() as unknown as SignedUploadResponse;
-}
-
-async function uploadSpec(specPath: string, upload: SignedUploadResponse) {
-  const { fields, url } = upload;
+async function uploadSpecAndConfig(specPath: string, configPath: string, token: string) {
   const formData = new FormData();
 
-  // Add the required fields for S3 upload
-  Object.entries(fields).forEach(([key, value]) => {
-    formData.append(key, value as string);
+  // append a spec file
+  const specStats = fs.statSync(specPath);
+  formData.append('oasSpec', fs.createReadStream(specPath), {
+    contentType: 'text/plain',
+    knownLength: specStats.size,
   });
 
-  // Attach the actual spec file
-  const stats = fs.statSync(specPath);
-  formData.append('file', fs.createReadStream(specPath), { knownLength: stats.size });
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to upload spec: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
+  // append a config file, if present
+  if (configPath) {
+    const configStats = fs.statSync(configPath);
+    formData.append('stainlessConfig', fs.createReadStream(specPath), {
+      contentType: 'text/plain',
+      knownLength: configStats.size,
+    });
   }
-}
 
-async function decorateSpec(specPath: string, token: string): Promise<string> {
-  info('Getting a signed upload URL...');
-  const signedUpload = await createSignedUpload(token);
-
-  info('Uploading the spec file...');
-  await uploadSpec(specPath, signedUpload);
-
-  info('Decorating spec...');
   const response = await fetch('https://api.stainlessapi.com/api/spec', {
     method: 'POST',
+    body: formData,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'multipart/form-data',
     },
-    body: JSON.stringify({
-      uploadedFileKey: signedUpload.fileKey,
-    }),
   });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
-  }
-
-  info('Decorated spec');
-  return response.text();
+  return response;
 }
 
 if (require.main === module) {

@@ -14,7 +14,7 @@ and more manual steps before they are merged and released.
 
 If your account is configured to do so, this action can also output a copy of your OpenAPI spec decorated with sample code snippets,
 so that your API reference documentation can show examples of making each request with the user's chosen SDK
-(e.g., show `client.items.list()` instead of `curl https://api.my-company.com/items`).
+(e.g. show `client.items.list()` instead of `curl https://api.my-company.com/items`).
 
 ## Example usage
 
@@ -42,6 +42,7 @@ jobs:
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
+          config_path: 'path/to/my-company.stainless.yaml'
 ```
 
 ## Usage with ReadMe for docs with example snippets
@@ -66,6 +67,7 @@ jobs:
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
+          config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
       - uses: readmeio/rdme
         with:
