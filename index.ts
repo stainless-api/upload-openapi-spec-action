@@ -10,14 +10,15 @@ export async function main() {
   const configPath = getInput('config_path', { required: false });
   const outputPath = getInput('output_path');
 
-  info('Uploading spec and config files...');
+  info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
   const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
   if (!response.ok) {
     const text = await response.text();
-    const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${text}`;
+    const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
     error(errorMsg);
     throw Error(errorMsg);
   }
+  info('Uploaded!');
 
   if (outputPath) {
     const decoratedSpec = await response.text();

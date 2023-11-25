@@ -31652,14 +31652,15 @@ function main() {
         const inputPath = (0, core_1.getInput)('input_path', { required: true });
         const configPath = (0, core_1.getInput)('config_path', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
-        (0, console_1.info)('Uploading spec and config files...');
+        (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
         if (!response.ok) {
             const text = yield response.text();
-            const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${text}`;
+            const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
             (0, console_1.error)(errorMsg);
             throw Error(errorMsg);
         }
+        (0, console_1.info)('Uploaded!');
         if (outputPath) {
             const decoratedSpec = yield response.text();
             (0, fs_extra_1.writeFile)(outputPath, decoratedSpec);
