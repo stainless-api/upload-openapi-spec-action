@@ -33172,7 +33172,7 @@ function uploadSpecAndConfig(specPath, configPath, token) {
         // append a config file, if present
         if (configPath) {
             const configStats = fs_1.default.statSync(configPath);
-            formData.append('stainlessConfig', fs_1.default.createReadStream(specPath), {
+            formData.append('stainlessConfig', fs_1.default.createReadStream(configPath), {
                 contentType: 'text/plain',
                 knownLength: configStats.size,
             });

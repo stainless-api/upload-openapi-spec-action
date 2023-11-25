@@ -41,7 +41,7 @@ async function uploadSpecAndConfig(specPath: string, configPath: string, token: 
   // append a config file, if present
   if (configPath) {
     const configStats = fs.statSync(configPath);
-    formData.append('stainlessConfig', fs.createReadStream(specPath), {
+    formData.append('stainlessConfig', fs.createReadStream(configPath), {
       contentType: 'text/plain',
       knownLength: configStats.size,
     });
