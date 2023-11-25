@@ -15,13 +15,14 @@ export async function main() {
   info('Uploading spec and config files...');
   const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
   if (!response.ok) {
-    const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${response.text}`;
+    const text = await response.text();
+    const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${text}`;
     error(errorMsg);
     throw Error(errorMsg);
   }
 
   if (outputPath) {
-    const decoratedSpec = response.text();
+    const decoratedSpec = await response.text();
     writeFile(outputPath, decoratedSpec);
     info('Wrote decorated spec to', outputPath);
   }

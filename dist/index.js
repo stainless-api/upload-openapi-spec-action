@@ -33147,12 +33147,13 @@ function main() {
         (0, console_1.info)('Uploading spec and config files...');
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
         if (!response.ok) {
-            const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${response.text}`;
+            const text = yield response.text();
+            const errorMsg = `Failed to upload spec or config file: ${response.statusText} ${text}`;
             (0, console_1.error)(errorMsg);
             throw Error(errorMsg);
         }
         if (outputPath) {
-            const decoratedSpec = response.text();
+            const decoratedSpec = yield response.text();
             (0, fs_extra_1.writeFile)(outputPath, decoratedSpec);
             (0, console_1.info)('Wrote decorated spec to', outputPath);
         }
