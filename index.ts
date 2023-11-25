@@ -2,8 +2,7 @@ import fs from 'fs';
 import { getInput } from '@actions/core';
 import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
-import fetch, { Response } from 'node-fetch';
-import FormData from 'form-data';
+import fetch, { Response, fileFrom, FormData } from 'node-fetch';
 
 export async function main() {
   // inputs
@@ -32,15 +31,11 @@ async function uploadSpecAndConfig(specPath: string, configPath: string, token: 
   const formData = new FormData();
 
   // append a spec file
-  formData.append('oasSpec', fs.createReadStream(specPath), {
-    contentType: 'text/plain',
-  });
+  formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));
 
   // append a config file, if present
   if (configPath) {
-    formData.append('stainlessConfig', fs.createReadStream(configPath), {
-      contentType: 'text/plain',
-    });
+    formData.set('stainlessConfig', await fileFrom(configPath, 'text/plain'));
   }
 
   const response = await fetch('https://api.stainlessapi.com/api/spec', {
