@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { getInput } from '@actions/core';
 import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
