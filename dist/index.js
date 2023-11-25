@@ -33182,7 +33182,6 @@ function uploadSpecAndConfig(specPath, configPath, token) {
             body: formData,
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data',
                 'X-GitHub-Action': 'stainless-api/upload-openapi-spec-action',
             },
         });
