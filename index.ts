@@ -2,7 +2,7 @@ import fs from 'fs';
 import { getInput } from '@actions/core';
 import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 import FormData from 'form-data';
 
 export async function main() {
@@ -28,22 +28,18 @@ export async function main() {
   }
 }
 
-async function uploadSpecAndConfig(specPath: string, configPath: string, token: string) {
+async function uploadSpecAndConfig(specPath: string, configPath: string, token: string): Promise<Response> {
   const formData = new FormData();
 
   // append a spec file
-  const specStats = fs.statSync(specPath);
   formData.append('oasSpec', fs.createReadStream(specPath), {
     contentType: 'text/plain',
-    knownLength: specStats.size,
   });
 
   // append a config file, if present
   if (configPath) {
-    const configStats = fs.statSync(configPath);
     formData.append('stainlessConfig', fs.createReadStream(configPath), {
       contentType: 'text/plain',
-      knownLength: configStats.size,
     });
   }
 

@@ -33164,17 +33164,13 @@ function uploadSpecAndConfig(specPath, configPath, token) {
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new form_data_1.default();
         // append a spec file
-        const specStats = fs_1.default.statSync(specPath);
         formData.append('oasSpec', fs_1.default.createReadStream(specPath), {
             contentType: 'text/plain',
-            knownLength: specStats.size,
         });
         // append a config file, if present
         if (configPath) {
-            const configStats = fs_1.default.statSync(configPath);
             formData.append('stainlessConfig', fs_1.default.createReadStream(configPath), {
                 contentType: 'text/plain',
-                knownLength: configStats.size,
             });
         }
         const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
