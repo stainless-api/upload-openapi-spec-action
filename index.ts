@@ -1,105 +1,52 @@
-import fs from 'fs';
 import { getInput } from '@actions/core';
 import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
-import fetch from 'node-fetch';
-import FormData from 'form-data';
+import fetch, { Response, fileFrom, FormData } from 'node-fetch';
 
 export async function main() {
   // inputs
   const stainless_api_key = getInput('stainless_api_key', { required: true });
   const inputPath = getInput('input_path', { required: true });
+  const configPath = getInput('config_path', { required: false });
   const outputPath = getInput('output_path');
 
-  const decoratedSpec = await decorateSpec(inputPath, stainless_api_key);
+  info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
+  const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
+  if (!response.ok) {
+    const text = await response.text();
+    const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
+    error(errorMsg);
+    throw Error(errorMsg);
+  }
+  info('Uploaded!');
 
   if (outputPath) {
+    const decoratedSpec = await response.text();
     writeFile(outputPath, decoratedSpec);
-    info('Wrote spec to', outputPath);
+    info('Wrote decorated spec to', outputPath);
   }
 }
 
-type SignedUploadResponse = {
-  // Which key the upload is going to
-  fileKey: string;
-
-  // Which URL to POST an upload to
-  url: string;
-
-  // Which fields to include in the POST
-  fields: { [key: string]: string };
-};
-
-async function createSignedUpload(token: string): Promise<SignedUploadResponse> {
-  const response = await fetch('https://api.stainlessapi.com/api/spec/upload', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to create a signed upload: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
-  }
-
-  return response.json() as unknown as SignedUploadResponse;
-}
-
-async function uploadSpec(specPath: string, upload: SignedUploadResponse) {
-  const { fields, url } = upload;
+async function uploadSpecAndConfig(specPath: string, configPath: string, token: string): Promise<Response> {
   const formData = new FormData();
 
-  // Add the required fields for S3 upload
-  Object.entries(fields).forEach(([key, value]) => {
-    formData.append(key, value as string);
-  });
+  // append a spec file
+  formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));
 
-  // Attach the actual spec file
-  const stats = fs.statSync(specPath);
-  formData.append('file', fs.createReadStream(specPath), { knownLength: stats.size });
-
-  const response = await fetch(url, {
-    method: 'POST',
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to upload spec: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
+  // append a config file, if present
+  if (configPath) {
+    formData.set('stainlessConfig', await fileFrom(configPath, 'text/plain'));
   }
-}
 
-async function decorateSpec(specPath: string, token: string): Promise<string> {
-  info('Getting a signed upload URL...');
-  const signedUpload = await createSignedUpload(token);
-
-  info('Uploading the spec file...');
-  await uploadSpec(specPath, signedUpload);
-
-  info('Decorating spec...');
   const response = await fetch('https://api.stainlessapi.com/api/spec', {
     method: 'POST',
+    body: formData,
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
+      'X-GitHub-Action': 'stainless-api/upload-openapi-spec-action',
     },
-    body: JSON.stringify({
-      uploadedFileKey: signedUpload.fileKey,
-    }),
   });
-
-  if (!response.ok) {
-    const errorMsg = `Failed to decorate spec: ${response.statusText} ${response.text}`;
-    error(errorMsg);
-    throw Error(errorMsg);
-  }
-
-  info('Decorated spec');
-  return response.text();
+  return response;
 }
 
 if (require.main === module) {

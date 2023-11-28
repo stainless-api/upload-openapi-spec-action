@@ -13,5 +13,8 @@ inputs:
   input_path:
     description: "Path to the OpenAPI file."
     required: true
+  config_path:
+    description: "Path to the Stainless config file."
+    required: false
   output_path:
     description: "Output path for the decorated OpenAPI spec."
