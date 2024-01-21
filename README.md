@@ -80,3 +80,49 @@ This assumes the following secrets have been [uploaded to your Github Actions Se
 - `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
 - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document),
   this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
+
+## Usage with Mintlify for docs with example snippets
+
+If you use Mintlify's OpenAPI support for your API reference documentation,
+add the following to your Stainless config:
+```yaml
+openapi:
+  code_samples: mintlify
+```
+
+Mintlify can generate your docs based on the OpenAPI spec in your docs repo if it is [configured to do so](https://mintlify.com/docs/api-playground/openapi/setup#in-the-repo). To integrate Stainless, you can modify the GitHub Action that uploads your OpenAPI spec to Stainless such that it then pushes the Stainless-enhanced OpenAPI spec into your docs repo:
+```yaml
+name: Upload OpenAPI spec to Stainless and (Mintlify) docs repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  stainless:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Push spec and config to Stainless and outputs documented spec
+        uses: stainless-api/upload-openapi-spec-action@main
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          input_path: 'config/acme-openapi.yml'
+          config_path: 'config/acme.stainless.yml'
+          output_path: 'config/acme-openapi.documented.json'
+      - name: Push documented spec to docs repo
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: 'config/acme-openapi.documented.json'
+          destination_repo: '{DOCS_REPO_NAME}'
+          user_email: '{EMAIL}' # the email associated with the GH token
+          user_name: '{USERNAME}' # the username associated with the GH token
+          commit_message: 'Auto-updates from Stainless'
+```
+
+This assumes the following secrets have been [uploaded to your Github Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
+
+- `secrets.STAINLESS_API_KEY`: Your Stainless API key.
+- `secrets.API_TOKEN_GITHUB`: A Github [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with permissions to push to your docs repo.
