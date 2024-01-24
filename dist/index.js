@@ -31651,9 +31651,10 @@ function main() {
         const stainless_api_key = (0, core_1.getInput)('stainless_api_key', { required: true });
         const inputPath = (0, core_1.getInput)('input_path', { required: true });
         const configPath = (0, core_1.getInput)('config_path', { required: false });
+        const projectName = (0, core_1.getInput)('project_name', { required: true });
         const outputPath = (0, core_1.getInput)('output_path');
         (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
+        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName);
         if (!response.ok) {
             const text = yield response.text();
             const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -31669,9 +31670,10 @@ function main() {
     });
 }
 exports.main = main;
-function uploadSpecAndConfig(specPath, configPath, token) {
+function uploadSpecAndConfig(specPath, configPath, token, projectName) {
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new node_fetch_1.FormData();
+        formData.set('projectName', projectName);
         // append a spec file
         formData.set('oasSpec', yield (0, node_fetch_1.fileFrom)(specPath, 'text/plain'));
         // append a config file, if present

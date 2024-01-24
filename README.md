@@ -43,6 +43,7 @@ jobs:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
           config_path: 'path/to/my-company.stainless.yaml'
+          project_name: 'my-stainless-project'
 ```
 
 ## Usage with ReadMe for docs with example snippets
@@ -69,6 +70,7 @@ jobs:
           input_path: 'path/to/my-company-openapi.json'
           config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
+          project_name: 'my-stainless-project'
       - uses: readmeio/rdme
         with:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
@@ -85,12 +87,14 @@ This assumes the following secrets have been [uploaded to your Github Actions Se
 
 If you use Mintlify's OpenAPI support for your API reference documentation,
 add the following to your Stainless config:
+
 ```yaml
 openapi:
   code_samples: mintlify
 ```
 
 Mintlify can generate your docs based on the OpenAPI spec in your docs repo if it is [configured to do so](https://mintlify.com/docs/api-playground/openapi/setup#in-the-repo). To integrate Stainless, you can modify the GitHub Action that uploads your OpenAPI spec to Stainless such that it then pushes the Stainless-enhanced OpenAPI spec into your docs repo:
+
 ```yaml
 name: Upload OpenAPI spec to Stainless and (Mintlify) docs repo
 
@@ -110,6 +114,7 @@ jobs:
           input_path: 'config/acme-openapi.yml'
           config_path: 'config/acme.stainless.yml'
           output_path: 'config/acme-openapi.documented.json'
+          project_name: 'my-stainless-project'
       - name: Push documented spec to docs repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:

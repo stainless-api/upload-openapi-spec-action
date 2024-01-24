@@ -18,3 +18,6 @@ inputs:
     required: false
   output_path:
     description: "Output path for the decorated OpenAPI spec."
+  project_name: 
+    description: "Stainless project name."
+    required: true
