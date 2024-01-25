@@ -46,6 +46,8 @@ jobs:
           project_name: 'my-stainless-project'
 ```
 
+You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
+
 ## Usage with ReadMe for docs with example snippets
 
 If you use ReadMe's OpenAPI support for your API reference documentation,
@@ -114,7 +116,7 @@ jobs:
           input_path: 'config/acme-openapi.yml'
           config_path: 'config/acme.stainless.yml'
           output_path: 'config/acme-openapi.documented.json'
-          project_name: 'my-stainless-project'
+          project_name: 'acme'
       - name: Push documented spec to docs repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
