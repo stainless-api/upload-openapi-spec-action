@@ -53,7 +53,7 @@ openapi:
   code_samples: readme
 ```
 
-And then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe.
+Then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
 
