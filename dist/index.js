@@ -31651,7 +31651,7 @@ function main() {
         const stainless_api_key = (0, core_1.getInput)('stainless_api_key', { required: true });
         const inputPath = (0, core_1.getInput)('input_path', { required: true });
         const configPath = (0, core_1.getInput)('config_path', { required: false });
-        const projectName = (0, core_1.getInput)('project_name', { required: true });
+        const projectName = (0, core_1.getInput)('project_name', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
         (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName);

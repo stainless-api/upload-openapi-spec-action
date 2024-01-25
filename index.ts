@@ -8,7 +8,7 @@ export async function main() {
   const stainless_api_key = getInput('stainless_api_key', { required: true });
   const inputPath = getInput('input_path', { required: true });
   const configPath = getInput('config_path', { required: false });
-  const projectName = getInput('project_name', { required: true });
+  const projectName = getInput('project_name', { required: false });
   const outputPath = getInput('output_path');
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');

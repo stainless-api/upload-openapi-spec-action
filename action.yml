@@ -8,16 +8,16 @@ runs:
   main: dist/index.js
 inputs:
   stainless_api_key:
-    description: "Stainless API key."
+    description: 'Stainless API key.'
     required: true
   input_path:
-    description: "Path to the OpenAPI file."
+    description: 'Path to the OpenAPI file.'
     required: true
   config_path:
-    description: "Path to the Stainless config file."
+    description: 'Path to the Stainless config file.'
     required: false
   output_path:
-    description: "Output path for the decorated OpenAPI spec."
-  project_name: 
-    description: "Stainless project name."
-    required: true
+    description: 'Output path for the decorated OpenAPI spec.'
+  project_name:
+    description: 'Stainless project name.'
+    required: false
