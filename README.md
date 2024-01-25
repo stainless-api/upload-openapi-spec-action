@@ -18,7 +18,7 @@ so that your API reference documentation can show examples of making each reques
 
 ## Example usage
 
-First, obtain an API Key from Stainless, and [add it to your GitHub actions secrets](https://docs.github.com/actions/security-guides/encrypted-secrets%23creating-encrypted-secrets-for-a-repository?tool=cli#creating-encrypted-secrets-for-a-repository) as `STAINLESS_API_KEY`:
+First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub actions secrets](https://docs.github.com/actions/security-guides/encrypted-secrets%23creating-encrypted-secrets-for-a-repository?tool=cli#creating-encrypted-secrets-for-a-repository) as `STAINLESS_API_KEY`:
 
 ```
 gh secret set STAINLESS_API_KEY
@@ -47,10 +47,13 @@ jobs:
 
 ## Usage with ReadMe for docs with example snippets
 
-If you use ReadMe's OpenAPI support for your API reference documentation,
-ask your contact at Stainless to configure sample code decoration for ReadMe,
-and then:
+If you use ReadMe's OpenAPI support for your API reference documentation, add the following to your Stainless config:
+```yaml
+openapi:
+  code_samples: readme
+```
 
+And then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe.
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
 
