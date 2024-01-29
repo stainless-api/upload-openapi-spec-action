@@ -51,12 +51,14 @@ You can identify your Stainless project name on the [Stainless dashboard](https:
 ## Usage with ReadMe for docs with example snippets
 
 If you use ReadMe's OpenAPI support for your API reference documentation, add the following to your Stainless config:
+
 ```yaml
 openapi:
   code_samples: readme
 ```
 
 Then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
+
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
 
@@ -127,6 +129,7 @@ jobs:
         with:
           source_file: 'config/acme-openapi.documented.json'
           destination_repo: '{DOCS_REPO_NAME}'
+          destination_folder: 'openapi-specs' # (optional) the folder in the destination repository to place the file in, if not the root directory
           user_email: '{EMAIL}' # the email associated with the GH token
           user_name: '{USERNAME}' # the username associated with the GH token
           commit_message: 'Auto-updates from Stainless'
