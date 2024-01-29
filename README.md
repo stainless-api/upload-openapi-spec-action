@@ -48,12 +48,14 @@ jobs:
 ## Usage with ReadMe for docs with example snippets
 
 If you use ReadMe's OpenAPI support for your API reference documentation, add the following to your Stainless config:
+
 ```yaml
 openapi:
   code_samples: readme
 ```
 
 Then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
+
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
 
@@ -88,12 +90,14 @@ This assumes the following secrets have been [uploaded to your Github Actions Se
 
 If you use Mintlify's OpenAPI support for your API reference documentation,
 add the following to your Stainless config:
+
 ```yaml
 openapi:
   code_samples: mintlify
 ```
 
 Mintlify can generate your docs based on the OpenAPI spec in your docs repo if it is [configured to do so](https://mintlify.com/docs/api-playground/openapi/setup#in-the-repo). To integrate Stainless, you can modify the GitHub Action that uploads your OpenAPI spec to Stainless such that it then pushes the Stainless-enhanced OpenAPI spec into your docs repo:
+
 ```yaml
 name: Upload OpenAPI spec to Stainless and (Mintlify) docs repo
 
@@ -120,6 +124,7 @@ jobs:
         with:
           source_file: 'config/acme-openapi.documented.json'
           destination_repo: '{DOCS_REPO_NAME}'
+          destination_folder: 'openapi-specs' # (optional) the folder in the destination repository to place the file in, if not the root directory
           user_email: '{EMAIL}' # the email associated with the GH token
           user_name: '{USERNAME}' # the username associated with the GH token
           commit_message: 'Auto-updates from Stainless'
