@@ -8,10 +8,11 @@ export async function main() {
   const stainless_api_key = getInput('stainless_api_key', { required: true });
   const inputPath = getInput('input_path', { required: true });
   const configPath = getInput('config_path', { required: false });
+  const projectName = getInput('project_name', { required: false });
   const outputPath = getInput('output_path');
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-  const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key);
+  const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName);
   if (!response.ok) {
     const text = await response.text();
     const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -27,8 +28,15 @@ export async function main() {
   }
 }
 
-async function uploadSpecAndConfig(specPath: string, configPath: string, token: string): Promise<Response> {
+async function uploadSpecAndConfig(
+  specPath: string,
+  configPath: string,
+  token: string,
+  projectName: string,
+): Promise<Response> {
   const formData = new FormData();
+
+  formData.set('projectName', projectName);
 
   // append a spec file
   formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));
