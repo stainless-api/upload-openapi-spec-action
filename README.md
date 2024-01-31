@@ -18,7 +18,7 @@ so that your API reference documentation can show examples of making each reques
 
 ## Example usage
 
-First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub actions secrets](https://docs.github.com/actions/security-guides/encrypted-secrets%23creating-encrypted-secrets-for-a-repository?tool=cli#creating-encrypted-secrets-for-a-repository) as `STAINLESS_API_KEY`:
+First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) as `STAINLESS_API_KEY`:
 
 ```
 gh secret set STAINLESS_API_KEY
