@@ -78,7 +78,7 @@ jobs:
           config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
           project_name: 'my-stainless-project'
-      - uses: readmeio/rdme
+      - uses: readmeio/rdme@v8
         with:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
 ```
@@ -89,6 +89,8 @@ This assumes the following secrets have been [uploaded to your Github Actions Se
 - `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
 - `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document),
   this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
+
+Remember to set the `redameio/rdme` ref version to the latest stable available. You can check the versioning of readmeio's github action [here](https://github.com/marketplace/actions/rdme-sync-to-readme).
 
 ## Usage with Mintlify for docs with example snippets
 
