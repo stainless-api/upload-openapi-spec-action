@@ -32,6 +32,7 @@ name: Upload OpenAPI spec to Stainless
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   stainless:
@@ -65,6 +66,7 @@ name: Upload OpenAPI spec to Stainless and ReadMe
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   stainless:
@@ -110,6 +112,7 @@ name: Upload OpenAPI spec to Stainless and (Mintlify) docs repo
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   stainless:
