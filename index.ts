@@ -9,10 +9,13 @@ export async function main() {
   const inputPath = getInput('input_path', { required: true });
   const configPath = getInput('config_path', { required: false });
   const projectName = getInput('project_name', { required: false });
+  const commitMessage = getInput('commit_message', { required: false });
   const outputPath = getInput('output_path');
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-  const response = await uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName);
+  const response = await uploadSpecAndConfig(
+    inputPath, configPath, stainless_api_key, projectName, commitMessage
+  );
   if (!response.ok) {
     const text = await response.text();
     const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -33,10 +36,12 @@ async function uploadSpecAndConfig(
   configPath: string,
   token: string,
   projectName: string,
+  commitMessage: string,
 ): Promise<Response> {
   const formData = new FormData();
 
   formData.set('projectName', projectName);
+  formData.set('commitMesssage', commitMessage);
 
   // append a spec file
   formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));
