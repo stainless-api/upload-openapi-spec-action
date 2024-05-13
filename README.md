@@ -45,9 +45,12 @@ jobs:
           input_path: 'path/to/my-company-openapi.json'
           config_path: 'path/to/my-company.stainless.yaml'
           project_name: 'my-stainless-project'
+          commit_message: 'feat(api): my cool feature'
 ```
 
 You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
+
+`commit_message` is an optional parameter. If you provide it, please use the [Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/) for all of your messages.
 
 ## Usage with ReadMe for docs with example snippets
 
@@ -80,6 +83,7 @@ jobs:
           config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
           project_name: 'my-stainless-project'
+          commit_message: 'feat(api): my cool feature'
       - uses: readmeio/rdme@v8
         with:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
@@ -127,6 +131,7 @@ jobs:
           config_path: 'config/acme.stainless.yml'
           output_path: 'config/acme-openapi.documented.json'
           project_name: 'acme'
+          commit_message: 'feat(api): my cool feature'
       - name: Push documented spec to docs repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
