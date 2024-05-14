@@ -123,21 +123,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Push spec and config to Stainless and outputs documented spec
+      - name: Push spec and config to Stainless and output documented spec
         uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: 'config/acme-openapi.yml'
-          config_path: 'config/acme.stainless.yml'
-          output_path: 'config/acme-openapi.documented.json'
-          project_name: 'acme'
+          input_path: 'path/to/my-company-openapi.json'
+          config_path: 'path/to/my-company.stainless.yaml'
+          output_path: 'path/to/my-company-openapi.documented.json'
+          project_name: 'my-stainless-project'
           commit_message: 'feat(api): my cool feature'
       - name: Push documented spec to docs repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: 'config/acme-openapi.documented.json'
+          source_file: 'path/to/my-company-openapi.documented.json'
           destination_repo: '{DOCS_REPO_NAME}'
           destination_folder: 'openapi-specs' # (optional) the folder in the destination repository to place the file in, if not the root directory
           user_email: '{EMAIL}' # the email associated with the GH token
