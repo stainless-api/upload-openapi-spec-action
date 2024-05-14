@@ -14,7 +14,11 @@ export async function main() {
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
   const response = await uploadSpecAndConfig(
-    inputPath, configPath, stainless_api_key, projectName, commitMessage
+    inputPath,
+    configPath,
+    stainless_api_key,
+    projectName,
+    commitMessage
   );
   if (!response.ok) {
     const text = await response.text();
