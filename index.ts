@@ -18,7 +18,7 @@ export async function main() {
     configPath,
     stainless_api_key,
     projectName,
-    commitMessage
+    commitMessage,
   );
   if (!response.ok) {
     const text = await response.text();
