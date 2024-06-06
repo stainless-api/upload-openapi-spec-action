@@ -43,10 +43,11 @@ jobs:
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
-          config_path: 'path/to/my-company.stainless.yaml'
           project_name: 'my-stainless-project'
           commit_message: 'feat(api): my cool feature'
 ```
+
+You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the `with:` block if you'd like to send us updates to your Stainless config.
 
 You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
 
@@ -80,7 +81,6 @@ jobs:
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
-          config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
           project_name: 'my-stainless-project'
           commit_message: 'feat(api): my cool feature'
@@ -128,7 +128,6 @@ jobs:
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           input_path: 'path/to/my-company-openapi.json'
-          config_path: 'path/to/my-company.stainless.yaml'
           output_path: 'path/to/my-company-openapi.documented.json'
           project_name: 'my-stainless-project'
           commit_message: 'feat(api): my cool feature'
