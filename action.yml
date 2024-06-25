@@ -4,7 +4,7 @@ branding:
   icon: book-open
   color: green
 runs:
-  using: node16
+  using: node20
   main: dist/index.js
 inputs:
   stainless_api_key:
