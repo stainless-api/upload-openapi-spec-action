@@ -9,7 +9,7 @@
   "private": true,
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.0.0",
     "node-fetch": "^3.2.10"
   },
   "scripts": {
@@ -19,7 +19,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@types/fs-extra": "^9.0.13",
+    "@types/fs-extra": "^11.0.0",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^5.40.0",
     "@typescript-eslint/parser": "^5.40.0",
