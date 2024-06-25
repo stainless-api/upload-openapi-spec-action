@@ -31652,9 +31652,10 @@ function main() {
         const inputPath = (0, core_1.getInput)('input_path', { required: true });
         const configPath = (0, core_1.getInput)('config_path', { required: false });
         const projectName = (0, core_1.getInput)('project_name', { required: false });
+        const commitMessage = (0, core_1.getInput)('commit_message', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
         (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName);
+        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage);
         if (!response.ok) {
             const text = yield response.text();
             const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -31670,10 +31671,11 @@ function main() {
     });
 }
 exports.main = main;
-function uploadSpecAndConfig(specPath, configPath, token, projectName) {
+function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage) {
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new node_fetch_1.FormData();
         formData.set('projectName', projectName);
+        formData.set('commitMesssage', commitMessage);
         // append a spec file
         formData.set('oasSpec', yield (0, node_fetch_1.fileFrom)(specPath, 'text/plain'));
         // append a config file, if present
