@@ -24,7 +24,7 @@ First, obtain an API Key from your Stainless dashboard, and [add it to your GitH
 gh secret set STAINLESS_API_KEY
 ```
 
-Then, add a new workflow file, or add the action to an existing workflow:
+Then, in your repo that stores your ground truth OpenAPI spec, add a new workflow file, or add the action to an existing workflow:
 
 ```yaml
 name: Upload OpenAPI spec to Stainless
