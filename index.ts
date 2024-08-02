@@ -45,7 +45,10 @@ async function uploadSpecAndConfig(
   const formData = new FormData();
 
   formData.set('projectName', projectName);
-  formData.set('commitMessage', commitMessage);
+
+  if (commitMessage) {
+    formData.set('commitMessage', commitMessage);
+  }
 
   // append a spec file
   formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));

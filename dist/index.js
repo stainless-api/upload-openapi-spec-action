@@ -32475,7 +32475,9 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new node_fetch_1.FormData();
         formData.set('projectName', projectName);
-        formData.set('commitMessage', commitMessage);
+        if (commitMessage) {
+            formData.set('commitMessage', commitMessage);
+        }
         // append a spec file
         formData.set('oasSpec', yield (0, node_fetch_1.fileFrom)(specPath, 'text/plain'));
         // append a config file, if present
