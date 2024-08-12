@@ -12,6 +12,8 @@ export async function main() {
   const commitMessage = getInput('commit_message', { required: false });
   const outputPath = getInput('output_path');
 
+  info('test');
+
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
   const response = await uploadSpecAndConfig(
     inputPath,
