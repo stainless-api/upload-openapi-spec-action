@@ -25,6 +25,6 @@ inputs:
     description: 'Commit message to use in the commits in the SDK repo.'
     required: false
   guess_config:
-    description: 'Whether to renegerate the endpoints in the Stainless config file.'
+    description: 'If true, renegerate the endpoints in the Stainless config file.'
     required: false
     default: false
