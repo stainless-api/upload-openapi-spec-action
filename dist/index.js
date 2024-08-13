@@ -31718,10 +31718,15 @@ function main() {
         const configPath = (0, core_1.getInput)('config_path', { required: false });
         const projectName = (0, core_1.getInput)('project_name', { required: false });
         const commitMessage = (0, core_1.getInput)('commit_message', { required: false });
+        const guessConfig = (0, core_1.getBooleanInput)('guess_config', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
-        (0, console_1.info)('test');
+        if (configPath && guessConfig) {
+            const errorMsg = "Can't set both configPath and guessConfig";
+            (0, console_1.error)(errorMsg);
+            throw Error(errorMsg);
+        }
         (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage);
+        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig);
         if (!response.ok) {
             const text = yield response.text();
             const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -31737,7 +31742,7 @@ function main() {
     });
 }
 exports.main = main;
-function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage) {
+function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig) {
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new node_fetch_1.FormData();
         formData.set('projectName', projectName);
@@ -31749,6 +31754,9 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
         // append a config file, if present
         if (configPath) {
             formData.set('stainlessConfig', yield (0, node_fetch_1.fileFrom)(configPath, 'text/plain'));
+        }
+        if (guessConfig) {
+            formData.set('guessConfig', 'true');
         }
         const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
             method: 'POST',
