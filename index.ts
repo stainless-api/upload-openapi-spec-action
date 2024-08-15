@@ -1,4 +1,4 @@
-import { getInput } from '@actions/core';
+import { getBooleanInput, getInput } from '@actions/core';
 import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
 import fetch, { Response, fileFrom, FormData } from 'node-fetch';
@@ -10,7 +10,14 @@ export async function main() {
   const configPath = getInput('config_path', { required: false });
   const projectName = getInput('project_name', { required: false });
   const commitMessage = getInput('commit_message', { required: false });
+  const guessConfig = getBooleanInput('guess_config', { required: false });
   const outputPath = getInput('output_path');
+
+  if (configPath && guessConfig) {
+    const errorMsg = "Can't set both configPath and guessConfig";
+    error(errorMsg);
+    throw Error(errorMsg);
+  }
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
   const response = await uploadSpecAndConfig(
@@ -19,6 +26,7 @@ export async function main() {
     stainless_api_key,
     projectName,
     commitMessage,
+    guessConfig,
   );
   if (!response.ok) {
     const text = await response.text();
@@ -41,6 +49,7 @@ async function uploadSpecAndConfig(
   token: string,
   projectName: string,
   commitMessage: string,
+  guessConfig: boolean,
 ): Promise<Response> {
   const formData = new FormData();
 
@@ -56,6 +65,10 @@ async function uploadSpecAndConfig(
   // append a config file, if present
   if (configPath) {
     formData.set('stainlessConfig', await fileFrom(configPath, 'text/plain'));
+  }
+
+  if (guessConfig) {
+    formData.set('guessConfig', 'true');
   }
 
   const response = await fetch('https://api.stainlessapi.com/api/spec', {

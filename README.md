@@ -45,6 +45,7 @@ jobs:
           input_path: 'path/to/my-company-openapi.json'
           project_name: 'my-stainless-project'
           commit_message: 'feat(api): my cool feature'
+          guess_config: true
 ```
 
 You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the `with:` block if you'd like to send us updates to your Stainless config.
@@ -52,6 +53,8 @@ You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the
 You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
 
 `commit_message` is an optional parameter that allows you to specify the commit message that we will use for the commits generated for your SDKs as a result of your API change (and which will subsequently appear in the Changelog). If you provide it, please use the [Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/) for all of your messages. If you do not provide it, we will use a default.
+
+`guess_config` is an optional parameter that, when `true`, will update your Stainless config file based on the change you've made to your spec. By default, it is `false`. You should not set this to `true` if you are passing a `config_path`.
 
 ## Usage with ReadMe for docs with example snippets
 
