@@ -31758,7 +31758,7 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
         if (guessConfig) {
             formData.set('guessConfig', 'true');
         }
-        const response = yield (0, node_fetch_1.default)('https://staging.stainlessapi.com/api/spec', {
+        const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
             method: 'POST',
             body: formData,
             headers: {

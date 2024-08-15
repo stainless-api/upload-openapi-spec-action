@@ -71,7 +71,7 @@ async function uploadSpecAndConfig(
     formData.set('guessConfig', 'true');
   }
 
-  const response = await fetch('https://staging.stainlessapi.com/api/spec', {
+  const response = await fetch('https://api.stainlessapi.com/api/spec', {
     method: 'POST',
     body: formData,
     headers: {

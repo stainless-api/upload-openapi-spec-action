@@ -54,7 +54,7 @@ You can identify your Stainless project name on the [Stainless dashboard](https:
 
 `commit_message` is an optional parameter that allows you to specify the commit message that we will use for the commits generated for your SDKs as a result of your API change (and which will subsequently appear in the Changelog). If you provide it, please use the [Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/) for all of your messages. If you do not provide it, we will use a default.
 
-`guess_config` is an optional parameter that, when `true`, will regenerate the endpoints in the Stainless config file. By default, it is `false`.
+`guess_config` is an optional parameter that, when `true`, will update your Stainless config file based on the change you've made to your spec. By default, it is `false`. You should not set this to `true` if you are passing a `config_path`.
 
 ## Usage with ReadMe for docs with example snippets
 
