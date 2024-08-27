@@ -3,6 +3,15 @@ import { error, info } from 'console';
 import { writeFile } from 'fs-extra';
 import fetch, { Response, fileFrom, FormData } from 'node-fetch';
 
+// https://www.conventionalcommits.org/en/v1.0.0/
+const CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
+);
+
+export const isValidConventionalCommitMessage = (message: string) => {
+  return CONVENTIONAL_COMMIT_REGEX.test(message);
+};
+
 export async function main() {
   // inputs
   const stainless_api_key = getInput('stainless_api_key', { required: true });
@@ -15,6 +24,13 @@ export async function main() {
 
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
+    error(errorMsg);
+    throw Error(errorMsg);
+  }
+
+  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
+    const errorMsg =
+      'Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/';
     error(errorMsg);
     throw Error(errorMsg);
   }

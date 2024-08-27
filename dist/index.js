@@ -31705,11 +31705,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.main = void 0;
+exports.main = exports.isValidConventionalCommitMessage = void 0;
 const core_1 = __nccwpck_require__(2186);
 const console_1 = __nccwpck_require__(6206);
 const fs_extra_1 = __nccwpck_require__(5630);
 const node_fetch_1 = __importStar(__nccwpck_require__(1793));
+// https://www.conventionalcommits.org/en/v1.0.0/
+const CONVENTIONAL_COMMIT_REGEX = new RegExp(/^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/);
+const isValidConventionalCommitMessage = (message) => {
+    return CONVENTIONAL_COMMIT_REGEX.test(message);
+};
+exports.isValidConventionalCommitMessage = isValidConventionalCommitMessage;
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         // inputs
@@ -31722,6 +31728,11 @@ function main() {
         const outputPath = (0, core_1.getInput)('output_path');
         if (configPath && guessConfig) {
             const errorMsg = "Can't set both configPath and guessConfig";
+            (0, console_1.error)(errorMsg);
+            throw Error(errorMsg);
+        }
+        if (commitMessage && !(0, exports.isValidConventionalCommitMessage)(commitMessage)) {
+            const errorMsg = 'Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/';
             (0, console_1.error)(errorMsg);
             throw Error(errorMsg);
         }
