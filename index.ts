@@ -20,6 +20,7 @@ export async function main() {
   const projectName = getInput('project_name', { required: false });
   const commitMessage = getInput('commit_message', { required: false });
   const guessConfig = getBooleanInput('guess_config', { required: false });
+  const branch = getInput('output_path', { required: false });
   const outputPath = getInput('output_path');
 
   if (configPath && guessConfig) {
@@ -43,6 +44,7 @@ export async function main() {
     projectName,
     commitMessage,
     guessConfig,
+    branch,
   );
   if (!response.ok) {
     const text = await response.text();
@@ -66,6 +68,7 @@ async function uploadSpecAndConfig(
   projectName: string,
   commitMessage: string,
   guessConfig: boolean,
+  branch: string,
 ): Promise<Response> {
   const formData = new FormData();
 
@@ -85,6 +88,10 @@ async function uploadSpecAndConfig(
 
   if (guessConfig) {
     formData.set('guessConfig', 'true');
+  }
+
+  if (branch) {
+    formData.set('branch', branch);
   }
 
   const response = await fetch('https://api.stainlessapi.com/api/spec', {
