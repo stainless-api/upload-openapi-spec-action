@@ -31725,6 +31725,7 @@ function main() {
         const projectName = (0, core_1.getInput)('project_name', { required: false });
         const commitMessage = (0, core_1.getInput)('commit_message', { required: false });
         const guessConfig = (0, core_1.getBooleanInput)('guess_config', { required: false });
+        const branch = (0, core_1.getInput)('branch', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
         if (configPath && guessConfig) {
             const errorMsg = "Can't set both configPath and guessConfig";
@@ -31737,7 +31738,7 @@ function main() {
             throw Error(errorMsg);
         }
         (0, console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
-        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig);
+        const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig, branch);
         if (!response.ok) {
             const text = yield response.text();
             const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
@@ -31753,7 +31754,7 @@ function main() {
     });
 }
 exports.main = main;
-function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig) {
+function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig, branch) {
     return __awaiter(this, void 0, void 0, function* () {
         const formData = new node_fetch_1.FormData();
         formData.set('projectName', projectName);
@@ -31768,6 +31769,9 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
         }
         if (guessConfig) {
             formData.set('guessConfig', 'true');
+        }
+        if (branch) {
+            formData.set('branch', branch);
         }
         const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
             method: 'POST',

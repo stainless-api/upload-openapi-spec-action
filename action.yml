@@ -27,4 +27,8 @@ inputs:
   guess_config:
     description: 'If true, renegerate the endpoints in the Stainless config file.'
     required: false
-    default: false
+    default: 'false'
+  branch:
+    description: 'If true, renegerate the endpoints in the Stainless config file.'
+    required: false
+    default: 'main'

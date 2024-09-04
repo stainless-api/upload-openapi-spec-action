@@ -52,12 +52,19 @@ You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the
 
 You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
 
-`commit_message` is an optional parameter that allows you to specify the commit message that we will use for the commits
-generated for your SDKs as a result of your API change (and which will subsequently appear in the Changelog). If you
-provide it, it MUST follow the [Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/). If you do
-not provide it, we will use a default message.
+### Optional parameters
 
-`guess_config` is an optional parameter that, when `true`, will update your Stainless config file based on the change you've made to your spec. By default, it is `false`. You should not set this to `true` if you are passing a `config_path`.
+- `branch`: Specifies the branch to push files to. If you provide it, the project MUST have the [branches
+feature](https://app.stainlessapi.com/docs/guides/branches) enabled. By default, it is `main`.
+
+- `commit_message`: Specifies the commit message that we will use for the commits generated for your SDKs as a result
+of the API change (and which will subsequently appear in the Changelog). If you provide it, it MUST follow the
+[Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/). If you do not provide it, we will use a
+default message.
+
+- `guess_config`: When `true`, will update your Stainless config file based on the change you've made to your spec. This
+does the same thing as selecting the "Generate missing endpoints" button in the Studio. By default, it is `false`. You
+should not set this to `true` if you are passing a `config_path`.
 
 ## Usage with ReadMe for docs with example snippets
 
