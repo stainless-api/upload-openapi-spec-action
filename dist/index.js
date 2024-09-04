@@ -31725,7 +31725,7 @@ function main() {
         const projectName = (0, core_1.getInput)('project_name', { required: false });
         const commitMessage = (0, core_1.getInput)('commit_message', { required: false });
         const guessConfig = (0, core_1.getBooleanInput)('guess_config', { required: false });
-        const branch = (0, core_1.getInput)('output_path', { required: false });
+        const branch = (0, core_1.getInput)('branch', { required: false });
         const outputPath = (0, core_1.getInput)('output_path');
         if (configPath && guessConfig) {
             const errorMsg = "Can't set both configPath and guessConfig";

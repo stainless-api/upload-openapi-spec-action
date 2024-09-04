@@ -20,7 +20,7 @@ export async function main() {
   const projectName = getInput('project_name', { required: false });
   const commitMessage = getInput('commit_message', { required: false });
   const guessConfig = getBooleanInput('guess_config', { required: false });
-  const branch = getInput('output_path', { required: false });
+  const branch = getInput('branch', { required: false });
   const outputPath = getInput('output_path');
 
   if (configPath && guessConfig) {
