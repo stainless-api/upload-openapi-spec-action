@@ -7,7 +7,7 @@ stainless-api/upload-openapi-spec
 [![lint](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml)
 [![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-apiupload-openapi-spec-action/actions/workflows/build.yml)
 
-A GitHub action for pushing your OpenAPI spec to [Stainless](https://stainlessapi.com/) to trigger regeneration of your SDKs.
+A GitHub Action for pushing your OpenAPI spec to [Stainless](https://stainlessapi.com/) to trigger regeneration of your SDKs.
 
 Note that there is currently a manual step in between this action and automatic creation of your PR's,
 and more manual steps before they are merged and released.
@@ -18,7 +18,7 @@ so that your API reference documentation can show examples of making each reques
 
 ## Example usage
 
-First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) as `STAINLESS_API_KEY`:
+First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub Actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) as `STAINLESS_API_KEY`:
 
 ```
 gh secret set STAINLESS_API_KEY
@@ -68,14 +68,14 @@ should not set this to `true` if you are passing a `config_path`.
 
 ## Usage with ReadMe for docs with example snippets
 
-If you use ReadMe's OpenAPI support for your API reference documentation, add the following to your Stainless config:
+If you sync an OpenAPI file to your [ReadMe API Reference](https://readme.com/), add the following to your Stainless config:
 
 ```yaml
 openapi:
   code_samples: readme
 ```
 
-Then configure your GitHub action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
+Then configure your GitHub Action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
 
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
@@ -102,14 +102,14 @@ jobs:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
 ```
 
-This assumes the following secrets have been [uploaded to your Github Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
+This assumes the following secrets have been [uploaded to your GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
 
 - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
-- `secrets.README_TOKEN`: Your API token for readme.com. Only sent to ReadMe's servers.
-- `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/docs/openapi#re-syncing-an-openapi-document),
+- `secrets.README_TOKEN`: Your [ReadMe API key](https://docs.readme.com/main/reference/intro/authentication#api-key-quick-start). Only sent to ReadMe's servers.
+- `secrets.README_DEFINITION_ID`: According to [ReadMe's documentation](https://docs.readme.com/main/docs/openapi-resyncing#api-definition-ids),
   this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
 
-Remember to set the `redameio/rdme` ref version to the latest stable available. You can check the versioning of readmeio's github action [here](https://github.com/marketplace/actions/rdme-sync-to-readme).
+Remember to set the `readmeio/rdme` ref version to the latest stable available (`v8`, as of this writing). You can verify the latest version of ReadMe's GitHub Action [here](https://github.com/marketplace/actions/rdme-sync-to-readme).
 
 ## Usage with Mintlify for docs with example snippets
 
@@ -157,7 +157,7 @@ jobs:
           commit_message: 'Auto-updates from Stainless'
 ```
 
-This assumes the following secrets have been [uploaded to your Github Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
+This assumes the following secrets have been [uploaded to your GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):
 
 - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
-- `secrets.API_TOKEN_GITHUB`: A Github [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with permissions to push to your docs repo.
+- `secrets.API_TOKEN_GITHUB`: A GitHub [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with permissions to push to your docs repo.
