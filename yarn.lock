@@ -128,9 +128,9 @@
     undici-types "~5.26.4"
 
 "@types/node@^20.0.0":
-  version "20.16.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.16.2.tgz#9e388f503a5af306e8c63319334887390966a11e"
-  integrity sha512-91s/n4qUPV/wg8eE9KHYW1kouTfDk2FPGjXbBMfRWP/2vg1rCXNQL1OCabwGs0XSdukuK+MwCDXE30QpSeMUhQ==
+  version "20.17.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.17.0.tgz#d0620ba0fe4cf2a0f12351c7bdd805fc4e1f036b"
+  integrity sha512-a7zRo0f0eLo9K5X9Wp5cAqTUNGzuFLDG2R7C4HY2BhcMAsxgSPuRvAC1ZB6QkuUQXf0YZAgfOX2ZyrBa2n4nHQ==
   dependencies:
     undici-types "~6.19.2"
 
