@@ -31773,7 +31773,7 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
         if (branch) {
             formData.set('branch', branch);
         }
-        const response = yield (0, node_fetch_1.default)('https://api.stainlessapi.com/api/spec', {
+        const response = yield (0, node_fetch_1.default)('https://api.stainless.com/api/spec', {
             method: 'POST',
             body: formData,
             headers: {
