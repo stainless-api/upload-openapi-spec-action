@@ -94,7 +94,7 @@ async function uploadSpecAndConfig(
     formData.set('branch', branch);
   }
 
-  const response = await fetch('https://api.stainlessapi.com/api/spec', {
+  const response = await fetch('https://api.stainless.com/api/spec', {
     method: 'POST',
     body: formData,
     headers: {

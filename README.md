@@ -7,7 +7,7 @@ stainless-api/upload-openapi-spec
 [![lint](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml)
 [![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-apiupload-openapi-spec-action/actions/workflows/build.yml)
 
-A GitHub Action for pushing your OpenAPI spec to [Stainless](https://stainlessapi.com/) to trigger regeneration of your SDKs.
+A GitHub Action for pushing your OpenAPI spec to [Stainless](https://stainless.com/) to trigger regeneration of your SDKs.
 
 Note that there is currently a manual step in between this action and automatic creation of your PR's,
 and more manual steps before they are merged and released.
@@ -50,12 +50,12 @@ jobs:
 
 You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the `with:` block if you'd like to send us updates to your Stainless config.
 
-You can identify your Stainless project name on the [Stainless dashboard](https://app.stainlessapi.com/).
+You can identify your Stainless project name on the [Stainless dashboard](https://app.stainless.com/).
 
 ### Optional parameters
 
 - `branch`: Specifies the branch to push files to. If you provide it, the project MUST have the [branches
-feature](https://app.stainlessapi.com/docs/guides/branches) enabled. By default, it is `main`.
+feature](https://app.stainless.com/docs/guides/branches) enabled. By default, it is `main`.
 
 - `commit_message`: Specifies the commit message that we will use for the commits generated for your SDKs as a result
 of the API change (and which will subsequently appear in the Changelog). If you provide it, it MUST follow the
