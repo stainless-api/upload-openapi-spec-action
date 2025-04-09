@@ -1,9 +1,9 @@
 {
-  "name": "decorate-spec",
+  "name": "upload-openapi-spec",
   "version": "1.0.0",
-  "description": "Generate \"decorated\" openapi spec for README.com",
+  "description": "Upload OpenAPI spec to Stainless (GitHub Action & GitLab CI component)",
   "main": "index.ts",
-  "repository": "https://github.com/stainless-api/readme-action.git",
+  "repository": "https://github.com/stainless-api/upload-openapi-spec-action.git",
   "author": "Matt Gleich <git@mattglei.ch>",
   "license": "Copyright Stainless 2022",
   "private": true,
@@ -30,5 +30,6 @@
     "husky": "^8.0.1",
     "prettier": "^2.7.1",
     "typescript": "^4.8.4"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
