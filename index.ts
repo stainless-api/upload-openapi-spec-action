@@ -12,16 +12,65 @@ export const isValidConventionalCommitMessage = (message: string) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
 
+// Detect if running in GitHub Actions or GitLab CI
+function isGitLabCI(): boolean {
+  return process.env['GITLAB_CI'] === 'true';
+}
+
+// Get input values from either GitHub Actions or GitLab CI environment
+function getInputValue(name: string, options?: { required: boolean }): string {
+  if (isGitLabCI()) {
+    // Try GitLab-specific INPUT_ prefixed variable first (like GitHub Actions)
+    const inputEnvName = `INPUT_${name.toUpperCase()}`;
+    const inputValue = process.env[inputEnvName];
+
+    // Fall back to direct name for backward compatibility
+    const directEnvName = name.toUpperCase();
+    const directValue = process.env[directEnvName];
+
+    const value = inputValue || directValue;
+
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value || '';
+  } else {
+    return getInput(name, options);
+  }
+}
+
+// Get boolean input values from either GitHub Actions or GitLab CI environment
+function getBooleanInputValue(name: string, options?: { required: boolean }): boolean {
+  if (isGitLabCI()) {
+    // Try GitLab-specific INPUT_ prefixed variable first (like GitHub Actions)
+    const inputEnvName = `INPUT_${name.toUpperCase()}`;
+    const inputValue = process.env[inputEnvName]?.toLowerCase();
+
+    // Fall back to direct name for backward compatibility
+    const directEnvName = name.toUpperCase();
+    const directValue = process.env[directEnvName]?.toLowerCase();
+
+    const value = inputValue || directValue;
+
+    if (options?.required && value === undefined) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value === 'true';
+  } else {
+    return getBooleanInput(name, options);
+  }
+}
+
 export async function main() {
   // inputs
-  const stainless_api_key = getInput('stainless_api_key', { required: true });
-  const inputPath = getInput('input_path', { required: true });
-  const configPath = getInput('config_path', { required: false });
-  const projectName = getInput('project_name', { required: false });
-  const commitMessage = getInput('commit_message', { required: false });
-  const guessConfig = getBooleanInput('guess_config', { required: false });
-  const branch = getInput('branch', { required: false });
-  const outputPath = getInput('output_path');
+  const stainless_api_key = getInputValue('stainless_api_key', { required: true });
+  const inputPath = getInputValue('input_path', { required: true });
+  const configPath = getInputValue('config_path', { required: false });
+  const projectName = getInputValue('project_name', { required: false });
+  const commitMessage = getInputValue('commit_message', { required: false });
+  const guessConfig = getBooleanInputValue('guess_config', { required: false });
+  const branch = getInputValue('branch', { required: false });
+  const outputPath = getInputValue('output_path');
 
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
@@ -94,13 +143,21 @@ async function uploadSpecAndConfig(
     formData.set('branch', branch);
   }
 
+  // Determine which CI system is being used for headers
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  if (isGitLabCI()) {
+    headers['X-GitLab-CI'] = 'stainless-api/upload-openapi-spec-action';
+  } else {
+    headers['X-GitHub-Action'] = 'stainless-api/upload-openapi-spec-action';
+  }
+
   const response = await fetch('https://api.stainless.com/api/spec', {
     method: 'POST',
     body: formData,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'X-GitHub-Action': 'stainless-api/upload-openapi-spec-action',
-    },
+    headers,
   });
   return response;
 }

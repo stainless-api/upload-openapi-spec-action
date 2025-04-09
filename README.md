@@ -1,13 +1,13 @@
-# GitHub Action: upload your OpenAPI spec to Stainless
+# Upload your OpenAPI spec to Stainless (GitHub Action & GitLab CI)
 
 ```
 stainless-api/upload-openapi-spec
 ```
 
 [![lint](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/lint.yml)
-[![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-apiupload-openapi-spec-action/actions/workflows/build.yml)
+[![build](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml/badge.svg)](https://github.com/stainless-api/upload-openapi-spec-action/actions/workflows/build.yml)
 
-A GitHub Action for pushing your OpenAPI spec to [Stainless](https://stainless.com/) to trigger regeneration of your SDKs.
+A CI component for pushing your OpenAPI spec to [Stainless](https://stainless.com/) to trigger regeneration of your SDKs. Supports both GitHub Actions and GitLab CI.
 
 Note that there is currently a manual step in between this action and automatic creation of your PR's,
 and more manual steps before they are merged and released.
@@ -18,7 +18,11 @@ so that your API reference documentation can show examples of making each reques
 
 ## Example usage
 
-First, obtain an API Key from your Stainless dashboard, and [add it to your GitHub Actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) as `STAINLESS_API_KEY`:
+First, obtain an API Key from your Stainless dashboard.
+
+### GitHub Actions
+
+For GitHub Actions, [add the API key to your repository secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) as `STAINLESS_API_KEY`:
 
 ```
 gh secret set STAINLESS_API_KEY
@@ -50,6 +54,29 @@ jobs:
 
 You can optionally add `config_path: 'path/to/my-company.stainless.yaml'` to the `with:` block if you'd like to send us updates to your Stainless config.
 
+### GitLab CI
+
+For GitLab CI, add the API key to your [GitLab CI/CD variables](https://docs.gitlab.com/ee/ci/variables/#add-a-cicd-variable-to-a-project) as `STAINLESS_API_KEY`.
+
+Then, add the following to your `.gitlab-ci.yml` file:
+
+```yaml
+include:
+  - remote: 'https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/main/.gitlab-ci.yml'
+
+upload-openapi-spec:
+  extends: .upload-openapi-spec
+  variables:
+    STAINLESS_API_KEY: "$STAINLESS_API_KEY"
+    INPUT_PATH: '$CI_PROJECT_DIR/path/to/my-company-openapi.json'
+    PROJECT_NAME: 'my-stainless-project'
+    COMMIT_MESSAGE: 'feat(api): my cool feature'
+    GUESS_CONFIG: 'true'
+    # CONFIG_PATH: '$CI_PROJECT_DIR/path/to/my-company.stainless.yaml' # Optional
+    # OUTPUT_PATH: '$CI_PROJECT_DIR/path/to/output.json' # Optional
+    # BRANCH: 'main' # Optional
+```
+
 You can identify your Stainless project name on the [Stainless dashboard](https://app.stainless.com/).
 
 ### Optional parameters
@@ -75,7 +102,9 @@ openapi:
   code_samples: readme
 ```
 
-Then configure your GitHub Action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
+### GitHub Actions with ReadMe
+
+Configure your GitHub Action to upload the Stainless-enhanced OpenAPI spec to ReadMe:
 
 ```yaml
 name: Upload OpenAPI spec to Stainless and ReadMe
@@ -111,6 +140,7 @@ This assumes the following secrets have been [uploaded to your GitHub Actions Se
 
 Remember to set the `readmeio/rdme` ref version to the latest stable available (`v8`, as of this writing). You can verify the latest version of ReadMe's GitHub Action [here](https://github.com/marketplace/actions/rdme-sync-to-readme).
 
+
 ## Usage with Mintlify for docs with example snippets
 
 If you use Mintlify's OpenAPI support for your API reference documentation,
@@ -121,7 +151,11 @@ openapi:
   code_samples: mintlify
 ```
 
-Mintlify can generate your docs based on the OpenAPI spec in your docs repo if it is [configured to do so](https://mintlify.com/docs/api-playground/openapi/setup#in-the-repo). To integrate Stainless, you can modify the GitHub Action that uploads your OpenAPI spec to Stainless such that it then pushes the Stainless-enhanced OpenAPI spec into your docs repo:
+Mintlify can generate your docs based on the OpenAPI spec in your docs repo if it is [configured to do so](https://mintlify.com/docs/api-playground/openapi/setup#in-the-repo).
+
+### GitHub Actions with Mintlify
+
+To integrate Stainless with your GitHub Actions workflow:
 
 ```yaml
 name: Upload OpenAPI spec to Stainless and (Mintlify) docs repo
@@ -161,3 +195,4 @@ This assumes the following secrets have been [uploaded to your GitHub Actions Se
 
 - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
 - `secrets.API_TOKEN_GITHUB`: A GitHub [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with permissions to push to your docs repo.
+

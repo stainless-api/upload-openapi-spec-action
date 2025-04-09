@@ -1,5 +1,5 @@
 name: Stainless — Upload OpenAPI specification
-description: Upload your OpenAPI spec to update your Stainless SDKs (and, if configured, add example snippets to your API docs)
+description: Upload your OpenAPI spec to update your Stainless SDKs (and, if configured, add example snippets to your API docs). Works with GitHub Actions and GitLab CI.
 branding:
   icon: book-open
   color: green
