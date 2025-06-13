@@ -1,6 +1,6 @@
 # Upload your OpenAPI spec to Stainless (GitHub Action & GitLab CI)
 
-> [!INFO]  
+> [!WARNING]
 > We are planning to deprecate this GitHub action in favor of
 > [`build-sdk-action`](github.com/stainless-api/build-sdk-action). New users
 > are encouraged to use `build-sdk-action` instead. Existing users can follow
