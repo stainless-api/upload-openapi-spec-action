@@ -1,5 +1,11 @@
 # Upload your OpenAPI spec to Stainless (GitHub Action & GitLab CI)
 
+> [!INFO]  
+> We are planning to deprecate this GitHub action in favor of
+> [`build-sdk-action`](github.com/stainless-api/build-sdk-action). New users
+> are encouraged to use `build-sdk-action` instead. Existing users can follow
+> the [migration guide](#migrating-to-build-sdk-action) to update.
+
 ```
 stainless-api/upload-openapi-spec
 ```
@@ -196,3 +202,42 @@ This assumes the following secrets have been [uploaded to your GitHub Actions Se
 - `secrets.STAINLESS_API_KEY`: Your Stainless API key.
 - `secrets.API_TOKEN_GITHUB`: A GitHub [Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with permissions to push to your docs repo.
 
+## Migrating to `build-sdk-action`
+
+If all changes to your OpenAPI spec are made via pull requests, we recommend
+switching to the [pull request workflows](https://github.com/stainless-api/build-sdk-action/blob/main/examples/README.md#pull-request-workflows)
+if possible. These workflows are triggered when PRs are created and merged,
+rather than when a commit is pushed. To migrate to the pull request workflows,
+we recommend reading the example workflows and replacing the variables.
+
+For the quickest migration, and to maintain similar behavior to the existing
+`upload-openapi-spec-action`, you can switch to the
+[push workflows](https://github.com/stainless-api/build-sdk-action/blob/main/examples/README.md#push-workflows).
+Migrating to the push workflows mostly amounts to renaming things:
+
+- `stainless-api/upload-openapi-spec-action@main` to
+`stainless-api/build-sdk-action@main`, though we recommend pinning the action
+to a full-length commit SHA.
+  
+- `input_path` to `oas_path`.
+
+- `project_name` to `project`.
+
+- `output_path` doesn't directly correspond to an input, but you can move the
+`documented_spec_path` output to that path:
+
+```yml
+jobs:
+  stainless:
+    steps:
+      - uses: stainless-api/build-sdk-action@main
+        id: build-sdk
+        with:
+          ...
+
+      - run: |
+          mv ${{ steps.build-sdk.outputs.documented_spec_path }} \
+            path/to/my-company-openapi.documented.yml
+```
+
+Nothing else need to be renamed.
