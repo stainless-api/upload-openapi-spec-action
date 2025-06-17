@@ -2,7 +2,7 @@
 
 > [!WARNING]
 > We are planning to deprecate this GitHub action in favor of
-> [`build-sdk-action`](github.com/stainless-api/build-sdk-action). New users
+> [`build-sdk-action`](https://github.com/stainless-api/build-sdk-action). New users
 > are encouraged to use `build-sdk-action` instead. Existing users can follow
 > the [migration guide](#migrating-to-build-sdk-action) to update.
 
