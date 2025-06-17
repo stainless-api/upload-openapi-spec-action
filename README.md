@@ -46,6 +46,7 @@ on:
 
 jobs:
   stainless:
+    concurrency: upload-openapi-spec-action
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -122,6 +123,7 @@ on:
 
 jobs:
   stainless:
+    concurrency: upload-openapi-spec-action
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -173,6 +175,7 @@ on:
 
 jobs:
   stainless:
+    concurrency: upload-openapi-spec-action
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
