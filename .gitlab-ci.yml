@@ -1,6 +1,6 @@
 # This file defines reusable GitLab CI component for uploading OpenAPI specs to Stainless
 
-image: node:22-alpine
+image: node:20-alpine
 
 .upload-openapi-spec:
   script:
