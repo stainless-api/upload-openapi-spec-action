@@ -157,6 +157,7 @@ async function uploadSpecAndConfig(
         'openapi.yml': { content: specContent },
         ...(configContent && { 'openapi.stainless.yml': { content: configContent } }),
       },
+      allow_empty: true,
     },
     { headers },
   );
