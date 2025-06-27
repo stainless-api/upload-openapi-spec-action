@@ -151,8 +151,8 @@ async function uploadSpecAndConfig(
 
   let build = await stainless.builds.create(
     {
-      branch,
-      commit_message: commitMessage,
+      ...(branch && { branch }),
+      ...(commitMessage && { commit_message: commitMessage }),
       revision: {
         'openapi.yml': { content: specContent },
         ...(configContent && { 'openapi.stainless.yml': { content: configContent } }),

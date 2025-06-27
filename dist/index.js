@@ -25778,12 +25778,7 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
         else {
             headers['X-GitHub-Action'] = 'stainless-api/upload-openapi-spec-action';
         }
-        let build = yield stainless.builds.create({
-            branch,
-            commit_message: commitMessage,
-            revision: Object.assign({ 'openapi.yml': { content: specContent } }, (configContent && { 'openapi.stainless.yml': { content: configContent } })),
-            allow_empty: true,
-        }, { headers });
+        let build = yield stainless.builds.create(Object.assign(Object.assign(Object.assign({}, (branch && { branch })), (commitMessage && { commit_message: commitMessage })), { revision: Object.assign({ 'openapi.yml': { content: specContent } }, (configContent && { 'openapi.stainless.yml': { content: configContent } })), allow_empty: true }), { headers });
         const pollingStart = Date.now();
         let donePolling = false;
         while (!donePolling && Date.now() - pollingStart < 10 * 60 * 1000) {
