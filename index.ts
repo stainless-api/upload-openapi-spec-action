@@ -1,7 +1,7 @@
+import { error, info } from 'node:console';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { getBooleanInput, getInput } from '@actions/core';
-import { error, info } from 'console';
-import { writeFile } from 'fs-extra';
-import fetch, { Response, fileFrom, FormData } from 'node-fetch';
+import Stainless from '@stainless-api/sdk';
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
@@ -96,16 +96,19 @@ export async function main() {
     branch,
   );
   if (!response.ok) {
-    const text = await response.text();
-    const errorMsg = `Failed to upload files: ${response.statusText} ${text}`;
+    const errorMsg = `Failed to upload files: ${response.error}`;
     error(errorMsg);
     throw Error(errorMsg);
   }
   info('Uploaded!');
 
   if (outputPath) {
-    const decoratedSpec = await response.text();
-    writeFile(outputPath, decoratedSpec);
+    if (!response.decoratedSpec) {
+      const errorMsg = 'Failed to get decorated spec';
+      error(errorMsg);
+      throw Error(errorMsg);
+    }
+    writeFileSync(outputPath, response.decoratedSpec);
     info('Wrote decorated spec to', outputPath);
   }
 }
@@ -118,48 +121,73 @@ async function uploadSpecAndConfig(
   commitMessage: string,
   guessConfig: boolean,
   branch: string,
-): Promise<Response> {
-  const formData = new FormData();
+): Promise<{
+  ok: boolean;
+  error: string | null;
+  decoratedSpec: string | null;
+}> {
+  const stainless = new Stainless({ apiKey: token, project: projectName });
+  const specContent = readFileSync(specPath, 'utf8');
 
-  formData.set('projectName', projectName);
-
-  if (commitMessage) {
-    formData.set('commitMessage', commitMessage);
-  }
-
-  // append a spec file
-  formData.set('oasSpec', await fileFrom(specPath, 'text/plain'));
-
-  // append a config file, if present
-  if (configPath) {
-    formData.set('stainlessConfig', await fileFrom(configPath, 'text/plain'));
-  }
+  let configContent;
 
   if (guessConfig) {
-    formData.set('guessConfig', 'true');
+    configContent = Object.values(
+      await stainless.projects.configs.guess({
+        branch,
+        spec: specContent,
+      }),
+    )[0]?.content;
+  } else if (configPath) {
+    configContent = readFileSync(configPath, 'utf8');
   }
 
-  if (branch) {
-    formData.set('branch', branch);
-  }
-
-  // Determine which CI system is being used for headers
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-  };
-
+  const headers: Record<string, string> = {};
   if (isGitLabCI()) {
     headers['X-GitLab-CI'] = 'stainless-api/upload-openapi-spec-action';
   } else {
     headers['X-GitHub-Action'] = 'stainless-api/upload-openapi-spec-action';
   }
 
-  const response = await fetch('https://api.stainless.com/api/spec', {
-    method: 'POST',
-    body: formData,
-    headers,
-  });
-  return response;
+  let build = await stainless.builds.create(
+    {
+      branch,
+      commit_message: commitMessage,
+      revision: {
+        'openapi.yml': { content: specContent },
+        ...(configContent && { 'openapi.stainless.yml': { content: configContent } }),
+      },
+      allow_empty: true,
+    },
+    { headers },
+  );
+
+  const pollingStart = Date.now();
+  let donePolling = false;
+  while (!donePolling && Date.now() - pollingStart < 10 * 60 * 1000) {
+    build = await stainless.builds.retrieve(build.id);
+    donePolling = Object.values(build.targets).every(
+      (target) => (target as Stainless.BuildTarget).commit.status === 'completed',
+    );
+    if (!donePolling) {
+      await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
+    }
+  }
+
+  const targetsWithoutCommits = (Object.values(build.targets) as Stainless.BuildTarget[]).filter(
+    (target) => target.commit?.status !== 'completed' || !target.commit?.completed?.commit,
+  );
+  const ok = targetsWithoutCommits.length === 0;
+  const error = ok
+    ? null
+    : targetsWithoutCommits[0]!.commit.status === 'completed'
+    ? targetsWithoutCommits[0]!.commit.completed.conclusion
+    : 'timed_out';
+
+  // TODO: API only returns "content" for now; need to support "url" in the future
+  const decoratedSpec = build.documented_spec?.type === 'content' ? build.documented_spec.content : null;
+
+  return { ok, error, decoratedSpec };
 }
 
 if (require.main === module) {
