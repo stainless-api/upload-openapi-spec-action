@@ -112,10 +112,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@stainless-api/sdk@^0.1.0-alpha.9":
-  version "0.1.0-alpha.9"
-  resolved "https://registry.yarnpkg.com/@stainless-api/sdk/-/sdk-0.1.0-alpha.9.tgz#79aace008b8cc7c7a891cd37e2dddbed8723dfb9"
-  integrity sha512-NazBC2MLmtr9aNl4SMPfsR3a9Udz4E8hg+K765qJR9M6amMaCuPl9r0ExNyNrvxoIgLl5M2PIe5mNTC7abSNOw==
+"@stainless-api/sdk@^0.1.0-alpha.10":
+  version "0.1.0-alpha.10"
+  resolved "https://registry.yarnpkg.com/@stainless-api/sdk/-/sdk-0.1.0-alpha.10.tgz#f0e5661f13a2e4597d8a0252cd8b0fbed4b3b94a"
+  integrity sha512-56bWC9Ze9hnnJnV9gf5AL03RBoMNdMZb/5QSDUdFr/MpTY7tfO0KesvDXvZgQdXRU4pjXdmYwJ3vdSFfGroxWg==
 
 "@types/json-schema@^7.0.9":
   version "7.0.15"

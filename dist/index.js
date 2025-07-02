@@ -25721,7 +25721,7 @@ function main() {
         const stainless_api_key = getInputValue('stainless_api_key', { required: true });
         const inputPath = getInputValue('input_path', { required: true });
         const configPath = getInputValue('config_path', { required: false });
-        const projectName = getInputValue('project_name', { required: true });
+        let projectName = getInputValue('project_name', { required: false });
         const commitMessage = getInputValue('commit_message', { required: false });
         const guessConfig = getBooleanInputValue('guess_config', { required: false });
         const branch = getInputValue('branch', { required: false });
@@ -25735,6 +25735,19 @@ function main() {
             const errorMsg = 'Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/';
             (0, node_console_1.error)(errorMsg);
             throw Error(errorMsg);
+        }
+        if (!projectName) {
+            const stainless = new sdk_1.default({ apiKey: stainless_api_key });
+            const projects = yield stainless.projects.list({ limit: 2 });
+            if (projects.data.length === 0) {
+                const errorMsg = 'No projects found. Please create a project first.';
+                (0, node_console_1.error)(errorMsg);
+                throw Error(errorMsg);
+            }
+            projectName = projects.data[0].slug;
+            if (projects.data.length > 1) {
+                (0, node_console_1.warn)(`Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`);
+            }
         }
         (0, node_console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig, branch);
@@ -27737,6 +27750,7 @@ const headers_1 = __nccwpck_require__(7327);
 const env_1 = __nccwpck_require__(9722);
 const log_1 = __nccwpck_require__(5854);
 const values_2 = __nccwpck_require__(6195);
+const unwrap_1 = __nccwpck_require__(6144);
 const environments = {
     production: 'https://api.stainless.com',
     staging: 'https://staging.stainless.com',
@@ -28186,6 +28200,7 @@ Stainless.InternalServerError = Errors.InternalServerError;
 Stainless.PermissionDeniedError = Errors.PermissionDeniedError;
 Stainless.UnprocessableEntityError = Errors.UnprocessableEntityError;
 Stainless.toFile = Uploads.toFile;
+Stainless.unwrapFile = unwrap_1.unwrapFile;
 Stainless.Projects = projects_1.Projects;
 Stainless.Builds = builds_1.Builds;
 Stainless.Orgs = orgs_1.Orgs;
@@ -30301,6 +30316,27 @@ exports.safeJSON = safeJSON;
 
 /***/ }),
 
+/***/ 6144:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.unwrapFile = unwrapFile;
+async function unwrapFile(value) {
+    if (value === null) {
+        return null;
+    }
+    if (value.type === 'content') {
+        return value.content;
+    }
+    const response = await fetch(value.url);
+    return response.text();
+}
+//# sourceMappingURL=unwrap.js.map
+
+/***/ }),
+
 /***/ 2566:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -30604,7 +30640,7 @@ Projects.Configs = configs_1.Configs;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.VERSION = void 0;
-exports.VERSION = '0.1.0-alpha.9'; // x-release-please-version
+exports.VERSION = '0.1.0-alpha.10'; // x-release-please-version
 //# sourceMappingURL=version.js.map
 
 /***/ })
