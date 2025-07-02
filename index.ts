@@ -174,14 +174,18 @@ async function uploadSpecAndConfig(
     }
   }
 
-  const targetsWithoutCommits = (Object.values(build.targets) as Stainless.BuildTarget[]).filter(
-    (target) => target.commit?.status !== 'completed' || !target.commit?.completed?.commit,
+  const failedTargets = (Object.values(build.targets) as Stainless.BuildTarget[]).filter(
+    (target) =>
+      target.commit?.status !== 'completed' ||
+      // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+      // all be considered failures.
+      !['noop', 'error', 'warning', 'note', 'success'].includes(target.commit.completed.conclusion),
   );
-  const ok = targetsWithoutCommits.length === 0;
+  const ok = failedTargets.length === 0;
   const error = ok
     ? null
-    : targetsWithoutCommits[0]!.commit.status === 'completed'
-    ? targetsWithoutCommits[0]!.commit.completed.conclusion
+    : failedTargets[0]!.commit.status === 'completed'
+    ? failedTargets[0]!.commit.completed.conclusion
     : 'timed_out';
 
   // TODO: API only returns "content" for now; need to support "url" in the future
