@@ -25788,12 +25788,18 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
                 yield new Promise((resolve) => setTimeout(resolve, 5 * 1000));
             }
         }
-        const targetsWithoutCommits = Object.values(build.targets).filter((target) => { var _a, _b, _c; return ((_a = target.commit) === null || _a === void 0 ? void 0 : _a.status) !== 'completed' || !((_c = (_b = target.commit) === null || _b === void 0 ? void 0 : _b.completed) === null || _c === void 0 ? void 0 : _c.commit); });
-        const ok = targetsWithoutCommits.length === 0;
+        const failedTargets = Object.values(build.targets).filter((target) => {
+            var _a;
+            return ((_a = target.commit) === null || _a === void 0 ? void 0 : _a.status) !== 'completed' ||
+                // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+                // all be considered failures.
+                !['noop', 'error', 'warning', 'note', 'success'].includes(target.commit.completed.conclusion);
+        });
+        const ok = failedTargets.length === 0;
         const error = ok
             ? null
-            : targetsWithoutCommits[0].commit.status === 'completed'
-                ? targetsWithoutCommits[0].commit.completed.conclusion
+            : failedTargets[0].commit.status === 'completed'
+                ? failedTargets[0].commit.completed.conclusion
                 : 'timed_out';
         // TODO: API only returns "content" for now; need to support "url" in the future
         const decoratedSpec = ((_b = build.documented_spec) === null || _b === void 0 ? void 0 : _b.type) === 'content' ? build.documented_spec.content : null;
