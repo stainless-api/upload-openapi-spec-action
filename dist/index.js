@@ -25721,7 +25721,7 @@ function main() {
         const stainless_api_key = getInputValue('stainless_api_key', { required: true });
         const inputPath = getInputValue('input_path', { required: true });
         const configPath = getInputValue('config_path', { required: false });
-        const projectName = getInputValue('project_name', { required: false });
+        const projectName = getInputValue('project_name', { required: true });
         const commitMessage = getInputValue('commit_message', { required: false });
         const guessConfig = getBooleanInputValue('guess_config', { required: false });
         const branch = getInputValue('branch', { required: false });
@@ -27725,6 +27725,7 @@ const Opts = tslib_1.__importStar(__nccwpck_require__(9338));
 const qs = tslib_1.__importStar(__nccwpck_require__(1754));
 const version_1 = __nccwpck_require__(2965);
 const Errors = tslib_1.__importStar(__nccwpck_require__(3571));
+const Pagination = tslib_1.__importStar(__nccwpck_require__(6858));
 const Uploads = tslib_1.__importStar(__nccwpck_require__(3624));
 const API = tslib_1.__importStar(__nccwpck_require__(4554));
 const api_promise_1 = __nccwpck_require__(8875);
@@ -27736,6 +27737,10 @@ const headers_1 = __nccwpck_require__(7327);
 const env_1 = __nccwpck_require__(9722);
 const log_1 = __nccwpck_require__(5854);
 const values_2 = __nccwpck_require__(6195);
+const environments = {
+    production: 'https://api.stainless.com',
+    staging: 'https://staging.stainless.com',
+};
 /**
  * API Client for interfacing with the Stainless API.
  */
@@ -27745,6 +27750,7 @@ class Stainless {
      *
      * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
      * @param {string | null | undefined} [opts.project]
+     * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
      * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
      * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
      * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
@@ -27764,9 +27770,13 @@ class Stainless {
             apiKey,
             project,
             ...opts,
-            baseURL: baseURL || `https://api.stainless.com`,
+            baseURL,
+            environment: opts.environment ?? 'production',
         };
-        this.baseURL = options.baseURL;
+        if (baseURL && opts.environment) {
+            throw new Errors.StainlessError('Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null');
+        }
+        this.baseURL = options.baseURL || environments[options.environment || 'production'];
         this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT /* 1 minute */;
         this.logger = options.logger ?? console;
         const defaultLogLevel = 'warn';
@@ -27790,7 +27800,8 @@ class Stainless {
     withOptions(options) {
         return new this.constructor({
             ...this._options,
-            baseURL: this.baseURL,
+            environment: options.environment ? options.environment : undefined,
+            baseURL: options.environment ? undefined : this.baseURL,
             maxRetries: this.maxRetries,
             timeout: this.timeout,
             logger: this.logger,
@@ -27982,6 +27993,13 @@ class Stainless {
         }));
         return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
     }
+    getAPIList(path, Page, opts) {
+        return this.requestAPIList(Page, { method: 'get', path, ...opts });
+    }
+    requestAPIList(Page, options) {
+        const request = this.makeRequest(options, null, undefined);
+        return new Pagination.PagePromise(this, request, Page);
+    }
     async fetchWithTimeout(url, init, ms, controller) {
         const { signal, method, ...options } = init || {};
         if (signal)
@@ -28150,7 +28168,7 @@ class Stainless {
 }
 exports.Stainless = Stainless;
 _a = Stainless, _Stainless_encoder = new WeakMap(), _Stainless_instances = new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden() {
-    return this.baseURL !== 'https://api.stainless.com';
+    return this.baseURL !== environments[this._options.environment || 'production'];
 };
 Stainless.Stainless = _a;
 Stainless.DEFAULT_TIMEOUT = 60000; // 1 minute
@@ -28377,6 +28395,114 @@ exports.InternalServerError = InternalServerError;
 
 /***/ }),
 
+/***/ 6858:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
+var _AbstractPage_client;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.List = exports.PagePromise = exports.AbstractPage = void 0;
+const tslib_1 = __nccwpck_require__(6811);
+const error_1 = __nccwpck_require__(3571);
+const parse_1 = __nccwpck_require__(455);
+const api_promise_1 = __nccwpck_require__(8875);
+const values_1 = __nccwpck_require__(6195);
+class AbstractPage {
+    constructor(client, response, body, options) {
+        _AbstractPage_client.set(this, void 0);
+        tslib_1.__classPrivateFieldSet(this, _AbstractPage_client, client, "f");
+        this.options = options;
+        this.response = response;
+        this.body = body;
+    }
+    hasNextPage() {
+        const items = this.getPaginatedItems();
+        if (!items.length)
+            return false;
+        return this.nextPageRequestOptions() != null;
+    }
+    async getNextPage() {
+        const nextOptions = this.nextPageRequestOptions();
+        if (!nextOptions) {
+            throw new error_1.StainlessError('No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.');
+        }
+        return await tslib_1.__classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
+    }
+    async *iterPages() {
+        let page = this;
+        yield page;
+        while (page.hasNextPage()) {
+            page = await page.getNextPage();
+            yield page;
+        }
+    }
+    async *[(_AbstractPage_client = new WeakMap(), Symbol.asyncIterator)]() {
+        for await (const page of this.iterPages()) {
+            for (const item of page.getPaginatedItems()) {
+                yield item;
+            }
+        }
+    }
+}
+exports.AbstractPage = AbstractPage;
+/**
+ * This subclass of Promise will resolve to an instantiated Page once the request completes.
+ *
+ * It also implements AsyncIterable to allow auto-paginating iteration on an unawaited list call, eg:
+ *
+ *    for await (const item of client.items.list()) {
+ *      console.log(item)
+ *    }
+ */
+class PagePromise extends api_promise_1.APIPromise {
+    constructor(client, request, Page) {
+        super(client, request, async (client, props) => new Page(client, props.response, await (0, parse_1.defaultParseResponse)(client, props), props.options));
+    }
+    /**
+     * Allow auto-paginating iteration on an unawaited list call, eg:
+     *
+     *    for await (const item of client.items.list()) {
+     *      console.log(item)
+     *    }
+     */
+    async *[Symbol.asyncIterator]() {
+        const page = await this;
+        for await (const item of page) {
+            yield item;
+        }
+    }
+}
+exports.PagePromise = PagePromise;
+class List extends AbstractPage {
+    constructor(client, response, body, options) {
+        super(client, response, body, options);
+        this.data = body.data || [];
+        this.next_cursor = body.next_cursor || '';
+    }
+    getPaginatedItems() {
+        return this.data ?? [];
+    }
+    nextPageRequestOptions() {
+        const cursor = this.next_cursor;
+        if (!cursor) {
+            return null;
+        }
+        return {
+            ...this.options,
+            query: {
+                ...(0, values_1.maybeObj)(this.options.query),
+                cursor,
+            },
+        };
+    }
+}
+exports.List = List;
+//# sourceMappingURL=pagination.js.map
+
+/***/ }),
+
 /***/ 7325:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -28418,7 +28544,7 @@ exports = module.exports = function (...args) {
   return new exports.default(...args)
 }
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UnprocessableEntityError = exports.PermissionDeniedError = exports.InternalServerError = exports.AuthenticationError = exports.BadRequestError = exports.RateLimitError = exports.ConflictError = exports.NotFoundError = exports.APIUserAbortError = exports.APIConnectionTimeoutError = exports.APIConnectionError = exports.APIError = exports.StainlessError = exports.Stainless = exports.APIPromise = exports.toFile = exports["default"] = void 0;
+exports.UnprocessableEntityError = exports.PermissionDeniedError = exports.InternalServerError = exports.AuthenticationError = exports.BadRequestError = exports.RateLimitError = exports.ConflictError = exports.NotFoundError = exports.APIUserAbortError = exports.APIConnectionTimeoutError = exports.APIConnectionError = exports.APIError = exports.StainlessError = exports.PagePromise = exports.Stainless = exports.APIPromise = exports.toFile = exports["default"] = void 0;
 var client_1 = __nccwpck_require__(4334);
 Object.defineProperty(exports, "default", ({ enumerable: true, get: function () { return client_1.Stainless; } }));
 var uploads_1 = __nccwpck_require__(3624);
@@ -28427,6 +28553,8 @@ var api_promise_1 = __nccwpck_require__(8875);
 Object.defineProperty(exports, "APIPromise", ({ enumerable: true, get: function () { return api_promise_1.APIPromise; } }));
 var client_2 = __nccwpck_require__(4334);
 Object.defineProperty(exports, "Stainless", ({ enumerable: true, get: function () { return client_2.Stainless; } }));
+var pagination_1 = __nccwpck_require__(6858);
+Object.defineProperty(exports, "PagePromise", ({ enumerable: true, get: function () { return pagination_1.PagePromise; } }));
 var error_1 = __nccwpck_require__(3571);
 Object.defineProperty(exports, "StainlessError", ({ enumerable: true, get: function () { return error_1.StainlessError; } }));
 Object.defineProperty(exports, "APIError", ({ enumerable: true, get: function () { return error_1.APIError; } }));
@@ -29577,10 +29705,26 @@ function propsForError(value) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.__setModuleDefault = exports.__createBinding = void 0;
-exports.__importStar = __importStar;
 exports.__classPrivateFieldSet = __classPrivateFieldSet;
 exports.__classPrivateFieldGet = __classPrivateFieldGet;
+exports.__importStar = __importStar;
 exports.__exportStar = __exportStar;
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+    if (kind === "m")
+        throw new TypeError("Private method is not writable");
+    if (kind === "a" && !f)
+        throw new TypeError("Private accessor was defined without a setter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+        throw new TypeError("Cannot write private member to an object whose class did not declare it");
+    return kind === "a" ? f.call(receiver, value) : f ? (f.value = value) : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet(receiver, state, kind, f) {
+    if (kind === "a" && !f)
+        throw new TypeError("Private accessor was defined without a getter");
+    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+        throw new TypeError("Cannot read private member from an object whose class did not declare it");
+    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
 var __createBinding = Object.create
     ? function (o, m, k, k2) {
         if (k2 === void 0)
@@ -29633,22 +29777,6 @@ function __importStar(mod) {
     }
     __setModuleDefault(result, mod);
     return result;
-}
-function __classPrivateFieldSet(receiver, state, value, kind, f) {
-    if (kind === "m")
-        throw new TypeError("Private method is not writable");
-    if (kind === "a" && !f)
-        throw new TypeError("Private accessor was defined without a setter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-        throw new TypeError("Cannot write private member to an object whose class did not declare it");
-    return kind === "a" ? f.call(receiver, value) : f ? (f.value = value) : state.set(receiver, value), value;
-}
-function __classPrivateFieldGet(receiver, state, kind, f) {
-    if (kind === "a" && !f)
-        throw new TypeError("Private accessor was defined without a getter");
-    if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-        throw new TypeError("Cannot read private member from an object whose class did not declare it");
-    return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 function __exportStar(m, o) {
     for (var p in m)
@@ -29715,7 +29843,7 @@ const multipartFormRequestOptions = async (opts, fetch) => {
     return { ...opts, body: await (0, exports.createForm)(opts.body, fetch) };
 };
 exports.multipartFormRequestOptions = multipartFormRequestOptions;
-const supportsFormDataMap = /** @__PURE__ */ new WeakMap();
+const supportsFormDataMap = /* @__PURE__ */ new WeakMap();
 /**
  * node-fetch doesn't support the global FormData object in recent node versions. Instead of sending
  * properly-encoded form data, it just stringifies the object, resulting in a request body of "[object FormData]".
@@ -29880,7 +30008,7 @@ const noopLogger = {
     info: noop,
     debug: noop,
 };
-let cachedLoggers = /** @__PURE__ */ new WeakMap();
+let cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
     const logger = client.logger;
     const logLevel = client.logLevel ?? 'off';
@@ -29948,21 +30076,38 @@ const error_1 = __nccwpck_require__(3571);
 function encodeURIPath(str) {
     return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
+const EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
 const createPathTagFunction = (pathEncoder = encodeURIPath) => function path(statics, ...params) {
     // If there are no params, no processing is needed.
     if (statics.length === 1)
         return statics[0];
     let postPath = false;
+    const invalidSegments = [];
     const path = statics.reduce((previousValue, currentValue, index) => {
         if (/[?#]/.test(currentValue)) {
             postPath = true;
         }
-        return (previousValue +
-            currentValue +
-            (index === params.length ? '' : (postPath ? encodeURIComponent : pathEncoder)(String(params[index]))));
+        const value = params[index];
+        let encoded = (postPath ? encodeURIComponent : pathEncoder)('' + value);
+        if (index !== params.length &&
+            (value == null ||
+                (typeof value === 'object' &&
+                    // handle values from other realms
+                    value.toString ===
+                        Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)
+                            ?.toString))) {
+            encoded = value + '';
+            invalidSegments.push({
+                start: previousValue.length + currentValue.length,
+                length: encoded.length,
+                error: `Value of type ${Object.prototype.toString
+                    .call(value)
+                    .slice(8, -1)} is not a valid path parameter`,
+            });
+        }
+        return previousValue + currentValue + (index === params.length ? '' : encoded);
     }, '');
     const pathOnly = path.split(/[?#]/, 1)[0];
-    const invalidSegments = [];
     const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
     let match;
     // Find all invalid segments
@@ -29970,8 +30115,10 @@ const createPathTagFunction = (pathEncoder = encodeURIPath) => function path(sta
         invalidSegments.push({
             start: match.index,
             length: match[0].length,
+            error: `Value "${match[0]}" can\'t be safely passed as a path parameter`,
         });
     }
+    invalidSegments.sort((a, b) => a.start - b.start);
     if (invalidSegments.length > 0) {
         let lastEnd = 0;
         const underline = invalidSegments.reduce((acc, segment) => {
@@ -29980,7 +30127,9 @@ const createPathTagFunction = (pathEncoder = encodeURIPath) => function path(sta
             lastEnd = segment.start + segment.length;
             return acc + spaces + arrows;
         }, '');
-        throw new error_1.StainlessError(`Path parameters result in path with invalid segments:\n${path}\n${underline}`);
+        throw new error_1.StainlessError(`Path parameters result in path with invalid segments:\n${invalidSegments
+            .map((e) => e.error)
+            .join('\n')}\n${path}\n${underline}`);
     }
     return path;
 };
@@ -30166,6 +30315,7 @@ const DiagnosticsAPI = tslib_1.__importStar(__nccwpck_require__(2283));
 const diagnostics_1 = __nccwpck_require__(2283);
 const TargetOutputsAPI = tslib_1.__importStar(__nccwpck_require__(226));
 const target_outputs_1 = __nccwpck_require__(226);
+const pagination_1 = __nccwpck_require__(6858);
 const path_1 = __nccwpck_require__(5710);
 class Builds extends resource_1.APIResource {
     constructor() {
@@ -30191,7 +30341,10 @@ class Builds extends resource_1.APIResource {
      */
     list(params = {}, options) {
         const { project = this._client.project, ...query } = params ?? {};
-        return this._client.get('/v0/builds', { query: { project, ...query }, ...options });
+        return this._client.getAPIList('/v0/builds', (pagination_1.List), {
+            query: { project, ...query },
+            ...options,
+        });
     }
     /**
      * Creates two builds whose outputs can be compared directly
@@ -30217,13 +30370,17 @@ Builds.TargetOutputs = target_outputs_1.TargetOutputs;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Diagnostics = void 0;
 const resource_1 = __nccwpck_require__(7325);
+const pagination_1 = __nccwpck_require__(6858);
 const path_1 = __nccwpck_require__(5710);
 class Diagnostics extends resource_1.APIResource {
     /**
      * Get diagnostics for a build
      */
     list(buildID, query = {}, options) {
-        return this._client.get((0, path_1.path) `/v0/builds/${buildID}/diagnostics`, { query, ...options });
+        return this._client.getAPIList((0, path_1.path) `/v0/builds/${buildID}/diagnostics`, (pagination_1.List), {
+            query,
+            ...options,
+        });
     }
 }
 exports.Diagnostics = Diagnostics;
@@ -30398,6 +30555,7 @@ const BranchesAPI = tslib_1.__importStar(__nccwpck_require__(7554));
 const branches_1 = __nccwpck_require__(7554);
 const ConfigsAPI = tslib_1.__importStar(__nccwpck_require__(473));
 const configs_1 = __nccwpck_require__(473);
+const pagination_1 = __nccwpck_require__(6858);
 const path_1 = __nccwpck_require__(5710);
 class Projects extends resource_1.APIResource {
     constructor() {
@@ -30429,7 +30587,7 @@ class Projects extends resource_1.APIResource {
      * List projects in an organization
      */
     list(query = {}, options) {
-        return this._client.get('/v0/projects', { query, ...options });
+        return this._client.getAPIList('/v0/projects', (pagination_1.List), { query, ...options });
     }
 }
 exports.Projects = Projects;
@@ -30446,7 +30604,7 @@ Projects.Configs = configs_1.Configs;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.VERSION = void 0;
-exports.VERSION = '0.1.0-alpha.8'; // x-release-please-version
+exports.VERSION = '0.1.0-alpha.9'; // x-release-please-version
 //# sourceMappingURL=version.js.map
 
 /***/ })

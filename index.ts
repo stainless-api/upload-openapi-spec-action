@@ -66,7 +66,7 @@ export async function main() {
   const stainless_api_key = getInputValue('stainless_api_key', { required: true });
   const inputPath = getInputValue('input_path', { required: true });
   const configPath = getInputValue('config_path', { required: false });
-  const projectName = getInputValue('project_name', { required: false });
+  const projectName = getInputValue('project_name', { required: true });
   const commitMessage = getInputValue('commit_message', { required: false });
   const guessConfig = getBooleanInputValue('guess_config', { required: false });
   const branch = getInputValue('branch', { required: false });
