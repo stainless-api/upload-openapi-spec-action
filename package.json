@@ -9,7 +9,7 @@
   "private": true,
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.8"
+    "@stainless-api/sdk": "^0.1.0-alpha.10"
   },
   "scripts": {
     "build": "ncc build index.ts --license licenses.txt",

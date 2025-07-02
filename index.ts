@@ -1,4 +1,4 @@
-import { error, info } from 'node:console';
+import { error, info, warn } from 'node:console';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { getBooleanInput, getInput } from '@actions/core';
 import Stainless from '@stainless-api/sdk';
@@ -66,7 +66,7 @@ export async function main() {
   const stainless_api_key = getInputValue('stainless_api_key', { required: true });
   const inputPath = getInputValue('input_path', { required: true });
   const configPath = getInputValue('config_path', { required: false });
-  const projectName = getInputValue('project_name', { required: false });
+  let projectName = getInputValue('project_name', { required: false });
   const commitMessage = getInputValue('commit_message', { required: false });
   const guessConfig = getBooleanInputValue('guess_config', { required: false });
   const branch = getInputValue('branch', { required: false });
@@ -83,6 +83,22 @@ export async function main() {
       'Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/';
     error(errorMsg);
     throw Error(errorMsg);
+  }
+
+  if (!projectName) {
+    const stainless = new Stainless({ apiKey: stainless_api_key });
+    const projects = await stainless.projects.list({ limit: 2 });
+    if (projects.data.length === 0) {
+      const errorMsg = 'No projects found. Please create a project first.';
+      error(errorMsg);
+      throw Error(errorMsg);
+    }
+    projectName = projects.data[0]!.slug;
+    if (projects.data.length > 1) {
+      warn(
+        `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`,
+      );
+    }
   }
 
   info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
@@ -188,8 +204,7 @@ async function uploadSpecAndConfig(
     ? failedTargets[0]!.commit.completed.conclusion
     : 'timed_out';
 
-  // TODO: API only returns "content" for now; need to support "url" in the future
-  const decoratedSpec = build.documented_spec?.type === 'content' ? build.documented_spec.content : null;
+  const decoratedSpec = await Stainless.unwrapFile(build.documented_spec);
 
   return { ok, error, decoratedSpec };
 }
