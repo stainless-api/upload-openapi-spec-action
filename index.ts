@@ -204,8 +204,7 @@ async function uploadSpecAndConfig(
     ? failedTargets[0]!.commit.completed.conclusion
     : 'timed_out';
 
-  // TODO: API only returns "content" for now; need to support "url" in the future
-  const decoratedSpec = build.documented_spec?.type === 'content' ? build.documented_spec.content : null;
+  const decoratedSpec = await Stainless.unwrapFile(build.documented_spec);
 
   return { ok, error, decoratedSpec };
 }

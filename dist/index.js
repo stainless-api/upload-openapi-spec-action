@@ -25770,7 +25770,7 @@ function main() {
 }
 exports.main = main;
 function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig, branch) {
-    var _a, _b;
+    var _a;
     return __awaiter(this, void 0, void 0, function* () {
         const stainless = new sdk_1.default({ apiKey: token, project: projectName });
         const specContent = (0, node_fs_1.readFileSync)(specPath, 'utf8');
@@ -25814,8 +25814,7 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
             : failedTargets[0].commit.status === 'completed'
                 ? failedTargets[0].commit.completed.conclusion
                 : 'timed_out';
-        // TODO: API only returns "content" for now; need to support "url" in the future
-        const decoratedSpec = ((_b = build.documented_spec) === null || _b === void 0 ? void 0 : _b.type) === 'content' ? build.documented_spec.content : null;
+        const decoratedSpec = yield sdk_1.default.unwrapFile(build.documented_spec);
         return { ok, error, decoratedSpec };
     });
 }
