@@ -19,8 +19,8 @@ inputs:
   output_path:
     description: 'Output path for the decorated OpenAPI spec.'
   project_name:
-    description: 'Stainless project name. Required for organizations with multiple projects.'
-    required: false
+    description: 'Stainless project name.'
+    required: true
   commit_message:
     description: 'Commit message to use in the commits in the SDK repo.'
     required: false
