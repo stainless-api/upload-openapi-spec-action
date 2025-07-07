@@ -1,5 +1,6 @@
 import { error, info, warn } from 'node:console';
 import { readFileSync, writeFileSync } from 'node:fs';
+import YAML from 'yaml';
 import { getBooleanInput, getInput } from '@actions/core';
 import Stainless from '@stainless-api/sdk';
 
@@ -125,6 +126,10 @@ export async function main() {
       const errorMsg = 'Failed to get decorated spec';
       error(errorMsg);
       throw Error(errorMsg);
+    }
+    // Decorated spec is currently always YAML, so convert it to JSON if needed.
+    if (outputPath.endsWith('.json')) {
+      response.decoratedSpec = JSON.stringify(YAML.parse(response.decoratedSpec), null, 2);
     }
     writeFileSync(outputPath, response.decoratedSpec);
     info('Wrote decorated spec to', outputPath);
