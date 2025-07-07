@@ -112,7 +112,9 @@ export async function main() {
     branch,
   );
   if (!response.ok) {
-    const errorMsg = `Failed to upload files: ${response.error}`;
+    const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(
+      response.errors,
+    )} See more details in the Stainless Studio.`;
     error(errorMsg);
     throw Error(errorMsg);
   }
@@ -139,7 +141,10 @@ async function uploadSpecAndConfig(
   branch: string,
 ): Promise<{
   ok: boolean;
-  error: string | null;
+  errors: Array<{
+    target: keyof Stainless.BuildObject.Targets;
+    outcome: string;
+  }>;
   decoratedSpec: string | null;
 }> {
   const stainless = new Stainless({ apiKey: token, project: projectName });
@@ -190,23 +195,37 @@ async function uploadSpecAndConfig(
     }
   }
 
-  const failedTargets = (Object.values(build.targets) as Stainless.BuildTarget[]).filter(
-    (target) =>
-      target.commit?.status !== 'completed' ||
-      // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
-      // all be considered failures.
-      !['noop', 'error', 'warning', 'note', 'success'].includes(target.commit.completed.conclusion),
-  );
-  const ok = failedTargets.length === 0;
-  const error = ok
-    ? null
-    : failedTargets[0]!.commit.status === 'completed'
-    ? failedTargets[0]!.commit.completed.conclusion
-    : 'timed_out';
-
+  const errors = (
+    Object.entries(build.targets) as [keyof Stainless.BuildObject.Targets, Stainless.BuildTarget][]
+  )
+    .map(([target, value]) => {
+      if (
+        // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+        // all be considered failures.
+        value.commit?.status === 'completed' &&
+        ['noop', 'error', 'warning', 'note', 'success'].includes(value.commit.completed.conclusion)
+      ) {
+        return undefined;
+      } else if (value.commit?.status === 'completed') {
+        return {
+          target,
+          outcome: value.commit.completed.conclusion,
+        };
+      } else {
+        return {
+          target,
+          outcome: 'timed_out',
+        };
+      }
+    })
+    .filter((e) => e !== undefined) as Array<{
+    target: keyof Stainless.BuildObject.Targets;
+    outcome: string;
+  }>;
+  const ok = errors.length === 0;
   const decoratedSpec = await Stainless.unwrapFile(build.documented_spec);
 
-  return { ok, error, decoratedSpec };
+  return { ok, errors, decoratedSpec };
 }
 
 if (require.main === module) {
