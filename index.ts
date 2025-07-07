@@ -144,7 +144,7 @@ async function uploadSpecAndConfig(
   errors: Array<{
     target: keyof Stainless.BuildObject.Targets;
     outcome: string;
-  }> | null;
+  }>;
   decoratedSpec: string | null;
 }> {
   const stainless = new Stainless({ apiKey: token, project: projectName });
