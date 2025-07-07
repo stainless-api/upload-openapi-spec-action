@@ -128,7 +128,7 @@ export async function main() {
       throw Error(errorMsg);
     }
     // Decorated spec is currently always YAML, so convert it to JSON if needed.
-    if (outputPath.endsWith('.json')) {
+    if (!(outputPath.endsWith('.yml') || outputPath.endsWith('.yaml'))) {
       response.decoratedSpec = JSON.stringify(YAML.parse(response.decoratedSpec), null, 2);
     }
     writeFileSync(outputPath, response.decoratedSpec);
