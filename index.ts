@@ -219,9 +219,9 @@ async function uploadSpecAndConfig(
       }
     })
     .filter((e) => e !== undefined) as Array<{
-      target: keyof Stainless.BuildObject.Targets;
-      outcome: string;
-    }>;
+    target: keyof Stainless.BuildObject.Targets;
+    outcome: string;
+  }>;
   const ok = errors.length === 0;
   const decoratedSpec = await Stainless.unwrapFile(build.documented_spec);
 
