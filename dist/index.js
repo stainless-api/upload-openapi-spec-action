@@ -25752,7 +25752,7 @@ function main() {
         (0, node_console_1.info)(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig, branch);
         if (!response.ok) {
-            const errorMsg = `Failed to upload files: ${response.error}`;
+            const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(response.errors)} See more details in the Stainless Studio.`;
             (0, node_console_1.error)(errorMsg);
             throw Error(errorMsg);
         }
@@ -25801,21 +25801,33 @@ function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMes
                 yield new Promise((resolve) => setTimeout(resolve, 5 * 1000));
             }
         }
-        const failedTargets = Object.values(build.targets).filter((target) => {
-            var _a;
-            return ((_a = target.commit) === null || _a === void 0 ? void 0 : _a.status) !== 'completed' ||
-                // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
-                // all be considered failures.
-                !['noop', 'error', 'warning', 'note', 'success'].includes(target.commit.completed.conclusion);
-        });
-        const ok = failedTargets.length === 0;
-        const error = ok
-            ? null
-            : failedTargets[0].commit.status === 'completed'
-                ? failedTargets[0].commit.completed.conclusion
-                : 'timed_out';
+        const errors = Object.entries(build.targets)
+            .map(([target, value]) => {
+            var _a, _b;
+            if (
+            // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+            // all be considered failures.
+            ((_a = value.commit) === null || _a === void 0 ? void 0 : _a.status) === 'completed' &&
+                ['noop', 'error', 'warning', 'note', 'success'].includes(value.commit.completed.conclusion)) {
+                return undefined;
+            }
+            else if (((_b = value.commit) === null || _b === void 0 ? void 0 : _b.status) === 'completed') {
+                return {
+                    target,
+                    outcome: value.commit.completed.conclusion,
+                };
+            }
+            else {
+                return {
+                    target,
+                    outcome: 'timed_out',
+                };
+            }
+        })
+            .filter((e) => e !== undefined);
+        const ok = errors.length === 0;
         const decoratedSpec = yield sdk_1.default.unwrapFile(build.documented_spec);
-        return { ok, error, decoratedSpec };
+        return { ok, errors, decoratedSpec };
     });
 }
 if (require.main === require.cache[eval('__filename')]) {
