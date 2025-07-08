@@ -113,9 +113,9 @@
     fastq "^1.6.0"
 
 "@stainless-api/sdk@^0.1.0-alpha.10":
-  version "0.1.0-alpha.10"
-  resolved "https://registry.yarnpkg.com/@stainless-api/sdk/-/sdk-0.1.0-alpha.10.tgz#f0e5661f13a2e4597d8a0252cd8b0fbed4b3b94a"
-  integrity sha512-56bWC9Ze9hnnJnV9gf5AL03RBoMNdMZb/5QSDUdFr/MpTY7tfO0KesvDXvZgQdXRU4pjXdmYwJ3vdSFfGroxWg==
+  version "0.1.0-alpha.11"
+  resolved "https://registry.yarnpkg.com/@stainless-api/sdk/-/sdk-0.1.0-alpha.11.tgz#3833efd7af16ac378248a2241c21f4b09732745d"
+  integrity sha512-fsKZLENhvwbCJFmjt5Gu3FnyDWx9Diy6zdBH8I6ZpbcKm+B/4qk+PH8baUHLAtJfUHfk5HuaIyiM0mWlGgI30w==
 
 "@types/json-schema@^7.0.9":
   version "7.0.15"
@@ -123,9 +123,9 @@
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
 "@types/node@^22.9.0":
-  version "22.15.33"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.15.33.tgz#5722ba32042fd547c113bc35ea92c1cc59ef68b1"
-  integrity sha512-wzoocdnnpSxZ+6CjW4ADCK1jVmd1S/J3ArNWfn8FDDQtRm8dkDg7TA+mvek2wNrfCgwuZxqEOiB9B1XCJ6+dbw==
+  version "22.16.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.16.0.tgz#352bc4951fd089df32f2b6412a61d339b67ded8b"
+  integrity sha512-B2egV9wALML1JCpv3VQoQ+yesQKAmNMBIAY7OteVrikcOcAkWm+dGL6qpeCktPjAv6N1JLnhbNiqS35UpFyBsQ==
   dependencies:
     undici-types "~6.21.0"
 
