@@ -29174,7 +29174,7 @@ async function main() {
     const baseRevision = getInput2("base_revision", { required: false }) || void 0;
     const baseBranch = getInput2("base_branch", { required: false }) || void 0;
     const outputDir = getInput2("output_dir", { required: false }) || void 0;
-    const outputPath = getInput2("documented_spec_path", { required: false }) || void 0;
+    const documentedSpecOutputPath = getInput2("documented_spec_path", { required: false }) || void 0;
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -29201,18 +29201,17 @@ async function main() {
       setOutput2("outcomes", outcomes);
       setOutput2("base_outcomes", baseOutcomes);
       setOutput2("documented_spec_path", documentedSpecPath);
-      if (outputPath && documentedSpecPath) {
+      if (documentedSpecOutputPath && documentedSpecPath) {
         documentedSpec = (0, import_node_fs.readFileSync)(documentedSpecPath, "utf8");
       }
     }
-    if (outputPath) {
-      if (!documentedSpec) {
-        throw new Error("Failed to get documented spec.");
-      }
-      if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
+    if (documentedSpecOutputPath && documentedSpec) {
+      if (!(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml"))) {
         documentedSpec = JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2);
       }
-      (0, import_node_fs.writeFileSync)(outputPath, import_yaml.default.stringify(documentedSpec));
+      (0, import_node_fs.writeFileSync)(documentedSpecOutputPath, import_yaml.default.stringify(documentedSpec));
+    } else if (documentedSpecOutputPath) {
+      console.error("No documented spec found.");
     }
   } catch (error) {
     console.error("Error interacting with API:", error);

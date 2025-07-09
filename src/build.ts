@@ -23,7 +23,7 @@ async function main() {
     const baseBranch =
       getInput("base_branch", { required: false }) || undefined;
     const outputDir = getInput("output_dir", { required: false }) || undefined;
-    const outputPath =
+    const documentedSpecOutputPath =
       getInput("documented_spec_path", { required: false }) || undefined;
 
     const stainless = new Stainless({
@@ -54,22 +54,25 @@ async function main() {
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
       setOutput("documented_spec_path", documentedSpecPath);
-      if (outputPath && documentedSpecPath) {
+      if (documentedSpecOutputPath && documentedSpecPath) {
         documentedSpec = readFileSync(documentedSpecPath, "utf8");
       }
     }
 
-    if (outputPath) {
-      if (!documentedSpec) {
-        throw new Error("Failed to get documented spec.");
-      }
-
+    if (documentedSpecOutputPath && documentedSpec) {
       // Decorated spec is currently always YAML, so convert it to JSON if needed.
-      if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
+      if (
+        !(
+          documentedSpecOutputPath.endsWith(".yml") ||
+          documentedSpecOutputPath.endsWith(".yaml")
+        )
+      ) {
         documentedSpec = JSON.stringify(YAML.parse(documentedSpec), null, 2);
       }
 
-      writeFileSync(outputPath, YAML.stringify(documentedSpec));
+      writeFileSync(documentedSpecOutputPath, YAML.stringify(documentedSpec));
+    } else if (documentedSpecOutputPath) {
+      console.error("No documented spec found.");
     }
   } catch (error) {
     console.error("Error interacting with API:", error);
