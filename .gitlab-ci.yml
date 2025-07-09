@@ -7,6 +7,7 @@ image: node:20-alpine
     - apk add --no-cache git
     - git clone https://github.com/stainless-api/upload-openapi-spec-action.git
     - cd upload-openapi-spec-action
+    - npm install
     - node dist/index.js
   variables:
     INPUT_STAINLESS_API_KEY: $STAINLESS_API_KEY

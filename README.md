@@ -124,6 +124,16 @@ beforehand. That action needs the `contents: read` permission.
 
 ### Versioning policy
 
-This action is in public beta, and breaking changes may be introduced in any
-commit. We recommend pinning your actions to a full-length commit SHA to avoid
-potential breaking changes.
+This action uses [semantic versioning](https://semver.org/), and you can pin
+your action to a major (`v1`), minor (`v1.0`), or patch (`v1.0.0`) version.
+The public API includes:
+
+- The inputs to each action, and their expected format.
+
+- The format of pull request comments.
+
+- The name and format of the file written to `documented_spec_path`.
+
+The public API does not include:
+
+- The format of the `outcomes` and `base_outcomes` outputs.
