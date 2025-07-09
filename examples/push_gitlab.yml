@@ -4,12 +4,12 @@ include:
   - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/build/gitlab-ci.yml"
 
 build-sdk:
+  extends: .build-sdk
   only:
     # Set this to the branch of the repository that the `main` Stainless branch
     # of your project gets its OpenAPI spec from. This is usually the default
     # branch of your repository.
     - main
-  extends: .build-sdk
   variables:
     # A Stainless API key, which you can generate on the Stainless organization
     # dashboard. Add this to your CI/CD variables:
