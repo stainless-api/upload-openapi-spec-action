@@ -13,9 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Stainless organization name.
-  STAINLESS_ORG: YOUR_ORG
-
   # Stainless project name.
   STAINLESS_PROJECT: YOUR_PROJECT
 
@@ -61,10 +58,9 @@ jobs:
 
       - name: Run build
         id: build
-        uses: stainless-api/upload-openapi-spec-action@v1
+        uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}

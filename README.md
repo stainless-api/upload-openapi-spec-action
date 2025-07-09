@@ -3,6 +3,9 @@
 GitHub Actions for building [Stainless](https://stainless.com/) SDKs and
 previewing changes to an SDK from a pull request.
 
+Limited support for GitLab CI is available. See the
+[GitLab example](./examples/push_gitlab.yml).
+
 ## Usage
 
 Get an API key from your Stainless organization dashboard. In the GitHub
@@ -96,8 +99,8 @@ and integration with docs platforms, see the [examples directory](./examples).
 This repository provides three GitHub actions.
 
 - `stainless-api/upload-openapi-spec-action/build`: Build SDKs for a Stainless
-project. For information about the input parameters, see the [action
-definition](./build/action.yml).
+project. This action is also usable in GitLab CI. For information about the
+input parameters, see the [action definition](./build/action.yml).
 
 - `stainless-api/upload-openapi-spec-action/preview`: Preview changes to SDKs
 introduced by a pull request. For information about the input parameters, see

@@ -1,0 +1,39 @@
+# Add this to your .gitlab-ci.yml file.
+
+include:
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/build/gitlab-ci.yml"
+
+build-sdk:
+  only:
+    # Set this to the branch of the repository that the `main` Stainless branch
+    # of your project gets its OpenAPI spec from. This is usually the default
+    # branch of your repository.
+    - main
+  extends: .build-sdk
+  variables:
+    # A Stainless API key, which you can generate on the Stainless organization
+    # dashboard. Add this to your CI/CD variables:
+    # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
+    STAINLESS_API_KEY: $STAINLESS_API_KEY
+
+    # Stainless project name.
+    STAINLESS_PROJECT: YOUR_PROJECT
+
+    # Path to your OpenAPI spec.
+    OAS_PATH: YOUR_OAS_PATH
+
+    # Path to your Stainless config. Optional; only provide this if you prefer
+    # to maintain the ground truth Stainless config in your own repo.
+    CONFIG_PATH: YOUR_CONFIG_PATH
+
+    # The commit message to use for the SDK builds. Use a commit message in the
+    # conventional commits format: https://www.conventionalcommits.org/en/v1.0.0/
+    COMMIT_MESSAGE: "feat(api): update api"
+
+    # When to fail the job based on build conclusion.
+    # Options: "never" | "note" | "warning" | "error" | "fatal".
+    FAIL_ON: error
+
+    # Path to write a documented OpenAPI spec to. Optional; will only write if
+    # you code samples configured in your Stainless config.
+    DOCUMENTED_SPEC_PATH: YOUR_DOCUMENTED_SPEC_PATH

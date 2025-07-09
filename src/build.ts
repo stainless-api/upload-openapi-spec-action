@@ -1,5 +1,7 @@
-import { getBooleanInput, getInput, setOutput } from "@actions/core";
 import { Stainless } from "@stainless-api/sdk";
+import { readFileSync, writeFileSync } from "node:fs";
+import YAML from "yaml";
+import { getBooleanInput, getInput, setOutput } from "./compat";
 import { runBuilds } from "./runBuilds";
 
 async function main() {
@@ -11,8 +13,9 @@ async function main() {
     const projectName = getInput("project", { required: true });
     const commitMessage =
       getInput("commit_message", { required: false }) || undefined;
-    const guessConfig = getBooleanInput("guess_config", { required: false });
-    const branch = getInput("branch", { required: false }) || undefined;
+    const guessConfig =
+      getBooleanInput("guess_config", { required: false }) || false;
+    const branch = getInput("branch", { required: false }) || "main";
     const mergeBranch =
       getInput("merge_branch", { required: false }) || undefined;
     const baseRevision =
@@ -20,6 +23,8 @@ async function main() {
     const baseBranch =
       getInput("base_branch", { required: false }) || undefined;
     const outputDir = getInput("output_dir", { required: false }) || undefined;
+    const outputPath =
+      getInput("documented_spec_path", { required: false }) || undefined;
 
     const stainless = new Stainless({
       project: projectName,
@@ -27,9 +32,11 @@ async function main() {
       logLevel: "warn",
     });
 
+    let documentedSpec: string | null = null;
+
     for await (const {
-      baseOutcomes,
       outcomes,
+      baseOutcomes,
       documentedSpecPath,
     } of runBuilds({
       stainless,
@@ -47,6 +54,22 @@ async function main() {
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
       setOutput("documented_spec_path", documentedSpecPath);
+      if (outputPath && documentedSpecPath) {
+        documentedSpec = readFileSync(documentedSpecPath, "utf8");
+      }
+    }
+
+    if (outputPath) {
+      if (!documentedSpec) {
+        throw new Error("Failed to get documented spec.");
+      }
+
+      // Decorated spec is currently always YAML, so convert it to JSON if needed.
+      if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
+        documentedSpec = JSON.stringify(YAML.parse(documentedSpec), null, 2);
+      }
+
+      writeFileSync(outputPath, YAML.stringify(documentedSpec));
     }
   } catch (error) {
     console.error("Error interacting with API:", error);
