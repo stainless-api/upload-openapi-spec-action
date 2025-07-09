@@ -1,0 +1,111 @@
+name: Build SDKs for pull request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Stainless organization name.
+  STAINLESS_ORG: YOUR_ORG
+
+  # Stainless project name.
+  STAINLESS_PROJECT: YOUR_PROJECT
+
+  # Path to your OpenAPI spec.
+  OAS_PATH: YOUR_OAS_PATH
+
+  # Path to your Stainless config. Optional; only provide this if you prefer
+  # to maintain the ground truth Stainless config in your own repo.
+  CONFIG_PATH: YOUR_CONFIG_PATH
+
+  # When to fail the job based on build conclusion.
+  # Options: "never" | "note" | "warning" | "error" | "fatal".
+  FAIL_ON: error
+
+  # Name of your Mintlify GitHub repo, e.g. `stainless-api/docs`.
+  MINTLIFY_DOCS_REPO: YOUR_MINTLIFY_DOCS_REPO
+
+  # Email associated with the GitHub token, for committing to the Mintlify repo.
+  GITHUB_TOKEN_EMAIL: YOUR_EMAIL
+
+  # Name associated with the GitHub token, for committing to the Mintlify repo.
+  GITHUB_TOKEN_NAME: YOUR_NAME
+
+  # In your repo secrets, configure:
+  # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
+  #   Stainless organization dashboard
+  #
+  # - API_TOKEN_GITHUB: a GitHub personal access token with permissions to
+  #   write to the Mintlify repo
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Run preview builds
+        uses: stainless-api/build-sdk-action/preview@3fa5f068d05f51899b2903965e0ec395743d005f
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+
+  merge:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Note that this only merges in changes that happened on the last build on
+      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
+      # changes that haven't been built, if the preview-sdk job didn't finish
+      # before this step starts. In theory we want to wait for all builds
+      # against preview/${{ github.head_ref }} to complete, but assuming that
+      # the preview-sdk job happens before the PR merge, it should be fine.
+      - name: Run merge build
+        id: build
+        uses: stainless-api/build-sdk-action/merge@3fa5f068d05f51899b2903965e0ec395743d005f
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+
+      - name: Push spec to Mintlify
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+        with:
+          source_file: ${{ steps.build.outputs.documented_spec_path }}
+          destination_repo: ${{ env.MINTLIFY_DOCS_REPO }}
+          destination_folder: openapi-specs
+          user_email: ${{ env.GITHUB_TOKEN_EMAIL }}
+          user_name: ${{ env.GITHUB_TOKEN_NAME }}
+          commit_message: Auto-updates from Stainless

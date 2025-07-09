@@ -1,0 +1,117 @@
+name: Stainless — Merge SDK changes
+description: Build SDKs after merging a pull request
+runs:
+  using: node20
+  main: ../dist/merge.js
+inputs:
+  stainless_api_key:
+    description: Stainless API key.
+    required: true
+  org:
+    description: Stainless organization name.
+    required: true
+  project:
+    description: Stainless project name.
+    required: true
+  oas_path:
+    description: Path to your OpenAPI spec.
+    required: false
+  config_path:
+    description: >-
+      Path to your Stainless config. Optional; only provide this if you prefer
+      to maintain the ground truth Stainless config in your own repo. If
+      omitted, the build will use the existing Stainless config on the
+      Stainless branch.
+    required: false
+  commit_message:
+    description: >-
+      Commit message to use in the commits in the SDK repo. Use a commit
+      message in the conventional commits format:
+      https://www.conventionalcommits.org/en/v1.0.0/
+      If `make_comment` is true, this is only a default, and will be overriden
+      by the commit message specified in the comment.
+    required: false
+    default: ${{ github.event.pull_request.title }}
+  fail_on:
+    description: >-
+      When to fail the run based on build conclusion. Options: 'note',
+      'warning', 'error', 'fatal', 'never'.
+    required: false
+    default: "error"
+  make_comment:
+    description: >-
+      If true, will comment on the pull request with the build results.
+    required: false
+    default: "true"
+  github_token:
+    description: >-
+      A GitHub token used for making comments on pull requests. Required if
+      `make_comment` is true. The token must have the `pull-requests: write`
+      permission. Defaults to the current workflow token.
+    required: false
+    default: ${{ github.token }}
+
+  # We think it's unlikely you'll need to use non-default inputs for these:
+  base_sha:
+    description: >-
+      The SHA of the branch immediately before the merge is made. Used to
+      determine whether the build should be skipped.
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  base_ref:
+    description: >-
+      The branch the pull request was merged into. Used to determine whether the
+      build should be skipped.
+    required: false
+    default: ${{ github.event.pull_request.base.ref }}
+  default_branch:
+    description: >-
+      The branch of the repository that the `main` Stainless branch of your
+      project gets its OpenAPI spec from. This is usually the default branch of
+      your repository. Used to determine whether the build should be skipped.
+    required: false
+    default: ${{ github.event.repository.default_branch }}
+  head_sha:
+    description: >-
+      The SHA of the branch immediately after the merge is made. Used to
+      determine whether the build should be skipped.
+    required: false
+    default: ${{ github.event.pull_request.merge_commit_sha }}
+  merge_branch:
+    description: >-
+      The Stainless branch name that was merged. This should be the same as the
+      preview action's `branch` input.
+    required: false
+    default: ${{ format('preview/{0}', github.event.pull_request.head.ref) }}
+  output_dir:
+    description: >-
+      Directory to write output files to. Defaults to the runner's temporary
+      directory.
+    required: false
+    default: ${{ runner.temp }}
+
+outputs:
+  outcomes:
+    description: >-
+      JSON-stringified object of the preview build outcomes. Keys are
+      languages, and values contain the `commit` result of the build for that
+      language. Will look like:
+
+      ```
+      {
+        "typescript": {
+          "conclusion": "success",
+          "commit": {
+            "sha": "...",
+            ...
+          },
+        },
+        ...
+      }
+      ```
+  documented_spec_path:
+    description: >-
+      Path to an OpenAPI spec with SDK code samples. Present when `output_dir`
+      is specified and `code_samples` is in your Stainless config. See
+      https://app.stainless.com/docs/reference/config#open-api-config for
+      more details.

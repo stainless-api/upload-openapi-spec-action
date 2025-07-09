@@ -1,34 +1,31 @@
 {
-  "name": "upload-openapi-spec",
+  "name": "build-sdk-action",
   "version": "1.0.0",
-  "description": "Upload OpenAPI spec to Stainless (GitHub Action & GitLab CI component)",
-  "main": "index.ts",
-  "repository": "https://github.com/stainless-api/upload-openapi-spec-action.git",
-  "author": "Matt Gleich <git@mattglei.ch>",
-  "license": "Copyright Stainless 2022",
-  "private": true,
-  "dependencies": {
-    "@actions/core": "^1.10.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.10",
-    "yaml": "^2.8.0"
-  },
+  "description": "",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "ncc build index.ts --license licenses.txt",
-    "start": "node dist/index.js",
-    "prepare": "husky install",
-    "lint": "eslint ."
+    "build": "npm run build:index && npm run build:merge && npm run build:preview",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "test": "vitest"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
-    "@types/node": "^22.9.0",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "@vercel/ncc": "^0.38.0",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^8.0.1",
-    "prettier": "^2.7.1",
-    "typescript": "^4.8.4"
+    "@types/node": "^22.10.6",
+    "esbuild": "^0.25.4",
+    "typescript": "^5.7.3",
+    "vitest": "^3.2.4"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.1",
+    "@stainless-api/github-internal": "^0.12.1",
+    "@stainless-api/sdk": "^0.1.0-alpha.11",
+    "ts-dedent": "^2.2.0"
+  },
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }
