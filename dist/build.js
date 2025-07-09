@@ -28870,6 +28870,7 @@ Stainless.Generate = Generate;
 
 // src/build.ts
 var import_node_fs = require("node:fs");
+var import_node_os = require("node:os");
 var import_yaml = __toESM(require_dist());
 
 // src/compat.ts
@@ -29173,7 +29174,7 @@ async function main() {
     const mergeBranch = getInput2("merge_branch", { required: false }) || void 0;
     const baseRevision = getInput2("base_revision", { required: false }) || void 0;
     const baseBranch = getInput2("base_branch", { required: false }) || void 0;
-    const outputDir = getInput2("output_dir", { required: false }) || void 0;
+    const outputDir = getInput2("output_dir", { required: false }) || (0, import_node_os.tmpdir)();
     const documentedSpecOutputPath = getInput2("documented_spec_path", { required: false }) || void 0;
     const stainless = new Stainless({
       project: projectName,

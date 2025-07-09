@@ -1,5 +1,6 @@
 import { Stainless } from "@stainless-api/sdk";
 import { readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { runBuilds } from "./runBuilds";
@@ -22,7 +23,7 @@ async function main() {
       getInput("base_revision", { required: false }) || undefined;
     const baseBranch =
       getInput("base_branch", { required: false }) || undefined;
-    const outputDir = getInput("output_dir", { required: false }) || undefined;
+    const outputDir = getInput("output_dir", { required: false }) || tmpdir();
     const documentedSpecOutputPath =
       getInput("documented_spec_path", { required: false }) || undefined;
 
