@@ -1,0 +1,127 @@
+name: Stainless — Preview SDK changes
+description: Build SDKs to preview a pull request
+runs:
+  using: node20
+  main: ../dist/preview.js
+inputs:
+  stainless_api_key:
+    description: Stainless API key.
+    required: true
+  org:
+    description: Stainless organization name.
+    required: true
+  project:
+    description: Stainless project name.
+    required: true
+  oas_path:
+    description: Path to your OpenAPI spec.
+    required: true
+  config_path:
+    description: >-
+      Path to your Stainless config. Optional; only provide this if you prefer
+      to maintain the ground truth Stainless config in your own repo. If
+      omitted, the existing Stainless config will be updated based on the
+      OpenAPI spec.
+    required: false
+  commit_message:
+    description: >-
+      Commit message to use in the commits in the SDK repo. Use a commit
+      message in the conventional commits format:
+      https://www.conventionalcommits.org/en/v1.0.0/
+      If `make_comment` is true, this is only a default, and will be overriden
+      by the commit message specified in the comment.
+    required: false
+    default: ${{ github.event.pull_request.title }}
+  fail_on:
+    description: >-
+      When to fail the run based on build conclusion. Options: 'note',
+      'warning', 'error', 'fatal', 'never'.
+    required: false
+    default: "error"
+  make_comment:
+    description: >-
+      If true, will comment on the pull request with the build results.
+    required: false
+    default: "true"
+  github_token:
+    description: >-
+      A GitHub token used for making comments on pull requests. Required if
+      `make_comment` is true. The token must have the `pull-requests: write`
+      permission. Defaults to the current workflow token.
+    required: false
+    default: ${{ github.token }}
+
+  # We think it's unlikely you'll need to use non-default inputs for these:
+  base_sha:
+    description: >-
+      The base SHA for the pull request. Used to create a base build.
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  base_ref:
+    description: >-
+      The branch the pull request will be merged into. Used to create a base
+      build, if no existing build matches the base SHA.
+    required: false
+    default: ${{ github.event.pull_request.base.ref }}
+  base_branch:
+    description: The Stainless branch name of the base build.
+    required: false
+    default: ${{ format('preview/base/{0}', github.event.pull_request.head.ref) }}
+  default_branch:
+    description: >-
+      The branch of the repository that the `main` Stainless branch of your
+      project gets its OpenAPI spec from. This is usually the default branch of
+      your repository. Used to find a base build, if no build matches the
+      base SHA or base ref.
+    required: false
+    default: ${{ github.event.repository.default_branch }}
+  head_sha:
+    description: >-
+      The head SHA for the pull request. Used to get the OpenAPI spec and
+      Stainless config for the preview build.
+    required: false
+    default: ${{ github.event.pull_request.head.sha }}
+  branch:
+    description: >-
+      The Stainless branch name of the preview build. This should be the same
+      as the merge action's `merge_branch` input.
+    required: false
+    default: ${{ format('preview/{0}', github.event.pull_request.head.ref) }}
+
+outputs:
+  outcomes:
+    description: >-
+      JSON-stringified object of the preview build outcomes. Keys are
+      languages, and values contain the `commit` result of the build for that
+      language. Will look like:
+
+      ```
+      {
+        "typescript": {
+          "conclusion": "success",
+          "commit": {
+            "sha": "...",
+            ...
+          },
+        },
+        ...
+      }
+      ```
+  base_outcomes:
+    description: >-
+      JSON-stringified object of the base build outcomes. Keys are languages,
+      and values contain the `commit` result of the build for that language.
+      Will look like:
+
+      ```
+      {
+        "typescript": {
+          "conclusion": "success",
+          "commit": {
+            "sha": "...",
+            ...
+          },
+        },
+        ...
+      }
+      ```
