@@ -6,7 +6,7 @@ import Stainless from "@stainless-api/sdk";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
 );
 
 export const isValidConventionalCommitMessage = (message: string) => {
@@ -43,7 +43,7 @@ function getInputValue(name: string, options?: { required: boolean }): string {
 // Get boolean input values from either GitHub Actions or GitLab CI environment
 function getBooleanInputValue(
   name: string,
-  options?: { required: boolean }
+  options?: { required: boolean },
 ): boolean {
   if (isGitLabCI()) {
     // Try GitLab-specific INPUT_ prefixed variable first (like GitHub Actions)
@@ -102,13 +102,15 @@ export async function main() {
     projectName = projects.data[0]!.slug;
     if (projects.data.length > 1) {
       warn(
-        `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`
+        `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`,
       );
     }
   }
 
   info(
-    configPath ? "Uploading spec and config files..." : "Uploading spec file..."
+    configPath
+      ? "Uploading spec and config files..."
+      : "Uploading spec file...",
   );
   const response = await uploadSpecAndConfig(
     inputPath,
@@ -117,11 +119,11 @@ export async function main() {
     projectName,
     commitMessage,
     guessConfig,
-    branch
+    branch,
   );
   if (!response.ok) {
     const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(
-      response.errors
+      response.errors,
     )} See more details in the Stainless Studio.`;
     error(errorMsg);
     throw Error(errorMsg);
@@ -139,7 +141,7 @@ export async function main() {
       response.decoratedSpec = JSON.stringify(
         YAML.parse(response.decoratedSpec),
         null,
-        2
+        2,
       );
     }
     writeFileSync(outputPath, response.decoratedSpec);
@@ -154,7 +156,7 @@ async function uploadSpecAndConfig(
   projectName: string,
   commitMessage: string,
   guessConfig: boolean,
-  branch: string
+  branch: string,
 ): Promise<{
   ok: boolean;
   errors: Array<{
@@ -173,7 +175,7 @@ async function uploadSpecAndConfig(
       await stainless.projects.configs.guess({
         branch,
         spec: specContent,
-      })
+      }),
     )[0]?.content;
   } else if (configPath) {
     configContent = readFileSync(configPath, "utf8");
@@ -198,7 +200,7 @@ async function uploadSpecAndConfig(
       },
       allow_empty: true,
     },
-    { headers }
+    { headers },
   );
 
   const pollingStart = Date.now();
@@ -207,7 +209,7 @@ async function uploadSpecAndConfig(
     build = await stainless.builds.retrieve(build.id);
     donePolling = Object.values(build.targets).every(
       (target) =>
-        (target as Stainless.BuildTarget).commit.status === "completed"
+        (target as Stainless.BuildTarget).commit.status === "completed",
     );
     if (!donePolling) {
       await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
@@ -217,7 +219,7 @@ async function uploadSpecAndConfig(
   const errors = (
     Object.entries(build.targets) as [
       keyof Stainless.BuildObject.Targets,
-      Stainless.BuildTarget
+      Stainless.BuildTarget,
     ][]
   )
     .map(([target, value]) => {
@@ -226,7 +228,7 @@ async function uploadSpecAndConfig(
         // all be considered failures.
         value.commit?.status === "completed" &&
         ["noop", "error", "warning", "note", "success"].includes(
-          value.commit.completed.conclusion
+          value.commit.completed.conclusion,
         )
       ) {
         return undefined;

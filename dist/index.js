@@ -25661,7 +25661,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.main = exports.isValidConventionalCommitMessage = void 0;
+exports.isValidConventionalCommitMessage = void 0;
+exports.main = main;
 const node_console_1 = __nccwpck_require__(7540);
 const node_fs_1 = __nccwpck_require__(3024);
 const yaml_1 = __importDefault(__nccwpck_require__(8815));
@@ -25752,7 +25753,9 @@ function main() {
                 (0, node_console_1.warn)(`Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`);
             }
         }
-        (0, node_console_1.info)(configPath ? "Uploading spec and config files..." : "Uploading spec file...");
+        (0, node_console_1.info)(configPath
+            ? "Uploading spec and config files..."
+            : "Uploading spec file...");
         const response = yield uploadSpecAndConfig(inputPath, configPath, stainless_api_key, projectName, commitMessage, guessConfig, branch);
         if (!response.ok) {
             const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(response.errors)} See more details in the Stainless Studio.`;
@@ -25775,10 +25778,9 @@ function main() {
         }
     });
 }
-exports.main = main;
 function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig, branch) {
-    var _a;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const stainless = new sdk_1.default({ apiKey: token, project: projectName });
         const specContent = (0, node_fs_1.readFileSync)(specPath, "utf8");
         let configContent;
