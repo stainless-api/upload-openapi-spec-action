@@ -28983,6 +28983,7 @@ async function* runBuilds({
         waitFor
       });
       let documentedSpecPath = null;
+      console.log({ outputDir, documentedSpec });
       if (outputDir && documentedSpec) {
         documentedSpecPath = `${outputDir}/openapi.documented.yml`;
         fs.mkdirSync(outputDir, { recursive: true });
@@ -29176,6 +29177,20 @@ async function main() {
     const baseBranch = getInput2("base_branch", { required: false }) || void 0;
     const outputDir = getInput2("output_dir", { required: false }) || (0, import_node_os.tmpdir)();
     const documentedSpecOutputPath = getInput2("documented_spec_path", { required: false }) || void 0;
+    console.log({
+      apiKey,
+      oasPath,
+      configPath,
+      projectName,
+      commitMessage,
+      guessConfig,
+      branch,
+      mergeBranch,
+      baseRevision,
+      baseBranch,
+      outputDir,
+      documentedSpecOutputPath
+    });
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -29202,6 +29217,11 @@ async function main() {
       setOutput2("outcomes", outcomes);
       setOutput2("base_outcomes", baseOutcomes);
       setOutput2("documented_spec_path", documentedSpecPath);
+      console.log({
+        outcomes,
+        baseOutcomes,
+        documentedSpecPath
+      });
       if (documentedSpecOutputPath && documentedSpecPath) {
         documentedSpec = (0, import_node_fs.readFileSync)(documentedSpecPath, "utf8");
       }

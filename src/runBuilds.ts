@@ -114,6 +114,7 @@ export async function* runBuilds({
       });
 
       let documentedSpecPath: string | null = null;
+      console.log({ outputDir, documentedSpec });
       if (outputDir && documentedSpec) {
         documentedSpecPath = `${outputDir}/openapi.documented.yml`;
         fs.mkdirSync(outputDir, { recursive: true });
