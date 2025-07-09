@@ -2,5 +2,5 @@ image: node:20-alpine
 
 .build-sdk:
   script:
-    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/cj/gitlab/dist/build.js
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/build.js
     - node build.js

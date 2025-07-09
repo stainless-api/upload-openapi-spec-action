@@ -27,21 +27,6 @@ async function main() {
     const documentedSpecOutputPath =
       getInput("documented_spec_path", { required: false }) || undefined;
 
-    console.log({
-      apiKey,
-      oasPath,
-      configPath,
-      projectName,
-      commitMessage,
-      guessConfig,
-      branch,
-      mergeBranch,
-      baseRevision,
-      baseBranch,
-      outputDir,
-      documentedSpecOutputPath,
-    });
-
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -70,11 +55,6 @@ async function main() {
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
       setOutput("documented_spec_path", documentedSpecPath);
-      console.log({
-        outcomes,
-        baseOutcomes,
-        documentedSpecPath,
-      });
       if (documentedSpecOutputPath && documentedSpecPath) {
         documentedSpec = readFileSync(documentedSpecPath, "utf8");
       }
