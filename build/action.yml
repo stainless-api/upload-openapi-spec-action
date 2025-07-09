@@ -1,0 +1,107 @@
+name: Stainless — Build SDK
+description: Build SDKs
+branding:
+  icon: book-open
+  color: green
+runs:
+  using: node20
+  main: dist/build.js
+inputs:
+  stainless_api_key:
+    description: Stainless API key.
+    required: true
+  project:
+    description: Stainless project name.
+    required: true
+  oas_path:
+    description: >-
+      Path to your OpenAPI spec. If omitted, and `merge_branch` is false,
+      will use the existing OpenAPI spec on the Stainless branch.
+    required: false
+  config_path:
+    description: >-
+      Path to your Stainless config. If omitted, and `merge_branch` is false,
+      will use the existing Stainless config on the Stainless branch.
+    required: false
+  commit_message:
+    description: >-
+      Commit message to use in the commits in the SDK repo. Use a commit
+      message in the conventional commits format:
+      https://www.conventionalcommits.org/en/v1.0.0/
+    required: false
+  guess_config:
+    description: >-
+      If true, update the existing Stainless config file based on the OpenAPI
+      spec. Cannot be specified if `config_path` is specified.
+    required: false
+    default: false
+  branch:
+    description: Stainless branch to create the build on.
+    required: false
+    default: main
+  merge_branch:
+    description: >-
+      Stainless branch to merge changes from. The OpenAPI spec and Stainless
+      config from the `merge_branch` will be used to create a build on top of
+      the Stainless branch.
+    required: false
+  base_revision:
+    description: >-
+      A base revision to compare this build against. Must be a config commit
+      SHA. Cannot be specified if `merge_branch` is specified.
+    required: false
+  base_branch:
+    description: >-
+      Stainless branch to create the base build on. Must be specified if
+      `base_revision` is specified.
+    required: false
+  output_dir:
+    description: >-
+      Directory to write output files to. Defaults to the runner's temporary
+      directory.
+    required: false
+    default: ${{ runner.temp }}
+
+outputs:
+  outcomes:
+    description: >-
+      JSON-stringified object of build outcomes. Keys are languages, and values
+      contain the `commit` result of the build for that language. Will look
+      like:
+
+      ```
+      {
+        "typescript": {
+          "conclusion": "success",
+          "commit": {
+            "sha": "...",
+            ...
+          },
+        },
+        ...
+      }
+      ```
+  base_outcomes:
+    description: >-
+      JSON-stringified object of base build outcomes. Present when
+      `base_revision` is specified. Keys are languages, and values contain the
+      `commit` result of the build for that language. Will look like:
+
+      ```
+      {
+        "typescript": {
+          "conclusion": "success",
+          "commit": {
+            "sha": "...",
+            ...
+          },
+        },
+        ...
+      }
+      ```
+  documented_spec_path:
+    description: >-
+      Path to an OpenAPI spec with SDK code samples. Present when `output_dir`
+      is specified and `code_samples` is in your Stainless config. See
+      https://app.stainless.com/docs/reference/config#open-api-config for
+      more details.

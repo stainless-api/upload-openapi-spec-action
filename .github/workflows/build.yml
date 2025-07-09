@@ -3,14 +3,30 @@ name: build
 on: push
 
 jobs:
-  eslint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # use a token so we trigger release-please if needed
+          token: ${{ secrets.BOT_GITHUB_TOKEN }}
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          cache: "yarn"
-          node-version: "20"
-      - run: yarn install
-      - run: yarn run build
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install
+      - name: Build TypeScript
+        run: npm run build
+      - name: Commit build changes
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist
+          if git diff --cached --quiet HEAD; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(build): Update dist"
+            git push
+          fi
