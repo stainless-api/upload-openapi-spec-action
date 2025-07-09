@@ -2,6 +2,5 @@ image: node:20-alpine
 
 .build-sdk:
   script:
-    - apk --no-cache add curl
-    - curl https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/cj/gitlab/dist/build.js --output build.js
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/cj/gitlab/dist/build.js
     - node build.js
