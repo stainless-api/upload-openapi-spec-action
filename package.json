@@ -1,5 +1,5 @@
 {
-  "name": "build-sdk-action",
+  "name": "upload-openapi-spec-action",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",

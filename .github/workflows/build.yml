@@ -1,0 +1,30 @@
+name: build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install
+      - name: Build TypeScript
+        run: npm run build
+      - name: Commit build changes
+        id: current_sha
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist
+          if git diff --cached --quiet HEAD; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(build): Update dist [skip ci]"
+          fi
+          echo "current_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT

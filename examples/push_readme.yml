@@ -56,7 +56,7 @@ jobs:
 
       - name: Run build
         id: build
-        uses: stainless-api/build-sdk-action@3fa5f068d05f51899b2903965e0ec395743d005f
+        uses: stainless-api/upload-openapi-spec-action@v1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}

@@ -38,7 +38,6 @@ env:
   STAINLESS_ORG: YOUR_ORG
   STAINLESS_PROJECT: YOUR_PROJECT
   OAS_PATH: YOUR_OAS_PATH
-  COMMIT_MESSAGE: ${{ github.event.pull_request.title }}
 
 jobs:
   preview:
@@ -54,13 +53,12 @@ jobs:
           fetch-depth: 2
 
       - name: Run preview builds
-        uses: stainless-api/build-sdk-action/preview@3fa5f068d05f51899b2903965e0ec395743d005f
+        uses: stainless-api/upload-openapi-spec-action/preview@v1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
-          commit_message: ${{ env.COMMIT_MESSAGE }}
 
   merge:
     if: github.event.action == 'closed' && github.event.pull_request.merged == true
@@ -75,13 +73,12 @@ jobs:
           fetch-depth: 2
 
       - name: Run merge build
-        uses: stainless-api/build-sdk-action/merge@3fa5f068d05f51899b2903965e0ec395743d005f
+        uses: stainless-api/upload-openapi-spec-action/merge@v1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
-          commit_message: ${{ env.COMMIT_MESSAGE }}
 ```
 </details>
 
@@ -98,16 +95,17 @@ and integration with docs platforms, see the [examples directory](./examples).
 
 This repository provides three GitHub actions.
 
-- `stainless-api/build-sdk-action`: Build SDKs for a Stainless project. For
-information about the input parameters, see the [action definition](./action.yml).
+- `stainless-api/upload-openapi-spec-action`: Build SDKs for a Stainless
+project. For information about the input parameters, see the [action
+definition](./action.yml).
 
-- `stainless-api/build-sdk-action/preview`: Preview changes to SDKs introduced
-by a pull request. For information about the input parameters, see the
-[action definition](./preview/action.yml).
+- `stainless-api/upload-openapi-spec-action/preview`: Preview changes to SDKs
+introduced by a pull request. For information about the input parameters, see
+the [action definition](./preview/action.yml).
 
-- `stainless-api/build-sdk-action/merge`: Merge changes to SDKs from a pull
-request. For information about the input parameters, see the
-[action definition](./merge/action.yml).
+- `stainless-api/upload-openapi-spec-action/merge`: Merge changes to SDKs from
+a pull request. For information about the input parameters, see the [action
+definition](./merge/action.yml).
 
 ### Workflow permissions
 
