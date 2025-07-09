@@ -2,7 +2,7 @@ import * as github from "@actions/github";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
 import { createClient as createGitHubClient } from "@stainless-api/github-internal/tree-shakable";
 import type { Stainless } from "@stainless-api/sdk";
-import { Outcomes } from "./build";
+import { Outcomes } from "./runBuilds";
 import * as MD from "./markdown";
 
 type DiagnosticLevel =

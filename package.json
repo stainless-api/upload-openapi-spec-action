@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npm run build:index && npm run build:merge && npm run build:preview",
+    "build": "npm run build:build && npm run build:index && npm run build:merge && npm run build:preview",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
@@ -25,7 +26,8 @@
     "@actions/github": "^6.0.1",
     "@stainless-api/github-internal": "^0.12.1",
     "@stainless-api/sdk": "^0.1.0-alpha.11",
-    "ts-dedent": "^2.2.0"
+    "ts-dedent": "^2.2.0",
+    "yaml": "^2.8.0"
   },
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }

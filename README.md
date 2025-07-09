@@ -95,9 +95,9 @@ and integration with docs platforms, see the [examples directory](./examples).
 
 This repository provides three GitHub actions.
 
-- `stainless-api/upload-openapi-spec-action`: Build SDKs for a Stainless
+- `stainless-api/upload-openapi-spec-action/build`: Build SDKs for a Stainless
 project. For information about the input parameters, see the [action
-definition](./action.yml).
+definition](./build/action.yml).
 
 - `stainless-api/upload-openapi-spec-action/preview`: Preview changes to SDKs
 introduced by a pull request. For information about the input parameters, see

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import type { Outcomes } from "./build";
+import type { Outcomes } from "./runBuilds";
 import { parseCommitMessage, printComment } from "./comment";
 import * as MD from "./markdown";
 

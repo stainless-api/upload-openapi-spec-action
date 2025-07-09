@@ -1,0 +1,19 @@
+# This file defines reusable GitLab CI component for uploading OpenAPI specs to Stainless
+
+image: node:20-alpine
+
+.upload-openapi-spec:
+  script:
+    - apk add --no-cache git
+    - git clone https://github.com/stainless-api/upload-openapi-spec-action.git
+    - cd upload-openapi-spec-action
+    - node dist/index.js
+  variables:
+    INPUT_STAINLESS_API_KEY: $STAINLESS_API_KEY
+    INPUT_INPUT_PATH: $INPUT_PATH
+    INPUT_CONFIG_PATH: $CONFIG_PATH
+    INPUT_OUTPUT_PATH: $OUTPUT_PATH
+    INPUT_PROJECT_NAME: $PROJECT_NAME
+    INPUT_COMMIT_MESSAGE: $COMMIT_MESSAGE
+    INPUT_GUESS_CONFIG: $GUESS_CONFIG
+    INPUT_BRANCH: $BRANCH
