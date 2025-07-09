@@ -46,9 +46,9 @@ jobs:
       - uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: 'path/to/my-company-openapi.json'
-          project_name: 'my-stainless-project'
-          commit_message: 'feat(api): my cool feature'
+          input_path: "path/to/my-company-openapi.json"
+          project_name: "my-stainless-project"
+          commit_message: "feat(api): my cool feature"
           guess_config: true
 ```
 
@@ -62,16 +62,16 @@ Then, add the following to your `.gitlab-ci.yml` file:
 
 ```yaml
 include:
-  - remote: 'https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/main/.gitlab-ci.yml'
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/main/.gitlab-ci.yml"
 
 upload-openapi-spec:
   extends: .upload-openapi-spec
   variables:
     STAINLESS_API_KEY: "$STAINLESS_API_KEY"
-    INPUT_PATH: '$CI_PROJECT_DIR/path/to/my-company-openapi.json'
-    PROJECT_NAME: 'my-stainless-project'
-    COMMIT_MESSAGE: 'feat(api): my cool feature'
-    GUESS_CONFIG: 'true'
+    INPUT_PATH: "$CI_PROJECT_DIR/path/to/my-company-openapi.json"
+    PROJECT_NAME: "my-stainless-project"
+    COMMIT_MESSAGE: "feat(api): my cool feature"
+    GUESS_CONFIG: "true"
     # CONFIG_PATH: '$CI_PROJECT_DIR/path/to/my-company.stainless.yaml' # Optional
     # OUTPUT_PATH: '$CI_PROJECT_DIR/path/to/output.json' # Optional
     # BRANCH: 'main' # Optional
@@ -82,16 +82,16 @@ You can identify your Stainless project name on the [Stainless dashboard](https:
 ### Optional parameters
 
 - `branch`: Specifies the branch to push files to. If you provide it, the project MUST have the [branches
-feature](https://app.stainless.com/docs/guides/branches) enabled. By default, it is `main`.
+  feature](https://app.stainless.com/docs/guides/branches) enabled. By default, it is `main`.
 
 - `commit_message`: Specifies the commit message that we will use for the commits generated for your SDKs as a result
-of the API change (and which will subsequently appear in the Changelog). If you provide it, it MUST follow the
-[Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/). If you do not provide it, we will use a
-default message.
+  of the API change (and which will subsequently appear in the Changelog). If you provide it, it MUST follow the
+  [Conventional Commits format](https://www.conventionalcommits.org/en/v1.0.0/). If you do not provide it, we will use a
+  default message.
 
 - `guess_config`: When `true`, will update your Stainless config file based on the change you've made to your spec. This
-does the same thing as selecting the "Generate missing endpoints" button in the Studio. By default, it is `false`. You
-should not set this to `true` if you are passing a `config_path`.
+  does the same thing as selecting the "Generate missing endpoints" button in the Studio. By default, it is `false`. You
+  should not set this to `true` if you are passing a `config_path`.
 
 ## Usage with ReadMe for docs with example snippets
 
@@ -122,10 +122,10 @@ jobs:
       - uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: 'path/to/my-company-openapi.json'
-          output_path: 'path/to/my-company-openapi.documented.json'
-          project_name: 'my-stainless-project'
-          commit_message: 'feat(api): my cool feature'
+          input_path: "path/to/my-company-openapi.json"
+          output_path: "path/to/my-company-openapi.documented.json"
+          project_name: "my-stainless-project"
+          commit_message: "feat(api): my cool feature"
       - uses: readmeio/rdme@v8
         with:
           rdme: openapi "path/to/my-company-openapi.documented.json" --key=${{ secrets.README_TOKEN }} --id=${{ secrets.README_DEFINITION_ID }}
@@ -139,7 +139,6 @@ This assumes the following secrets have been [uploaded to your GitHub Actions Se
   this can be obtained by "clicking edit on the API definition on your project API definitions page". Only sent to ReadMe's servers.
 
 Remember to set the `readmeio/rdme` ref version to the latest stable available (`v8`, as of this writing). You can verify the latest version of ReadMe's GitHub Action [here](https://github.com/marketplace/actions/rdme-sync-to-readme).
-
 
 ## Usage with Mintlify for docs with example snippets
 
@@ -174,21 +173,21 @@ jobs:
         uses: stainless-api/upload-openapi-spec-action@main
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
-          input_path: 'path/to/my-company-openapi.json'
-          output_path: 'path/to/my-company-openapi.documented.json'
-          project_name: 'my-stainless-project'
-          commit_message: 'feat(api): my cool feature'
+          input_path: "path/to/my-company-openapi.json"
+          output_path: "path/to/my-company-openapi.documented.json"
+          project_name: "my-stainless-project"
+          commit_message: "feat(api): my cool feature"
       - name: Push documented spec to docs repo
         uses: dmnemec/copy_file_to_another_repo_action@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
         with:
-          source_file: 'path/to/my-company-openapi.documented.json'
-          destination_repo: '{DOCS_REPO_NAME}'
-          destination_folder: 'openapi-specs' # (optional) the folder in the destination repository to place the file in, if not the root directory
-          user_email: '{EMAIL}' # the email associated with the GH token
-          user_name: '{USERNAME}' # the username associated with the GH token
-          commit_message: 'Auto-updates from Stainless'
+          source_file: "path/to/my-company-openapi.documented.json"
+          destination_repo: "{DOCS_REPO_NAME}"
+          destination_folder: "openapi-specs" # (optional) the folder in the destination repository to place the file in, if not the root directory
+          user_email: "{EMAIL}" # the email associated with the GH token
+          user_name: "{USERNAME}" # the username associated with the GH token
+          commit_message: "Auto-updates from Stainless"
 ```
 
 This assumes the following secrets have been [uploaded to your GitHub Actions Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets):

@@ -8,27 +8,27 @@ runs:
   main: dist/index.js
 inputs:
   stainless_api_key:
-    description: 'Stainless API key.'
+    description: "Stainless API key."
     required: true
   input_path:
-    description: 'Path to the OpenAPI file.'
+    description: "Path to the OpenAPI file."
     required: true
   config_path:
-    description: 'Path to the Stainless config file.'
+    description: "Path to the Stainless config file."
     required: false
   output_path:
-    description: 'Output path for the decorated OpenAPI spec.'
+    description: "Output path for the decorated OpenAPI spec."
   project_name:
-    description: 'Stainless project name.'
+    description: "Stainless project name."
     required: true
   commit_message:
-    description: 'Commit message to use in the commits in the SDK repo.'
+    description: "Commit message to use in the commits in the SDK repo."
     required: false
   guess_config:
-    description: 'If true, renegerate the endpoints in the Stainless config file.'
+    description: "If true, renegerate the endpoints in the Stainless config file."
     required: false
-    default: 'false'
+    default: "false"
   branch:
-    description: 'If true, renegerate the endpoints in the Stainless config file.'
+    description: "If true, renegerate the endpoints in the Stainless config file."
     required: false
-    default: 'main'
+    default: "main"

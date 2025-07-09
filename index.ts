@@ -1,12 +1,12 @@
-import { error, info, warn } from 'node:console';
-import { readFileSync, writeFileSync } from 'node:fs';
-import YAML from 'yaml';
-import { getBooleanInput, getInput } from '@actions/core';
-import Stainless from '@stainless-api/sdk';
+import { error, info, warn } from "node:console";
+import { readFileSync, writeFileSync } from "node:fs";
+import YAML from "yaml";
+import { getBooleanInput, getInput } from "@actions/core";
+import Stainless from "@stainless-api/sdk";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
 );
 
 export const isValidConventionalCommitMessage = (message: string) => {
@@ -15,7 +15,7 @@ export const isValidConventionalCommitMessage = (message: string) => {
 
 // Detect if running in GitHub Actions or GitLab CI
 function isGitLabCI(): boolean {
-  return process.env['GITLAB_CI'] === 'true';
+  return process.env["GITLAB_CI"] === "true";
 }
 
 // Get input values from either GitHub Actions or GitLab CI environment
@@ -34,14 +34,17 @@ function getInputValue(name: string, options?: { required: boolean }): string {
     if (options?.required && !value) {
       throw new Error(`Input required and not supplied: ${name}`);
     }
-    return value || '';
+    return value || "";
   } else {
     return getInput(name, options);
   }
 }
 
 // Get boolean input values from either GitHub Actions or GitLab CI environment
-function getBooleanInputValue(name: string, options?: { required: boolean }): boolean {
+function getBooleanInputValue(
+  name: string,
+  options?: { required: boolean }
+): boolean {
   if (isGitLabCI()) {
     // Try GitLab-specific INPUT_ prefixed variable first (like GitHub Actions)
     const inputEnvName = `INPUT_${name.toUpperCase()}`;
@@ -56,7 +59,7 @@ function getBooleanInputValue(name: string, options?: { required: boolean }): bo
     if (options?.required && value === undefined) {
       throw new Error(`Input required and not supplied: ${name}`);
     }
-    return value === 'true';
+    return value === "true";
   } else {
     return getBooleanInput(name, options);
   }
@@ -64,14 +67,16 @@ function getBooleanInputValue(name: string, options?: { required: boolean }): bo
 
 export async function main() {
   // inputs
-  const stainless_api_key = getInputValue('stainless_api_key', { required: true });
-  const inputPath = getInputValue('input_path', { required: true });
-  const configPath = getInputValue('config_path', { required: false });
-  let projectName = getInputValue('project_name', { required: false });
-  const commitMessage = getInputValue('commit_message', { required: false });
-  const guessConfig = getBooleanInputValue('guess_config', { required: false });
-  const branch = getInputValue('branch', { required: false });
-  const outputPath = getInputValue('output_path');
+  const stainless_api_key = getInputValue("stainless_api_key", {
+    required: true,
+  });
+  const inputPath = getInputValue("input_path", { required: true });
+  const configPath = getInputValue("config_path", { required: false });
+  let projectName = getInputValue("project_name", { required: false });
+  const commitMessage = getInputValue("commit_message", { required: false });
+  const guessConfig = getBooleanInputValue("guess_config", { required: false });
+  const branch = getInputValue("branch", { required: false });
+  const outputPath = getInputValue("output_path");
 
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
@@ -81,7 +86,7 @@ export async function main() {
 
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     const errorMsg =
-      'Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/';
+      "Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/";
     error(errorMsg);
     throw Error(errorMsg);
   }
@@ -90,19 +95,21 @@ export async function main() {
     const stainless = new Stainless({ apiKey: stainless_api_key });
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
-      const errorMsg = 'No projects found. Please create a project first.';
+      const errorMsg = "No projects found. Please create a project first.";
       error(errorMsg);
       throw Error(errorMsg);
     }
     projectName = projects.data[0]!.slug;
     if (projects.data.length > 1) {
       warn(
-        `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`,
+        `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`
       );
     }
   }
 
-  info(configPath ? 'Uploading spec and config files...' : 'Uploading spec file...');
+  info(
+    configPath ? "Uploading spec and config files..." : "Uploading spec file..."
+  );
   const response = await uploadSpecAndConfig(
     inputPath,
     configPath,
@@ -110,29 +117,33 @@ export async function main() {
     projectName,
     commitMessage,
     guessConfig,
-    branch,
+    branch
   );
   if (!response.ok) {
     const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(
-      response.errors,
+      response.errors
     )} See more details in the Stainless Studio.`;
     error(errorMsg);
     throw Error(errorMsg);
   }
-  info('Uploaded!');
+  info("Uploaded!");
 
   if (outputPath) {
     if (!response.decoratedSpec) {
-      const errorMsg = 'Failed to get decorated spec';
+      const errorMsg = "Failed to get decorated spec";
       error(errorMsg);
       throw Error(errorMsg);
     }
     // Decorated spec is currently always YAML, so convert it to JSON if needed.
-    if (!(outputPath.endsWith('.yml') || outputPath.endsWith('.yaml'))) {
-      response.decoratedSpec = JSON.stringify(YAML.parse(response.decoratedSpec), null, 2);
+    if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
+      response.decoratedSpec = JSON.stringify(
+        YAML.parse(response.decoratedSpec),
+        null,
+        2
+      );
     }
     writeFileSync(outputPath, response.decoratedSpec);
-    info('Wrote decorated spec to', outputPath);
+    info("Wrote decorated spec to", outputPath);
   }
 }
 
@@ -143,7 +154,7 @@ async function uploadSpecAndConfig(
   projectName: string,
   commitMessage: string,
   guessConfig: boolean,
-  branch: string,
+  branch: string
 ): Promise<{
   ok: boolean;
   errors: Array<{
@@ -153,7 +164,7 @@ async function uploadSpecAndConfig(
   decoratedSpec: string | null;
 }> {
   const stainless = new Stainless({ apiKey: token, project: projectName });
-  const specContent = readFileSync(specPath, 'utf8');
+  const specContent = readFileSync(specPath, "utf8");
 
   let configContent;
 
@@ -162,17 +173,17 @@ async function uploadSpecAndConfig(
       await stainless.projects.configs.guess({
         branch,
         spec: specContent,
-      }),
+      })
     )[0]?.content;
   } else if (configPath) {
-    configContent = readFileSync(configPath, 'utf8');
+    configContent = readFileSync(configPath, "utf8");
   }
 
   const headers: Record<string, string> = {};
   if (isGitLabCI()) {
-    headers['X-GitLab-CI'] = 'stainless-api/upload-openapi-spec-action';
+    headers["X-GitLab-CI"] = "stainless-api/upload-openapi-spec-action";
   } else {
-    headers['X-GitHub-Action'] = 'stainless-api/upload-openapi-spec-action';
+    headers["X-GitHub-Action"] = "stainless-api/upload-openapi-spec-action";
   }
 
   let build = await stainless.builds.create(
@@ -180,12 +191,14 @@ async function uploadSpecAndConfig(
       ...(branch && { branch }),
       ...(commitMessage && { commit_message: commitMessage }),
       revision: {
-        'openapi.yml': { content: specContent },
-        ...(configContent && { 'openapi.stainless.yml': { content: configContent } }),
+        "openapi.yml": { content: specContent },
+        ...(configContent && {
+          "openapi.stainless.yml": { content: configContent },
+        }),
       },
       allow_empty: true,
     },
-    { headers },
+    { headers }
   );
 
   const pollingStart = Date.now();
@@ -193,7 +206,8 @@ async function uploadSpecAndConfig(
   while (!donePolling && Date.now() - pollingStart < 10 * 60 * 1000) {
     build = await stainless.builds.retrieve(build.id);
     donePolling = Object.values(build.targets).every(
-      (target) => (target as Stainless.BuildTarget).commit.status === 'completed',
+      (target) =>
+        (target as Stainless.BuildTarget).commit.status === "completed"
     );
     if (!donePolling) {
       await new Promise((resolve) => setTimeout(resolve, 5 * 1000));
@@ -201,17 +215,22 @@ async function uploadSpecAndConfig(
   }
 
   const errors = (
-    Object.entries(build.targets) as [keyof Stainless.BuildObject.Targets, Stainless.BuildTarget][]
+    Object.entries(build.targets) as [
+      keyof Stainless.BuildObject.Targets,
+      Stainless.BuildTarget
+    ][]
   )
     .map(([target, value]) => {
       if (
         // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
         // all be considered failures.
-        value.commit?.status === 'completed' &&
-        ['noop', 'error', 'warning', 'note', 'success'].includes(value.commit.completed.conclusion)
+        value.commit?.status === "completed" &&
+        ["noop", "error", "warning", "note", "success"].includes(
+          value.commit.completed.conclusion
+        )
       ) {
         return undefined;
-      } else if (value.commit?.status === 'completed') {
+      } else if (value.commit?.status === "completed") {
         return {
           target,
           outcome: value.commit.completed.conclusion,
@@ -219,7 +238,7 @@ async function uploadSpecAndConfig(
       } else {
         return {
           target,
-          outcome: 'timed_out',
+          outcome: "timed_out",
         };
       }
     })
