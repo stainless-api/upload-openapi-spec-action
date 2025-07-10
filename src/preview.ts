@@ -14,6 +14,7 @@ import {
   getNonMainBaseRef,
   isConfigChanged,
   readConfig,
+  saveConfig,
 } from "./config";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
@@ -40,6 +41,10 @@ async function main() {
       throw new Error("github_token is required to make a comment");
     }
 
+    // If we came from the checkout-base action, we might need to save the
+    // generated config files.
+    const { savedSha } = await saveConfig({ oasPath, configPath });
+
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -49,6 +54,12 @@ async function main() {
     startGroup("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+    if (savedSha !== null && savedSha !== mergeBaseSha) {
+      throw new Error(
+        `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`,
+      );
+    }
+
     const { nonMainBaseRef } = await getNonMainBaseRef({
       baseRef,
       defaultBranch,

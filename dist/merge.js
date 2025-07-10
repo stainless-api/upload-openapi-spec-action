@@ -33186,6 +33186,9 @@ async function upsertComment({
 // src/config.ts
 var exec = __toESM(require_exec());
 var fs = __toESM(require("node:fs"));
+function getConfigTag(sha) {
+  return `stainless-generated-config-from-${sha}`;
+}
 async function readConfig({
   oasPath,
   configPath,
@@ -33194,7 +33197,7 @@ async function readConfig({
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
   console.log("Reading config at", sha);
   const results = {};
-  for (const ref of [sha]) {
+  for (const ref of [sha, getConfigTag(sha)]) {
     try {
       await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
         silent: true
