@@ -6,9 +6,10 @@ import {
   startGroup,
 } from "@actions/core";
 import { Stainless } from "@stainless-api/sdk";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
+import * as fs from "node:fs";
 import { printComment, retrieveComment, upsertComment } from "./comment";
-import { isConfigChanged } from "./config";
+import { isConfigChanged, readConfig } from "./config";
+import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
   try {
@@ -44,11 +45,11 @@ async function main() {
       logLevel: "warn",
     });
 
+    const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
+    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
     const configChanged = await isConfigChanged({
-      before: baseSha,
-      after: headSha,
-      oasPath,
-      configPath,
+      before: baseConfig,
+      after: headConfig,
     });
 
     if (!configChanged) {
@@ -75,7 +76,6 @@ async function main() {
       branch: "main",
       mergeBranch,
       guessConfig: false,
-      outputDir,
     });
 
     let latestRun: RunResult;
@@ -89,10 +89,16 @@ async function main() {
       endGroup();
 
       if (run.done) {
-        const { outcomes, documentedSpecPath } = latestRun!;
+        const { outcomes, documentedSpec } = latestRun!;
 
         setOutput("outcomes", outcomes);
-        setOutput("documented_spec_path", documentedSpecPath);
+
+        if (documentedSpec && outputDir) {
+          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+          fs.mkdirSync(outputDir, { recursive: true });
+          fs.writeFileSync(documentedSpecPath, documentedSpec);
+          setOutput("documented_spec_path", documentedSpecPath);
+        }
 
         if (!checkResults({ outcomes, failRunOn })) {
           process.exit(1);

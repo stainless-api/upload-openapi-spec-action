@@ -1,5 +1,7 @@
 import { getBooleanInput, getInput, setOutput } from "@actions/core";
 import { Stainless } from "@stainless-api/sdk";
+import * as fs from "node:fs";
+import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 
 async function main() {
@@ -21,32 +23,35 @@ async function main() {
       getInput("base_branch", { required: false }) || undefined;
     const outputDir = getInput("output_dir", { required: false }) || undefined;
 
+    const config = await readConfig({ oasPath, configPath });
+
     const stainless = new Stainless({
       project: projectName,
       apiKey,
       logLevel: "warn",
     });
 
-    for await (const {
-      baseOutcomes,
-      outcomes,
-      documentedSpecPath,
-    } of runBuilds({
+    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
       stainless,
       projectName,
       baseRevision,
       baseBranch,
       mergeBranch,
       branch,
-      oasPath,
-      configPath,
+      oasContent: config.oas,
+      configContent: config.config,
       guessConfig,
       commitMessage,
-      outputDir,
     })) {
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
-      setOutput("documented_spec_path", documentedSpecPath);
+
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs.mkdirSync(outputDir, { recursive: true });
+        fs.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
     }
   } catch (error) {
     console.error("Error interacting with API:", error);

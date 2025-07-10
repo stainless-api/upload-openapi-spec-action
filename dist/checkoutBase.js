@@ -177,7 +177,7 @@ var require_file_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
     var crypto = __importStar(require("crypto"));
-    var fs3 = __importStar(require("fs"));
+    var fs2 = __importStar(require("fs"));
     var os = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
@@ -185,10 +185,10 @@ var require_file_command = __commonJS({
       if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
       }
-      if (!fs3.existsSync(filePath)) {
+      if (!fs2.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs3.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
+      fs2.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -229,7 +229,7 @@ var require_proxy = __commonJS({
       if (proxyVar) {
         try {
           return new DecodedURL(proxyVar);
-        } catch (_a2) {
+        } catch (_a) {
           if (!proxyVar.startsWith("http://") && !proxyVar.startsWith("https://"))
             return new DecodedURL(`http://${proxyVar}`);
         }
@@ -938,7 +938,7 @@ var require_util = __commonJS({
     var { InvalidArgumentError } = require_errors();
     var { Blob: Blob2 } = require("buffer");
     var nodeUtil = require("util");
-    var { stringify: stringify2 } = require("querystring");
+    var { stringify } = require("querystring");
     var { headerNameLowerCasedRecord } = require_constants();
     var [nodeMajor, nodeMinor] = process.versions.node.split(".").map((v) => Number(v));
     function nop() {
@@ -946,14 +946,14 @@ var require_util = __commonJS({
     function isStream(obj) {
       return obj && typeof obj === "object" && typeof obj.pipe === "function" && typeof obj.on === "function";
     }
-    function isBlobLike2(object) {
+    function isBlobLike(object) {
       return Blob2 && object instanceof Blob2 || object && typeof object === "object" && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && /^(Blob|File)$/.test(object[Symbol.toStringTag]);
     }
     function buildURL(url, queryParams) {
       if (url.includes("?") || url.includes("#")) {
         throw new Error('Query params cannot be passed when url already contains "?" or "#".');
       }
-      const stringified = stringify2(queryParams);
+      const stringified = stringify(queryParams);
       if (stringified) {
         url += "?" + stringified;
       }
@@ -991,14 +991,14 @@ var require_util = __commonJS({
         }
         const port = url.port != null ? url.port : url.protocol === "https:" ? 443 : 80;
         let origin = url.origin != null ? url.origin : `${url.protocol}//${url.hostname}:${port}`;
-        let path2 = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
+        let path = url.path != null ? url.path : `${url.pathname || ""}${url.search || ""}`;
         if (origin.endsWith("/")) {
           origin = origin.substring(0, origin.length - 1);
         }
-        if (path2 && !path2.startsWith("/")) {
-          path2 = `/${path2}`;
+        if (path && !path.startsWith("/")) {
+          path = `/${path}`;
         }
-        url = new URL(origin + path2);
+        url = new URL(origin + path);
       }
       return url;
     }
@@ -1033,7 +1033,7 @@ var require_util = __commonJS({
     function deepClone(obj) {
       return JSON.parse(JSON.stringify(obj));
     }
-    function isAsyncIterable2(obj) {
+    function isAsyncIterable(obj) {
       return !!(obj != null && typeof obj[Symbol.asyncIterator] === "function");
     }
     function isIterable(obj) {
@@ -1045,7 +1045,7 @@ var require_util = __commonJS({
       } else if (isStream(body)) {
         const state = body._readableState;
         return state && state.objectMode === false && state.ended === true && Number.isFinite(state.length) ? state.length : null;
-      } else if (isBlobLike2(body)) {
+      } else if (isBlobLike(body)) {
         return body.size != null ? body.size : null;
       } else if (isBuffer(body)) {
         return body.byteLength;
@@ -1193,7 +1193,7 @@ var require_util = __commonJS({
       }
     }
     var ReadableStream;
-    function ReadableStreamFrom2(iterable) {
+    function ReadableStreamFrom(iterable) {
       if (!ReadableStream) {
         ReadableStream = require("stream/web").ReadableStream;
       }
@@ -1278,13 +1278,13 @@ var require_util = __commonJS({
       isReadable,
       toUSVString,
       isReadableAborted,
-      isBlobLike: isBlobLike2,
+      isBlobLike,
       parseOrigin,
       parseURL,
       getServerName,
       isStream,
       isIterable,
-      isAsyncIterable: isAsyncIterable2,
+      isAsyncIterable,
       isDestroyed,
       headerNameToString,
       parseRawHeaders,
@@ -1293,7 +1293,7 @@ var require_util = __commonJS({
       destroy,
       bodyLength,
       deepClone,
-      ReadableStreamFrom: ReadableStreamFrom2,
+      ReadableStreamFrom,
       isBuffer,
       validateHandler,
       getSocketInfo,
@@ -2612,20 +2612,20 @@ var require_parseParams = __commonJS({
 var require_basename = __commonJS({
   "node_modules/@fastify/busboy/lib/utils/basename.js"(exports2, module2) {
     "use strict";
-    module2.exports = function basename(path2) {
-      if (typeof path2 !== "string") {
+    module2.exports = function basename(path) {
+      if (typeof path !== "string") {
         return "";
       }
-      for (var i = path2.length - 1; i >= 0; --i) {
-        switch (path2.charCodeAt(i)) {
+      for (var i = path.length - 1; i >= 0; --i) {
+        switch (path.charCodeAt(i)) {
           case 47:
           // '/'
           case 92:
-            path2 = path2.slice(i + 1);
-            return path2 === ".." || path2 === "." ? "" : path2;
+            path = path.slice(i + 1);
+            return path === ".." || path === "." ? "" : path;
         }
       }
-      return path2 === ".." || path2 === "." ? "" : path2;
+      return path === ".." || path === "." ? "" : path;
     };
   }
 });
@@ -3625,7 +3625,7 @@ var require_util2 = __commonJS({
     var { redirectStatusSet, referrerPolicySet: referrerPolicyTokens, badPortsSet } = require_constants2();
     var { getGlobalOrigin } = require_global();
     var { performance: performance2 } = require("perf_hooks");
-    var { isBlobLike: isBlobLike2, toUSVString, ReadableStreamFrom: ReadableStreamFrom2 } = require_util();
+    var { isBlobLike, toUSVString, ReadableStreamFrom } = require_util();
     var assert = require("assert");
     var { isUint8Array } = require("util/types");
     var supportedHashes = [];
@@ -4182,12 +4182,12 @@ var require_util2 = __commonJS({
       const protocol = url.protocol;
       return protocol === "http:" || protocol === "https:";
     }
-    var hasOwn2 = Object.hasOwn || ((dict, key) => Object.prototype.hasOwnProperty.call(dict, key));
+    var hasOwn = Object.hasOwn || ((dict, key) => Object.prototype.hasOwnProperty.call(dict, key));
     module2.exports = {
       isAborted,
       isCancelled,
       createDeferredPromise,
-      ReadableStreamFrom: ReadableStreamFrom2,
+      ReadableStreamFrom,
       toUSVString,
       tryUpgradeRequestToAPotentiallyTrustworthyURL,
       coarsenedSharedCurrentTime,
@@ -4206,7 +4206,7 @@ var require_util2 = __commonJS({
       requestCurrentURL,
       responseURL,
       responseLocationURL,
-      isBlobLike: isBlobLike2,
+      isBlobLike,
       isURLPotentiallyTrustworthy,
       isValidReasonPhrase,
       sameOrigin,
@@ -4215,7 +4215,7 @@ var require_util2 = __commonJS({
       makeIterator,
       isValidHeaderName,
       isValidHeaderValue,
-      hasOwn: hasOwn2,
+      hasOwn,
       isErrorLike,
       fullyReadBody,
       bytesMatch,
@@ -4253,7 +4253,7 @@ var require_webidl = __commonJS({
   "node_modules/undici/lib/fetch/webidl.js"(exports2, module2) {
     "use strict";
     var { types } = require("util");
-    var { hasOwn: hasOwn2, toUSVString } = require_util2();
+    var { hasOwn, toUSVString } = require_util2();
     var webidl = {};
     webidl.converters = {};
     webidl.util = {};
@@ -4464,7 +4464,7 @@ var require_webidl = __commonJS({
         for (const options of converters) {
           const { key, defaultValue, required, converter } = options;
           if (required === true) {
-            if (!hasOwn2(dictionary, key)) {
+            if (!hasOwn(dictionary, key)) {
               throw webidl.errors.exception({
                 header: "Dictionary",
                 message: `Missing required key "${key}".`
@@ -4472,7 +4472,7 @@ var require_webidl = __commonJS({
             }
           }
           let value = dictionary[key];
-          const hasDefault = hasOwn2(options, "defaultValue");
+          const hasDefault = hasOwn(options, "defaultValue");
           if (hasDefault && value !== null) {
             value = value ?? defaultValue;
           }
@@ -4909,12 +4909,12 @@ var require_file = __commonJS({
     var { Blob: Blob2, File: NativeFile } = require("buffer");
     var { types } = require("util");
     var { kState } = require_symbols2();
-    var { isBlobLike: isBlobLike2 } = require_util2();
+    var { isBlobLike } = require_util2();
     var { webidl } = require_webidl();
     var { parseMIMEType, serializeAMimeType } = require_dataURL();
     var { kEnumerableProperty } = require_util();
     var encoder = new TextEncoder();
-    var File2 = class _File extends Blob2 {
+    var File = class _File extends Blob2 {
       constructor(fileBits, fileName, options = {}) {
         webidl.argumentLengthCheck(arguments, 2, { header: "File constructor" });
         fileBits = webidl.converters["sequence<BlobPart>"](fileBits);
@@ -5002,7 +5002,7 @@ var require_file = __commonJS({
         return "File";
       }
     };
-    Object.defineProperties(File2.prototype, {
+    Object.defineProperties(File.prototype, {
       [Symbol.toStringTag]: {
         value: "File",
         configurable: true
@@ -5013,7 +5013,7 @@ var require_file = __commonJS({
     webidl.converters.Blob = webidl.interfaceConverter(Blob2);
     webidl.converters.BlobPart = function(V, opts) {
       if (webidl.util.Type(V) === "Object") {
-        if (isBlobLike2(V)) {
+        if (isBlobLike(V)) {
           return webidl.converters.Blob(V, { strict: false });
         }
         if (ArrayBuffer.isView(V) || types.isAnyArrayBuffer(V)) {
@@ -5068,7 +5068,7 @@ var require_file = __commonJS({
               new Uint8Array(element.buffer, element.byteOffset, element.byteLength)
             );
           }
-        } else if (isBlobLike2(element)) {
+        } else if (isBlobLike(element)) {
           bytes.push(element);
         }
       }
@@ -5081,10 +5081,10 @@ var require_file = __commonJS({
       }
       return s.replace(/\r?\n/g, nativeLineEnding);
     }
-    function isFileLike2(object) {
-      return NativeFile && object instanceof NativeFile || object instanceof File2 || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
+    function isFileLike(object) {
+      return NativeFile && object instanceof NativeFile || object instanceof File || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
     }
-    module2.exports = { File: File2, FileLike, isFileLike: isFileLike2 };
+    module2.exports = { File, FileLike, isFileLike };
   }
 });
 
@@ -5092,13 +5092,13 @@ var require_file = __commonJS({
 var require_formdata = __commonJS({
   "node_modules/undici/lib/fetch/formdata.js"(exports2, module2) {
     "use strict";
-    var { isBlobLike: isBlobLike2, toUSVString, makeIterator } = require_util2();
+    var { isBlobLike, toUSVString, makeIterator } = require_util2();
     var { kState } = require_symbols2();
-    var { File: UndiciFile, FileLike, isFileLike: isFileLike2 } = require_file();
+    var { File: UndiciFile, FileLike, isFileLike } = require_file();
     var { webidl } = require_webidl();
     var { Blob: Blob2, File: NativeFile } = require("buffer");
-    var File2 = NativeFile ?? UndiciFile;
-    var FormData2 = class _FormData {
+    var File = NativeFile ?? UndiciFile;
+    var FormData = class _FormData {
       constructor(form) {
         if (form !== void 0) {
           throw webidl.errors.conversionFailed({
@@ -5112,13 +5112,13 @@ var require_formdata = __commonJS({
       append(name, value, filename = void 0) {
         webidl.brandCheck(this, _FormData);
         webidl.argumentLengthCheck(arguments, 2, { header: "FormData.append" });
-        if (arguments.length === 3 && !isBlobLike2(value)) {
+        if (arguments.length === 3 && !isBlobLike(value)) {
           throw new TypeError(
             "Failed to execute 'append' on 'FormData': parameter 2 is not of type 'Blob'"
           );
         }
         name = webidl.converters.USVString(name);
-        value = isBlobLike2(value) ? webidl.converters.Blob(value, { strict: false }) : webidl.converters.USVString(value);
+        value = isBlobLike(value) ? webidl.converters.Blob(value, { strict: false }) : webidl.converters.USVString(value);
         filename = arguments.length === 3 ? webidl.converters.USVString(filename) : void 0;
         const entry = makeEntry(name, value, filename);
         this[kState].push(entry);
@@ -5154,13 +5154,13 @@ var require_formdata = __commonJS({
       set(name, value, filename = void 0) {
         webidl.brandCheck(this, _FormData);
         webidl.argumentLengthCheck(arguments, 2, { header: "FormData.set" });
-        if (arguments.length === 3 && !isBlobLike2(value)) {
+        if (arguments.length === 3 && !isBlobLike(value)) {
           throw new TypeError(
             "Failed to execute 'set' on 'FormData': parameter 2 is not of type 'Blob'"
           );
         }
         name = webidl.converters.USVString(name);
-        value = isBlobLike2(value) ? webidl.converters.Blob(value, { strict: false }) : webidl.converters.USVString(value);
+        value = isBlobLike(value) ? webidl.converters.Blob(value, { strict: false }) : webidl.converters.USVString(value);
         filename = arguments.length === 3 ? toUSVString(filename) : void 0;
         const entry = makeEntry(name, value, filename);
         const idx = this[kState].findIndex((entry2) => entry2.name === name);
@@ -5215,8 +5215,8 @@ var require_formdata = __commonJS({
         }
       }
     };
-    FormData2.prototype[Symbol.iterator] = FormData2.prototype.entries;
-    Object.defineProperties(FormData2.prototype, {
+    FormData.prototype[Symbol.iterator] = FormData.prototype.entries;
+    Object.defineProperties(FormData.prototype, {
       [Symbol.toStringTag]: {
         value: "FormData",
         configurable: true
@@ -5227,20 +5227,20 @@ var require_formdata = __commonJS({
       if (typeof value === "string") {
         value = Buffer.from(value).toString("utf8");
       } else {
-        if (!isFileLike2(value)) {
-          value = value instanceof Blob2 ? new File2([value], "blob", { type: value.type }) : new FileLike(value, "blob", { type: value.type });
+        if (!isFileLike(value)) {
+          value = value instanceof Blob2 ? new File([value], "blob", { type: value.type }) : new FileLike(value, "blob", { type: value.type });
         }
         if (filename !== void 0) {
           const options = {
             type: value.type,
             lastModified: value.lastModified
           };
-          value = NativeFile && value instanceof NativeFile || value instanceof UndiciFile ? new File2([value], filename, options) : new FileLike(value, filename, options);
+          value = NativeFile && value instanceof NativeFile || value instanceof UndiciFile ? new File([value], filename, options) : new FileLike(value, filename, options);
         }
       }
       return { name, value };
     }
-    module2.exports = { FormData: FormData2 };
+    module2.exports = { FormData };
   }
 });
 
@@ -5251,14 +5251,14 @@ var require_body = __commonJS({
     var Busboy = require_main();
     var util = require_util();
     var {
-      ReadableStreamFrom: ReadableStreamFrom2,
-      isBlobLike: isBlobLike2,
+      ReadableStreamFrom,
+      isBlobLike,
       isReadableStreamLike,
       readableStreamClose,
       createDeferredPromise,
       fullyReadBody
     } = require_util2();
-    var { FormData: FormData2 } = require_formdata();
+    var { FormData } = require_formdata();
     var { kState } = require_symbols2();
     var { webidl } = require_webidl();
     var { DOMException: DOMException2, structuredClone } = require_constants2();
@@ -5277,7 +5277,7 @@ var require_body = __commonJS({
       random = (max) => Math.floor(Math.random(max));
     }
     var ReadableStream = globalThis.ReadableStream;
-    var File2 = NativeFile ?? UndiciFile;
+    var File = NativeFile ?? UndiciFile;
     var textEncoder = new TextEncoder();
     var textDecoder = new TextDecoder();
     function extractBody(object, keepalive = false) {
@@ -5287,7 +5287,7 @@ var require_body = __commonJS({
       let stream = null;
       if (object instanceof ReadableStream) {
         stream = object;
-      } else if (isBlobLike2(object)) {
+      } else if (isBlobLike(object)) {
         stream = object.stream();
       } else {
         stream = new ReadableStream({
@@ -5321,7 +5321,7 @@ var require_body = __commonJS({
         const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, "0")}`;
         const prefix = `--${boundary}\r
 Content-Disposition: form-data`;
-        const escape2 = (str) => str.replace(/\n/g, "%0A").replace(/\r/g, "%0D").replace(/"/g, "%22");
+        const escape = (str) => str.replace(/\n/g, "%0A").replace(/\r/g, "%0D").replace(/"/g, "%22");
         const normalizeLinefeeds = (value) => value.replace(/\r?\n|\r/g, "\r\n");
         const blobParts = [];
         const rn = new Uint8Array([13, 10]);
@@ -5329,14 +5329,14 @@ Content-Disposition: form-data`;
         let hasUnknownSizeValue = false;
         for (const [name, value] of object) {
           if (typeof value === "string") {
-            const chunk2 = textEncoder.encode(prefix + `; name="${escape2(normalizeLinefeeds(name))}"\r
+            const chunk2 = textEncoder.encode(prefix + `; name="${escape(normalizeLinefeeds(name))}"\r
 \r
 ${normalizeLinefeeds(value)}\r
 `);
             blobParts.push(chunk2);
             length += chunk2.byteLength;
           } else {
-            const chunk2 = textEncoder.encode(`${prefix}; name="${escape2(normalizeLinefeeds(name))}"` + (value.name ? `; filename="${escape2(value.name)}"` : "") + `\r
+            const chunk2 = textEncoder.encode(`${prefix}; name="${escape(normalizeLinefeeds(name))}"` + (value.name ? `; filename="${escape(value.name)}"` : "") + `\r
 Content-Type: ${value.type || "application/octet-stream"}\r
 \r
 `);
@@ -5365,7 +5365,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
           }
         };
         type = "multipart/form-data; boundary=" + boundary;
-      } else if (isBlobLike2(object)) {
+      } else if (isBlobLike(object)) {
         source = object;
         length = object.size;
         if (object.type) {
@@ -5380,7 +5380,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
             "Response body object should not be disturbed or locked"
           );
         }
-        stream = object instanceof ReadableStream ? object : ReadableStreamFrom2(object);
+        stream = object instanceof ReadableStream ? object : ReadableStreamFrom(object);
       }
       if (typeof source === "string" || util.isBuffer(source)) {
         length = Buffer.byteLength(source);
@@ -5487,7 +5487,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
           if (/multipart\/form-data/.test(contentType)) {
             const headers = {};
             for (const [key, value] of this.headers) headers[key.toLowerCase()] = value;
-            const responseFormData = new FormData2();
+            const responseFormData = new FormData();
             let busboy;
             try {
               busboy = new Busboy({
@@ -5512,14 +5512,14 @@ Content-Type: ${value.type || "application/octet-stream"}\r
                 });
                 value.on("end", () => {
                   chunks.push(Buffer.from(base64chunk, "base64"));
-                  responseFormData.append(name, new File2(chunks, filename, { type: mimeType }));
+                  responseFormData.append(name, new File(chunks, filename, { type: mimeType }));
                 });
               } else {
                 value.on("data", (chunk) => {
                   chunks.push(chunk);
                 });
                 value.on("end", () => {
-                  responseFormData.append(name, new File2(chunks, filename, { type: mimeType }));
+                  responseFormData.append(name, new File(chunks, filename, { type: mimeType }));
                 });
               }
             });
@@ -5547,7 +5547,7 @@ Content-Type: ${value.type || "application/octet-stream"}\r
             } catch (err) {
               throw Object.assign(new TypeError(), { cause: err });
             }
-            const formData = new FormData2();
+            const formData = new FormData();
             for (const [name, value] of entries) {
               formData.append(name, value);
             }
@@ -5655,7 +5655,7 @@ var require_request = __commonJS({
     }
     var Request = class _Request {
       constructor(origin, {
-        path: path2,
+        path,
         method,
         body,
         headers,
@@ -5669,11 +5669,11 @@ var require_request = __commonJS({
         throwOnError,
         expectContinue
       }, handler) {
-        if (typeof path2 !== "string") {
+        if (typeof path !== "string") {
           throw new InvalidArgumentError("path must be a string");
-        } else if (path2[0] !== "/" && !(path2.startsWith("http://") || path2.startsWith("https://")) && method !== "CONNECT") {
+        } else if (path[0] !== "/" && !(path.startsWith("http://") || path.startsWith("https://")) && method !== "CONNECT") {
           throw new InvalidArgumentError("path must be an absolute URL or start with a slash");
-        } else if (invalidPathRegex.exec(path2) !== null) {
+        } else if (invalidPathRegex.exec(path) !== null) {
           throw new InvalidArgumentError("invalid request path");
         }
         if (typeof method !== "string") {
@@ -5736,7 +5736,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-        this.path = query ? util.buildURL(path2, query) : path2;
+        this.path = query ? util.buildURL(path, query) : path;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6744,9 +6744,9 @@ var require_RedirectHandler = __commonJS({
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
         const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path2 = search ? `${pathname}${search}` : pathname;
+        const path = search ? `${pathname}${search}` : pathname;
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
-        this.opts.path = path2;
+        this.opts.path = path;
         this.opts.origin = origin;
         this.opts.maxRedirections = 0;
         this.opts.query = null;
@@ -7986,7 +7986,7 @@ var require_client = __commonJS({
         writeH2(client, client[kHTTP2Session], request);
         return;
       }
-      const { body, method, path: path2, host, upgrade, headers, blocking, reset } = request;
+      const { body, method, path, host, upgrade, headers, blocking, reset } = request;
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
         body.read(0);
@@ -8036,7 +8036,7 @@ var require_client = __commonJS({
       if (blocking) {
         socket[kBlocking] = true;
       }
-      let header = `${method} ${path2} HTTP/1.1\r
+      let header = `${method} ${path} HTTP/1.1\r
 `;
       if (typeof host === "string") {
         header += `host: ${host}\r
@@ -8099,7 +8099,7 @@ upgrade: ${upgrade}\r
       return true;
     }
     function writeH2(client, session, request) {
-      const { body, method, path: path2, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
+      const { body, method, path, host, upgrade, expectContinue, signal, headers: reqHeaders } = request;
       let headers;
       if (typeof reqHeaders === "string") headers = Request[kHTTP2CopyHeaders](reqHeaders.trim());
       else headers = reqHeaders;
@@ -8142,7 +8142,7 @@ upgrade: ${upgrade}\r
         });
         return true;
       }
-      headers[HTTP2_HEADER_PATH] = path2;
+      headers[HTTP2_HEADER_PATH] = path;
       headers[HTTP2_HEADER_SCHEME] = "https";
       const expectsPayload = method === "PUT" || method === "POST" || method === "PATCH";
       if (body && typeof body.read === "function") {
@@ -9202,14 +9202,14 @@ var require_readable = __commonJS({
     var { Readable } = require("stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError } = require_errors();
     var util = require_util();
-    var { ReadableStreamFrom: ReadableStreamFrom2, toUSVString } = require_util();
+    var { ReadableStreamFrom, toUSVString } = require_util();
     var Blob2;
     var kConsume = Symbol("kConsume");
     var kReading = Symbol("kReading");
     var kBody = Symbol("kBody");
     var kAbort = Symbol("abort");
     var kContentType = Symbol("kContentType");
-    var noop2 = () => {
+    var noop = () => {
     };
     module2.exports = class BodyReadable extends Readable {
       constructor({
@@ -9304,7 +9304,7 @@ var require_readable = __commonJS({
       // https://fetch.spec.whatwg.org/#dom-body-body
       get body() {
         if (!this[kBody]) {
-          this[kBody] = ReadableStreamFrom2(this);
+          this[kBody] = ReadableStreamFrom(this);
           if (this[kConsume]) {
             this[kBody].getReader();
             assert(this[kBody].locked);
@@ -9313,7 +9313,7 @@ var require_readable = __commonJS({
         return this[kBody];
       }
       dump(opts) {
-        let limit2 = opts && Number.isFinite(opts.limit) ? opts.limit : 262144;
+        let limit = opts && Number.isFinite(opts.limit) ? opts.limit : 262144;
         const signal = opts && opts.signal;
         if (signal) {
           try {
@@ -9331,7 +9331,7 @@ var require_readable = __commonJS({
         return new Promise((resolve, reject) => {
           const signalListenerCleanup = signal ? util.addAbortListener(signal, () => {
             this.destroy();
-          }) : noop2;
+          }) : noop;
           this.on("close", function() {
             signalListenerCleanup();
             if (signal && signal.aborted) {
@@ -9339,9 +9339,9 @@ var require_readable = __commonJS({
             } else {
               resolve(null);
             }
-          }).on("error", noop2).on("data", function(chunk) {
-            limit2 -= chunk.length;
-            if (limit2 <= 0) {
+          }).on("error", noop).on("data", function(chunk) {
+            limit -= chunk.length;
+            if (limit <= 0) {
               this.destroy();
             }
           }).resume();
@@ -9457,11 +9457,11 @@ var require_util3 = __commonJS({
     async function getResolveErrorBodyCallback({ callback, body, contentType, statusCode, statusMessage, headers }) {
       assert(body);
       let chunks = [];
-      let limit2 = 0;
+      let limit = 0;
       for await (const chunk of body) {
         chunks.push(chunk);
-        limit2 += chunk.length;
-        if (limit2 > 128 * 1024) {
+        limit += chunk.length;
+        if (limit > 128 * 1024) {
           chunks = null;
           break;
         }
@@ -10382,20 +10382,20 @@ var require_mock_utils = __commonJS({
       }
       return true;
     }
-    function safeUrl(path2) {
-      if (typeof path2 !== "string") {
-        return path2;
+    function safeUrl(path) {
+      if (typeof path !== "string") {
+        return path;
       }
-      const pathSegments = path2.split("?");
+      const pathSegments = path.split("?");
       if (pathSegments.length !== 2) {
-        return path2;
+        return path;
       }
       const qp = new URLSearchParams(pathSegments.pop());
       qp.sort();
       return [...pathSegments, qp.toString()].join("?");
     }
-    function matchKey(mockDispatch2, { path: path2, method, body, headers }) {
-      const pathMatch = matchValue(mockDispatch2.path, path2);
+    function matchKey(mockDispatch2, { path, method, body, headers }) {
+      const pathMatch = matchValue(mockDispatch2.path, path);
       const methodMatch = matchValue(mockDispatch2.method, method);
       const bodyMatch = typeof mockDispatch2.body !== "undefined" ? matchValue(mockDispatch2.body, body) : true;
       const headersMatch = matchHeaders(mockDispatch2, headers);
@@ -10413,7 +10413,7 @@ var require_mock_utils = __commonJS({
     function getMockDispatch(mockDispatches, key) {
       const basePath = key.query ? buildURL(key.path, key.query) : key.path;
       const resolvedPath = typeof basePath === "string" ? safeUrl(basePath) : basePath;
-      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path: path2 }) => matchValue(safeUrl(path2), resolvedPath));
+      let matchedMockDispatches = mockDispatches.filter(({ consumed }) => !consumed).filter(({ path }) => matchValue(safeUrl(path), resolvedPath));
       if (matchedMockDispatches.length === 0) {
         throw new MockNotMatchedError(`Mock dispatch not matched for path '${resolvedPath}'`);
       }
@@ -10450,9 +10450,9 @@ var require_mock_utils = __commonJS({
       }
     }
     function buildKey(opts) {
-      const { path: path2, method, body, headers, query } = opts;
+      const { path, method, body, headers, query } = opts;
       return {
-        path: path2,
+        path,
         method,
         body,
         headers,
@@ -10901,10 +10901,10 @@ var require_pending_interceptors_formatter = __commonJS({
       }
       format(pendingInterceptors) {
         const withPrettyHeaders = pendingInterceptors.map(
-          ({ method, path: path2, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
+          ({ method, path, data: { statusCode }, persist, times, timesInvoked, origin }) => ({
             Method: method,
             Origin: origin,
-            Path: path2,
+            Path: path,
             "Status code": statusCode,
             Persistent: persist ? "\u2705" : "\u274C",
             Invocations: timesInvoked,
@@ -11167,7 +11167,7 @@ var require_proxy_agent = __commonJS({
       }
       dispatch(opts, handler) {
         const { host } = new URL2(opts.origin);
-        const headers = buildHeaders2(opts.headers);
+        const headers = buildHeaders(opts.headers);
         throwIfProxyAuthIsSent(headers);
         return this[kAgent].dispatch(
           {
@@ -11189,7 +11189,7 @@ var require_proxy_agent = __commonJS({
         await this[kClient].destroy();
       }
     };
-    function buildHeaders2(headers) {
+    function buildHeaders(headers) {
       if (Array.isArray(headers)) {
         const headersPair = {};
         for (let i = 0; i < headers.length; i += 2) {
@@ -11693,7 +11693,7 @@ var require_headers = __commonJS({
         return headers;
       }
     };
-    var Headers2 = class _Headers {
+    var Headers = class _Headers {
       constructor(init = void 0) {
         if (init === kConstruct) {
           return;
@@ -11888,8 +11888,8 @@ var require_headers = __commonJS({
         return this[kHeadersList];
       }
     };
-    Headers2.prototype[Symbol.iterator] = Headers2.prototype.entries;
-    Object.defineProperties(Headers2.prototype, {
+    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
+    Object.defineProperties(Headers.prototype, {
       append: kEnumerableProperty,
       delete: kEnumerableProperty,
       get: kEnumerableProperty,
@@ -11924,7 +11924,7 @@ var require_headers = __commonJS({
     };
     module2.exports = {
       fill,
-      Headers: Headers2,
+      Headers,
       HeadersList
     };
   }
@@ -11934,7 +11934,7 @@ var require_headers = __commonJS({
 var require_response = __commonJS({
   "node_modules/undici/lib/fetch/response.js"(exports2, module2) {
     "use strict";
-    var { Headers: Headers2, HeadersList, fill } = require_headers();
+    var { Headers, HeadersList, fill } = require_headers();
     var { extractBody, cloneBody, mixinBody } = require_body();
     var util = require_util();
     var { kEnumerableProperty } = util;
@@ -11942,7 +11942,7 @@ var require_response = __commonJS({
       isValidReasonPhrase,
       isCancelled,
       isAborted,
-      isBlobLike: isBlobLike2,
+      isBlobLike,
       serializeJavascriptValueToJSONString,
       isErrorLike,
       isomorphicEncode
@@ -11954,7 +11954,7 @@ var require_response = __commonJS({
     } = require_constants2();
     var { kState, kHeaders, kGuard, kRealm } = require_symbols2();
     var { webidl } = require_webidl();
-    var { FormData: FormData2 } = require_formdata();
+    var { FormData } = require_formdata();
     var { getGlobalOrigin } = require_global();
     var { URLSerializer } = require_dataURL();
     var { kHeadersList, kConstruct } = require_symbols();
@@ -11962,7 +11962,7 @@ var require_response = __commonJS({
     var { types } = require("util");
     var ReadableStream = globalThis.ReadableStream || require("stream/web").ReadableStream;
     var textEncoder = new TextEncoder("utf-8");
-    var Response2 = class _Response {
+    var Response = class _Response {
       // Creates network error Response.
       static error() {
         const relevantRealm = { settingsObject: {} };
@@ -12026,7 +12026,7 @@ var require_response = __commonJS({
         init = webidl.converters.ResponseInit(init);
         this[kRealm] = { settingsObject: {} };
         this[kState] = makeResponse({});
-        this[kHeaders] = new Headers2(kConstruct);
+        this[kHeaders] = new Headers(kConstruct);
         this[kHeaders][kGuard] = "response";
         this[kHeaders][kHeadersList] = this[kState].headersList;
         this[kHeaders][kRealm] = this[kRealm];
@@ -12104,8 +12104,8 @@ var require_response = __commonJS({
         return clonedResponseObject;
       }
     };
-    mixinBody(Response2);
-    Object.defineProperties(Response2.prototype, {
+    mixinBody(Response);
+    Object.defineProperties(Response.prototype, {
       type: kEnumerableProperty,
       url: kEnumerableProperty,
       status: kEnumerableProperty,
@@ -12121,7 +12121,7 @@ var require_response = __commonJS({
         configurable: true
       }
     });
-    Object.defineProperties(Response2, {
+    Object.defineProperties(Response, {
       json: kEnumerableProperty,
       redirect: kEnumerableProperty,
       error: kEnumerableProperty
@@ -12250,7 +12250,7 @@ var require_response = __commonJS({
       ReadableStream
     );
     webidl.converters.FormData = webidl.interfaceConverter(
-      FormData2
+      FormData
     );
     webidl.converters.URLSearchParams = webidl.interfaceConverter(
       URLSearchParams
@@ -12259,7 +12259,7 @@ var require_response = __commonJS({
       if (typeof V === "string") {
         return webidl.converters.USVString(V);
       }
-      if (isBlobLike2(V)) {
+      if (isBlobLike(V)) {
         return webidl.converters.Blob(V, { strict: false });
       }
       if (types.isArrayBuffer(V) || types.isTypedArray(V) || types.isDataView(V)) {
@@ -12303,7 +12303,7 @@ var require_response = __commonJS({
       makeResponse,
       makeAppropriateNetworkError,
       filterResponse,
-      Response: Response2,
+      Response,
       cloneResponse
     };
   }
@@ -12314,7 +12314,7 @@ var require_request2 = __commonJS({
   "node_modules/undici/lib/fetch/request.js"(exports2, module2) {
     "use strict";
     var { extractBody, mixinBody, cloneBody } = require_body();
-    var { Headers: Headers2, fill: fillHeaders, HeadersList } = require_headers();
+    var { Headers, fill: fillHeaders, HeadersList } = require_headers();
     var { FinalizationRegistry } = require_dispatcher_weakref()();
     var util = require_util();
     var {
@@ -12389,15 +12389,15 @@ var require_request2 = __commonJS({
           signal = input[kSignal];
         }
         const origin = this[kRealm].settingsObject.origin;
-        let window2 = "client";
+        let window = "client";
         if (request.window?.constructor?.name === "EnvironmentSettingsObject" && sameOrigin(request.window, origin)) {
-          window2 = request.window;
+          window = request.window;
         }
         if (init.window != null) {
-          throw new TypeError(`'window' option '${window2}' must be null`);
+          throw new TypeError(`'window' option '${window}' must be null`);
         }
         if ("window" in init) {
-          window2 = "no-window";
+          window = "no-window";
         }
         request = makeRequest({
           // URL request’s URL.
@@ -12412,7 +12412,7 @@ var require_request2 = __commonJS({
           // client This’s relevant settings object.
           client: this[kRealm].settingsObject,
           // window window.
-          window: window2,
+          window,
           // priority request’s priority.
           priority: request.priority,
           // origin request’s origin. The propagation of the origin is only significant for navigation requests
@@ -12558,7 +12558,7 @@ var require_request2 = __commonJS({
             requestFinalizer.register(ac, { signal, abort });
           }
         }
-        this[kHeaders] = new Headers2(kConstruct);
+        this[kHeaders] = new Headers(kConstruct);
         this[kHeaders][kHeadersList] = request.headersList;
         this[kHeaders][kGuard] = "request";
         this[kHeaders][kRealm] = this[kRealm];
@@ -12757,7 +12757,7 @@ var require_request2 = __commonJS({
         const clonedRequestObject = new _Request(kConstruct);
         clonedRequestObject[kState] = clonedRequest;
         clonedRequestObject[kRealm] = this[kRealm];
-        clonedRequestObject[kHeaders] = new Headers2(kConstruct);
+        clonedRequestObject[kHeaders] = new Headers(kConstruct);
         clonedRequestObject[kHeaders][kHeadersList] = clonedRequest.headersList;
         clonedRequestObject[kHeaders][kGuard] = this[kHeaders][kGuard];
         clonedRequestObject[kHeaders][kRealm] = this[kHeaders][kRealm];
@@ -12953,13 +12953,13 @@ var require_fetch = __commonJS({
   "node_modules/undici/lib/fetch/index.js"(exports2, module2) {
     "use strict";
     var {
-      Response: Response2,
+      Response,
       makeNetworkError,
       makeAppropriateNetworkError,
       filterResponse,
       makeResponse
     } = require_response();
-    var { Headers: Headers2 } = require_headers();
+    var { Headers } = require_headers();
     var { Request, makeRequest } = require_request2();
     var zlib = require("zlib");
     var {
@@ -12980,7 +12980,7 @@ var require_fetch = __commonJS({
       determineRequestsReferrer,
       coarsenedSharedCurrentTime,
       createDeferredPromise,
-      isBlobLike: isBlobLike2,
+      isBlobLike,
       sameOrigin,
       isCancelled,
       isAborted,
@@ -13046,7 +13046,7 @@ var require_fetch = __commonJS({
         this.emit("terminated", error);
       }
     };
-    function fetch2(input, init = {}) {
+    function fetch(input, init = {}) {
       webidl.argumentLengthCheck(arguments, 1, { header: "globalThis.fetch" });
       const p = createDeferredPromise();
       let requestObject;
@@ -13093,7 +13093,7 @@ var require_fetch = __commonJS({
           );
           return Promise.resolve();
         }
-        responseObject = new Response2();
+        responseObject = new Response();
         responseObject[kState] = response;
         responseObject[kRealm] = relevantRealm;
         responseObject[kHeaders][kHeadersList] = response.headersList;
@@ -13354,7 +13354,7 @@ var require_fetch = __commonJS({
             return Promise.resolve(makeNetworkError("NetworkError when attempting to fetch resource."));
           }
           const blobURLEntryObject = resolveObjectURL(blobURLEntry.toString());
-          if (request.method !== "GET" || !isBlobLike2(blobURLEntryObject)) {
+          if (request.method !== "GET" || !isBlobLike(blobURLEntryObject)) {
             return Promise.resolve(makeNetworkError("invalid method"));
           }
           const bodyWithType = safelyExtractBody(blobURLEntryObject);
@@ -13872,7 +13872,7 @@ var require_fetch = __commonJS({
               }
               let codings = [];
               let location = "";
-              const headers = new Headers2();
+              const headers = new Headers();
               if (Array.isArray(headersList)) {
                 for (let n = 0; n < headersList.length; n += 2) {
                   const key = headersList[n + 0].toString("latin1");
@@ -13957,7 +13957,7 @@ var require_fetch = __commonJS({
               if (status !== 101) {
                 return;
               }
-              const headers = new Headers2();
+              const headers = new Headers();
               for (let n = 0; n < headersList.length; n += 2) {
                 const key = headersList[n + 0].toString("latin1");
                 const val = headersList[n + 1].toString("latin1");
@@ -13976,7 +13976,7 @@ var require_fetch = __commonJS({
       }
     }
     module2.exports = {
-      fetch: fetch2,
+      fetch,
       Fetch,
       fetching,
       finalizeAndReportTiming
@@ -14850,7 +14850,7 @@ var require_cache = __commonJS({
     var { kEnumerableProperty, isDisturbed } = require_util();
     var { kHeadersList } = require_symbols();
     var { webidl } = require_webidl();
-    var { Response: Response2, cloneResponse } = require_response();
+    var { Response, cloneResponse } = require_response();
     var { Request } = require_request2();
     var { kState, kHeaders, kGuard, kRealm } = require_symbols2();
     var { fetching } = require_fetch();
@@ -14908,7 +14908,7 @@ var require_cache = __commonJS({
         }
         const responseList = [];
         for (const response of responses) {
-          const responseObject = new Response2(response.body?.source ?? null);
+          const responseObject = new Response(response.body?.source ?? null);
           const body = responseObject[kState].body;
           responseObject[kState] = response;
           responseObject[kState].body = body;
@@ -15363,7 +15363,7 @@ var require_cache = __commonJS({
         converter: webidl.converters.DOMString
       }
     ]);
-    webidl.converters.Response = webidl.interfaceConverter(Response2);
+    webidl.converters.Response = webidl.interfaceConverter(Response);
     webidl.converters["sequence<RequestInfo>"] = webidl.sequenceConverter(
       webidl.converters.RequestInfo
     );
@@ -15524,8 +15524,8 @@ var require_util6 = __commonJS({
         }
       }
     }
-    function validateCookiePath(path2) {
-      for (const char of path2) {
+    function validateCookiePath(path) {
+      for (const char of path) {
         const code = char.charCodeAt(0);
         if (code < 33 || char === ";") {
           throw new Error("Invalid cookie path");
@@ -15578,7 +15578,7 @@ var require_util6 = __commonJS({
         throw new Error("Invalid cookie max-age");
       }
     }
-    function stringify2(cookie) {
+    function stringify(cookie) {
       if (cookie.name.length === 0) {
         return null;
       }
@@ -15632,7 +15632,7 @@ var require_util6 = __commonJS({
       validateCookiePath,
       validateCookieValue,
       toIMFDate,
-      stringify: stringify2
+      stringify
     };
   }
 });
@@ -15782,12 +15782,12 @@ var require_cookies = __commonJS({
   "node_modules/undici/lib/cookies/index.js"(exports2, module2) {
     "use strict";
     var { parseSetCookie } = require_parse();
-    var { stringify: stringify2 } = require_util6();
+    var { stringify } = require_util6();
     var { webidl } = require_webidl();
-    var { Headers: Headers2 } = require_headers();
+    var { Headers } = require_headers();
     function getCookies(headers) {
       webidl.argumentLengthCheck(arguments, 1, { header: "getCookies" });
-      webidl.brandCheck(headers, Headers2, { strict: false });
+      webidl.brandCheck(headers, Headers, { strict: false });
       const cookie = headers.get("cookie");
       const out = {};
       if (!cookie) {
@@ -15801,7 +15801,7 @@ var require_cookies = __commonJS({
     }
     function deleteCookie(headers, name, attributes) {
       webidl.argumentLengthCheck(arguments, 2, { header: "deleteCookie" });
-      webidl.brandCheck(headers, Headers2, { strict: false });
+      webidl.brandCheck(headers, Headers, { strict: false });
       name = webidl.converters.DOMString(name);
       attributes = webidl.converters.DeleteCookieAttributes(attributes);
       setCookie(headers, {
@@ -15813,7 +15813,7 @@ var require_cookies = __commonJS({
     }
     function getSetCookies(headers) {
       webidl.argumentLengthCheck(arguments, 1, { header: "getSetCookies" });
-      webidl.brandCheck(headers, Headers2, { strict: false });
+      webidl.brandCheck(headers, Headers, { strict: false });
       const cookies = headers.getSetCookie();
       if (!cookies) {
         return [];
@@ -15822,11 +15822,11 @@ var require_cookies = __commonJS({
     }
     function setCookie(headers, cookie) {
       webidl.argumentLengthCheck(arguments, 2, { header: "setCookie" });
-      webidl.brandCheck(headers, Headers2, { strict: false });
+      webidl.brandCheck(headers, Headers, { strict: false });
       cookie = webidl.converters.Cookie(cookie);
-      const str = stringify2(cookie);
+      const str = stringify(cookie);
       if (str) {
-        headers.append("Set-Cookie", stringify2(cookie));
+        headers.append("Set-Cookie", stringify(cookie));
       }
     }
     webidl.converters.DeleteCookieAttributes = webidl.dictionaryConverter([
@@ -16315,7 +16315,7 @@ var require_connection = __commonJS({
     var { CloseEvent } = require_events();
     var { makeRequest } = require_request2();
     var { fetching } = require_fetch();
-    var { Headers: Headers2 } = require_headers();
+    var { Headers } = require_headers();
     var { getGlobalDispatcher } = require_global2();
     var { kHeadersList } = require_symbols();
     var channels = {};
@@ -16340,7 +16340,7 @@ var require_connection = __commonJS({
         redirect: "error"
       });
       if (options.headers) {
-        const headersList = new Headers2(options.headers)[kHeadersList];
+        const headersList = new Headers(options.headers)[kHeadersList];
         request.headersList = headersList;
       }
       const keyValue = crypto.randomBytes(16).toString("base64");
@@ -16762,7 +16762,7 @@ var require_websocket = __commonJS({
     var { establishWebSocketConnection } = require_connection();
     var { WebsocketFrameSend } = require_frame();
     var { ByteParser } = require_receiver();
-    var { kEnumerableProperty, isBlobLike: isBlobLike2 } = require_util();
+    var { kEnumerableProperty, isBlobLike } = require_util();
     var { getGlobalDispatcher } = require_global2();
     var { types } = require("util");
     var experimentalWarned = false;
@@ -16927,7 +16927,7 @@ var require_websocket = __commonJS({
           socket.write(buffer, () => {
             this.#bufferedAmount -= ab.byteLength;
           });
-        } else if (isBlobLike2(data)) {
+        } else if (isBlobLike(data)) {
           const frame = new WebsocketFrameSend();
           data.arrayBuffer().then((ab) => {
             const value = Buffer.from(ab);
@@ -17130,7 +17130,7 @@ var require_websocket = __commonJS({
     };
     webidl.converters.WebSocketSendData = function(V) {
       if (webidl.util.Type(V) === "Object") {
-        if (isBlobLike2(V)) {
+        if (isBlobLike(V)) {
           return webidl.converters.Blob(V, { strict: false });
         }
         if (ArrayBuffer.isView(V) || types.isAnyArrayBuffer(V)) {
@@ -17205,11 +17205,11 @@ var require_undici = __commonJS({
           if (typeof opts.path !== "string") {
             throw new InvalidArgumentError("invalid opts.path");
           }
-          let path2 = opts.path;
+          let path = opts.path;
           if (!opts.path.startsWith("/")) {
-            path2 = `/${path2}`;
+            path = `/${path}`;
           }
-          url = new URL(util.parseOrigin(url).origin + path2);
+          url = new URL(util.parseOrigin(url).origin + path);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -17232,7 +17232,7 @@ var require_undici = __commonJS({
     module2.exports.getGlobalDispatcher = getGlobalDispatcher;
     if (util.nodeMajor > 16 || util.nodeMajor === 16 && util.nodeMinor >= 8) {
       let fetchImpl = null;
-      module2.exports.fetch = async function fetch2(resource) {
+      module2.exports.fetch = async function fetch(resource) {
         if (!fetchImpl) {
           fetchImpl = require_fetch().fetch;
         }
@@ -17379,11 +17379,11 @@ var require_lib = __commonJS({
       HttpCodes2[HttpCodes2["ServiceUnavailable"] = 503] = "ServiceUnavailable";
       HttpCodes2[HttpCodes2["GatewayTimeout"] = 504] = "GatewayTimeout";
     })(HttpCodes || (exports2.HttpCodes = HttpCodes = {}));
-    var Headers2;
-    (function(Headers3) {
-      Headers3["Accept"] = "accept";
-      Headers3["ContentType"] = "content-type";
-    })(Headers2 || (exports2.Headers = Headers2 = {}));
+    var Headers;
+    (function(Headers2) {
+      Headers2["Accept"] = "accept";
+      Headers2["ContentType"] = "content-type";
+    })(Headers || (exports2.Headers = Headers = {}));
     var MediaTypes;
     (function(MediaTypes2) {
       MediaTypes2["ApplicationJson"] = "application/json";
@@ -17538,7 +17538,7 @@ var require_lib = __commonJS({
        */
       getJson(requestUrl, additionalHeaders = {}) {
         return __awaiter(this, void 0, void 0, function* () {
-          additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
           const res = yield this.get(requestUrl, additionalHeaders);
           return this._processResponse(res, this.requestOptions);
         });
@@ -17546,8 +17546,8 @@ var require_lib = __commonJS({
       postJson(requestUrl, obj, additionalHeaders = {}) {
         return __awaiter(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
-          additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
-          additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
           const res = yield this.post(requestUrl, data, additionalHeaders);
           return this._processResponse(res, this.requestOptions);
         });
@@ -17555,8 +17555,8 @@ var require_lib = __commonJS({
       putJson(requestUrl, obj, additionalHeaders = {}) {
         return __awaiter(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
-          additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
-          additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
           const res = yield this.put(requestUrl, data, additionalHeaders);
           return this._processResponse(res, this.requestOptions);
         });
@@ -17564,8 +17564,8 @@ var require_lib = __commonJS({
       patchJson(requestUrl, obj, additionalHeaders = {}) {
         return __awaiter(this, void 0, void 0, function* () {
           const data = JSON.stringify(obj, null, 2);
-          additionalHeaders[Headers2.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.Accept, MediaTypes.ApplicationJson);
-          additionalHeaders[Headers2.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers2.ContentType, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+          additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
           const res = yield this.patch(requestUrl, data, additionalHeaders);
           return this._processResponse(res, this.requestOptions);
         });
@@ -18066,7 +18066,7 @@ var require_oidc_utils = __commonJS({
         return runtimeUrl;
       }
       static getCall(id_token_url) {
-        var _a2;
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
           const httpclient = _OidcClient.createHttpClient();
           const res = yield httpclient.getJson(id_token_url).catch((error) => {
@@ -18076,7 +18076,7 @@ var require_oidc_utils = __commonJS({
  
         Error Message: ${error.message}`);
           });
-          const id_token = (_a2 = res.result) === null || _a2 === void 0 ? void 0 : _a2.value;
+          const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
           if (!id_token) {
             throw new Error("Response json body do not have ID Token field");
           }
@@ -18164,7 +18164,7 @@ var require_summary = __commonJS({
           }
           try {
             yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
-          } catch (_a2) {
+          } catch (_a) {
             throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
           }
           this._filePath = pathFromEnv;
@@ -18432,7 +18432,7 @@ var require_path_utils = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.toPlatformPath = exports2.toWin32Path = exports2.toPosixPath = void 0;
-    var path2 = __importStar(require("path"));
+    var path = __importStar(require("path"));
     function toPosixPath(pth) {
       return pth.replace(/[\\]/g, "/");
     }
@@ -18442,7 +18442,7 @@ var require_path_utils = __commonJS({
     }
     exports2.toWin32Path = toWin32Path;
     function toPlatformPath(pth) {
-      return pth.replace(/[/\\]/g, path2.sep);
+      return pth.replace(/[/\\]/g, path.sep);
     }
     exports2.toPlatformPath = toPlatformPath;
   }
@@ -18502,15 +18502,15 @@ var require_io_util = __commonJS({
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
     };
-    var _a2;
+    var _a;
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
-    var fs3 = __importStar(require("fs"));
-    var path2 = __importStar(require("path"));
-    _a2 = fs3.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
+    var fs2 = __importStar(require("fs"));
+    var path = __importStar(require("path"));
+    _a = fs2.promises, exports2.chmod = _a.chmod, exports2.copyFile = _a.copyFile, exports2.lstat = _a.lstat, exports2.mkdir = _a.mkdir, exports2.open = _a.open, exports2.readdir = _a.readdir, exports2.readlink = _a.readlink, exports2.rename = _a.rename, exports2.rm = _a.rm, exports2.rmdir = _a.rmdir, exports2.stat = _a.stat, exports2.symlink = _a.symlink, exports2.unlink = _a.unlink;
     exports2.IS_WINDOWS = process.platform === "win32";
     exports2.UV_FS_O_EXLOCK = 268435456;
-    exports2.READONLY = fs3.constants.O_RDONLY;
+    exports2.READONLY = fs2.constants.O_RDONLY;
     function exists(fsPath) {
       return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -18555,7 +18555,7 @@ var require_io_util = __commonJS({
         }
         if (stats && stats.isFile()) {
           if (exports2.IS_WINDOWS) {
-            const upperExt = path2.extname(filePath).toUpperCase();
+            const upperExt = path.extname(filePath).toUpperCase();
             if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) {
               return filePath;
             }
@@ -18579,11 +18579,11 @@ var require_io_util = __commonJS({
           if (stats && stats.isFile()) {
             if (exports2.IS_WINDOWS) {
               try {
-                const directory = path2.dirname(filePath);
-                const upperName = path2.basename(filePath).toUpperCase();
+                const directory = path.dirname(filePath);
+                const upperName = path.basename(filePath).toUpperCase();
                 for (const actualName of yield exports2.readdir(directory)) {
                   if (upperName === actualName.toUpperCase()) {
-                    filePath = path2.join(directory, actualName);
+                    filePath = path.join(directory, actualName);
                     break;
                   }
                 }
@@ -18614,8 +18614,8 @@ var require_io_util = __commonJS({
       return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && stats.uid === process.getuid();
     }
     function getCmdPath() {
-      var _a3;
-      return (_a3 = process.env["COMSPEC"]) !== null && _a3 !== void 0 ? _a3 : `cmd.exe`;
+      var _a2;
+      return (_a2 = process.env["COMSPEC"]) !== null && _a2 !== void 0 ? _a2 : `cmd.exe`;
     }
     exports2.getCmdPath = getCmdPath;
   }
@@ -18678,7 +18678,7 @@ var require_io = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.findInPath = exports2.which = exports2.mkdirP = exports2.rmRF = exports2.mv = exports2.cp = void 0;
     var assert_1 = require("assert");
-    var path2 = __importStar(require("path"));
+    var path = __importStar(require("path"));
     var ioUtil = __importStar(require_io_util());
     function cp(source, dest, options = {}) {
       return __awaiter(this, void 0, void 0, function* () {
@@ -18687,7 +18687,7 @@ var require_io = __commonJS({
         if (destStat && destStat.isFile() && !force) {
           return;
         }
-        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path2.join(dest, path2.basename(source)) : dest;
+        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path.join(dest, path.basename(source)) : dest;
         if (!(yield ioUtil.exists(source))) {
           throw new Error(`no such file or directory: ${source}`);
         }
@@ -18699,7 +18699,7 @@ var require_io = __commonJS({
             yield cpDirRecursive(source, newDest, 0, force);
           }
         } else {
-          if (path2.relative(source, newDest) === "") {
+          if (path.relative(source, newDest) === "") {
             throw new Error(`'${newDest}' and '${source}' are the same file`);
           }
           yield copyFile(source, newDest, force);
@@ -18712,7 +18712,7 @@ var require_io = __commonJS({
         if (yield ioUtil.exists(dest)) {
           let destExists = true;
           if (yield ioUtil.isDirectory(dest)) {
-            dest = path2.join(dest, path2.basename(source));
+            dest = path.join(dest, path.basename(source));
             destExists = yield ioUtil.exists(dest);
           }
           if (destExists) {
@@ -18723,7 +18723,7 @@ var require_io = __commonJS({
             }
           }
         }
-        yield mkdirP(path2.dirname(dest));
+        yield mkdirP(path.dirname(dest));
         yield ioUtil.rename(source, dest);
       });
     }
@@ -18786,7 +18786,7 @@ var require_io = __commonJS({
         }
         const extensions = [];
         if (ioUtil.IS_WINDOWS && process.env["PATHEXT"]) {
-          for (const extension of process.env["PATHEXT"].split(path2.delimiter)) {
+          for (const extension of process.env["PATHEXT"].split(path.delimiter)) {
             if (extension) {
               extensions.push(extension);
             }
@@ -18799,12 +18799,12 @@ var require_io = __commonJS({
           }
           return [];
         }
-        if (tool.includes(path2.sep)) {
+        if (tool.includes(path.sep)) {
           return [];
         }
         const directories = [];
         if (process.env.PATH) {
-          for (const p of process.env.PATH.split(path2.delimiter)) {
+          for (const p of process.env.PATH.split(path.delimiter)) {
             if (p) {
               directories.push(p);
             }
@@ -18812,7 +18812,7 @@ var require_io = __commonJS({
         }
         const matches = [];
         for (const directory of directories) {
-          const filePath = yield ioUtil.tryGetExecutablePath(path2.join(directory, tool), extensions);
+          const filePath = yield ioUtil.tryGetExecutablePath(path.join(directory, tool), extensions);
           if (filePath) {
             matches.push(filePath);
           }
@@ -18928,7 +18928,7 @@ var require_toolrunner = __commonJS({
     var os = __importStar(require("os"));
     var events = __importStar(require("events"));
     var child = __importStar(require("child_process"));
-    var path2 = __importStar(require("path"));
+    var path = __importStar(require("path"));
     var io = __importStar(require_io());
     var ioUtil = __importStar(require_io_util());
     var timers_1 = require("timers");
@@ -19143,7 +19143,7 @@ var require_toolrunner = __commonJS({
       exec() {
         return __awaiter(this, void 0, void 0, function* () {
           if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
-            this.toolPath = path2.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
+            this.toolPath = path.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
           }
           this.toolPath = yield io.which(this.toolPath, true);
           return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -19411,7 +19411,7 @@ var require_exec = __commonJS({
     exports2.getExecOutput = exports2.exec = void 0;
     var string_decoder_1 = require("string_decoder");
     var tr = __importStar(require_toolrunner());
-    function exec3(commandLine, args, options) {
+    function exec5(commandLine, args, options) {
       return __awaiter(this, void 0, void 0, function* () {
         const commandArgs = tr.argStringToArray(commandLine);
         if (commandArgs.length === 0) {
@@ -19423,15 +19423,15 @@ var require_exec = __commonJS({
         return runner.exec();
       });
     }
-    exports2.exec = exec3;
+    exports2.exec = exec5;
     function getExecOutput2(commandLine, args, options) {
-      var _a2, _b;
+      var _a, _b;
       return __awaiter(this, void 0, void 0, function* () {
         let stdout = "";
         let stderr = "";
         const stdoutDecoder = new string_decoder_1.StringDecoder("utf8");
         const stderrDecoder = new string_decoder_1.StringDecoder("utf8");
-        const originalStdoutListener = (_a2 = options === null || options === void 0 ? void 0 : options.listeners) === null || _a2 === void 0 ? void 0 : _a2.stdout;
+        const originalStdoutListener = (_a = options === null || options === void 0 ? void 0 : options.listeners) === null || _a === void 0 ? void 0 : _a.stdout;
         const originalStdErrListener = (_b = options === null || options === void 0 ? void 0 : options.listeners) === null || _b === void 0 ? void 0 : _b.stderr;
         const stdErrListener = (data) => {
           stderr += stderrDecoder.write(data);
@@ -19446,7 +19446,7 @@ var require_exec = __commonJS({
           }
         };
         const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
-        const exitCode = yield exec3(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        const exitCode = yield exec5(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
         stdout += stdoutDecoder.end();
         stderr += stderrDecoder.end();
         return {
@@ -19524,12 +19524,12 @@ var require_platform = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getDetails = exports2.isLinux = exports2.isMacOS = exports2.isWindows = exports2.arch = exports2.platform = void 0;
     var os_1 = __importDefault(require("os"));
-    var exec3 = __importStar(require_exec());
+    var exec5 = __importStar(require_exec());
     var getWindowsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout: version } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
+      const { stdout: version } = yield exec5.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
         silent: true
       });
-      const { stdout: name } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
+      const { stdout: name } = yield exec5.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
         silent: true
       });
       return {
@@ -19538,11 +19538,11 @@ var require_platform = __commonJS({
       };
     });
     var getMacOsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      var _a2, _b, _c, _d;
-      const { stdout } = yield exec3.getExecOutput("sw_vers", void 0, {
+      var _a, _b, _c, _d;
+      const { stdout } = yield exec5.getExecOutput("sw_vers", void 0, {
         silent: true
       });
-      const version = (_b = (_a2 = stdout.match(/ProductVersion:\s*(.+)/)) === null || _a2 === void 0 ? void 0 : _a2[1]) !== null && _b !== void 0 ? _b : "";
+      const version = (_b = (_a = stdout.match(/ProductVersion:\s*(.+)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : "";
       const name = (_d = (_c = stdout.match(/ProductName:\s*(.+)/)) === null || _c === void 0 ? void 0 : _c[1]) !== null && _d !== void 0 ? _d : "";
       return {
         name,
@@ -19550,7 +19550,7 @@ var require_platform = __commonJS({
       };
     });
     var getLinuxInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout } = yield exec3.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
+      const { stdout } = yield exec5.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
         silent: true
       });
       const [name, version] = stdout.trim().split("\n");
@@ -19643,7 +19643,7 @@ var require_core = __commonJS({
     var file_command_1 = require_file_command();
     var utils_1 = require_utils();
     var os = __importStar(require("os"));
-    var path2 = __importStar(require("path"));
+    var path = __importStar(require("path"));
     var oidc_utils_1 = require_oidc_utils();
     var ExitCode;
     (function(ExitCode2) {
@@ -19671,7 +19671,7 @@ var require_core = __commonJS({
       } else {
         (0, command_1.issueCommand)("add-path", {}, inputPath);
       }
-      process.env["PATH"] = `${inputPath}${path2.delimiter}${process.env["PATH"]}`;
+      process.env["PATH"] = `${inputPath}${path.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
     function getInput2(name, options) {
@@ -19693,7 +19693,7 @@ var require_core = __commonJS({
       return inputs.map((input) => input.trim());
     }
     exports2.getMultilineInput = getMultilineInput;
-    function getBooleanInput2(name, options) {
+    function getBooleanInput(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
       const val = getInput2(name, options);
@@ -19704,8 +19704,8 @@ var require_core = __commonJS({
       throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
-    exports2.getBooleanInput = getBooleanInput2;
-    function setOutput2(name, value) {
+    exports2.getBooleanInput = getBooleanInput;
+    function setOutput(name, value) {
       const filePath = process.env["GITHUB_OUTPUT"] || "";
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
@@ -19713,7 +19713,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(os.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
-    exports2.setOutput = setOutput2;
+    exports2.setOutput = setOutput;
     function setCommandEcho(enabled) {
       (0, command_1.issue)("echo", enabled ? "on" : "off");
     }
@@ -19808,1782 +19808,9 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
   }
 });
 
-// src/build.ts
+// src/checkoutBase.ts
 var import_core = __toESM(require_core());
-
-// node_modules/@stainless-api/sdk/internal/tslib.mjs
-function __classPrivateFieldSet(receiver, state, value, kind, f) {
-  if (kind === "m")
-    throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-}
-function __classPrivateFieldGet(receiver, state, kind, f) {
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}
-
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
-var uuid4 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid4 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/sdk/internal/errors.mjs
-function isAbortError(err) {
-  return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
-  ("name" in err && err.name === "AbortError" || // Expo fetch
-  "message" in err && String(err.message).includes("FetchRequestCanceledException"));
-}
-var castToError = (err) => {
-  if (err instanceof Error)
-    return err;
-  if (typeof err === "object" && err !== null) {
-    try {
-      if (Object.prototype.toString.call(err) === "[object Error]") {
-        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
-        if (err.stack)
-          error.stack = err.stack;
-        if (err.cause && !error.cause)
-          error.cause = err.cause;
-        if (err.name)
-          error.name = err.name;
-        return error;
-      }
-    } catch {
-    }
-    try {
-      return new Error(JSON.stringify(err));
-    } catch {
-    }
-  }
-  return new Error(err);
-};
-
-// node_modules/@stainless-api/sdk/core/error.mjs
-var StainlessError = class extends Error {
-};
-var APIError = class _APIError extends StainlessError {
-  constructor(status, error, message, headers) {
-    super(`${_APIError.makeMessage(status, error, message)}`);
-    this.status = status;
-    this.headers = headers;
-    this.error = error;
-  }
-  static makeMessage(status, error, message) {
-    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
-    if (status && msg) {
-      return `${status} ${msg}`;
-    }
-    if (status) {
-      return `${status} status code (no body)`;
-    }
-    if (msg) {
-      return msg;
-    }
-    return "(no status code or body)";
-  }
-  static generate(status, errorResponse, message, headers) {
-    if (!status || !headers) {
-      return new APIConnectionError({ message, cause: castToError(errorResponse) });
-    }
-    const error = errorResponse;
-    if (status === 400) {
-      return new BadRequestError(status, error, message, headers);
-    }
-    if (status === 401) {
-      return new AuthenticationError(status, error, message, headers);
-    }
-    if (status === 403) {
-      return new PermissionDeniedError(status, error, message, headers);
-    }
-    if (status === 404) {
-      return new NotFoundError(status, error, message, headers);
-    }
-    if (status === 409) {
-      return new ConflictError(status, error, message, headers);
-    }
-    if (status === 422) {
-      return new UnprocessableEntityError(status, error, message, headers);
-    }
-    if (status === 429) {
-      return new RateLimitError(status, error, message, headers);
-    }
-    if (status >= 500) {
-      return new InternalServerError(status, error, message, headers);
-    }
-    return new _APIError(status, error, message, headers);
-  }
-};
-var APIUserAbortError = class extends APIError {
-  constructor({ message } = {}) {
-    super(void 0, void 0, message || "Request was aborted.", void 0);
-  }
-};
-var APIConnectionError = class extends APIError {
-  constructor({ message, cause }) {
-    super(void 0, void 0, message || "Connection error.", void 0);
-    if (cause)
-      this.cause = cause;
-  }
-};
-var APIConnectionTimeoutError = class extends APIConnectionError {
-  constructor({ message } = {}) {
-    super({ message: message ?? "Request timed out." });
-  }
-};
-var BadRequestError = class extends APIError {
-};
-var AuthenticationError = class extends APIError {
-};
-var PermissionDeniedError = class extends APIError {
-};
-var NotFoundError = class extends APIError {
-};
-var ConflictError = class extends APIError {
-};
-var UnprocessableEntityError = class extends APIError {
-};
-var RateLimitError = class extends APIError {
-};
-var InternalServerError = class extends APIError {
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/values.mjs
-var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
-var isAbsoluteURL = (url) => {
-  return startsWithSchemeRegexp.test(url);
-};
-var isArray = (val) => (isArray = Array.isArray, isArray(val));
-var isReadonlyArray = isArray;
-function maybeObj(x) {
-  if (typeof x !== "object") {
-    return {};
-  }
-  return x ?? {};
-}
-function isEmptyObj(obj) {
-  if (!obj)
-    return true;
-  for (const _k in obj)
-    return false;
-  return true;
-}
-function hasOwn(obj, key) {
-  return Object.prototype.hasOwnProperty.call(obj, key);
-}
-var validatePositiveInteger = (name, n) => {
-  if (typeof n !== "number" || !Number.isInteger(n)) {
-    throw new StainlessError(`${name} must be an integer`);
-  }
-  if (n < 0) {
-    throw new StainlessError(`${name} must be a positive integer`);
-  }
-  return n;
-};
-var safeJSON = (text) => {
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    return void 0;
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
-var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.11";
-
-// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
-function getDetectedPlatform() {
-  if (typeof Deno !== "undefined" && Deno.build != null) {
-    return "deno";
-  }
-  if (typeof EdgeRuntime !== "undefined") {
-    return "edge";
-  }
-  if (Object.prototype.toString.call(typeof globalThis.process !== "undefined" ? globalThis.process : 0) === "[object process]") {
-    return "node";
-  }
-  return "unknown";
-}
-var getPlatformProperties = () => {
-  const detectedPlatform = getDetectedPlatform();
-  if (detectedPlatform === "deno") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION,
-      "X-Stainless-OS": normalizePlatform(Deno.build.os),
-      "X-Stainless-Arch": normalizeArch(Deno.build.arch),
-      "X-Stainless-Runtime": "deno",
-      "X-Stainless-Runtime-Version": typeof Deno.version === "string" ? Deno.version : Deno.version?.deno ?? "unknown"
-    };
-  }
-  if (typeof EdgeRuntime !== "undefined") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION,
-      "X-Stainless-OS": "Unknown",
-      "X-Stainless-Arch": `other:${EdgeRuntime}`,
-      "X-Stainless-Runtime": "edge",
-      "X-Stainless-Runtime-Version": globalThis.process.version
-    };
-  }
-  if (detectedPlatform === "node") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION,
-      "X-Stainless-OS": normalizePlatform(globalThis.process.platform ?? "unknown"),
-      "X-Stainless-Arch": normalizeArch(globalThis.process.arch ?? "unknown"),
-      "X-Stainless-Runtime": "node",
-      "X-Stainless-Runtime-Version": globalThis.process.version ?? "unknown"
-    };
-  }
-  const browserInfo = getBrowserInfo();
-  if (browserInfo) {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION,
-      "X-Stainless-OS": "Unknown",
-      "X-Stainless-Arch": "unknown",
-      "X-Stainless-Runtime": `browser:${browserInfo.browser}`,
-      "X-Stainless-Runtime-Version": browserInfo.version
-    };
-  }
-  return {
-    "X-Stainless-Lang": "js",
-    "X-Stainless-Package-Version": VERSION,
-    "X-Stainless-OS": "Unknown",
-    "X-Stainless-Arch": "unknown",
-    "X-Stainless-Runtime": "unknown",
-    "X-Stainless-Runtime-Version": "unknown"
-  };
-};
-function getBrowserInfo() {
-  if (typeof navigator === "undefined" || !navigator) {
-    return null;
-  }
-  const browserPatterns = [
-    { key: "edge", pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "ie", pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "ie", pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "chrome", pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "firefox", pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "safari", pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ }
-  ];
-  for (const { key, pattern } of browserPatterns) {
-    const match = pattern.exec(navigator.userAgent);
-    if (match) {
-      const major = match[1] || 0;
-      const minor = match[2] || 0;
-      const patch = match[3] || 0;
-      return { browser: key, version: `${major}.${minor}.${patch}` };
-    }
-  }
-  return null;
-}
-var normalizeArch = (arch) => {
-  if (arch === "x32")
-    return "x32";
-  if (arch === "x86_64" || arch === "x64")
-    return "x64";
-  if (arch === "arm")
-    return "arm";
-  if (arch === "aarch64" || arch === "arm64")
-    return "arm64";
-  if (arch)
-    return `other:${arch}`;
-  return "unknown";
-};
-var normalizePlatform = (platform) => {
-  platform = platform.toLowerCase();
-  if (platform.includes("ios"))
-    return "iOS";
-  if (platform === "android")
-    return "Android";
-  if (platform === "darwin")
-    return "MacOS";
-  if (platform === "win32")
-    return "Windows";
-  if (platform === "freebsd")
-    return "FreeBSD";
-  if (platform === "openbsd")
-    return "OpenBSD";
-  if (platform === "linux")
-    return "Linux";
-  if (platform)
-    return `Other:${platform}`;
-  return "Unknown";
-};
-var _platformHeaders;
-var getPlatformHeaders = () => {
-  return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
-};
-
-// node_modules/@stainless-api/sdk/internal/shims.mjs
-function getDefaultFetch() {
-  if (typeof fetch !== "undefined") {
-    return fetch;
-  }
-  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new Stainless({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
-}
-function makeReadableStream(...args) {
-  const ReadableStream = globalThis.ReadableStream;
-  if (typeof ReadableStream === "undefined") {
-    throw new Error("`ReadableStream` is not defined as a global; You will need to polyfill it, `globalThis.ReadableStream = ReadableStream`");
-  }
-  return new ReadableStream(...args);
-}
-function ReadableStreamFrom(iterable) {
-  let iter = Symbol.asyncIterator in iterable ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
-  return makeReadableStream({
-    start() {
-    },
-    async pull(controller) {
-      const { done, value } = await iter.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
-      }
-    },
-    async cancel() {
-      await iter.return?.();
-    }
-  });
-}
-async function CancelReadableStream(stream) {
-  if (stream === null || typeof stream !== "object")
-    return;
-  if (stream[Symbol.asyncIterator]) {
-    await stream[Symbol.asyncIterator]().return?.();
-    return;
-  }
-  const reader = stream.getReader();
-  const cancelPromise = reader.cancel();
-  reader.releaseLock();
-  await cancelPromise;
-}
-
-// node_modules/@stainless-api/sdk/internal/request-options.mjs
-var FallbackEncoder = ({ headers, body }) => {
-  return {
-    bodyHeaders: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify(body)
-  };
-};
-
-// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
-var default_format = "RFC3986";
-var default_formatter = (v) => String(v);
-var formatters = {
-  RFC1738: (v) => String(v).replace(/%20/g, "+"),
-  RFC3986: default_formatter
-};
-var RFC1738 = "RFC1738";
-
-// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
-var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
-var hex_table = /* @__PURE__ */ (() => {
-  const array = [];
-  for (let i = 0; i < 256; ++i) {
-    array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
-  }
-  return array;
-})();
-var limit = 1024;
-var encode = (str, _defaultEncoder, charset, _kind, format) => {
-  if (str.length === 0) {
-    return str;
-  }
-  let string = str;
-  if (typeof str === "symbol") {
-    string = Symbol.prototype.toString.call(str);
-  } else if (typeof str !== "string") {
-    string = String(str);
-  }
-  if (charset === "iso-8859-1") {
-    return escape(string).replace(/%u[0-9a-f]{4}/gi, function($0) {
-      return "%26%23" + parseInt($0.slice(2), 16) + "%3B";
-    });
-  }
-  let out = "";
-  for (let j = 0; j < string.length; j += limit) {
-    const segment = string.length >= limit ? string.slice(j, j + limit) : string;
-    const arr = [];
-    for (let i = 0; i < segment.length; ++i) {
-      let c = segment.charCodeAt(i);
-      if (c === 45 || // -
-      c === 46 || // .
-      c === 95 || // _
-      c === 126 || // ~
-      c >= 48 && c <= 57 || // 0-9
-      c >= 65 && c <= 90 || // a-z
-      c >= 97 && c <= 122 || // A-Z
-      format === RFC1738 && (c === 40 || c === 41)) {
-        arr[arr.length] = segment.charAt(i);
-        continue;
-      }
-      if (c < 128) {
-        arr[arr.length] = hex_table[c];
-        continue;
-      }
-      if (c < 2048) {
-        arr[arr.length] = hex_table[192 | c >> 6] + hex_table[128 | c & 63];
-        continue;
-      }
-      if (c < 55296 || c >= 57344) {
-        arr[arr.length] = hex_table[224 | c >> 12] + hex_table[128 | c >> 6 & 63] + hex_table[128 | c & 63];
-        continue;
-      }
-      i += 1;
-      c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
-      arr[arr.length] = hex_table[240 | c >> 18] + hex_table[128 | c >> 12 & 63] + hex_table[128 | c >> 6 & 63] + hex_table[128 | c & 63];
-    }
-    out += arr.join("");
-  }
-  return out;
-};
-function is_buffer(obj) {
-  if (!obj || typeof obj !== "object") {
-    return false;
-  }
-  return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
-}
-function maybe_map(val, fn) {
-  if (isArray(val)) {
-    const mapped = [];
-    for (let i = 0; i < val.length; i += 1) {
-      mapped.push(fn(val[i]));
-    }
-    return mapped;
-  }
-  return fn(val);
-}
-
-// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
-var array_prefix_generators = {
-  brackets(prefix) {
-    return String(prefix) + "[]";
-  },
-  comma: "comma",
-  indices(prefix, key) {
-    return String(prefix) + "[" + key + "]";
-  },
-  repeat(prefix) {
-    return String(prefix);
-  }
-};
-var push_to_array = function(arr, value_or_array) {
-  Array.prototype.push.apply(arr, isArray(value_or_array) ? value_or_array : [value_or_array]);
-};
-var toISOString;
-var defaults = {
-  addQueryPrefix: false,
-  allowDots: false,
-  allowEmptyArrays: false,
-  arrayFormat: "indices",
-  charset: "utf-8",
-  charsetSentinel: false,
-  delimiter: "&",
-  encode: true,
-  encodeDotInKeys: false,
-  encoder: encode,
-  encodeValuesOnly: false,
-  format: default_format,
-  formatter: default_formatter,
-  /** @deprecated */
-  indices: false,
-  serializeDate(date) {
-    return (toISOString ?? (toISOString = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
-  },
-  skipNulls: false,
-  strictNullHandling: false
-};
-function is_non_nullish_primitive(v) {
-  return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
-}
-var sentinel = {};
-function inner_stringify(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
-  let obj = object;
-  let tmp_sc = sideChannel;
-  let step = 0;
-  let find_flag = false;
-  while ((tmp_sc = tmp_sc.get(sentinel)) !== void 0 && !find_flag) {
-    const pos = tmp_sc.get(object);
-    step += 1;
-    if (typeof pos !== "undefined") {
-      if (pos === step) {
-        throw new RangeError("Cyclic object value");
-      } else {
-        find_flag = true;
-      }
-    }
-    if (typeof tmp_sc.get(sentinel) === "undefined") {
-      step = 0;
-    }
-  }
-  if (typeof filter === "function") {
-    obj = filter(prefix, obj);
-  } else if (obj instanceof Date) {
-    obj = serializeDate?.(obj);
-  } else if (generateArrayPrefix === "comma" && isArray(obj)) {
-    obj = maybe_map(obj, function(value) {
-      if (value instanceof Date) {
-        return serializeDate?.(value);
-      }
-      return value;
-    });
-  }
-  if (obj === null) {
-    if (strictNullHandling) {
-      return encoder && !encodeValuesOnly ? (
-        // @ts-expect-error
-        encoder(prefix, defaults.encoder, charset, "key", format)
-      ) : prefix;
-    }
-    obj = "";
-  }
-  if (is_non_nullish_primitive(obj) || is_buffer(obj)) {
-    if (encoder) {
-      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults.encoder, charset, "key", format);
-      return [
-        formatter?.(key_value) + "=" + // @ts-expect-error
-        formatter?.(encoder(obj, defaults.encoder, charset, "value", format))
-      ];
-    }
-    return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
-  }
-  const values = [];
-  if (typeof obj === "undefined") {
-    return values;
-  }
-  let obj_keys;
-  if (generateArrayPrefix === "comma" && isArray(obj)) {
-    if (encodeValuesOnly && encoder) {
-      obj = maybe_map(obj, encoder);
-    }
-    obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : void 0 }];
-  } else if (isArray(filter)) {
-    obj_keys = filter;
-  } else {
-    const keys = Object.keys(obj);
-    obj_keys = sort ? keys.sort(sort) : keys;
-  }
-  const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
-  const adjusted_prefix = commaRoundTrip && isArray(obj) && obj.length === 1 ? encoded_prefix + "[]" : encoded_prefix;
-  if (allowEmptyArrays && isArray(obj) && obj.length === 0) {
-    return adjusted_prefix + "[]";
-  }
-  for (let j = 0; j < obj_keys.length; ++j) {
-    const key = obj_keys[j];
-    const value = (
-      // @ts-ignore
-      typeof key === "object" && typeof key.value !== "undefined" ? key.value : obj[key]
-    );
-    if (skipNulls && value === null) {
-      continue;
-    }
-    const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, "%2E") : key;
-    const key_prefix = isArray(obj) ? typeof generateArrayPrefix === "function" ? generateArrayPrefix(adjusted_prefix, encoded_key) : adjusted_prefix : adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
-    sideChannel.set(object, step);
-    const valueSideChannel = /* @__PURE__ */ new WeakMap();
-    valueSideChannel.set(sentinel, sideChannel);
-    push_to_array(values, inner_stringify(
-      value,
-      key_prefix,
-      generateArrayPrefix,
-      commaRoundTrip,
-      allowEmptyArrays,
-      strictNullHandling,
-      skipNulls,
-      encodeDotInKeys,
-      // @ts-ignore
-      generateArrayPrefix === "comma" && encodeValuesOnly && isArray(obj) ? null : encoder,
-      filter,
-      sort,
-      allowDots,
-      serializeDate,
-      format,
-      formatter,
-      encodeValuesOnly,
-      charset,
-      valueSideChannel
-    ));
-  }
-  return values;
-}
-function normalize_stringify_options(opts = defaults) {
-  if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
-    throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
-  }
-  if (typeof opts.encodeDotInKeys !== "undefined" && typeof opts.encodeDotInKeys !== "boolean") {
-    throw new TypeError("`encodeDotInKeys` option can only be `true` or `false`, when provided");
-  }
-  if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
-    throw new TypeError("Encoder has to be a function.");
-  }
-  const charset = opts.charset || defaults.charset;
-  if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
-    throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
-  }
-  let format = default_format;
-  if (typeof opts.format !== "undefined") {
-    if (!has(formatters, opts.format)) {
-      throw new TypeError("Unknown format option provided.");
-    }
-    format = opts.format;
-  }
-  const formatter = formatters[format];
-  let filter = defaults.filter;
-  if (typeof opts.filter === "function" || isArray(opts.filter)) {
-    filter = opts.filter;
-  }
-  let arrayFormat;
-  if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators) {
-    arrayFormat = opts.arrayFormat;
-  } else if ("indices" in opts) {
-    arrayFormat = opts.indices ? "indices" : "repeat";
-  } else {
-    arrayFormat = defaults.arrayFormat;
-  }
-  if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
-    throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
-  }
-  const allowDots = typeof opts.allowDots === "undefined" ? !!opts.encodeDotInKeys === true ? true : defaults.allowDots : !!opts.allowDots;
-  return {
-    addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults.addQueryPrefix,
-    // @ts-ignore
-    allowDots,
-    allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults.allowEmptyArrays,
-    arrayFormat,
-    charset,
-    charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults.charsetSentinel,
-    commaRoundTrip: !!opts.commaRoundTrip,
-    delimiter: typeof opts.delimiter === "undefined" ? defaults.delimiter : opts.delimiter,
-    encode: typeof opts.encode === "boolean" ? opts.encode : defaults.encode,
-    encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults.encodeDotInKeys,
-    encoder: typeof opts.encoder === "function" ? opts.encoder : defaults.encoder,
-    encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults.encodeValuesOnly,
-    filter,
-    format,
-    formatter,
-    serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults.serializeDate,
-    skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults.skipNulls,
-    // @ts-ignore
-    sort: typeof opts.sort === "function" ? opts.sort : null,
-    strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling
-  };
-}
-function stringify(object, opts = {}) {
-  let obj = object;
-  const options = normalize_stringify_options(opts);
-  let obj_keys;
-  let filter;
-  if (typeof options.filter === "function") {
-    filter = options.filter;
-    obj = filter("", obj);
-  } else if (isArray(options.filter)) {
-    filter = options.filter;
-    obj_keys = filter;
-  }
-  const keys = [];
-  if (typeof obj !== "object" || obj === null) {
-    return "";
-  }
-  const generateArrayPrefix = array_prefix_generators[options.arrayFormat];
-  const commaRoundTrip = generateArrayPrefix === "comma" && options.commaRoundTrip;
-  if (!obj_keys) {
-    obj_keys = Object.keys(obj);
-  }
-  if (options.sort) {
-    obj_keys.sort(options.sort);
-  }
-  const sideChannel = /* @__PURE__ */ new WeakMap();
-  for (let i = 0; i < obj_keys.length; ++i) {
-    const key = obj_keys[i];
-    if (options.skipNulls && obj[key] === null) {
-      continue;
-    }
-    push_to_array(keys, inner_stringify(
-      obj[key],
-      key,
-      // @ts-expect-error
-      generateArrayPrefix,
-      commaRoundTrip,
-      options.allowEmptyArrays,
-      options.strictNullHandling,
-      options.skipNulls,
-      options.encodeDotInKeys,
-      options.encode ? options.encoder : null,
-      options.filter,
-      options.sort,
-      options.allowDots,
-      options.serializeDate,
-      options.format,
-      options.formatter,
-      options.encodeValuesOnly,
-      options.charset,
-      sideChannel
-    ));
-  }
-  const joined = keys.join(options.delimiter);
-  let prefix = options.addQueryPrefix === true ? "?" : "";
-  if (options.charsetSentinel) {
-    if (options.charset === "iso-8859-1") {
-      prefix += "utf8=%26%2310003%3B&";
-    } else {
-      prefix += "utf8=%E2%9C%93&";
-    }
-  }
-  return joined.length > 0 ? prefix + joined : "";
-}
-
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
-var levelNumbers = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn(levelNumbers, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
-  return void 0;
-};
-function noop() {
-}
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
-    return noop;
-  } else {
-    return logger[fnLevel].bind(logger);
-  }
-}
-var noopLogger = {
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop
-};
-var cachedLoggers = /* @__PURE__ */ new WeakMap();
-function loggerFor(client) {
-  const logger = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger) {
-    return noopLogger;
-  }
-  const cachedLogger = cachedLoggers.get(logger);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
-  };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-
-// node_modules/@stainless-api/sdk/internal/parse.mjs
-async function defaultParseResponse(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/sdk/core/api-promise.mjs
-var _APIPromise_client;
-var APIPromise = class _APIPromise extends Promise {
-  constructor(client, responsePromise, parseResponse = defaultParseResponse) {
-    super((resolve) => {
-      resolve(null);
-    });
-    this.responsePromise = responsePromise;
-    this.parseResponse = parseResponse;
-    _APIPromise_client.set(this, void 0);
-    __classPrivateFieldSet(this, _APIPromise_client, client, "f");
-  }
-  _thenUnwrap(transform) {
-    return new _APIPromise(__classPrivateFieldGet(this, _APIPromise_client, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-  }
-  /**
-   * Gets the raw `Response` instance instead of parsing the response
-   * data.
-   *
-   * If you want to parse the response body but still get the `Response`
-   * instance, you can use {@link withResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  asResponse() {
-    return this.responsePromise.then((p) => p.response);
-  }
-  /**
-   * Gets the parsed response data and the raw `Response` instance.
-   *
-   * If you just want to get the raw `Response` instance without parsing it,
-   * you can use {@link asResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  async withResponse() {
-    const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-    return { data, response };
-  }
-  parse() {
-    if (!this.parsedPromise) {
-      this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet(this, _APIPromise_client, "f"), data));
-    }
-    return this.parsedPromise;
-  }
-  then(onfulfilled, onrejected) {
-    return this.parse().then(onfulfilled, onrejected);
-  }
-  catch(onrejected) {
-    return this.parse().catch(onrejected);
-  }
-  finally(onfinally) {
-    return this.parse().finally(onfinally);
-  }
-};
-_APIPromise_client = /* @__PURE__ */ new WeakMap();
-
-// node_modules/@stainless-api/sdk/core/pagination.mjs
-var _AbstractPage_client;
-var AbstractPage = class {
-  constructor(client, response, body, options) {
-    _AbstractPage_client.set(this, void 0);
-    __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
-    this.options = options;
-    this.response = response;
-    this.body = body;
-  }
-  hasNextPage() {
-    const items = this.getPaginatedItems();
-    if (!items.length)
-      return false;
-    return this.nextPageRequestOptions() != null;
-  }
-  async getNextPage() {
-    const nextOptions = this.nextPageRequestOptions();
-    if (!nextOptions) {
-      throw new StainlessError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-    }
-    return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
-  }
-  async *iterPages() {
-    let page = this;
-    yield page;
-    while (page.hasNextPage()) {
-      page = await page.getNextPage();
-      yield page;
-    }
-  }
-  async *[(_AbstractPage_client = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-    for await (const page of this.iterPages()) {
-      for (const item of page.getPaginatedItems()) {
-        yield item;
-      }
-    }
-  }
-};
-var PagePromise = class extends APIPromise {
-  constructor(client, request, Page2) {
-    super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse(client2, props), props.options));
-  }
-  /**
-   * Allow auto-paginating iteration on an unawaited list call, eg:
-   *
-   *    for await (const item of client.items.list()) {
-   *      console.log(item)
-   *    }
-   */
-  async *[Symbol.asyncIterator]() {
-    const page = await this;
-    for await (const item of page) {
-      yield item;
-    }
-  }
-};
-var Page = class extends AbstractPage {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body.data || [];
-    this.next_cursor = body.next_cursor || "";
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const cursor = this.next_cursor;
-    if (!cursor) {
-      return null;
-    }
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj(this.options.query),
-        cursor
-      }
-    };
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/uploads.mjs
-var checkFileSupport = () => {
-  if (typeof File === "undefined") {
-    const { process: process2 } = globalThis;
-    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
-    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
-  }
-};
-function makeFile(fileBits, fileName, options) {
-  checkFileSupport();
-  return new File(fileBits, fileName ?? "unknown_file", options);
-}
-function getName(value) {
-  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
-}
-var isAsyncIterable = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
-
-// node_modules/@stainless-api/sdk/internal/to-file.mjs
-var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
-var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
-var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
-async function toFile(value, name, options) {
-  checkFileSupport();
-  value = await value;
-  if (isFileLike(value)) {
-    if (value instanceof File) {
-      return value;
-    }
-    return makeFile([await value.arrayBuffer()], value.name);
-  }
-  if (isResponseLike(value)) {
-    const blob = await value.blob();
-    name || (name = new URL(value.url).pathname.split(/[\\/]/).pop());
-    return makeFile(await getBytes(blob), name, options);
-  }
-  const parts = await getBytes(value);
-  name || (name = getName(value));
-  if (!options?.type) {
-    const type = parts.find((part) => typeof part === "object" && "type" in part && part.type);
-    if (typeof type === "string") {
-      options = { ...options, type };
-    }
-  }
-  return makeFile(parts, name, options);
-}
-async function getBytes(value) {
-  let parts = [];
-  if (typeof value === "string" || ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
-  value instanceof ArrayBuffer) {
-    parts.push(value);
-  } else if (isBlobLike(value)) {
-    parts.push(value instanceof Blob ? value : await value.arrayBuffer());
-  } else if (isAsyncIterable(value)) {
-    for await (const chunk of value) {
-      parts.push(...await getBytes(chunk));
-    }
-  } else {
-    const constructor = value?.constructor?.name;
-    throw new Error(`Unexpected data type: ${typeof value}${constructor ? `; constructor: ${constructor}` : ""}${propsForError(value)}`);
-  }
-  return parts;
-}
-function propsForError(value) {
-  if (typeof value !== "object" || value === null)
-    return "";
-  const props = Object.getOwnPropertyNames(value);
-  return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
-}
-
-// node_modules/@stainless-api/sdk/core/resource.mjs
-var APIResource = class {
-  constructor(client) {
-    this._client = client;
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/path.mjs
-function encodeURIPath(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction = (pathEncoder = encodeURIPath) => function path2(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path3 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path3.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new StainlessError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path3}
-${underline}`);
-  }
-  return path3;
-};
-var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
-
-// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
-var Diagnostics = class extends APIResource {
-  /**
-   * Get diagnostics for a build
-   */
-  list(buildID, query = {}, options) {
-    return this._client.getAPIList(path`/v0/builds/${buildID}/diagnostics`, Page, {
-      query,
-      ...options
-    });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
-var TargetOutputs = class extends APIResource {
-  /**
-   * Download the output of a build target
-   */
-  retrieve(query, options) {
-    return this._client.get("/v0/build_target_outputs", { query, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
-var Builds = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.diagnostics = new Diagnostics(this._client);
-    this.targetOutputs = new TargetOutputs(this._client);
-  }
-  /**
-   * Create a new build
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
-  }
-  /**
-   * Retrieve a build by ID
-   */
-  retrieve(buildID, options) {
-    return this._client.get(path`/v0/builds/${buildID}`, options);
-  }
-  /**
-   * List builds for a project
-   */
-  list(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList("/v0/builds", Page, {
-      query: { project, ...query },
-      ...options
-    });
-  }
-  /**
-   * Creates two builds whose outputs can be compared directly
-   */
-  compare(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds/compare", { body: { project, ...body }, ...options });
-  }
-};
-Builds.Diagnostics = Diagnostics;
-Builds.TargetOutputs = TargetOutputs;
-
-// node_modules/@stainless-api/sdk/resources/generate.mjs
-var Generate = class extends APIResource {
-  createSpec(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/generate/spec", { body: { project, ...body }, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/orgs.mjs
-var Orgs = class extends APIResource {
-  /**
-   * Retrieve an organization by name
-   */
-  retrieve(org, options) {
-    return this._client.get(path`/v0/orgs/${org}`, options);
-  }
-  /**
-   * List organizations the user has access to
-   */
-  list(options) {
-    return this._client.get("/v0/orgs", options);
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
-var Branches = class extends APIResource {
-  /**
-   * Create a new branch for a project
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/branches`, { body, ...options });
-  }
-  /**
-   * Retrieve a project branch
-   */
-  retrieve(branch, params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/branches/${branch}`, options);
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
-var Configs = class extends APIResource {
-  /**
-   * Retrieve configuration files for a project
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/configs`, { query, ...options });
-  }
-  /**
-   * Generate configuration suggestions based on an OpenAPI spec
-   */
-  guess(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/configs/guess`, { body, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
-var Projects = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.branches = new Branches(this._client);
-    this.configs = new Configs(this._client);
-  }
-  /**
-   * Create a new project
-   */
-  create(body, options) {
-    return this._client.post("/v0/projects", { body, ...options });
-  }
-  /**
-   * Retrieve a project by name
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}`, options);
-  }
-  /**
-   * Update a project's properties
-   */
-  update(params = {}, options) {
-    const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path`/v0/projects/${project}`, { body, ...options });
-  }
-  /**
-   * List projects in an organization, from oldest to newest
-   */
-  list(query = {}, options) {
-    return this._client.getAPIList("/v0/projects", Page, { query, ...options });
-  }
-};
-Projects.Branches = Branches;
-Projects.Configs = Configs;
-
-// node_modules/@stainless-api/sdk/internal/headers.mjs
-var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/env.mjs
-var readEnv = (env) => {
-  if (typeof globalThis.process !== "undefined") {
-    return globalThis.process.env?.[env]?.trim() ?? void 0;
-  }
-  if (typeof globalThis.Deno !== "undefined") {
-    return globalThis.Deno.env?.get?.(env)?.trim();
-  }
-  return void 0;
-};
-
-// node_modules/@stainless-api/sdk/lib/unwrap.mjs
-async function unwrapFile(value) {
-  if (value === null) {
-    return null;
-  }
-  if (value.type === "content") {
-    return value.content;
-  }
-  const response = await fetch(value.url);
-  return response.text();
-}
-
-// node_modules/@stainless-api/sdk/client.mjs
-var _Stainless_instances;
-var _a;
-var _Stainless_encoder;
-var _Stainless_baseURLOverridden;
-var Stainless = class {
-  /**
-   * API Client for interfacing with the Stainless API.
-   *
-   * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
-   * @param {string | null | undefined} [opts.project]
-   * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
-   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
-   * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
-   * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
-   * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
-   * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
-   * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
-   */
-  constructor({ baseURL = readEnv("STAINLESS_BASE_URL"), apiKey = readEnv("STAINLESS_API_KEY") ?? null, project = null, ...opts } = {}) {
-    _Stainless_instances.add(this);
-    _Stainless_encoder.set(this, void 0);
-    this.projects = new Projects(this);
-    this.builds = new Builds(this);
-    this.orgs = new Orgs(this);
-    this.generate = new Generate(this);
-    const options = {
-      apiKey,
-      project,
-      ...opts,
-      baseURL: baseURL || `https://api.stainless.com`
-    };
-    this.baseURL = options.baseURL;
-    this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT;
-    this.logger = options.logger ?? console;
-    const defaultLogLevel = "warn";
-    this.logLevel = defaultLogLevel;
-    this.logLevel = parseLogLevel(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel(readEnv("STAINLESS_LOG"), "process.env['STAINLESS_LOG']", this) ?? defaultLogLevel;
-    this.fetchOptions = options.fetchOptions;
-    this.maxRetries = options.maxRetries ?? 2;
-    this.fetch = options.fetch ?? getDefaultFetch();
-    __classPrivateFieldSet(this, _Stainless_encoder, FallbackEncoder, "f");
-    this._options = options;
-    this.apiKey = apiKey;
-    this.project = project;
-  }
-  /**
-   * Create a new client instance re-using the same options given to the current client with optional overriding.
-   */
-  withOptions(options) {
-    return new this.constructor({
-      ...this._options,
-      baseURL: this.baseURL,
-      maxRetries: this.maxRetries,
-      timeout: this.timeout,
-      logger: this.logger,
-      logLevel: this.logLevel,
-      fetch: this.fetch,
-      fetchOptions: this.fetchOptions,
-      apiKey: this.apiKey,
-      project: this.project,
-      ...options
-    });
-  }
-  defaultQuery() {
-    return this._options.defaultQuery;
-  }
-  validateHeaders({ values, nulls }) {
-    if (this.apiKey && values.get("authorization")) {
-      return;
-    }
-    if (nulls.has("authorization")) {
-      return;
-    }
-    throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
-  }
-  authHeaders(opts) {
-    if (this.apiKey == null) {
-      return void 0;
-    }
-    return buildHeaders([{ Authorization: `Bearer ${this.apiKey}` }]);
-  }
-  stringifyQuery(query) {
-    return stringify(query, { arrayFormat: "comma" });
-  }
-  getUserAgent() {
-    return `${this.constructor.name}/JS ${VERSION}`;
-  }
-  defaultIdempotencyKey() {
-    return `stainless-node-retry-${uuid4()}`;
-  }
-  makeStatusError(status, error, message, headers) {
-    return APIError.generate(status, error, message, headers);
-  }
-  buildURL(path2, query, defaultBaseURL) {
-    const baseURL = !__classPrivateFieldGet(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-    const url = isAbsoluteURL(path2) ? new URL(path2) : new URL(baseURL + (baseURL.endsWith("/") && path2.startsWith("/") ? path2.slice(1) : path2));
-    const defaultQuery = this.defaultQuery();
-    if (!isEmptyObj(defaultQuery)) {
-      query = { ...defaultQuery, ...query };
-    }
-    if (typeof query === "object" && query && !Array.isArray(query)) {
-      url.search = this.stringifyQuery(query);
-    }
-    return url.toString();
-  }
-  /**
-   * Used as a callback for mutating the given `FinalRequestOptions` object.
-   */
-  async prepareOptions(options) {
-  }
-  /**
-   * Used as a callback for mutating the given `RequestInit` object.
-   *
-   * This is useful for cases where you want to add certain headers based off of
-   * the request properties, e.g. `method` or `url`.
-   */
-  async prepareRequest(request, { url, options }) {
-  }
-  get(path2, opts) {
-    return this.methodRequest("get", path2, opts);
-  }
-  post(path2, opts) {
-    return this.methodRequest("post", path2, opts);
-  }
-  patch(path2, opts) {
-    return this.methodRequest("patch", path2, opts);
-  }
-  put(path2, opts) {
-    return this.methodRequest("put", path2, opts);
-  }
-  delete(path2, opts) {
-    return this.methodRequest("delete", path2, opts);
-  }
-  methodRequest(method, path2, opts) {
-    return this.request(Promise.resolve(opts).then((opts2) => {
-      return { method, path: path2, ...opts2 };
-    }));
-  }
-  request(options, remainingRetries = null) {
-    return new APIPromise(this, this.makeRequest(options, remainingRetries, void 0));
-  }
-  async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
-    const options = await optionsInput;
-    const maxRetries = options.maxRetries ?? this.maxRetries;
-    if (retriesRemaining == null) {
-      retriesRemaining = maxRetries;
-    }
-    await this.prepareOptions(options);
-    const { req, url, timeout } = this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
-    await this.prepareRequest(req, { url, options });
-    const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
-    const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
-    const startTime = Date.now();
-    loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({
-      retryOfRequestLogID,
-      method: options.method,
-      url,
-      options,
-      headers: req.headers
-    }));
-    if (options.signal?.aborted) {
-      throw new APIUserAbortError();
-    }
-    const controller = new AbortController();
-    const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
-    const headersTime = Date.now();
-    if (response instanceof Error) {
-      const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
-      if (options.signal?.aborted) {
-        throw new APIUserAbortError();
-      }
-      const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
-      if (retriesRemaining) {
-        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
-        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
-          retryOfRequestLogID,
-          url,
-          durationMs: headersTime - startTime,
-          message: response.message
-        }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
-      }
-      loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
-      loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails({
-        retryOfRequestLogID,
-        url,
-        durationMs: headersTime - startTime,
-        message: response.message
-      }));
-      if (isTimeout) {
-        throw new APIConnectionTimeoutError();
-      }
-      throw new APIConnectionError({ cause: response });
-    }
-    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
-    if (!response.ok) {
-      const shouldRetry = this.shouldRetry(response);
-      if (retriesRemaining && shouldRetry) {
-        const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
-        await CancelReadableStream(response.body);
-        loggerFor(this).info(`${responseInfo} - ${retryMessage2}`);
-        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails({
-          retryOfRequestLogID,
-          url: response.url,
-          status: response.status,
-          headers: response.headers,
-          durationMs: headersTime - startTime
-        }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
-      }
-      const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
-      loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
-      const errText = await response.text().catch((err2) => castToError(err2).message);
-      const errJSON = safeJSON(errText);
-      const errMessage = errJSON ? void 0 : errText;
-      loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({
-        retryOfRequestLogID,
-        url: response.url,
-        status: response.status,
-        headers: response.headers,
-        message: errMessage,
-        durationMs: Date.now() - startTime
-      }));
-      const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
-      throw err;
-    }
-    loggerFor(this).info(responseInfo);
-    loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({
-      retryOfRequestLogID,
-      url: response.url,
-      status: response.status,
-      headers: response.headers,
-      durationMs: headersTime - startTime
-    }));
-    return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
-  }
-  getAPIList(path2, Page2, opts) {
-    return this.requestAPIList(Page2, { method: "get", path: path2, ...opts });
-  }
-  requestAPIList(Page2, options) {
-    const request = this.makeRequest(options, null, void 0);
-    return new PagePromise(this, request, Page2);
-  }
-  async fetchWithTimeout(url, init, ms, controller) {
-    const { signal, method, ...options } = init || {};
-    if (signal)
-      signal.addEventListener("abort", () => controller.abort());
-    const timeout = setTimeout(() => controller.abort(), ms);
-    const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
-    const fetchOptions = {
-      signal: controller.signal,
-      ...isReadableBody ? { duplex: "half" } : {},
-      method: "GET",
-      ...options
-    };
-    if (method) {
-      fetchOptions.method = method.toUpperCase();
-    }
-    try {
-      return await this.fetch.call(void 0, url, fetchOptions);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-  shouldRetry(response) {
-    const shouldRetryHeader = response.headers.get("x-should-retry");
-    if (shouldRetryHeader === "true")
-      return true;
-    if (shouldRetryHeader === "false")
-      return false;
-    if (response.status === 408)
-      return true;
-    if (response.status === 409)
-      return true;
-    if (response.status === 429)
-      return true;
-    if (response.status >= 500)
-      return true;
-    return false;
-  }
-  async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
-    let timeoutMillis;
-    const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
-    if (retryAfterMillisHeader) {
-      const timeoutMs = parseFloat(retryAfterMillisHeader);
-      if (!Number.isNaN(timeoutMs)) {
-        timeoutMillis = timeoutMs;
-      }
-    }
-    const retryAfterHeader = responseHeaders?.get("retry-after");
-    if (retryAfterHeader && !timeoutMillis) {
-      const timeoutSeconds = parseFloat(retryAfterHeader);
-      if (!Number.isNaN(timeoutSeconds)) {
-        timeoutMillis = timeoutSeconds * 1e3;
-      } else {
-        timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
-      }
-    }
-    if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
-      const maxRetries = options.maxRetries ?? this.maxRetries;
-      timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
-    }
-    await sleep(timeoutMillis);
-    return this.makeRequest(options, retriesRemaining - 1, requestLogID);
-  }
-  calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
-    const initialRetryDelay = 0.5;
-    const maxRetryDelay = 8;
-    const numRetries = maxRetries - retriesRemaining;
-    const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
-    const jitter = 1 - Math.random() * 0.25;
-    return sleepSeconds * jitter * 1e3;
-  }
-  buildRequest(inputOptions, { retryCount = 0 } = {}) {
-    const options = { ...inputOptions };
-    const { method, path: path2, query, defaultBaseURL } = options;
-    const url = this.buildURL(path2, query, defaultBaseURL);
-    if ("timeout" in options)
-      validatePositiveInteger("timeout", options.timeout);
-    options.timeout = options.timeout ?? this.timeout;
-    const { bodyHeaders, body } = this.buildBody({ options });
-    const reqHeaders = this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
-    const req = {
-      method,
-      headers: reqHeaders,
-      ...options.signal && { signal: options.signal },
-      ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
-      ...body && { body },
-      ...this.fetchOptions ?? {},
-      ...options.fetchOptions ?? {}
-    };
-    return { req, url, timeout: options.timeout };
-  }
-  buildHeaders({ options, method, bodyHeaders, retryCount }) {
-    let idempotencyHeaders = {};
-    if (this.idempotencyHeader && method !== "get") {
-      if (!options.idempotencyKey)
-        options.idempotencyKey = this.defaultIdempotencyKey();
-      idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
-    }
-    const headers = buildHeaders([
-      idempotencyHeaders,
-      {
-        Accept: "application/json",
-        "User-Agent": this.getUserAgent(),
-        "X-Stainless-Retry-Count": String(retryCount),
-        ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
-        ...getPlatformHeaders()
-      },
-      this.authHeaders(options),
-      this._options.defaultHeaders,
-      bodyHeaders,
-      options.headers
-    ]);
-    this.validateHeaders(headers);
-    return headers.values;
-  }
-  buildBody({ options: { body, headers: rawHeaders } }) {
-    if (!body) {
-      return { bodyHeaders: void 0, body: void 0 };
-    }
-    const headers = buildHeaders([rawHeaders]);
-    if (
-      // Pass raw type verbatim
-      ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
-      headers.values.has("content-type") || // `Blob` is superset of `File`
-      body instanceof Blob || // `FormData` -> `multipart/form-data`
-      body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
-      body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
-      globalThis.ReadableStream && body instanceof globalThis.ReadableStream
-    ) {
-      return { bodyHeaders: void 0, body };
-    } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
-      return { bodyHeaders: void 0, body: ReadableStreamFrom(body) };
-    } else {
-      return __classPrivateFieldGet(this, _Stainless_encoder, "f").call(this, { body, headers });
-    }
-  }
-};
-_a = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
-  return this.baseURL !== "https://api.stainless.com";
-};
-Stainless.Stainless = _a;
-Stainless.DEFAULT_TIMEOUT = 6e4;
-Stainless.StainlessError = StainlessError;
-Stainless.APIError = APIError;
-Stainless.APIConnectionError = APIConnectionError;
-Stainless.APIConnectionTimeoutError = APIConnectionTimeoutError;
-Stainless.APIUserAbortError = APIUserAbortError;
-Stainless.NotFoundError = NotFoundError;
-Stainless.ConflictError = ConflictError;
-Stainless.RateLimitError = RateLimitError;
-Stainless.BadRequestError = BadRequestError;
-Stainless.AuthenticationError = AuthenticationError;
-Stainless.InternalServerError = InternalServerError;
-Stainless.PermissionDeniedError = PermissionDeniedError;
-Stainless.UnprocessableEntityError = UnprocessableEntityError;
-Stainless.toFile = toFile;
-Stainless.unwrapFile = unwrapFile;
-Stainless.Projects = Projects;
-Stainless.Builds = Builds;
-Stainless.Orgs = Orgs;
-Stainless.Generate = Generate;
-
-// src/build.ts
-var fs2 = __toESM(require("node:fs"));
+var exec3 = __toESM(require_exec());
 
 // src/config.ts
 var exec = __toESM(require_exec());
@@ -21591,318 +19818,81 @@ var fs = __toESM(require("node:fs"));
 function getConfigTag(sha) {
   return `stainless-generated-config-from-${sha}`;
 }
-async function readConfig({
+async function saveConfig({
   oasPath,
-  configPath,
-  sha
+  configPath
 }) {
-  sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
-  console.log("Reading config at", sha);
-  const results = {};
-  for (const ref of [sha, getConfigTag(sha)]) {
-    await exec.exec("git", ["fetch", "--depth=1", "origin", ref], {
-      silent: true
-    });
-    const code = await exec.exec("git", ["checkout", ref], { silent: true });
-    if (code !== 0) {
-      console.log("Could not checkout", ref);
-      break;
-    }
-    if (!results.oas && oasPath && fs.existsSync(oasPath)) {
-      results.oas = fs.readFileSync(oasPath, "utf-8");
-      results.oasHash = (await exec.getExecOutput("md5sum", [oasPath], { silent: true })).stdout.split(" ")[0];
-      console.log("Using OAS at", ref, "hash", results.oasHash);
-    }
-    if (!results.config && configPath && fs.existsSync(configPath)) {
-      results.config = fs.readFileSync(configPath, "utf-8");
-      results.configHash = (await exec.getExecOutput("md5sum", [configPath], { silent: true })).stdout.split(" ")[0];
-      console.log("Using config at", ref, "hash", results.configHash);
-    }
+  const sha = (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
+  let savedOAS = false;
+  let savedConfig = false;
+  if (oasPath && fs.existsSync(oasPath)) {
+    savedOAS = true;
+    await exec.exec("git", ["add", oasPath], { silent: true });
   }
-  return results;
+  if (configPath && fs.existsSync(configPath)) {
+    savedConfig = true;
+    await exec.exec("git", ["add", configPath], { silent: true });
+  }
+  if (savedOAS || savedConfig) {
+    const tag = getConfigTag(sha);
+    console.log("Saving generated config to", tag);
+    await exec.exec("git", ["restore", "."], { silent: true });
+    await exec.exec(
+      "git",
+      ["commit", "--allow-empty", "--allow-empty-message"],
+      { silent: true }
+    );
+    await exec.exec("git", ["tag", tag], { silent: true });
+  }
+  return { savedOAS, savedConfig };
 }
-
-// src/runBuilds.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-var isValidConventionalCommitMessage = (message) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 10 * 60;
-async function* runBuilds({
-  stainless,
-  projectName,
-  baseRevision,
-  baseBranch,
-  mergeBranch,
-  branch,
-  oasContent,
-  configContent,
-  guessConfig = false,
-  commitMessage
+async function getMergeBase({
+  baseSha,
+  headSha
 }) {
-  if (mergeBranch && (oasContent || configContent)) {
-    throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path"
-    );
-  }
-  if (guessConfig && (configContent || !oasContent)) {
-    throw new Error(
-      "If guess_config is true, must have oas_path and no config_path"
-    );
-  }
-  if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
-  }
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    console.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    commitMessage = `feat: ${commitMessage}`;
-  }
-  if (!baseRevision) {
-    const build = await stainless.builds.create(
-      {
-        project: projectName,
-        revision: mergeBranch ? `${branch}..${mergeBranch}` : {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage,
-        allow_empty: true
-      },
-      {
-        // For very large specs, writing the config files can take a while.
-        timeout: 3 * 60 * 1e3
-      }
-    );
-    for (const waitFor of ["postgen", "completed"]) {
-      const { outcomes, documentedSpec } = await pollBuild({
-        stainless,
-        build,
-        waitFor
-      });
-      yield {
-        baseOutcomes: null,
-        outcomes,
-        documentedSpec
-      };
-    }
-    return;
-  }
-  if (!configContent) {
-    if (guessConfig) {
-      console.log("Guessing config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.guess({
-          branch,
-          spec: oasContent
-        })
-      )[0]?.content;
-    } else {
-      console.log("Saving config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch
-        })
-      )[0]?.content;
-    }
-  }
-  console.log(`Hard resetting ${branch} to ${baseRevision}`);
-  const { config_commit } = await stainless.projects.branches.create({
-    branch_from: baseRevision,
-    branch,
-    force: true
+  await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
+    silent: true
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
-  const { base, head } = await stainless.builds.compare(
-    {
-      base: {
-        revision: baseRevision,
-        branch: baseBranch,
-        commit_message: commitMessage
-      },
-      head: {
-        revision: {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage
-      }
-    },
-    {
-      // For very large specs, writing the config files can take a while.
-      timeout: 3 * 60 * 1e3
+  let mergeBaseSha;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    try {
+      const output = await exec.getExecOutput(
+        "git",
+        ["merge-base", headSha, baseSha],
+        { silent: true }
+      );
+      mergeBaseSha = output.stdout.trim();
+      if (mergeBaseSha) break;
+    } catch {
     }
-  );
-  for (const waitFor of ["postgen", "completed"]) {
-    const results = await Promise.all([
-      pollBuild({ stainless, build: base, waitFor }),
-      pollBuild({ stainless, build: head, waitFor })
-    ]);
-    yield {
-      baseOutcomes: results[0].outcomes,
-      outcomes: results[1].outcomes,
-      documentedSpec: results[1].documentedSpec
-    };
-  }
-  return;
-}
-async function pollBuild({
-  stainless,
-  build,
-  waitFor,
-  pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
-  maxPollingSeconds = MAX_POLLING_SECONDS
-}) {
-  const outcomes = {};
-  let documentedSpec = null;
-  const buildId = build.id;
-  const languages = Object.keys(build.targets);
-  if (buildId) {
-    console.log(
-      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`
-    );
-  } else {
-    console.log(`No new build was created; exiting.`);
-    return { outcomes, documentedSpec };
-  }
-  const pollingStart = Date.now();
-  while (Object.keys(outcomes).length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
-    const build2 = await stainless.builds.retrieve(buildId);
-    for (const language of languages) {
-      if (!(language in outcomes)) {
-        const buildOutput = build2.targets[language];
-        console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
-        );
-        if ([waitFor, "completed"].includes(buildOutput.status) && buildOutput.commit.status === "completed") {
-          console.log(
-            `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput)
-          );
-          const diagnostics = [];
-          try {
-            for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId
-            )) {
-              diagnostics.push(diagnostic);
-            }
-          } catch (e) {
-            console.error(
-              `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e
-            );
-          }
-          outcomes[language] = {
-            ...buildOutput,
-            commit: buildOutput.commit,
-            diagnostics
-          };
-        }
-      }
-    }
-    if (!documentedSpec && build2.documented_spec) {
-      documentedSpec = await Stainless.unwrapFile(build2.documented_spec);
-    }
-    await new Promise(
-      (resolve) => setTimeout(resolve, pollingIntervalSeconds * 1e3)
+    await exec.exec(
+      "git",
+      ["fetch", "--quiet", "--deepen=10", "origin", baseSha, headSha],
+      { silent: true }
     );
   }
-  const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes)
-  );
-  for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
-    );
-    outcomes[language] = {
-      object: "build_target",
-      status: "completed",
-      lint: {
-        status: "not_started"
-      },
-      test: {
-        status: "not_started"
-      },
-      commit: {
-        status: "completed",
-        completed: {
-          conclusion: "timed_out",
-          commit: null,
-          merge_conflict_pr: null,
-          url: null
-        }
-      },
-      diagnostics: []
-    };
+  if (!mergeBaseSha) {
+    throw new Error("Could not determine merge base SHA");
   }
-  return { outcomes, documentedSpec };
+  console.log(`Merge base: ${mergeBaseSha}`);
+  return { mergeBaseSha };
 }
 
-// src/build.ts
+// src/checkoutBase.ts
 async function main() {
   try {
-    const apiKey = (0, import_core.getInput)("stainless_api_key", { required: true });
-    const oasPath = (0, import_core.getInput)("oas_path", { required: false }) || void 0;
+    const oasPath = (0, import_core.getInput)("oas_path", { required: true });
     const configPath = (0, import_core.getInput)("config_path", { required: false }) || void 0;
-    const projectName = (0, import_core.getInput)("project", { required: true });
-    const commitMessage = (0, import_core.getInput)("commit_message", { required: false }) || void 0;
-    const guessConfig = (0, import_core.getBooleanInput)("guess_config", { required: false });
-    const branch = (0, import_core.getInput)("branch", { required: false }) || void 0;
-    const mergeBranch = (0, import_core.getInput)("merge_branch", { required: false }) || void 0;
-    const baseRevision = (0, import_core.getInput)("base_revision", { required: false }) || void 0;
-    const baseBranch = (0, import_core.getInput)("base_branch", { required: false }) || void 0;
-    const outputDir = (0, import_core.getInput)("output_dir", { required: false }) || void 0;
-    const config = await readConfig({ oasPath, configPath });
-    const stainless = new Stainless({
-      project: projectName,
-      apiKey,
-      logLevel: "warn"
-    });
-    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
-      stainless,
-      projectName,
-      baseRevision,
-      baseBranch,
-      mergeBranch,
-      branch,
-      oasContent: config.oas,
-      configContent: config.config,
-      guessConfig,
-      commitMessage
-    })) {
-      (0, import_core.setOutput)("outcomes", outcomes);
-      (0, import_core.setOutput)("base_outcomes", baseOutcomes);
-      if (documentedSpec && outputDir) {
-        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs2.mkdirSync(outputDir, { recursive: true });
-        fs2.writeFileSync(documentedSpecPath, documentedSpec);
-        (0, import_core.setOutput)("documented_spec_path", documentedSpecPath);
-      }
+    const baseSha = (0, import_core.getInput)("base_sha", { required: true });
+    const headSha = (0, import_core.getInput)("head_sha", { required: true });
+    const { savedOAS } = await saveConfig({ oasPath, configPath });
+    if (!savedOAS) {
+      throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
+    const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+    await exec3.exec("git", ["checkout", mergeBaseSha], { silent: true });
   } catch (error) {
-    console.error("Error interacting with API:", error);
+    console.error("Error in checkout-base action:", error);
     process.exit(1);
   }
 }
