@@ -233,9 +233,7 @@ async function pollBuild({
   >;
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${
-        build.config_commit
-      } for languages: ${languages.join(", ")}`,
+      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
   } else {
     console.log(`No new build was created; exiting.`);
