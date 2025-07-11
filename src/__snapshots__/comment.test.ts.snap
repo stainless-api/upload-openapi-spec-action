@@ -16,7 +16,7 @@ Edit this comment to update it.
 
 <blockquote>
 
-<i>Code was not generated because there was a fatal error</i>
+<i>Code was not generated because there was a fatal error.</i>
 <code>generate ❗</code> → <code>lint ⏳</code> → <code>test ⏳</code>
 
 </blockquote>
@@ -29,7 +29,7 @@ Edit this comment to update it.
 <blockquote>
 
 <i>There was a conflict between your custom code and your generated changes.</i>
-<i>You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users.Read more about why this happened <a href="https://www.stainless.com/docs/guides/add-custom-code">here</a></i>
+<i>You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened <a href="https://www.stainless.com/docs/guides/add-custom-code">here</a>.</i>
 <code>generate ⚠️</code> → <code>lint ⏳</code> → <code>test ⏳</code>
 
 </blockquote>
