@@ -1,47 +1,40 @@
-import {
-  endGroup,
-  getBooleanInput,
-  getInput,
-  setOutput,
-  startGroup,
-} from "@actions/core";
-import * as exec from "@actions/exec";
-import * as github from "@actions/github";
-import { Stainless } from "@stainless-api/sdk";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
-import { printComment, retrieveComment, upsertComment } from "./comment";
-import { isConfigChanged } from "./config";
+import { endGroup, getBooleanInput, getInput, setOutput, startGroup } from '@actions/core';
+import * as exec from '@actions/exec';
+import * as github from '@actions/github';
+import { Stainless } from '@stainless-api/sdk';
+import { checkResults, runBuilds, RunResult } from './runBuilds';
+import { printComment, retrieveComment, upsertComment } from './comment';
+import { isConfigChanged } from './config';
 
 async function main() {
   try {
-    const apiKey = getInput("stainless_api_key", { required: true });
-    const orgName = getInput("org", { required: true });
-    const projectName = getInput("project", { required: true });
-    const oasPath = getInput("oas_path", { required: true });
-    const configPath =
-      getInput("config_path", { required: false }) || undefined;
-    const defaultCommitMessage = getInput("commit_message", { required: true });
-    const failRunOn = getInput("fail_on", { required: true }) || "error";
-    const makeComment = getBooleanInput("make_comment", { required: true });
-    const githubToken = getInput("github_token", { required: false });
-    const baseSha = getInput("base_sha", { required: true });
-    const baseRef = getInput("base_ref", { required: true });
-    const baseBranch = getInput("base_branch", { required: true });
-    const defaultBranch = getInput("default_branch", { required: true });
-    const headSha = getInput("head_sha", { required: true });
-    const branch = getInput("branch", { required: true });
+    const apiKey = getInput('stainless_api_key', { required: true });
+    const orgName = getInput('org', { required: true });
+    const projectName = getInput('project', { required: true });
+    const oasPath = getInput('oas_path', { required: true });
+    const configPath = getInput('config_path', { required: false }) || undefined;
+    const defaultCommitMessage = getInput('commit_message', { required: true });
+    const failRunOn = getInput('fail_on', { required: true }) || 'error';
+    const makeComment = getBooleanInput('make_comment', { required: true });
+    const githubToken = getInput('github_token', { required: false });
+    const baseSha = getInput('base_sha', { required: true });
+    const baseRef = getInput('base_ref', { required: true });
+    const baseBranch = getInput('base_branch', { required: true });
+    const defaultBranch = getInput('default_branch', { required: true });
+    const headSha = getInput('head_sha', { required: true });
+    const branch = getInput('branch', { required: true });
 
     if (makeComment && !githubToken) {
-      throw new Error("github_token is required to make a comment");
+      throw new Error('github_token is required to make a comment');
     }
 
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logLevel: 'warn',
     });
 
-    startGroup("Getting parent revision");
+    startGroup('Getting parent revision');
 
     const { mergeBaseSha, nonMainBaseRef } = await getParentCommits({
       baseSha,
@@ -58,16 +51,13 @@ async function main() {
     });
 
     if (!configChanged) {
-      console.log("No config files changed, skipping preview");
+      console.log('No config files changed, skipping preview');
 
       // In this case, we only want to make a comment if there's an existing
       // comment---which can happen if the changes introduced by the PR
       // disappear for some reason.
-      if (
-        github.context.payload.pull_request!.action !== "opened" &&
-        makeComment
-      ) {
-        startGroup("Updating comment");
+      if (github.context.payload.pull_request!.action !== 'opened' && makeComment) {
+        startGroup('Updating comment');
 
         const commentBody = printComment({ noChanges: true });
 
@@ -103,10 +93,10 @@ async function main() {
       }
     }
 
-    console.log("Using commit message:", commitMessage);
+    console.log('Using commit message:', commitMessage);
 
     // Checkout HEAD for runBuilds to pull the files of:
-    await exec.exec("git", ["checkout", headSha], { silent: true });
+    await exec.exec('git', ['checkout', headSha], { silent: true });
 
     let latestRun: RunResult;
 
@@ -124,7 +114,7 @@ async function main() {
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      startGroup("Running builds");
+      startGroup('Running builds');
 
       const run = await generator.next();
 
@@ -133,8 +123,8 @@ async function main() {
       if (run.done) {
         const { outcomes, baseOutcomes } = latestRun!;
 
-        setOutput("outcomes", outcomes);
-        setOutput("base_outcomes", baseOutcomes);
+        setOutput('outcomes', outcomes);
+        setOutput('base_outcomes', baseOutcomes);
 
         if (!checkResults({ outcomes, failRunOn })) {
           process.exit(1);
@@ -148,7 +138,7 @@ async function main() {
       if (makeComment) {
         const { outcomes, baseOutcomes } = latestRun;
 
-        startGroup("Updating comment");
+        startGroup('Updating comment');
 
         // In case the comment was updated between polls:
         const comment = await retrieveComment({ token: githubToken });
@@ -171,7 +161,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in preview action:", error);
+    console.error('Error in preview action:', error);
     process.exit(1);
   }
 }
@@ -187,7 +177,7 @@ async function getParentCommits({
   baseRef: string;
   defaultBranch: string;
 }) {
-  await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
+  await exec.exec('git', ['fetch', '--depth=1', 'origin', baseSha], {
     silent: true,
   });
 
@@ -195,11 +185,7 @@ async function getParentCommits({
 
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
-      const output = await exec.getExecOutput(
-        "git",
-        ["merge-base", headSha, baseSha],
-        { silent: true },
-      );
+      const output = await exec.getExecOutput('git', ['merge-base', headSha, baseSha], { silent: true });
       mergeBaseSha = output.stdout.trim();
       if (mergeBaseSha) break;
     } catch {
@@ -207,15 +193,11 @@ async function getParentCommits({
     }
 
     // deepen fetch until we find merge base
-    await exec.exec(
-      "git",
-      ["fetch", "--quiet", "--deepen=10", "origin", baseSha, headSha],
-      { silent: true },
-    );
+    await exec.exec('git', ['fetch', '--quiet', '--deepen=10', 'origin', baseSha, headSha], { silent: true });
   }
 
   if (!mergeBaseSha) {
-    throw new Error("Could not determine merge base SHA");
+    throw new Error('Could not determine merge base SHA');
   }
 
   console.log(`Merge base: ${mergeBaseSha}`);
@@ -248,17 +230,17 @@ async function computeBaseRevision({
   if (mergeBaseSha) {
     const hashes: Record<string, { hash: string }> = {};
 
-    await exec.exec("git", ["checkout", mergeBaseSha], { silent: true });
+    await exec.exec('git', ['checkout', mergeBaseSha], { silent: true });
 
     for (const [path, file] of [
-      [oasPath, "openapi.yml"],
-      [configPath, "openapi.stainless.yml"],
+      [oasPath, 'openapi.yml'],
+      [configPath, 'openapi.stainless.yml'],
     ]) {
       if (path) {
         await exec
-          .getExecOutput("md5sum", [path], { silent: true })
+          .getExecOutput('md5sum', [path], { silent: true })
           .then(({ stdout }) => {
-            hashes[file!] = { hash: stdout.split(" ")[0] };
+            hashes[file!] = { hash: stdout.split(' ')[0] };
           })
           .catch(() => {
             console.log(`File ${path} does not exist at merge base.`);
@@ -298,13 +280,13 @@ async function computeBaseRevision({
   const configCommit = (
     await stainless.builds.list({
       project: projectName,
-      branch: "main",
+      branch: 'main',
       limit: 1,
     })
   ).data[0]?.config_commit;
 
   if (!configCommit) {
-    throw new Error("Could not determine base revision");
+    throw new Error('Could not determine base revision');
   }
 
   console.log(`Found base via main branch: ${configCommit}`);

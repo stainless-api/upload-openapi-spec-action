@@ -1,10 +1,10 @@
-import { Stainless } from "@stainless-api/sdk";
-import * as fs from "fs";
+import { Stainless } from '@stainless-api/sdk';
+import * as fs from 'fs';
 
 type Build = Stainless.Builds.BuildObject;
 export type Outcomes = Record<
   string,
-  Exclude<Stainless.Builds.BuildTarget, "commit"> & {
+  Exclude<Stainless.Builds.BuildTarget, 'commit'> & {
     commit: Stainless.Builds.BuildTarget.Completed | null;
     diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[];
   }
@@ -54,17 +54,13 @@ export async function* runBuilds({
   outputDir?: string;
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasPath || configPath)) {
-    throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path",
-    );
+    throw new Error('Cannot specify both merge_branch and oas_path or config_path');
   }
   if (guessConfig && (configPath || !oasPath)) {
-    throw new Error(
-      "If guess_config is true, must have oas_path and no config_path",
-    );
+    throw new Error('If guess_config is true, must have oas_path and no config_path');
   }
   if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
+    throw new Error('Cannot specify both base_revision and merge_branch');
   }
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     console.warn(
@@ -73,25 +69,24 @@ export async function* runBuilds({
     commitMessage = `feat: ${commitMessage}`;
   }
 
-  const oasContent = oasPath ? fs.readFileSync(oasPath, "utf-8") : undefined;
-  let configContent = configPath
-    ? fs.readFileSync(configPath, "utf-8")
-    : undefined;
+  const oasContent = oasPath ? fs.readFileSync(oasPath, 'utf-8') : undefined;
+  let configContent = configPath ? fs.readFileSync(configPath, 'utf-8') : undefined;
 
   if (!baseRevision) {
     const build = await stainless.builds.create(
       {
         project: projectName,
-        revision: mergeBranch
-          ? `${branch}..${mergeBranch}`
+        revision:
+          mergeBranch ?
+            `${branch}..${mergeBranch}`
           : {
               ...(oasContent && {
-                "openapi.yml": {
+                'openapi.yml': {
                   content: oasContent,
                 },
               }),
               ...(configContent && {
-                "openapi.stainless.yml": {
+                'openapi.stainless.yml': {
                   content: configContent,
                 },
               }),
@@ -106,7 +101,7 @@ export async function* runBuilds({
       },
     );
 
-    for (const waitFor of ["postgen", "completed"] as const) {
+    for (const waitFor of ['postgen', 'completed'] as const) {
       const { outcomes, documentedSpec } = await pollBuild({
         stainless,
         build,
@@ -132,7 +127,7 @@ export async function* runBuilds({
 
   if (!configContent) {
     if (guessConfig) {
-      console.log("Guessing config before branch reset");
+      console.log('Guessing config before branch reset');
       configContent = Object.values(
         await stainless.projects.configs.guess({
           branch,
@@ -140,7 +135,7 @@ export async function* runBuilds({
         }),
       )[0]?.content;
     } else {
-      console.log("Saving config before branch reset");
+      console.log('Saving config before branch reset');
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
@@ -167,12 +162,12 @@ export async function* runBuilds({
       head: {
         revision: {
           ...(oasContent && {
-            "openapi.yml": {
+            'openapi.yml': {
               content: oasContent,
             },
           }),
           ...(configContent && {
-            "openapi.stainless.yml": {
+            'openapi.stainless.yml': {
               content: configContent,
             },
           }),
@@ -187,7 +182,7 @@ export async function* runBuilds({
     },
   );
 
-  for (const waitFor of ["postgen", "completed"] as const) {
+  for (const waitFor of ['postgen', 'completed'] as const) {
     // yield once in postgen and again once it's completed
     const results = await Promise.all([
       pollBuild({ stainless, build: base, waitFor }),
@@ -220,7 +215,7 @@ async function pollBuild({
 }: {
   stainless: Stainless;
   build: Build;
-  waitFor: "postgen" | "completed";
+  waitFor: 'postgen' | 'completed';
   pollingIntervalSeconds?: number;
   maxPollingSeconds?: number;
 }) {
@@ -228,14 +223,10 @@ async function pollBuild({
   let documentedSpec: string | null = null;
 
   const buildId = build.id;
-  const languages = Object.keys(build.targets) as Array<
-    keyof typeof build.targets
-  >;
+  const languages = Object.keys(build.targets) as Array<keyof typeof build.targets>;
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${
-        build.config_commit
-      } for languages: ${languages.join(", ")}`,
+      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(', ')}`,
     );
   } else {
     console.log(`No new build was created; exiting.`);
@@ -252,32 +243,21 @@ async function pollBuild({
       if (!(language in outcomes)) {
         const buildOutput = build.targets[language]!;
 
-        console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`,
-        );
+        console.log(`[${buildId}] Build for ${language} has status ${buildOutput.status}`);
 
         if (
-          [waitFor, "completed"].includes(buildOutput.status) &&
-          buildOutput.commit.status === "completed"
+          [waitFor, 'completed'].includes(buildOutput.status) &&
+          buildOutput.commit.status === 'completed'
         ) {
-          console.log(
-            `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput),
-          );
+          console.log(`[${buildId}] Build has output:`, JSON.stringify(buildOutput));
 
-          const diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[] =
-            [];
+          const diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[] = [];
           try {
-            for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId,
-            )) {
+            for await (const diagnostic of stainless.builds.diagnostics.list(buildId)) {
               diagnostics.push(diagnostic);
             }
           } catch (e) {
-            console.error(
-              `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e,
-            );
+            console.error(`[${buildId}] Error getting diagnostics, continuing anyway`, e);
           }
 
           outcomes[language] = {
@@ -294,31 +274,25 @@ async function pollBuild({
     }
 
     // wait a bit before polling again
-    await new Promise((resolve) =>
-      setTimeout(resolve, pollingIntervalSeconds * 1000),
-    );
+    await new Promise((resolve) => setTimeout(resolve, pollingIntervalSeconds * 1000));
   }
 
-  const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes),
-  );
+  const languagesWithoutOutcome = languages.filter((language) => !(language in outcomes));
   for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`,
-    );
+    console.log(`[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`);
     outcomes[language] = {
-      object: "build_target",
-      status: "completed",
+      object: 'build_target',
+      status: 'completed',
       lint: {
-        status: "not_started",
+        status: 'not_started',
       },
       test: {
-        status: "not_started",
+        status: 'not_started',
       },
       commit: {
-        status: "completed",
+        status: 'completed',
         completed: {
-          conclusion: "timed_out",
+          conclusion: 'timed_out',
           commit: null,
           merge_conflict_pr: null,
           url: null,
@@ -331,33 +305,23 @@ async function pollBuild({
   return { outcomes, documentedSpec };
 }
 
-export function checkResults({
-  outcomes,
-  failRunOn,
-}: {
-  outcomes: Outcomes;
-  failRunOn: string;
-}) {
-  if (failRunOn === "never") {
+export function checkResults({ outcomes, failRunOn }: { outcomes: Outcomes; failRunOn: string }) {
+  if (failRunOn === 'never') {
     return true;
   }
 
   const failedLanguages = Object.entries(outcomes).filter(([_, outcome]) => {
-    if (!outcome.commit || outcome.commit.completed.conclusion === "noop") {
+    if (!outcome.commit || outcome.commit.completed.conclusion === 'noop') {
       return true;
     }
-    if (
-      failRunOn === "error" ||
-      failRunOn === "warning" ||
-      failRunOn === "note"
-    ) {
-      if (outcome.commit.completed.conclusion === "error") return true;
+    if (failRunOn === 'error' || failRunOn === 'warning' || failRunOn === 'note') {
+      if (outcome.commit.completed.conclusion === 'error') return true;
     }
-    if (failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "warning") return true;
+    if (failRunOn === 'warning' || failRunOn === 'note') {
+      if (outcome.commit.completed.conclusion === 'warning') return true;
     }
-    if (failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "note") return true;
+    if (failRunOn === 'note') {
+      if (outcome.commit.completed.conclusion === 'note') return true;
     }
     return false;
   });
@@ -366,7 +330,7 @@ export function checkResults({
     console.log(
       `The following languages did not build successfully: ${failedLanguages
         .map(([lang]) => lang)
-        .join(", ")}`,
+        .join(', ')}`,
     );
     return false;
   }

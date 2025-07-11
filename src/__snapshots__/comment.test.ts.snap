@@ -3,52 +3,59 @@
 exports[`printComment > should print comment 1`] = `
 "<h3>✱ Stainless SDK previews</h3>
 
-<i>Last updated: 2000-01-01 00:00:00 UTC</i>
+This PR will update the <code>test-project</code> SDKs with the following commit message.
 
-💬 This PR updates <code>test-project</code> SDKs with this commit message. To change the commit message, edit this comment.
-
-<!-- Replace the contents of this code block with your commit message. Use a commit message in the conventional commits format: https://www.conventionalcommits.org/en/v1.0.0/ -->
 \`\`\`
 Update API endpoints
 \`\`\`
 
-❗ <b>Failures.</b> See the <a href="https://app.stainless.com/test-org/test-project/studio?branch=feature-branch">Stainless Studio</a> for details.
-
-<ul>
-<li>test-project-python: Fatal error.</li>
-</ul>
-
-⚡ <b>Merge conflicts.</b> You can resolve conflicts now; if you do, <a href="https://github.com/test-org/test-sdk/actions/runs/200">re-run this GitHub action</a> to get diffs. If you merge before resolving conflicts, new conflict PRs will be created after merging.
-
-<ul>
-<li>test-project-go: <a href="https://github.com/test-org/test-sdk/pull/1">Link to conflict.</a></li>
-</ul>
-
-⚠️ <b>Regressions.</b>
+Edit this comment to update it.
 
 <details open>
-<summary>test-project-typescript: <a href="https://app.stainless.com/test-org/test-project/studio?language=typescript&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/tree/feature-branch">code</a> · <a href="https://github.com/test-org/test-sdk/compare/base-branch..feature-branch">diff</a></summary>
+<summary>❗ <b>test-project-python</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=python&branch=feature-branch">studio</a></summary>
 
 <blockquote>
 
-Build: <a href="https://github.com/test-org/test-sdk/actions/runs/200">✅ success</a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211">❗ failure</a>
-
-<details>
-<summary>New diagnostics (1 error, 1 warning)</summary>
-
-<blockquote>
-
-See the Stainless Studio for more details.
-
-<ul>
-<li>❗ <b>Error</b>: Error</li>
-<li>⚠️ <b>Warning</b>: Other warning</li>
-</ul>
+<i>Code was not generated because there was a fatal error</i>
+<code>generate ❗</code> → <code>lint ⏳</code> → <code>test ⏳</code>
 
 </blockquote>
 
 </details>
 
+<details open>
+<summary>⚠️ <b>test-project-go</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=go&branch=feature-branch">studio</a> · <a href="#">conflict</a></summary>
+
+<blockquote>
+
+<i>There was a conflict between your custom code and your generated changes.</i>
+<i>You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users.Read more about why this happened <a href="https://www.stainless.com/docs/guides/add-custom-code">here</a></i>
+<code>generate ⚠️</code> → <code>lint ⏳</code> → <code>test ⏳</code>
+
+</blockquote>
+
+</details>
+
+<details open>
+<summary>⚠️ <b>test-project-typescript</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=typescript&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/tree/feature-branch">code</a> · <a href="https://github.com/test-org/test-sdk/compare/base-branch..feature-branch">diff</a></summary>
+
+<blockquote>
+
+<i>There was a regression in your SDK.</i>
+<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/212"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a>
+<details>
+<summary>New diagnostics (1 error, 1 warning)</summary>
+
+<table>
+<tr>
+<td>❗ <b>Error</b>: Error</td>
+</tr>
+<tr>
+<td>⚠️ <b>Warning</b>: Other warning</td>
+</tr>
+</table>
+
+</details>
 <details>
 <summary>Installation</summary>
 
@@ -62,9 +69,21 @@ npm install https://github.com/test-org/test-sdk.git#feature-branch
 
 </details>
 
-✅ <b>Successes.</b>
+<details>
+<summary>✅ <b>test-project-kotlin</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=kotlin&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/tree/feature-branch">code</a></summary>
 
-- test-project-kotlin: <a href="https://app.stainless.com/test-org/test-project/studio?language=kotlin&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/tree/feature-branch">code</a>
+<blockquote>
 
-⏳ These are partial results; builds are still running."
+<i>Your SDK built successfully.</i>
+<code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/214"><code>test ✅</code></a>
+
+</blockquote>
+
+</details>
+
+⏳ These are partial results; builds are still running.
+
+<hr />
+
+<i>This comment is auto-generated by GitHub Actions and is automatically kept up to date as you push.<br/>Last updated: 2000-01-01 00:00:00 UTC</i>"
 `;
