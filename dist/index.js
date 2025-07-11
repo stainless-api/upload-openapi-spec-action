@@ -26968,7 +26968,7 @@ var require_core = __commonJS({
       process.env["PATH"] = `${inputPath}${path2.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
-    function getInput2(name, options) {
+    function getInput3(name, options) {
       const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
       if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
@@ -26978,19 +26978,19 @@ var require_core = __commonJS({
       }
       return val.trim();
     }
-    exports2.getInput = getInput2;
+    exports2.getInput = getInput3;
     function getMultilineInput(name, options) {
-      const inputs = getInput2(name, options).split("\n").filter((x) => x !== "");
+      const inputs = getInput3(name, options).split("\n").filter((x) => x !== "");
       if (options && options.trimWhitespace === false) {
         return inputs;
       }
       return inputs.map((input) => input.trim());
     }
     exports2.getMultilineInput = getMultilineInput;
-    function getBooleanInput2(name, options) {
+    function getBooleanInput3(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
-      const val = getInput2(name, options);
+      const val = getInput3(name, options);
       if (trueValue.includes(val))
         return true;
       if (falseValue.includes(val))
@@ -26998,8 +26998,8 @@ var require_core = __commonJS({
       throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
-    exports2.getBooleanInput = getBooleanInput2;
-    function setOutput(name, value) {
+    exports2.getBooleanInput = getBooleanInput3;
+    function setOutput2(name, value) {
       const filePath = process.env["GITHUB_OUTPUT"] || "";
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
@@ -27007,7 +27007,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(os.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
-    exports2.setOutput = setOutput;
+    exports2.setOutput = setOutput2;
     function setCommandEcho(enabled) {
       (0, command_1.issue)("echo", enabled ? "on" : "off");
     }
@@ -27109,10 +27109,6 @@ __export(index_exports, {
   main: () => main
 });
 module.exports = __toCommonJS(index_exports);
-var import_node_console = require("node:console");
-var import_node_fs = require("node:fs");
-var import_yaml = __toESM(require_dist());
-var import_core = __toESM(require_core());
 
 // node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
@@ -28886,56 +28882,56 @@ Stainless.Orgs = Orgs;
 Stainless.Generate = Generate;
 
 // src/index.ts
+var import_node_console = require("node:console");
+var import_node_fs = require("node:fs");
+var import_yaml = __toESM(require_dist());
+
+// src/compat.ts
+var core = __toESM(require_core());
+function isGitLabCI() {
+  return process.env["GITLAB_CI"] === "true";
+}
+function getInput2(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value || "";
+  } else {
+    return core.getInput(name, options);
+  }
+}
+function getBooleanInput2(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`]?.toLowerCase() || process.env[`INPUT_${name.toUpperCase()}`]?.toLowerCase();
+    if (options?.required && value === void 0) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value === "true";
+  } else {
+    return core.getBooleanInput(name, options);
+  }
+}
+
+// src/index.ts
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
   /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
 );
 var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
-function getInputValue(name, options) {
-  if (isGitLabCI()) {
-    const inputEnvName = `INPUT_${name.toUpperCase()}`;
-    const inputValue = process.env[inputEnvName];
-    const directEnvName = name.toUpperCase();
-    const directValue = process.env[directEnvName];
-    const value = inputValue || directValue;
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value || "";
-  } else {
-    return (0, import_core.getInput)(name, options);
-  }
-}
-function getBooleanInputValue(name, options) {
-  if (isGitLabCI()) {
-    const inputEnvName = `INPUT_${name.toUpperCase()}`;
-    const inputValue = process.env[inputEnvName]?.toLowerCase();
-    const directEnvName = name.toUpperCase();
-    const directValue = process.env[directEnvName]?.toLowerCase();
-    const value = inputValue || directValue;
-    if (options?.required && value === void 0) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value === "true";
-  } else {
-    return (0, import_core.getBooleanInput)(name, options);
-  }
-}
 async function main() {
-  const stainless_api_key = getInputValue("stainless_api_key", {
+  const stainless_api_key = getInput2("stainless_api_key", {
     required: true
   });
-  const inputPath = getInputValue("input_path", { required: true });
-  const configPath = getInputValue("config_path", { required: false });
-  let projectName = getInputValue("project_name", { required: false });
-  const commitMessage = getInputValue("commit_message", { required: false });
-  const guessConfig = getBooleanInputValue("guess_config", { required: false });
-  const branch = getInputValue("branch", { required: false });
-  const outputPath = getInputValue("output_path");
+  const inputPath = getInput2("input_path", { required: true });
+  const configPath = getInput2("config_path", { required: false });
+  let projectName = getInput2("project_name", { required: false });
+  const commitMessage = getInput2("commit_message", { required: false });
+  const guessConfig = getBooleanInput2("guess_config", { required: false }) || false;
+  const branch = getInput2("branch", { required: false }) || "main";
+  const outputPath = getInput2("output_path");
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
     (0, import_node_console.error)(errorMsg);

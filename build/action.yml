@@ -6,6 +6,8 @@ branding:
 runs:
   using: node20
   main: dist/build.js
+
+# All inputs are also supported in GitLab CI, input as an all-uppercase variable.
 inputs:
   stainless_api_key:
     description: Stainless API key.
@@ -61,6 +63,12 @@ inputs:
       directory.
     required: false
     default: ${{ runner.temp }}
+  documented_spec_path:
+    description: >-
+      Path to write an OpenAPI spec with SDK code samples, if configured. See
+      https://app.stainless.com/docs/reference/config#open-api-config for
+      more details.
+    required: false
 
 outputs:
   outcomes:

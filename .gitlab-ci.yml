@@ -1,4 +1,5 @@
-# This file defines reusable GitLab CI component for uploading OpenAPI specs to Stainless
+# This file is provided for backward-compatibility purposes; do not use it
+# for new projects. Instead, use `upload-openapi-spec-action/build`.
 
 image: node:20-alpine
 
