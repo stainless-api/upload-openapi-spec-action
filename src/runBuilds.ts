@@ -12,7 +12,7 @@ export type Outcomes = Record<
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
 );
 
 const isValidConventionalCommitMessage = (message: string) => {
@@ -55,12 +55,12 @@ export async function* runBuilds({
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasPath || configPath)) {
     throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path"
+      "Cannot specify both merge_branch and oas_path or config_path",
     );
   }
   if (guessConfig && (configPath || !oasPath)) {
     throw new Error(
-      "If guess_config is true, must have oas_path and no config_path"
+      "If guess_config is true, must have oas_path and no config_path",
     );
   }
   if (baseRevision && mergeBranch) {
@@ -68,7 +68,7 @@ export async function* runBuilds({
   }
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     console.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`,
     );
     commitMessage = `feat: ${commitMessage}`;
   }
@@ -103,7 +103,7 @@ export async function* runBuilds({
       {
         // For very large specs, writing the config files can take a while.
         timeout: 3 * 60 * 1000,
-      }
+      },
     );
 
     for (const waitFor of ["postgen", "completed"] as const) {
@@ -137,14 +137,14 @@ export async function* runBuilds({
         await stainless.projects.configs.guess({
           branch,
           spec: oasContent!,
-        })
+        }),
       )[0]?.content;
     } else {
       console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
-        })
+        }),
       )[0]?.content;
     }
   }
@@ -184,7 +184,7 @@ export async function* runBuilds({
     {
       // For very large specs, writing the config files can take a while.
       timeout: 3 * 60 * 1000,
-    }
+    },
   );
 
   for (const waitFor of ["postgen", "completed"] as const) {
@@ -233,9 +233,7 @@ async function pollBuild({
   >;
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${
-        build.config_commit
-      } for languages: ${languages.join(", ")}`
+      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
   } else {
     console.log(`No new build was created; exiting.`);
@@ -253,7 +251,7 @@ async function pollBuild({
         const buildOutput = build.targets[language]!;
 
         console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
+          `[${buildId}] Build for ${language} has status ${buildOutput.status}`,
         );
 
         if (
@@ -262,21 +260,21 @@ async function pollBuild({
         ) {
           console.log(
             `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput)
+            JSON.stringify(buildOutput),
           );
 
           const diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[] =
             [];
           try {
             for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId
+              buildId,
             )) {
               diagnostics.push(diagnostic);
             }
           } catch (e) {
             console.error(
               `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e
+              e,
             );
           }
 
@@ -295,16 +293,16 @@ async function pollBuild({
 
     // wait a bit before polling again
     await new Promise((resolve) =>
-      setTimeout(resolve, pollingIntervalSeconds * 1000)
+      setTimeout(resolve, pollingIntervalSeconds * 1000),
     );
   }
 
   const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes)
+    (language) => !(language in outcomes),
   );
   for (const language of languagesWithoutOutcome) {
     console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
+      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`,
     );
     outcomes[language] = {
       object: "build_target",
@@ -366,7 +364,7 @@ export function checkResults({
     console.log(
       `The following languages did not build successfully: ${failedLanguages
         .map(([lang]) => lang)
-        .join(", ")}`
+        .join(", ")}`,
     );
     return false;
   }
