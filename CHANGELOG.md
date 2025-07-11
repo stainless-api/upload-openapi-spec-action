@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.0.0...v1.1.0) (2025-07-11)
+
+
+### Features
+
+* add gitlab ci support ([#73](https://github.com/stainless-api/upload-openapi-spec-action/issues/73)) ([27f29a9](https://github.com/stainless-api/upload-openapi-spec-action/commit/27f29a9cf3ed65668e083cfffbc82f552b41a1aa))
+* improve comment contents-again ([#75](https://github.com/stainless-api/upload-openapi-spec-action/issues/75)) ([a1358ef](https://github.com/stainless-api/upload-openapi-spec-action/commit/a1358efebc0bf7b362f99615d1934cfa4148ff05))
+
 ## [1.0.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v0.5.0...v1.0.0) (2025-07-09)
 
 
