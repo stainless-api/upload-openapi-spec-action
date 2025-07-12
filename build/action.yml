@@ -5,7 +5,7 @@ branding:
   color: green
 runs:
   using: node20
-  main: dist/build.js
+  main: ../dist/build.js
 
 # All inputs are also supported in GitLab CI, input as an all-uppercase variable.
 inputs:
