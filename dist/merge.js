@@ -177,7 +177,7 @@ var require_file_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
     var crypto = __importStar(require("crypto"));
-    var fs2 = __importStar(require("fs"));
+    var fs3 = __importStar(require("fs"));
     var os = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
@@ -185,10 +185,10 @@ var require_file_command = __commonJS({
       if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
       }
-      if (!fs2.existsSync(filePath)) {
+      if (!fs3.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs2.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
+      fs3.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -18505,12 +18505,12 @@ var require_io_util = __commonJS({
     var _a2;
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
-    var fs2 = __importStar(require("fs"));
+    var fs3 = __importStar(require("fs"));
     var path3 = __importStar(require("path"));
-    _a2 = fs2.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
+    _a2 = fs3.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
     exports2.IS_WINDOWS = process.platform === "win32";
     exports2.UV_FS_O_EXLOCK = 268435456;
-    exports2.READONLY = fs2.constants.O_RDONLY;
+    exports2.READONLY = fs3.constants.O_RDONLY;
     function exists(fsPath) {
       return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -30902,289 +30902,8 @@ Stainless.Builds = Builds;
 Stainless.Orgs = Orgs;
 Stainless.Generate = Generate;
 
-// src/runBuilds.ts
-var fs = __toESM(require("fs"));
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-var isValidConventionalCommitMessage = (message) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 10 * 60;
-async function* runBuilds({
-  stainless,
-  projectName,
-  baseRevision,
-  baseBranch,
-  mergeBranch,
-  branch,
-  oasPath,
-  configPath,
-  guessConfig = false,
-  commitMessage,
-  outputDir
-}) {
-  if (mergeBranch && (oasPath || configPath)) {
-    throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path"
-    );
-  }
-  if (guessConfig && (configPath || !oasPath)) {
-    throw new Error(
-      "If guess_config is true, must have oas_path and no config_path"
-    );
-  }
-  if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
-  }
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    console.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    commitMessage = `feat: ${commitMessage}`;
-  }
-  const oasContent = oasPath ? fs.readFileSync(oasPath, "utf-8") : void 0;
-  let configContent = configPath ? fs.readFileSync(configPath, "utf-8") : void 0;
-  if (!baseRevision) {
-    const build = await stainless.builds.create(
-      {
-        project: projectName,
-        revision: mergeBranch ? `${branch}..${mergeBranch}` : {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage,
-        allow_empty: true
-      },
-      {
-        // For very large specs, writing the config files can take a while.
-        timeout: 3 * 60 * 1e3
-      }
-    );
-    for (const waitFor of ["postgen", "completed"]) {
-      const { outcomes, documentedSpec } = await pollBuild({
-        stainless,
-        build,
-        waitFor
-      });
-      let documentedSpecPath = null;
-      if (outputDir && documentedSpec) {
-        documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(documentedSpecPath, documentedSpec);
-      }
-      yield {
-        baseOutcomes: null,
-        outcomes,
-        documentedSpecPath
-      };
-    }
-    return;
-  }
-  if (!configContent) {
-    if (guessConfig) {
-      console.log("Guessing config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.guess({
-          branch,
-          spec: oasContent
-        })
-      )[0]?.content;
-    } else {
-      console.log("Saving config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch
-        })
-      )[0]?.content;
-    }
-  }
-  console.log(`Hard resetting ${branch} to ${baseRevision}`);
-  const { config_commit } = await stainless.projects.branches.create({
-    branch_from: baseRevision,
-    branch,
-    force: true
-  });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
-  const { base, head } = await stainless.builds.compare(
-    {
-      base: {
-        revision: baseRevision,
-        branch: baseBranch,
-        commit_message: commitMessage
-      },
-      head: {
-        revision: {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage
-      }
-    },
-    {
-      // For very large specs, writing the config files can take a while.
-      timeout: 3 * 60 * 1e3
-    }
-  );
-  for (const waitFor of ["postgen", "completed"]) {
-    const results = await Promise.all([
-      pollBuild({ stainless, build: base, waitFor }),
-      pollBuild({ stainless, build: head, waitFor })
-    ]);
-    let documentedSpecPath = null;
-    if (outputDir && results[1].documentedSpec) {
-      documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-      fs.mkdirSync(outputDir, { recursive: true });
-      fs.writeFileSync(documentedSpecPath, results[1].documentedSpec);
-    }
-    yield {
-      baseOutcomes: results[0].outcomes,
-      outcomes: results[1].outcomes,
-      documentedSpecPath
-    };
-  }
-  return;
-}
-async function pollBuild({
-  stainless,
-  build,
-  waitFor,
-  pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
-  maxPollingSeconds = MAX_POLLING_SECONDS
-}) {
-  const outcomes = {};
-  let documentedSpec = null;
-  const buildId = build.id;
-  const languages = Object.keys(build.targets);
-  if (buildId) {
-    console.log(
-      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`
-    );
-  } else {
-    console.log(`No new build was created; exiting.`);
-    return { outcomes, documentedSpec };
-  }
-  const pollingStart = Date.now();
-  while (Object.keys(outcomes).length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
-    const build2 = await stainless.builds.retrieve(buildId);
-    for (const language of languages) {
-      if (!(language in outcomes)) {
-        const buildOutput = build2.targets[language];
-        console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
-        );
-        if ([waitFor, "completed"].includes(buildOutput.status) && buildOutput.commit.status === "completed") {
-          console.log(
-            `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput)
-          );
-          const diagnostics = [];
-          try {
-            for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId
-            )) {
-              diagnostics.push(diagnostic);
-            }
-          } catch (e) {
-            console.error(
-              `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e
-            );
-          }
-          outcomes[language] = {
-            ...buildOutput,
-            commit: buildOutput.commit,
-            diagnostics
-          };
-        }
-      }
-    }
-    if (!documentedSpec && build2.documented_spec) {
-      documentedSpec = await Stainless.unwrapFile(build2.documented_spec);
-    }
-    await new Promise(
-      (resolve) => setTimeout(resolve, pollingIntervalSeconds * 1e3)
-    );
-  }
-  const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes)
-  );
-  for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
-    );
-    outcomes[language] = {
-      object: "build_target",
-      status: "completed",
-      lint: {
-        status: "not_started"
-      },
-      test: {
-        status: "not_started"
-      },
-      commit: {
-        status: "completed",
-        completed: {
-          conclusion: "timed_out",
-          commit: null,
-          merge_conflict_pr: null,
-          url: null
-        }
-      },
-      diagnostics: []
-    };
-  }
-  return { outcomes, documentedSpec };
-}
-function checkResults({
-  outcomes,
-  failRunOn
-}) {
-  if (failRunOn === "never") {
-    return true;
-  }
-  const failedLanguages = Object.entries(outcomes).filter(([_, outcome]) => {
-    if (!outcome.commit || outcome.commit.completed.conclusion === "noop") {
-      return true;
-    }
-    if (failRunOn === "error" || failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "error") return true;
-    }
-    if (failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "warning") return true;
-    }
-    if (failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "note") return true;
-    }
-    return false;
-  });
-  if (failedLanguages.length > 0) {
-    console.log(
-      `The following languages did not build successfully: ${failedLanguages.map(([lang]) => lang).join(", ")}`
-    );
-    return false;
-  }
-  return true;
-}
+// src/merge.ts
+var fs2 = __toESM(require("node:fs"));
 
 // src/comment.ts
 var github = __toESM(require_github());
@@ -33466,35 +33185,323 @@ async function upsertComment({
 
 // src/config.ts
 var exec = __toESM(require_exec());
+var fs = __toESM(require("node:fs"));
+async function readConfig({
+  oasPath,
+  configPath,
+  sha
+}) {
+  sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
+  console.log("Reading config at", sha);
+  const results = {};
+  for (const ref of [sha]) {
+    try {
+      await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
+        silent: true
+      });
+    } catch {
+    }
+    try {
+      await exec.exec("git", ["checkout", ref], { silent: true });
+    } catch {
+      console.log("Could not checkout", ref);
+      break;
+    }
+    if (!results.oas && oasPath && fs.existsSync(oasPath)) {
+      results.oas = fs.readFileSync(oasPath, "utf-8");
+      results.oasHash = (await exec.getExecOutput("md5sum", [oasPath], { silent: true })).stdout.split(" ")[0];
+      console.log("Using OAS at", ref, "hash", results.oasHash);
+    }
+    if (!results.config && configPath && fs.existsSync(configPath)) {
+      results.config = fs.readFileSync(configPath, "utf-8");
+      results.configHash = (await exec.getExecOutput("md5sum", [configPath], { silent: true })).stdout.split(" ")[0];
+      console.log("Using config at", ref, "hash", results.configHash);
+    }
+  }
+  return results;
+}
 async function isConfigChanged({
   before,
-  after,
-  oasPath,
-  configPath
+  after
 }) {
-  await exec.exec("git", ["fetch", "--depth=1", "origin", before], {
-    silent: true
-  });
-  await exec.exec("git", ["fetch", "--depth=1", "origin", after], {
-    silent: true
-  });
-  const diffOutput = await exec.getExecOutput("git", [
-    "diff",
-    "--name-only",
-    before,
-    after
-  ]);
-  const changedFiles = diffOutput.stdout.trim().split("\n");
   let changed = false;
-  if (oasPath && changedFiles.includes(oasPath)) {
+  if (before.oasHash !== after.oasHash) {
     console.log("OAS file changed");
     changed = true;
   }
-  if (configPath && changedFiles.includes(configPath)) {
+  if (before.configHash !== after.configHash) {
     console.log("Config file changed");
     changed = true;
   }
   return changed;
+}
+
+// src/runBuilds.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+);
+var isValidConventionalCommitMessage = (message) => {
+  return CONVENTIONAL_COMMIT_REGEX.test(message);
+};
+var POLLING_INTERVAL_SECONDS = 5;
+var MAX_POLLING_SECONDS = 10 * 60;
+async function* runBuilds({
+  stainless,
+  projectName,
+  baseRevision,
+  baseBranch,
+  mergeBranch,
+  branch,
+  oasContent,
+  configContent,
+  guessConfig = false,
+  commitMessage
+}) {
+  if (mergeBranch && (oasContent || configContent)) {
+    throw new Error(
+      "Cannot specify both merge_branch and oas_path or config_path"
+    );
+  }
+  if (guessConfig && (configContent || !oasContent)) {
+    throw new Error(
+      "If guess_config is true, must have oas_path and no config_path"
+    );
+  }
+  if (baseRevision && mergeBranch) {
+    throw new Error("Cannot specify both base_revision and merge_branch");
+  }
+  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
+    console.warn(
+      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+    );
+    commitMessage = `feat: ${commitMessage}`;
+  }
+  if (!baseRevision) {
+    const build = await stainless.builds.create(
+      {
+        project: projectName,
+        revision: mergeBranch ? `${branch}..${mergeBranch}` : {
+          ...oasContent && {
+            "openapi.yml": {
+              content: oasContent
+            }
+          },
+          ...configContent && {
+            "openapi.stainless.yml": {
+              content: configContent
+            }
+          }
+        },
+        branch,
+        commit_message: commitMessage,
+        allow_empty: true
+      },
+      {
+        // For very large specs, writing the config files can take a while.
+        timeout: 3 * 60 * 1e3
+      }
+    );
+    for (const waitFor of ["postgen", "completed"]) {
+      const { outcomes, documentedSpec } = await pollBuild({
+        stainless,
+        build,
+        waitFor
+      });
+      yield {
+        baseOutcomes: null,
+        outcomes,
+        documentedSpec
+      };
+    }
+    return;
+  }
+  if (!configContent) {
+    if (guessConfig) {
+      console.log("Guessing config before branch reset");
+      configContent = Object.values(
+        await stainless.projects.configs.guess({
+          branch,
+          spec: oasContent
+        })
+      )[0]?.content;
+    } else {
+      console.log("Saving config before branch reset");
+      configContent = Object.values(
+        await stainless.projects.configs.retrieve({
+          branch
+        })
+      )[0]?.content;
+    }
+  }
+  console.log(`Hard resetting ${branch} to ${baseRevision}`);
+  const { config_commit } = await stainless.projects.branches.create({
+    branch_from: baseRevision,
+    branch,
+    force: true
+  });
+  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  const { base, head } = await stainless.builds.compare(
+    {
+      base: {
+        revision: baseRevision,
+        branch: baseBranch,
+        commit_message: commitMessage
+      },
+      head: {
+        revision: {
+          ...oasContent && {
+            "openapi.yml": {
+              content: oasContent
+            }
+          },
+          ...configContent && {
+            "openapi.stainless.yml": {
+              content: configContent
+            }
+          }
+        },
+        branch,
+        commit_message: commitMessage
+      }
+    },
+    {
+      // For very large specs, writing the config files can take a while.
+      timeout: 3 * 60 * 1e3
+    }
+  );
+  for (const waitFor of ["postgen", "completed"]) {
+    const results = await Promise.all([
+      pollBuild({ stainless, build: base, waitFor }),
+      pollBuild({ stainless, build: head, waitFor })
+    ]);
+    yield {
+      baseOutcomes: results[0].outcomes,
+      outcomes: results[1].outcomes,
+      documentedSpec: results[1].documentedSpec
+    };
+  }
+  return;
+}
+async function pollBuild({
+  stainless,
+  build,
+  waitFor,
+  pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
+  maxPollingSeconds = MAX_POLLING_SECONDS
+}) {
+  const outcomes = {};
+  let documentedSpec = null;
+  const buildId = build.id;
+  const languages = Object.keys(build.targets);
+  if (buildId) {
+    console.log(
+      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`
+    );
+  } else {
+    console.log(`No new build was created; exiting.`);
+    return { outcomes, documentedSpec };
+  }
+  const pollingStart = Date.now();
+  while (Object.keys(outcomes).length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+    const build2 = await stainless.builds.retrieve(buildId);
+    for (const language of languages) {
+      if (!(language in outcomes)) {
+        const buildOutput = build2.targets[language];
+        console.log(
+          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
+        );
+        if ([waitFor, "completed"].includes(buildOutput.status) && buildOutput.commit.status === "completed") {
+          console.log(
+            `[${buildId}] Build has output:`,
+            JSON.stringify(buildOutput)
+          );
+          const diagnostics = [];
+          try {
+            for await (const diagnostic of stainless.builds.diagnostics.list(
+              buildId
+            )) {
+              diagnostics.push(diagnostic);
+            }
+          } catch (e) {
+            console.error(
+              `[${buildId}] Error getting diagnostics, continuing anyway`,
+              e
+            );
+          }
+          outcomes[language] = {
+            ...buildOutput,
+            commit: buildOutput.commit,
+            diagnostics
+          };
+        }
+      }
+    }
+    if (!documentedSpec && build2.documented_spec) {
+      documentedSpec = await Stainless.unwrapFile(build2.documented_spec);
+    }
+    await new Promise(
+      (resolve) => setTimeout(resolve, pollingIntervalSeconds * 1e3)
+    );
+  }
+  const languagesWithoutOutcome = languages.filter(
+    (language) => !(language in outcomes)
+  );
+  for (const language of languagesWithoutOutcome) {
+    console.log(
+      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
+    );
+    outcomes[language] = {
+      object: "build_target",
+      status: "completed",
+      lint: {
+        status: "not_started"
+      },
+      test: {
+        status: "not_started"
+      },
+      commit: {
+        status: "completed",
+        completed: {
+          conclusion: "timed_out",
+          commit: null,
+          merge_conflict_pr: null,
+          url: null
+        }
+      },
+      diagnostics: []
+    };
+  }
+  return { outcomes, documentedSpec };
+}
+function checkResults({
+  outcomes,
+  failRunOn
+}) {
+  if (failRunOn === "never") {
+    return true;
+  }
+  const failedLanguages = Object.entries(outcomes).filter(([_, outcome]) => {
+    if (!outcome.commit || outcome.commit.completed.conclusion === "noop") {
+      return true;
+    }
+    if (failRunOn === "error" || failRunOn === "warning" || failRunOn === "note") {
+      if (outcome.commit.completed.conclusion === "error") return true;
+    }
+    if (failRunOn === "warning" || failRunOn === "note") {
+      if (outcome.commit.completed.conclusion === "warning") return true;
+    }
+    if (failRunOn === "note") {
+      if (outcome.commit.completed.conclusion === "note") return true;
+    }
+    return false;
+  });
+  if (failedLanguages.length > 0) {
+    console.log(
+      `The following languages did not build successfully: ${failedLanguages.map(([lang]) => lang).join(", ")}`
+    );
+    return false;
+  }
+  return true;
 }
 
 // src/merge.ts
@@ -33527,11 +33534,11 @@ async function main() {
       apiKey,
       logLevel: "warn"
     });
+    const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
+    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
     const configChanged = await isConfigChanged({
-      before: baseSha,
-      after: headSha,
-      oasPath,
-      configPath
+      before: baseConfig,
+      after: headConfig
     });
     if (!configChanged) {
       console.log("No config files changed, skipping merge");
@@ -33552,8 +33559,7 @@ async function main() {
       // This action always merges to the Stainless `main` branch:
       branch: "main",
       mergeBranch,
-      guessConfig: false,
-      outputDir
+      guessConfig: false
     });
     let latestRun;
     while (true) {
@@ -33561,9 +33567,14 @@ async function main() {
       const run = await generator.next();
       (0, import_core.endGroup)();
       if (run.done) {
-        const { outcomes, documentedSpecPath } = latestRun;
+        const { outcomes, documentedSpec } = latestRun;
         (0, import_core.setOutput)("outcomes", outcomes);
-        (0, import_core.setOutput)("documented_spec_path", documentedSpecPath);
+        if (documentedSpec && outputDir) {
+          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+          fs2.mkdirSync(outputDir, { recursive: true });
+          fs2.writeFileSync(documentedSpecPath, documentedSpec);
+          (0, import_core.setOutput)("documented_spec_path", documentedSpecPath);
+        }
         if (!checkResults({ outcomes, failRunOn })) {
           process.exit(1);
         }

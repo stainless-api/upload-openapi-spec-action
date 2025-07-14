@@ -16,7 +16,7 @@ The main kind of workflows are the pull-request-based workflows, such as [pull_r
 
 * `merge`, which runs when a pull request is merged. The job creates a build of the SDK with the changes from the pull request, along with any [custom code](https://app.stainless.com/docs/guides/patch-custom-code#project-branches) added to the preview build.
 
-By default, the pull request workflow uses the title of the pull request as the commit message.
+By default, the pull request workflow uses the title of the pull request as the commit message, but you can edit the comment on the pull request to change the commit message.
 
 ## Push workflows
 
@@ -24,7 +24,7 @@ The other kind of workflows are the push-based workflows, such as [push.yml](./p
 
 * `build`, which runs when a commit is pushed to a branch you specify. The job creates a build of your SDK against the latest commit on that branch.
 
-By default, the push workflow uses the same commit message.
+In the examples, the push workflow is configured to use a generic commit message. You can change this to the message of the pushed commit by using `${{ github.event.head_commit.message }}`.
 
 ## Integration with docs platforms
 
