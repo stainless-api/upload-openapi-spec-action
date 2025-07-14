@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.1.0...v1.1.1) (2025-07-14)
+
+
+### Bug Fixes
+
+* path to build.js ([#77](https://github.com/stainless-api/upload-openapi-spec-action/issues/77)) ([47cd71f](https://github.com/stainless-api/upload-openapi-spec-action/commit/47cd71fd770c17022e308e989679d4c146a6b9b8))
+
 ## [1.1.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.0.0...v1.1.0) (2025-07-11)
 
 
