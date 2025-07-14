@@ -1,8 +1,9 @@
 import { Stainless } from "@stainless-api/sdk";
-import { readFileSync, writeFileSync } from "node:fs";
+import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { getBooleanInput, getInput, setOutput } from "./compat";
+import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 
 async function main() {
@@ -27,53 +28,52 @@ async function main() {
     const documentedSpecOutputPath =
       getInput("documented_spec_path", { required: false }) || undefined;
 
+    const config = await readConfig({ oasPath, configPath });
+
     const stainless = new Stainless({
       project: projectName,
       apiKey,
       logLevel: "warn",
     });
 
-    let documentedSpec: string | null = null;
-
-    for await (const {
-      outcomes,
-      baseOutcomes,
-      documentedSpecPath,
-    } of runBuilds({
+    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
       stainless,
       projectName,
       baseRevision,
       baseBranch,
       mergeBranch,
       branch,
-      oasPath,
-      configPath,
+      oasContent: config.oas,
+      configContent: config.config,
       guessConfig,
       commitMessage,
-      outputDir,
     })) {
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
-      setOutput("documented_spec_path", documentedSpecPath);
-      if (documentedSpecOutputPath && documentedSpecPath) {
-        documentedSpec = readFileSync(documentedSpecPath, "utf8");
-      }
-    }
 
-    if (documentedSpecOutputPath && documentedSpec) {
-      // Decorated spec is currently always YAML, so convert it to JSON if needed.
-      if (
-        !(
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs.mkdirSync(outputDir, { recursive: true });
+        fs.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
+
+      if (documentedSpec && documentedSpecOutputPath) {
+        // Decorated spec is currently always YAML, so convert it to JSON if needed.
+        const documentedSpecOutput = !(
           documentedSpecOutputPath.endsWith(".yml") ||
           documentedSpecOutputPath.endsWith(".yaml")
         )
-      ) {
-        documentedSpec = JSON.stringify(YAML.parse(documentedSpec), null, 2);
-      }
+          ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
+          : documentedSpec;
 
-      writeFileSync(documentedSpecOutputPath, YAML.stringify(documentedSpec));
-    } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
+        fs.writeFileSync(
+          documentedSpecOutputPath,
+          YAML.stringify(documentedSpecOutput),
+        );
+      } else if (documentedSpecOutputPath) {
+        console.error("No documented spec found.");
+      }
     }
   } catch (error) {
     console.error("Error interacting with API:", error);

@@ -5,12 +5,17 @@ import {
   setOutput,
   startGroup,
 } from "@actions/core";
-import * as exec from "@actions/exec";
 import * as github from "@actions/github";
 import { Stainless } from "@stainless-api/sdk";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
 import { printComment, retrieveComment, upsertComment } from "./comment";
-import { isConfigChanged } from "./config";
+import {
+  Config,
+  getMergeBase,
+  getNonMainBaseRef,
+  isConfigChanged,
+  readConfig,
+} from "./config";
+import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
   try {
@@ -43,18 +48,21 @@ async function main() {
 
     startGroup("Getting parent revision");
 
-    const { mergeBaseSha, nonMainBaseRef } = await getParentCommits({
-      baseSha,
-      headSha,
+    const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+    const { nonMainBaseRef } = await getNonMainBaseRef({
       baseRef,
       defaultBranch,
     });
 
-    const configChanged = await isConfigChanged({
-      before: mergeBaseSha,
-      after: headSha,
+    const mergeBaseConfig = await readConfig({
       oasPath,
       configPath,
+      sha: mergeBaseSha,
+    });
+    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
+    const configChanged = await isConfigChanged({
+      before: mergeBaseConfig,
+      after: headConfig,
     });
 
     if (!configChanged) {
@@ -86,7 +94,7 @@ async function main() {
     const baseRevision = await computeBaseRevision({
       stainless,
       projectName,
-      mergeBaseSha,
+      mergeBaseConfig,
       nonMainBaseRef,
       oasPath,
       configPath,
@@ -105,15 +113,10 @@ async function main() {
 
     console.log("Using commit message:", commitMessage);
 
-    // Checkout HEAD for runBuilds to pull the files of:
-    await exec.exec("git", ["checkout", headSha], { silent: true });
-
-    let latestRun: RunResult;
-
     const generator = runBuilds({
       stainless,
-      oasPath,
-      configPath,
+      oasContent: headConfig.oas,
+      configContent: headConfig.config,
       projectName,
       baseRevision,
       baseBranch,
@@ -121,6 +124,8 @@ async function main() {
       guessConfig: !configPath,
       commitMessage,
     });
+
+    let latestRun: RunResult;
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -176,96 +181,37 @@ async function main() {
   }
 }
 
-async function getParentCommits({
-  baseSha,
-  headSha,
-  baseRef,
-  defaultBranch,
-}: {
-  baseSha: string;
-  headSha: string;
-  baseRef: string;
-  defaultBranch: string;
-}) {
-  await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
-    silent: true,
-  });
-
-  let mergeBaseSha: string | undefined;
-
-  for (let attempt = 0; attempt < 10; attempt++) {
-    try {
-      const output = await exec.getExecOutput(
-        "git",
-        ["merge-base", headSha, baseSha],
-        { silent: true },
-      );
-      mergeBaseSha = output.stdout.trim();
-      if (mergeBaseSha) break;
-    } catch {
-      // ignore
-    }
-
-    // deepen fetch until we find merge base
-    await exec.exec(
-      "git",
-      ["fetch", "--quiet", "--deepen=10", "origin", baseSha, headSha],
-      { silent: true },
-    );
-  }
-
-  if (!mergeBaseSha) {
-    throw new Error("Could not determine merge base SHA");
-  }
-
-  console.log(`Merge base: ${mergeBaseSha}`);
-
-  let nonMainBaseRef: string | undefined;
-
-  if (baseRef !== defaultBranch) {
-    nonMainBaseRef = `preview/${baseRef}`;
-    console.log(`Non-main base ref: ${nonMainBaseRef}`);
-  }
-
-  return { mergeBaseSha, nonMainBaseRef };
-}
-
 async function computeBaseRevision({
   stainless,
   projectName,
-  mergeBaseSha,
+  mergeBaseConfig,
   nonMainBaseRef,
   oasPath,
   configPath,
 }: {
   stainless: Stainless;
   projectName: string;
-  mergeBaseSha?: string;
+  mergeBaseConfig: Config;
   nonMainBaseRef?: string;
   oasPath?: string;
   configPath?: string;
 }) {
-  if (mergeBaseSha) {
-    const hashes: Record<string, { hash: string }> = {};
+  const hashes: Record<string, { hash: string }> = {};
 
-    await exec.exec("git", ["checkout", mergeBaseSha], { silent: true });
-
-    for (const [path, file] of [
-      [oasPath, "openapi.yml"],
-      [configPath, "openapi.stainless.yml"],
-    ]) {
-      if (path) {
-        await exec
-          .getExecOutput("md5sum", [path], { silent: true })
-          .then(({ stdout }) => {
-            hashes[file!] = { hash: stdout.split(" ")[0] };
-          })
-          .catch(() => {
-            console.log(`File ${path} does not exist at merge base.`);
-          });
-      }
-    }
-
+  if (mergeBaseConfig.oasHash) {
+    hashes["openapi.yml"] = { hash: mergeBaseConfig.oasHash };
+  }
+  if (mergeBaseConfig.configHash) {
+    hashes["stainless.yml"] = { hash: mergeBaseConfig.configHash };
+  }
+  if (
+    (oasPath && !mergeBaseConfig.oasHash) ||
+    (configPath && !mergeBaseConfig.configHash)
+  ) {
+    // We should only use the merge base to find a revision if all of the
+    // specified files have a hash. In this case, one of the paths is
+    // specified but the hash isn't in the merge base, so don't use it.
+  } else {
     const configCommit = (
       await stainless.builds.list({
         project: projectName,

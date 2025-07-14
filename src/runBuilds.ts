@@ -1,5 +1,4 @@
 import { Stainless } from "@stainless-api/sdk";
-import * as fs from "fs";
 
 type Build = Stainless.Builds.BuildObject;
 export type Outcomes = Record<
@@ -25,7 +24,7 @@ const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
 export type RunResult = {
   baseOutcomes: Outcomes | null;
   outcomes: Outcomes;
-  documentedSpecPath: string | null;
+  documentedSpec: string | null;
 };
 
 export async function* runBuilds({
@@ -35,11 +34,10 @@ export async function* runBuilds({
   baseBranch,
   mergeBranch,
   branch,
-  oasPath,
-  configPath,
+  oasContent,
+  configContent,
   guessConfig = false,
   commitMessage,
-  outputDir,
 }: {
   stainless: Stainless;
   projectName: string;
@@ -47,18 +45,17 @@ export async function* runBuilds({
   baseBranch?: string;
   mergeBranch?: string;
   branch?: string;
-  oasPath?: string;
-  configPath?: string;
+  oasContent?: string;
+  configContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
-  outputDir?: string;
 }): AsyncGenerator<RunResult> {
-  if (mergeBranch && (oasPath || configPath)) {
+  if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
       "Cannot specify both merge_branch and oas_path or config_path",
     );
   }
-  if (guessConfig && (configPath || !oasPath)) {
+  if (guessConfig && (configContent || !oasContent)) {
     throw new Error(
       "If guess_config is true, must have oas_path and no config_path",
     );
@@ -72,11 +69,6 @@ export async function* runBuilds({
     );
     commitMessage = `feat: ${commitMessage}`;
   }
-
-  const oasContent = oasPath ? fs.readFileSync(oasPath, "utf-8") : undefined;
-  let configContent = configPath
-    ? fs.readFileSync(configPath, "utf-8")
-    : undefined;
 
   if (!baseRevision) {
     const build = await stainless.builds.create(
@@ -113,17 +105,10 @@ export async function* runBuilds({
         waitFor,
       });
 
-      let documentedSpecPath: string | null = null;
-      if (outputDir && documentedSpec) {
-        documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(documentedSpecPath, documentedSpec);
-      }
-
       yield {
         baseOutcomes: null,
         outcomes,
-        documentedSpecPath,
+        documentedSpec,
       };
     }
 
@@ -194,17 +179,10 @@ export async function* runBuilds({
       pollBuild({ stainless, build: head, waitFor }),
     ]);
 
-    let documentedSpecPath: string | null = null;
-    if (outputDir && results[1].documentedSpec) {
-      documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-      fs.mkdirSync(outputDir, { recursive: true });
-      fs.writeFileSync(documentedSpecPath, results[1].documentedSpec);
-    }
-
     yield {
       baseOutcomes: results[0].outcomes,
       outcomes: results[1].outcomes,
-      documentedSpecPath,
+      documentedSpec: results[1].documentedSpec,
     };
   }
 
@@ -233,7 +211,9 @@ async function pollBuild({
   >;
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`,
+      `[${buildId}] Created build against ${
+        build.config_commit
+      } for languages: ${languages.join(", ")}`,
     );
   } else {
     console.log(`No new build was created; exiting.`);

@@ -6865,14 +6865,14 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs2 = this.flowScalar(this.type);
+              const fs3 = this.flowScalar(this.type);
               if (atNextItem || it.value) {
-                map.items.push({ start, key: fs2, sep: [] });
+                map.items.push({ start, key: fs3, sep: [] });
                 this.onKeyLine = true;
               } else if (it.sep) {
-                this.stack.push(fs2);
+                this.stack.push(fs3);
               } else {
-                Object.assign(it, { key: fs2, sep: [] });
+                Object.assign(it, { key: fs3, sep: [] });
                 this.onKeyLine = true;
               }
               return;
@@ -7000,13 +7000,13 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs2 = this.flowScalar(this.type);
+              const fs3 = this.flowScalar(this.type);
               if (!it || it.value)
-                fc.items.push({ start: [], key: fs2, sep: [] });
+                fc.items.push({ start: [], key: fs3, sep: [] });
               else if (it.sep)
-                this.stack.push(fs2);
+                this.stack.push(fs3);
               else
-                Object.assign(it, { key: fs2, sep: [] });
+                Object.assign(it, { key: fs3, sep: [] });
               return;
             }
             case "flow-map-end":
@@ -7466,7 +7466,7 @@ var require_file_command = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
     var crypto = __importStar(require("crypto"));
-    var fs2 = __importStar(require("fs"));
+    var fs3 = __importStar(require("fs"));
     var os = __importStar(require("os"));
     var utils_1 = require_utils();
     function issueFileCommand(command, message) {
@@ -7474,10 +7474,10 @@ var require_file_command = __commonJS({
       if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
       }
-      if (!fs2.existsSync(filePath)) {
+      if (!fs3.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
       }
-      fs2.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
+      fs3.appendFileSync(filePath, `${(0, utils_1.toCommandValue)(message)}${os.EOL}`, {
         encoding: "utf8"
       });
     }
@@ -25794,12 +25794,12 @@ var require_io_util = __commonJS({
     var _a2;
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
-    var fs2 = __importStar(require("fs"));
+    var fs3 = __importStar(require("fs"));
     var path2 = __importStar(require("path"));
-    _a2 = fs2.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
+    _a2 = fs3.promises, exports2.chmod = _a2.chmod, exports2.copyFile = _a2.copyFile, exports2.lstat = _a2.lstat, exports2.mkdir = _a2.mkdir, exports2.open = _a2.open, exports2.readdir = _a2.readdir, exports2.readlink = _a2.readlink, exports2.rename = _a2.rename, exports2.rm = _a2.rm, exports2.rmdir = _a2.rmdir, exports2.stat = _a2.stat, exports2.symlink = _a2.symlink, exports2.unlink = _a2.unlink;
     exports2.IS_WINDOWS = process.platform === "win32";
     exports2.UV_FS_O_EXLOCK = 268435456;
-    exports2.READONLY = fs2.constants.O_RDONLY;
+    exports2.READONLY = fs3.constants.O_RDONLY;
     function exists(fsPath) {
       return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -26700,7 +26700,7 @@ var require_exec = __commonJS({
     exports2.getExecOutput = exports2.exec = void 0;
     var string_decoder_1 = require("string_decoder");
     var tr = __importStar(require_toolrunner());
-    function exec(commandLine, args, options) {
+    function exec3(commandLine, args, options) {
       return __awaiter(this, void 0, void 0, function* () {
         const commandArgs = tr.argStringToArray(commandLine);
         if (commandArgs.length === 0) {
@@ -26712,8 +26712,8 @@ var require_exec = __commonJS({
         return runner.exec();
       });
     }
-    exports2.exec = exec;
-    function getExecOutput(commandLine, args, options) {
+    exports2.exec = exec3;
+    function getExecOutput2(commandLine, args, options) {
       var _a2, _b;
       return __awaiter(this, void 0, void 0, function* () {
         let stdout = "";
@@ -26735,7 +26735,7 @@ var require_exec = __commonJS({
           }
         };
         const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
-        const exitCode = yield exec(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        const exitCode = yield exec3(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
         stdout += stdoutDecoder.end();
         stderr += stderrDecoder.end();
         return {
@@ -26745,7 +26745,7 @@ var require_exec = __commonJS({
         };
       });
     }
-    exports2.getExecOutput = getExecOutput;
+    exports2.getExecOutput = getExecOutput2;
   }
 });
 
@@ -26813,12 +26813,12 @@ var require_platform = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getDetails = exports2.isLinux = exports2.isMacOS = exports2.isWindows = exports2.arch = exports2.platform = void 0;
     var os_1 = __importDefault(require("os"));
-    var exec = __importStar(require_exec());
+    var exec3 = __importStar(require_exec());
     var getWindowsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout: version } = yield exec.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
+      const { stdout: version } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
         silent: true
       });
-      const { stdout: name } = yield exec.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
+      const { stdout: name } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
         silent: true
       });
       return {
@@ -26828,7 +26828,7 @@ var require_platform = __commonJS({
     });
     var getMacOsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
       var _a2, _b, _c, _d;
-      const { stdout } = yield exec.getExecOutput("sw_vers", void 0, {
+      const { stdout } = yield exec3.getExecOutput("sw_vers", void 0, {
         silent: true
       });
       const version = (_b = (_a2 = stdout.match(/ProductVersion:\s*(.+)/)) === null || _a2 === void 0 ? void 0 : _a2[1]) !== null && _b !== void 0 ? _b : "";
@@ -26839,7 +26839,7 @@ var require_platform = __commonJS({
       };
     });
     var getLinuxInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout } = yield exec.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
+      const { stdout } = yield exec3.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
         silent: true
       });
       const [name, version] = stdout.trim().split("\n");
@@ -28869,7 +28869,7 @@ Stainless.Orgs = Orgs;
 Stainless.Generate = Generate;
 
 // src/build.ts
-var import_node_fs = require("node:fs");
+var fs2 = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
 var import_yaml = __toESM(require_dist());
 
@@ -28907,8 +28907,45 @@ function setOutput2(name, value) {
   }
 }
 
+// src/config.ts
+var exec = __toESM(require_exec());
+var fs = __toESM(require("node:fs"));
+async function readConfig({
+  oasPath,
+  configPath,
+  sha
+}) {
+  sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
+  console.log("Reading config at", sha);
+  const results = {};
+  for (const ref of [sha]) {
+    try {
+      await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
+        silent: true
+      });
+    } catch {
+    }
+    try {
+      await exec.exec("git", ["checkout", ref], { silent: true });
+    } catch {
+      console.log("Could not checkout", ref);
+      break;
+    }
+    if (!results.oas && oasPath && fs.existsSync(oasPath)) {
+      results.oas = fs.readFileSync(oasPath, "utf-8");
+      results.oasHash = (await exec.getExecOutput("md5sum", [oasPath], { silent: true })).stdout.split(" ")[0];
+      console.log("Using OAS at", ref, "hash", results.oasHash);
+    }
+    if (!results.config && configPath && fs.existsSync(configPath)) {
+      results.config = fs.readFileSync(configPath, "utf-8");
+      results.configHash = (await exec.getExecOutput("md5sum", [configPath], { silent: true })).stdout.split(" ")[0];
+      console.log("Using config at", ref, "hash", results.configHash);
+    }
+  }
+  return results;
+}
+
 // src/runBuilds.ts
-var fs = __toESM(require("fs"));
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
   /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
 );
@@ -28924,18 +28961,17 @@ async function* runBuilds({
   baseBranch,
   mergeBranch,
   branch,
-  oasPath,
-  configPath,
+  oasContent,
+  configContent,
   guessConfig = false,
-  commitMessage,
-  outputDir
+  commitMessage
 }) {
-  if (mergeBranch && (oasPath || configPath)) {
+  if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
       "Cannot specify both merge_branch and oas_path or config_path"
     );
   }
-  if (guessConfig && (configPath || !oasPath)) {
+  if (guessConfig && (configContent || !oasContent)) {
     throw new Error(
       "If guess_config is true, must have oas_path and no config_path"
     );
@@ -28949,8 +28985,6 @@ async function* runBuilds({
     );
     commitMessage = `feat: ${commitMessage}`;
   }
-  const oasContent = oasPath ? fs.readFileSync(oasPath, "utf-8") : void 0;
-  let configContent = configPath ? fs.readFileSync(configPath, "utf-8") : void 0;
   if (!baseRevision) {
     const build = await stainless.builds.create(
       {
@@ -28982,16 +29016,10 @@ async function* runBuilds({
         build,
         waitFor
       });
-      let documentedSpecPath = null;
-      if (outputDir && documentedSpec) {
-        documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(documentedSpecPath, documentedSpec);
-      }
       yield {
         baseOutcomes: null,
         outcomes,
-        documentedSpecPath
+        documentedSpec
       };
     }
     return;
@@ -29055,16 +29083,10 @@ async function* runBuilds({
       pollBuild({ stainless, build: base, waitFor }),
       pollBuild({ stainless, build: head, waitFor })
     ]);
-    let documentedSpecPath = null;
-    if (outputDir && results[1].documentedSpec) {
-      documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-      fs.mkdirSync(outputDir, { recursive: true });
-      fs.writeFileSync(documentedSpecPath, results[1].documentedSpec);
-    }
     yield {
       baseOutcomes: results[0].outcomes,
       outcomes: results[1].outcomes,
-      documentedSpecPath
+      documentedSpec: results[1].documentedSpec
     };
   }
   return;
@@ -29176,43 +29198,41 @@ async function main() {
     const baseBranch = getInput2("base_branch", { required: false }) || void 0;
     const outputDir = getInput2("output_dir", { required: false }) || (0, import_node_os.tmpdir)();
     const documentedSpecOutputPath = getInput2("documented_spec_path", { required: false }) || void 0;
+    const config = await readConfig({ oasPath, configPath });
     const stainless = new Stainless({
       project: projectName,
       apiKey,
       logLevel: "warn"
     });
-    let documentedSpec = null;
-    for await (const {
-      outcomes,
-      baseOutcomes,
-      documentedSpecPath
-    } of runBuilds({
+    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
       stainless,
       projectName,
       baseRevision,
       baseBranch,
       mergeBranch,
       branch,
-      oasPath,
-      configPath,
+      oasContent: config.oas,
+      configContent: config.config,
       guessConfig,
-      commitMessage,
-      outputDir
+      commitMessage
     })) {
       setOutput2("outcomes", outcomes);
       setOutput2("base_outcomes", baseOutcomes);
-      setOutput2("documented_spec_path", documentedSpecPath);
-      if (documentedSpecOutputPath && documentedSpecPath) {
-        documentedSpec = (0, import_node_fs.readFileSync)(documentedSpecPath, "utf8");
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs2.mkdirSync(outputDir, { recursive: true });
+        fs2.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput2("documented_spec_path", documentedSpecPath);
       }
-    }
-    if (documentedSpecOutputPath && documentedSpec) {
-      if (!(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml"))) {
-        documentedSpec = JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2);
+      if (documentedSpec && documentedSpecOutputPath) {
+        const documentedSpecOutput = !(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml")) ? JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2) : documentedSpec;
+        fs2.writeFileSync(
+          documentedSpecOutputPath,
+          import_yaml.default.stringify(documentedSpecOutput)
+        );
+      } else if (documentedSpecOutputPath) {
+        console.error("No documented spec found.");
       }
-      (0, import_node_fs.writeFileSync)(documentedSpecOutputPath, import_yaml.default.stringify(documentedSpec));
-    } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
     }
   } catch (error) {
     console.error("Error interacting with API:", error);
