@@ -1,12 +1,22 @@
-name: Stainless — Checkout PR base
-description: Git checkout the merge base of a pull request
+name: Stainless — Checkout PR ref
+description: Git checkout the base or head of a pull request
 runs:
   using: node20
-  main: ../dist/checkoutBase.js
+  main: ../dist/checkoutPRRef.js
 inputs:
+  ref:
+    description: >-
+      Which ref to checkout. Options: 'base', 'head'.
+    required: true
   oas_path:
     description: Path to your OpenAPI spec.
     required: true
+  config_path:
+    description: >-
+      Path to your Stainless config. Optional; only provide this if you are
+      building or maintaining the ground truth Stainless config in your own
+      repo.
+    required: false
 
   # We think it's unlikely you'll need to use non-default inputs for these:
   base_sha:

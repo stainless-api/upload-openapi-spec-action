@@ -16,7 +16,7 @@ By default, the pull request workflow uses the title of the pull request as the 
 
 If your OpenAPI spec is generated from your GitHub repo, via a shell script or other GitHub action, you will need to do some extra setup. This is because the action needs access to both the old OpenAPI spec and the new OpenAPI spec. See the example at [pull_request_generated.yml](./pull_request_generated.yml).
 
-Here  the first command runs against the head of your pull request, generating the new OpenAPI spec. Then, `checkout-base-ref` will checkout the relevant base Git commit. The second command runs against this base Git commit, to generate the old OpenAPI spec.
+Here, `checkout-pr-ref` will checkout the relevant base Git commit. The first command runs against the base Git commit, generating the old OpenAPI spec. Then, `checkout-pr-ref` will checkout the relevant head Git commit. The second command runs against the head Git commit, generating the new OpenAPI spec.
 
 ## Push workflows
 

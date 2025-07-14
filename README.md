@@ -110,9 +110,10 @@ the [action definition](./preview/action.yml).
 a pull request. For information about the input parameters, see the [action
 definition](./merge/action.yml).
 
-- `stainless-api/upload-openapi-spec-action/checkout-base`: Checkout the base
-commit for previewing a pull request's changes. For information about the input
-parameters, see the [action definition](./checkout-base/action.yml).
+- `stainless-api/upload-openapi-spec-action/checkout-pr-ref`: Checkout the base
+or head commit for previewing a pull request's changes, saving changes to the
+config when needed. For information about the input parameters, see the [action
+definition](./checkout-pr-ref/action.yml).
 
 ### Workflow permissions
 
@@ -124,7 +125,7 @@ will comment on the pull request with the build results. This is set to true by
 default. The actions use the `github_token` input to make a comment, and the
 comment must have the `pull-requests: write` permission.
 
-- The `preview` and `checkout-base` actions rely on being in a Git repository
+- The `preview` and `checkout-pr-ref` actions rely on being in a Git repository
 that can fetch from the remote to determine base revisions. This will be the
 case if you use the [`actions/checkout`](https://github.com/actions/checkout)
 GitHub action beforehand. That action needs the `contents: read` permission.

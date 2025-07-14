@@ -47,19 +47,25 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Checkout head ref
-        run: git checkout ${{ github.event.pull_request.head.sha }}
+      - name: Checkout base ref
+        uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
+        with:
+          ref: base
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
 
-      - name: Generate new OpenAPI spec
+      - name: Generate old OpenAPI spec
         # Add a step that generates the OpenAPI spec, based on the checked-out
         # repo contents, to the OAS_PATH.
 
-      - name: Checkout base ref
-        uses: stainless-api/upload-openapi-spec-action/checkout-base@v1
+      - name: Checkout head ref
+        uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
         with:
+          ref: head
           oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
 
-      - name: Generate old OpenAPI spec
+      - name: Generate new OpenAPI spec
         # Add a step that generates the OpenAPI spec, based on the checked-out
         # repo contents, to the OAS_PATH.
 

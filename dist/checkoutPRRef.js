@@ -19808,7 +19808,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
   }
 });
 
-// src/checkoutBase.ts
+// src/checkoutPRRef.ts
 var import_core = __toESM(require_core());
 var exec3 = __toESM(require_exec());
 
@@ -19899,22 +19899,35 @@ async function getMergeBase({
   return { mergeBaseSha };
 }
 
-// src/checkoutBase.ts
+// src/checkoutPRRef.ts
+function assertRef(ref) {
+  if (ref !== "base" && ref !== "head") {
+    throw new Error(`Expected ref to be 'base' or 'head', but was ${ref}`);
+  }
+}
 async function main() {
   try {
+    const ref = (0, import_core.getInput)("ref", { required: true });
     const oasPath = (0, import_core.getInput)("oas_path", { required: true });
     const configPath = (0, import_core.getInput)("config_path", { required: false }) || void 0;
     const baseSha = (0, import_core.getInput)("base_sha", { required: true });
     const headSha = (0, import_core.getInput)("head_sha", { required: true });
+    assertRef(ref);
+    const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+    if (ref === "base") {
+      await exec3.exec("git", ["checkout", mergeBaseSha], { silent: true });
+      return;
+    }
     const { savedOAS, savedSha } = await saveConfig({ oasPath, configPath });
     if (!savedOAS) {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
-    if (savedSha !== headSha) {
-      throw new Error(`Expected HEAD to be ${headSha}, but was ${savedSha}`);
+    if (savedSha !== mergeBaseSha) {
+      throw new Error(
+        `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`
+      );
     }
-    const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
-    await exec3.exec("git", ["checkout", mergeBaseSha], { silent: true });
+    await exec3.exec("git", ["checkout", headSha], { silent: true });
   } catch (error) {
     console.error("Error in checkout-base action:", error);
     process.exit(1);

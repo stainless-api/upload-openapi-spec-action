@@ -33618,6 +33618,9 @@ async function main() {
       throw new Error("github_token is required to make a comment");
     }
     const { savedSha } = await saveConfig({ oasPath, configPath });
+    if (savedSha !== null && savedSha !== headSha) {
+      throw new Error(`Expected HEAD to be ${headSha}, but was ${savedSha}`);
+    }
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -33625,11 +33628,6 @@ async function main() {
     });
     (0, import_core.startGroup)("Getting parent revision");
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
-    if (savedSha !== null && savedSha !== mergeBaseSha) {
-      throw new Error(
-        `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`
-      );
-    }
     const { nonMainBaseRef } = await getNonMainBaseRef({
       baseRef,
       defaultBranch
