@@ -29,11 +29,11 @@ export async function saveConfig({
   let savedSha: string | null = null;
   const hasChanges =
     (
-      await exec.getExecOutput(
-        "git",
-        ["status", "--porcelain", "--untracked-files=all"],
-        { silent: true },
-      )
+      await exec.getExecOutput("git", [
+        "status",
+        "--porcelain",
+        "--untracked-files=all",
+      ])
     ).stdout !== "";
 
   if (!hasChanges) {
@@ -42,44 +42,39 @@ export async function saveConfig({
 
   if (oasPath && fs.existsSync(oasPath)) {
     savedOAS = true;
-    await exec.exec("git", ["add", oasPath], { silent: true });
+    await exec.exec("git", ["add", oasPath]);
   }
 
   if (configPath && fs.existsSync(configPath)) {
     savedConfig = true;
-    await exec.exec("git", ["add", configPath], { silent: true });
+    await exec.exec("git", ["add", configPath]);
   }
 
   if (savedOAS || savedConfig) {
     savedSha = (
-      await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
+      await exec.getExecOutput("git", ["rev-parse", "HEAD"])
     ).stdout.trim();
     const tag = getConfigTag(savedSha);
     console.log("Saving generated config to", tag);
 
     // Don't commit any files other than the OAS and config:
-    await exec.exec("git", ["restore", "."], { silent: true });
+    await exec.exec("git", ["restore", "."]);
 
     // Need a name and email to commit:
-    await exec.exec("git", ["config", "user.name", "stainless-app[bot]"], {
-      silent: true,
-    });
-    await exec.exec(
-      "git",
-      [
-        "config",
-        "user.email",
-        "142633134+stainless-app[bot]@users.noreply.github.com",
-      ],
-      { silent: true },
-    );
+    await exec.exec("git", ["config", "user.name", "stainless-app[bot]"]);
+    await exec.exec("git", [
+      "config",
+      "user.email",
+      "142633134+stainless-app[bot]@users.noreply.github.com",
+    ]);
 
-    await exec.exec(
-      "git",
-      ["commit", "--allow-empty", "-m", "Save generated config"],
-      { silent: true },
-    );
-    await exec.exec("git", ["tag", tag], { silent: true });
+    await exec.exec("git", [
+      "commit",
+      "--allow-empty",
+      "-m",
+      "Save generated config",
+    ]);
+    await exec.exec("git", ["tag", tag]);
   }
 
   return { savedOAS, savedConfig, savedSha };

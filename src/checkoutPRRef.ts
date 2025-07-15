@@ -42,7 +42,7 @@ async function main() {
     // Checkout the head SHA.
     await exec.exec("git", ["checkout", headSha], { silent: true });
   } catch (error) {
-    console.error("Error in checkout-base action:", error);
+    console.error("Error in checkout-pr-ref action:", error);
     process.exit(1);
   }
 }
