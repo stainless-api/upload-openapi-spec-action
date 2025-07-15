@@ -173,12 +173,17 @@ async function uploadSpecAndConfig(
   )
     .map(([target, value]) => {
       if (
-        // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+        // The remaining possible conclusions ('fatal', 'payment_required', etc.) should
         // all be considered failures.
         value.commit?.status === "completed" &&
-        ["noop", "error", "warning", "note", "success"].includes(
-          value.commit.completed.conclusion,
-        )
+        [
+          "merge_conflict",
+          "noop",
+          "error",
+          "warning",
+          "note",
+          "success",
+        ].includes(value.commit.completed.conclusion)
       ) {
         return undefined;
       } else if (value.commit?.status === "completed") {
