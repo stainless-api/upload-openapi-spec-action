@@ -29041,11 +29041,16 @@ async function uploadSpecAndConfig(specPath, configPath, token, projectName, com
   }
   const errors = Object.entries(build.targets).map(([target, value]) => {
     if (
-      // The remaining possible conclusions ('merge_conflict', 'fatal', 'payment_required', etc.) should
+      // The remaining possible conclusions ('fatal', 'payment_required', etc.) should
       // all be considered failures.
-      value.commit?.status === "completed" && ["noop", "error", "warning", "note", "success"].includes(
-        value.commit.completed.conclusion
-      )
+      value.commit?.status === "completed" && [
+        "merge_conflict",
+        "noop",
+        "error",
+        "warning",
+        "note",
+        "success"
+      ].includes(value.commit.completed.conclusion)
     ) {
       return void 0;
     } else if (value.commit?.status === "completed") {
