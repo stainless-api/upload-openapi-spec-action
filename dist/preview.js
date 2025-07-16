@@ -33067,17 +33067,22 @@ function InstallationDetails(head, lang) {
   if (!head.commit.completed.commit) {
     return null;
   }
-  const { repo } = head.commit.completed.commit;
-  const githubURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
+  const { repo, sha } = head.commit.completed.commit;
+  const githubHTTPURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
+  const githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
   let installation = null;
   switch (lang) {
     case "typescript":
     case "node": {
-      installation = `npm install ${githubURL}`;
+      installation = `npm install ${githubHTTPURL}`;
       break;
     }
     case "python": {
-      installation = `pip install git+${githubURL}`;
+      installation = `pip install git+${githubHTTPURL}`;
+      break;
+    }
+    case "go": {
+      installation = `go get ${githubGoURL}`;
       break;
     }
     default: {
