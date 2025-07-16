@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.1.1...v1.2.0) (2025-07-16)
+
+
+### Features
+
+* add go installation instructions ([#82](https://github.com/stainless-api/upload-openapi-spec-action/issues/82)) ([bc77dbc](https://github.com/stainless-api/upload-openapi-spec-action/commit/bc77dbca81711b91e93bc1520d9a452445220809))
+* add preview support for generating oas ([#74](https://github.com/stainless-api/upload-openapi-spec-action/issues/74)) ([4a0529f](https://github.com/stainless-api/upload-openapi-spec-action/commit/4a0529ff71b96dcbd74c766a7ee938d618c53c4e))
+
+
+### Bug Fixes
+
+* don't fail action on merge conflicts ([#80](https://github.com/stainless-api/upload-openapi-spec-action/issues/80)) ([e2821aa](https://github.com/stainless-api/upload-openapi-spec-action/commit/e2821aa4c01149a9d2c36933eeb6f648c0b69808))
+
 ## [1.1.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.1.0...v1.1.1) (2025-07-14)
 
 
