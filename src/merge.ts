@@ -1,13 +1,7 @@
-import {
-  endGroup,
-  getBooleanInput,
-  getInput,
-  setOutput,
-  startGroup,
-} from "@actions/core";
+import { getBooleanInput, getInput, setOutput } from "@actions/core";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
-import { printComment, retrieveComment, upsertComment } from "./comment";
+import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { isConfigChanged, readConfig } from "./config";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
@@ -79,14 +73,29 @@ async function main() {
     });
 
     let latestRun: RunResult;
+    const upsert = commentThrottler(githubToken);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      startGroup("Running builds");
-
       const run = await generator.next();
 
-      endGroup();
+      if (run.value) {
+        latestRun = run.value;
+      }
+
+      if (makeComment) {
+        const { outcomes } = latestRun!;
+
+        const commentBody = printComment({
+          orgName,
+          projectName,
+          branch: "main",
+          commitMessage,
+          outcomes,
+        });
+
+        await upsert({ body: commentBody, force: run.done });
+      }
 
       if (run.done) {
         const { outcomes, documentedSpec } = latestRun!;
@@ -105,26 +114,6 @@ async function main() {
         }
 
         break;
-      }
-
-      latestRun = run.value;
-
-      if (makeComment) {
-        const { outcomes } = latestRun;
-
-        startGroup("Updating comment");
-
-        const commentBody = printComment({
-          orgName,
-          projectName,
-          branch: "main",
-          commitMessage,
-          outcomes,
-        });
-
-        await upsertComment({ body: commentBody, token: githubToken });
-
-        endGroup();
       }
     }
   } catch (error) {

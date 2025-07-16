@@ -147,15 +147,10 @@ function Result({
 }): string | null {
   const category = categorize(head, base);
 
-  // Pending outcomes don't generate individual result blocks
-  if (category === "pending") {
-    return null;
-  }
-
   const Description = (() => {
     switch (category) {
       case "failure": {
-        switch (head.commit.completed?.conclusion) {
+        switch (head.commit?.completed?.conclusion) {
           case "fatal":
             return MD.Italic(
               "Code was not generated because there was a fatal error.",
@@ -164,13 +159,13 @@ function Result({
             return MD.Italic("Timed out.");
           default:
             return MD.Italic(
-              `Unknown conclusion (${MD.CodeInline(head.commit.completed?.conclusion || "unknown")}).`,
+              `Unknown conclusion (${MD.CodeInline(head.commit?.completed?.conclusion || "unknown")}).`,
             );
         }
       }
       case "merge_conflict":
         return [
-          head.commit.completed?.conclusion === "upstream_merge_conflict"
+          head.commit?.completed?.conclusion === "upstream_merge_conflict"
             ? MD.Italic(
                 `There was an upstream conflict which is preventing the preview of your change.`,
               )
@@ -206,22 +201,20 @@ function Result({
         }),
         GitHubLink(head),
         base ? CompareLink(base, head) : null,
-        category === "merge_conflict"
-          ? MD.Link({ text: "conflict", href: "#" })
-          : null,
+        MergeConflictLink(head),
       ]
         .filter((link): link is string => link !== null)
         .join(` ${MD.Symbol.MiddleDot} `),
     ].join(" "),
     body: [
       Description,
-      StatusLine(head),
+      StatusLine(base, head),
       base ? DiagnosticsDetails(head, base) : null,
       InstallationDetails(head, lang),
     ]
       .filter((value): value is NonNullable<typeof value> => Boolean(value))
       .join("\n"),
-    open: category !== "success",
+    open: category !== "success" && category !== "pending",
   });
 }
 
@@ -230,6 +223,7 @@ function ResultIcon(category: OutcomeCategory): string {
     case "failure":
       return MD.Symbol.Exclamation;
     case "merge_conflict":
+      return MD.Symbol.Zap;
     case "regression":
       return MD.Symbol.Warning;
     case "success":
@@ -239,38 +233,79 @@ function ResultIcon(category: OutcomeCategory): string {
   }
 }
 
-function StatusLine(outcome: Outcomes[string]): string {
+function StatusLine(
+  base: Outcomes[string] | undefined,
+  head: Outcomes[string],
+): string {
   return [
-    StatusStep(outcome, "generate"),
-    StatusStep(outcome, "lint"),
-    StatusStep(outcome, "test"),
-    StatusStep(outcome, "build"),
+    StatusStep(base, head, "generate"),
+    StatusStep(base, head, "lint"),
+    StatusStep(base, head, "test"),
+    StatusStep(base, head, "build"),
   ]
     .filter((value): value is NonNullable<typeof value> => Boolean(value))
     .join(` ${MD.Symbol.RightwardsArrow} `);
 }
 
 function StatusStep(
-  outcome: Outcomes[string],
+  base: Outcomes[string] | undefined,
+  head: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ): string | null {
+  let baseStatus = base ? StatusSymbol(base, step) : null;
+  let headStatus = StatusSymbol(head, step);
+
+  if (!headStatus) {
+    return null;
+  }
+
+  // If one of them is pending, both of them should look pending:
+  if (
+    baseStatus === MD.Symbol.HourglassFlowingSand ||
+    headStatus === MD.Symbol.HourglassFlowingSand
+  ) {
+    baseStatus = MD.Symbol.HourglassFlowingSand;
+    headStatus = MD.Symbol.HourglassFlowingSand;
+  }
+
+  const headText = MD.CodeInline(`${step} ${headStatus}`);
+  const headURL = StatusURL(head, step);
+  const headLink = headURL
+    ? MD.Link({ text: headText, href: headURL })
+    : headText;
+
+  if (!baseStatus || baseStatus === headStatus) {
+    return headLink;
+  }
+
+  const baseText = MD.CodeInline(`${step} ${baseStatus}`);
+  const baseURL = StatusURL(base!, step);
+  const baseLink = baseURL
+    ? MD.Link({ text: baseText, href: baseURL })
+    : baseText;
+
+  return `${headLink} (old: ${baseLink})`;
+}
+
+function StatusSymbol(
+  outcome: Outcomes[string],
+  step: "generate" | "lint" | "test" | "build",
+) {
+  if (!outcome.commit?.completed?.commit) {
+    return null;
+  }
+
   if (step === "generate") {
-    let status: string;
-    switch (outcome.commit.completed?.conclusion) {
+    switch (outcome.commit.completed.conclusion) {
       case "fatal":
-        status = MD.Symbol.Exclamation;
-        break;
+        return MD.Symbol.Exclamation;
       case "merge_conflict":
+        return MD.Symbol.Zap;
       case "upstream_merge_conflict":
-        status = MD.Symbol.Warning;
-        break;
+        return MD.Symbol.Warning;
       default:
-        status = MD.Symbol.WhiteCheckMark;
-        break;
+        return MD.Symbol.WhiteCheckMark;
     }
-    const text = MD.CodeInline(`${step} ${status}`);
-    const url = outcome.commit.completed?.url;
-    return url ? MD.Link({ text, href: url }) : text;
   }
 
   const stepData = outcome[step];
@@ -279,16 +314,27 @@ function StatusStep(
   }
 
   if (stepData.status === "completed") {
-    const status =
-      stepData.completed.conclusion === "success"
-        ? MD.Symbol.WhiteCheckMark
-        : MD.Symbol.Exclamation;
-    const text = MD.CodeInline(`${step} ${status}`);
-    const url = stepData.completed.url;
-    return url ? MD.Link({ text, href: url }) : text;
+    return stepData.completed.conclusion === "success"
+      ? MD.Symbol.WhiteCheckMark
+      : MD.Symbol.Exclamation;
   }
 
-  return MD.CodeInline(`${step} ${MD.Symbol.HourglassFlowingSand}`);
+  return MD.Symbol.HourglassFlowingSand;
+}
+
+function StatusURL(
+  outcome: Outcomes[string],
+  step: "generate" | "lint" | "test" | "build",
+) {
+  if (step === "generate") {
+    return outcome.commit?.completed?.url;
+  }
+
+  if (!outcome[step] || outcome[step].status !== "completed") {
+    return null;
+  }
+
+  return outcome[step]?.completed?.url;
 }
 
 type OutcomeCategory =
@@ -299,7 +345,7 @@ type OutcomeCategory =
   | "pending";
 
 function GitHubLink(outcome: Outcomes[string]): string | null {
-  if (!outcome.commit.completed?.commit) return null;
+  if (!outcome.commit?.completed?.commit) return null;
 
   const {
     repo: { owner, name, branch },
@@ -314,7 +360,7 @@ function CompareLink(
   base: Outcomes[string],
   head: Outcomes[string],
 ): string | null {
-  if (!base.commit.completed?.commit || !head.commit.completed?.commit) {
+  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
     return null;
   }
 
@@ -323,6 +369,20 @@ function CompareLink(
   const headBranch = head.commit.completed.commit.repo.branch;
   const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
   return MD.Link({ text: "diff", href: compareURL });
+}
+
+function MergeConflictLink(outcome: Outcomes[string]): string | null {
+  if (!outcome.commit?.completed?.merge_conflict_pr) return null;
+
+  const {
+    repo: { owner, name },
+    number,
+  } = outcome.commit.completed.merge_conflict_pr;
+
+  return MD.Link({
+    text: "conflict",
+    href: `https://github.com/${owner}/${name}/pull/${number}`,
+  });
 }
 
 function DiagnosticsDetails(
@@ -385,7 +445,7 @@ function InstallationDetails(
   head: Outcomes[string],
   lang: string,
 ): string | null {
-  if (!head.commit.completed.commit) {
+  if (!head.commit?.completed.commit) {
     return null;
   }
 
@@ -428,23 +488,30 @@ function categorize(
   head: Outcomes[string],
   base?: Outcomes[string],
 ): OutcomeCategory {
+  if (head.commit?.status !== "completed") {
+    return "pending";
+  }
+
   // Check for fatal failures first
-  switch (head.commit.completed?.conclusion) {
+  switch (head.commit.completed.conclusion) {
     case "fatal":
     case "timed_out":
       return "failure";
     case "merge_conflict":
     case "upstream_merge_conflict":
       return "merge_conflict";
-  }
-
-  // If not a completed success outcome, skip categorization
-  if (
-    !["error", "warning", "note", "success"].includes(
-      head.commit.completed?.conclusion || "",
-    )
-  ) {
-    return "pending";
+    case "noop":
+      return "success";
+    // Completed success outcomes are handled below
+    case "error":
+    case "warning":
+    case "note":
+    case "success": {
+      break;
+    }
+    // Unknown conclusions are fatal
+    default:
+      return "failure";
   }
 
   // Check for pending steps
@@ -463,7 +530,7 @@ function categorize(
           base[check]?.completed.conclusion === "success")) &&
       head[check] &&
       head[check].status === "completed" &&
-      head[check].completed.conclusion === "failure"
+      head[check].completed.conclusion !== "success"
     ) {
       return "regression";
     }
@@ -555,4 +622,32 @@ export async function upsertComment({
       body,
     });
   }
+}
+
+function areCommentsEqual(a: string, b: string) {
+  // Need to ignore the timestamp lines.
+  return (
+    a.split("\n").slice(0, -2).join("\n") ===
+    b.split("\n").slice(0, -2).join("\n")
+  );
+}
+
+export function commentThrottler(token: string) {
+  let lastComment: string | null = null;
+  let lastCommentTime: Date | null = null;
+
+  return async ({ body, force = false }: { body: string; force?: boolean }) => {
+    if (
+      force ||
+      !lastComment ||
+      !lastCommentTime ||
+      (!areCommentsEqual(body, lastComment) &&
+        Date.now() - lastCommentTime.getTime() > 10 * 1000) ||
+      Date.now() - lastCommentTime.getTime() > 30 * 1000
+    ) {
+      await upsertComment({ body, token });
+      lastComment = body;
+      lastCommentTime = new Date();
+    }
+  };
 }

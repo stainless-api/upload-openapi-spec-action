@@ -7,7 +7,12 @@ import {
 } from "@actions/core";
 import * as github from "@actions/github";
 import { Stainless } from "@stainless-api/sdk";
-import { printComment, retrieveComment, upsertComment } from "./comment";
+import {
+  commentThrottler,
+  printComment,
+  retrieveComment,
+  upsertComment,
+} from "./comment";
 import {
   Config,
   getMergeBase,
@@ -136,34 +141,18 @@ async function main() {
     });
 
     let latestRun: RunResult;
+    const upsert = commentThrottler(githubToken);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      startGroup("Running builds");
-
       const run = await generator.next();
 
-      endGroup();
-
-      if (run.done) {
-        const { outcomes, baseOutcomes } = latestRun!;
-
-        setOutput("outcomes", outcomes);
-        setOutput("base_outcomes", baseOutcomes);
-
-        if (!checkResults({ outcomes, failRunOn })) {
-          process.exit(1);
-        }
-
-        break;
+      if (run.value) {
+        latestRun = run.value;
       }
 
-      latestRun = run.value;
-
       if (makeComment) {
-        const { outcomes, baseOutcomes } = latestRun;
-
-        startGroup("Updating comment");
+        const { outcomes, baseOutcomes } = latestRun!;
 
         // In case the comment was updated between polls:
         const comment = await retrieveComment({ token: githubToken });
@@ -180,9 +169,20 @@ async function main() {
           baseOutcomes,
         });
 
-        await upsertComment({ body: commentBody, token: githubToken });
+        await upsert({ body: commentBody, force: run.done });
+      }
 
-        endGroup();
+      if (run.done) {
+        const { outcomes, baseOutcomes } = latestRun!;
+
+        setOutput("outcomes", outcomes);
+        setOutput("base_outcomes", baseOutcomes);
+
+        if (!checkResults({ outcomes, failRunOn })) {
+          process.exit(1);
+        }
+
+        break;
       }
     }
   } catch (error) {

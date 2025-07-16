@@ -17,20 +17,18 @@ Edit this comment to update it.
 <blockquote>
 
 <i>Code was not generated because there was a fatal error.</i>
-<code>generate ❗</code> → <code>lint ⏳</code> → <code>test ⏳</code>
 
 </blockquote>
 
 </details>
 
 <details open>
-<summary>⚠️ <b>test-project-go</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=go&branch=feature-branch">studio</a> · <a href="#">conflict</a></summary>
+<summary>⚡ <b>test-project-go</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=go&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/pull/1">conflict</a></summary>
 
 <blockquote>
 
 <i>There was a conflict between your custom code and your generated changes.</i>
 <i>You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened <a href="https://www.stainless.com/docs/guides/add-custom-code">here</a>.</i>
-<code>generate ⚠️</code> → <code>lint ⏳</code> → <code>test ⏳</code>
 
 </blockquote>
 
@@ -42,7 +40,7 @@ Edit this comment to update it.
 <blockquote>
 
 <i>There was a regression in your SDK.</i>
-<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/212"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a>
+<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/212"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (old: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>)
 <details>
 <summary>New diagnostics (1 error, 1 warning)</summary>
 
@@ -64,6 +62,17 @@ npm install https://github.com/test-org/test-sdk.git#feature-branch
 \`\`\`
 
 </details>
+
+</blockquote>
+
+</details>
+
+<details>
+<summary>⏳ <b>test-project-java</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=java&branch=feature-branch">studio</a> · <a href="https://github.com/test-org/test-sdk/tree/feature-branch">code</a></summary>
+
+<blockquote>
+
+<code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>lint ✅</code></a> → <code>test ⏳</code>
 
 </blockquote>
 

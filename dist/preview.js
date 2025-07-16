@@ -32892,13 +32892,10 @@ function Result({
   base
 }) {
   const category = categorize(head, base);
-  if (category === "pending") {
-    return null;
-  }
   const Description = (() => {
     switch (category) {
       case "failure": {
-        switch (head.commit.completed?.conclusion) {
+        switch (head.commit?.completed?.conclusion) {
           case "fatal":
             return Italic(
               "Code was not generated because there was a fatal error."
@@ -32907,13 +32904,13 @@ function Result({
             return Italic("Timed out.");
           default:
             return Italic(
-              `Unknown conclusion (${CodeInline(head.commit.completed?.conclusion || "unknown")}).`
+              `Unknown conclusion (${CodeInline(head.commit?.completed?.conclusion || "unknown")}).`
             );
         }
       }
       case "merge_conflict":
         return [
-          head.commit.completed?.conclusion === "upstream_merge_conflict" ? Italic(
+          head.commit?.completed?.conclusion === "upstream_merge_conflict" ? Italic(
             `There was an upstream conflict which is preventing the preview of your change.`
           ) : Italic(
             `There was a conflict between your custom code and your generated changes.`
@@ -32943,16 +32940,16 @@ function Result({
         }),
         GitHubLink(head),
         base ? CompareLink(base, head) : null,
-        category === "merge_conflict" ? Link({ text: "conflict", href: "#" }) : null
+        MergeConflictLink(head)
       ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
     ].join(" "),
     body: [
       Description,
-      StatusLine(head),
+      StatusLine(base, head),
       base ? DiagnosticsDetails(head, base) : null,
       InstallationDetails(head, lang)
     ].filter((value) => Boolean(value)).join("\n"),
-    open: category !== "success"
+    open: category !== "success" && category !== "pending"
   });
 }
 function ResultIcon(category) {
@@ -32960,6 +32957,7 @@ function ResultIcon(category) {
     case "failure":
       return Symbol2.Exclamation;
     case "merge_conflict":
+      return Symbol2.Zap;
     case "regression":
       return Symbol2.Warning;
     case "success":
@@ -32968,47 +32966,71 @@ function ResultIcon(category) {
       return Symbol2.HourglassFlowingSand;
   }
 }
-function StatusLine(outcome) {
+function StatusLine(base, head) {
   return [
-    StatusStep(outcome, "generate"),
-    StatusStep(outcome, "lint"),
-    StatusStep(outcome, "test"),
-    StatusStep(outcome, "build")
+    StatusStep(base, head, "generate"),
+    StatusStep(base, head, "lint"),
+    StatusStep(base, head, "test"),
+    StatusStep(base, head, "build")
   ].filter((value) => Boolean(value)).join(` ${Symbol2.RightwardsArrow} `);
 }
-function StatusStep(outcome, step) {
+function StatusStep(base, head, step) {
+  let baseStatus = base ? StatusSymbol(base, step) : null;
+  let headStatus = StatusSymbol(head, step);
+  if (!headStatus) {
+    return null;
+  }
+  if (baseStatus === Symbol2.HourglassFlowingSand || headStatus === Symbol2.HourglassFlowingSand) {
+    baseStatus = Symbol2.HourglassFlowingSand;
+    headStatus = Symbol2.HourglassFlowingSand;
+  }
+  const headText = CodeInline(`${step} ${headStatus}`);
+  const headURL = StatusURL(head, step);
+  const headLink = headURL ? Link({ text: headText, href: headURL }) : headText;
+  if (!baseStatus || baseStatus === headStatus) {
+    return headLink;
+  }
+  const baseText = CodeInline(`${step} ${baseStatus}`);
+  const baseURL = StatusURL(base, step);
+  const baseLink = baseURL ? Link({ text: baseText, href: baseURL }) : baseText;
+  return `${headLink} (old: ${baseLink})`;
+}
+function StatusSymbol(outcome, step) {
+  if (!outcome.commit?.completed?.commit) {
+    return null;
+  }
   if (step === "generate") {
-    let status;
-    switch (outcome.commit.completed?.conclusion) {
+    switch (outcome.commit.completed.conclusion) {
       case "fatal":
-        status = Symbol2.Exclamation;
-        break;
+        return Symbol2.Exclamation;
       case "merge_conflict":
+        return Symbol2.Zap;
       case "upstream_merge_conflict":
-        status = Symbol2.Warning;
-        break;
+        return Symbol2.Warning;
       default:
-        status = Symbol2.WhiteCheckMark;
-        break;
+        return Symbol2.WhiteCheckMark;
     }
-    const text = CodeInline(`${step} ${status}`);
-    const url = outcome.commit.completed?.url;
-    return url ? Link({ text, href: url }) : text;
   }
   const stepData = outcome[step];
   if (!stepData) {
     return null;
   }
   if (stepData.status === "completed") {
-    const status = stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : Symbol2.Exclamation;
-    const text = CodeInline(`${step} ${status}`);
-    const url = stepData.completed.url;
-    return url ? Link({ text, href: url }) : text;
+    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : Symbol2.Exclamation;
   }
-  return CodeInline(`${step} ${Symbol2.HourglassFlowingSand}`);
+  return Symbol2.HourglassFlowingSand;
+}
+function StatusURL(outcome, step) {
+  if (step === "generate") {
+    return outcome.commit?.completed?.url;
+  }
+  if (!outcome[step] || outcome[step].status !== "completed") {
+    return null;
+  }
+  return outcome[step]?.completed?.url;
 }
 function GitHubLink(outcome) {
-  if (!outcome.commit.completed?.commit) return null;
+  if (!outcome.commit?.completed?.commit) return null;
   const {
     repo: { owner, name, branch }
   } = outcome.commit.completed.commit;
@@ -33018,7 +33040,7 @@ function GitHubLink(outcome) {
   });
 }
 function CompareLink(base, head) {
-  if (!base.commit.completed?.commit || !head.commit.completed?.commit) {
+  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
     return null;
   }
   const { repo } = head.commit.completed.commit;
@@ -33026,6 +33048,17 @@ function CompareLink(base, head) {
   const headBranch = head.commit.completed.commit.repo.branch;
   const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
   return Link({ text: "diff", href: compareURL });
+}
+function MergeConflictLink(outcome) {
+  if (!outcome.commit?.completed?.merge_conflict_pr) return null;
+  const {
+    repo: { owner, name },
+    number
+  } = outcome.commit.completed.merge_conflict_pr;
+  return Link({
+    text: "conflict",
+    href: `https://github.com/${owner}/${name}/pull/${number}`
+  });
 }
 function DiagnosticsDetails(head, base) {
   if (!base.diagnostics || !head.diagnostics) return null;
@@ -33064,7 +33097,7 @@ ${tableRows}
   });
 }
 function InstallationDetails(head, lang) {
-  if (!head.commit.completed.commit) {
+  if (!head.commit?.completed.commit) {
     return null;
   }
   const { repo, sha } = head.commit.completed.commit;
@@ -33099,18 +33132,28 @@ var COMMENT_TITLE = Heading(
   `${Symbol2.HeavyAsterisk} Stainless SDK previews`
 );
 function categorize(head, base) {
-  switch (head.commit.completed?.conclusion) {
+  if (head.commit?.status !== "completed") {
+    return "pending";
+  }
+  switch (head.commit.completed.conclusion) {
     case "fatal":
     case "timed_out":
       return "failure";
     case "merge_conflict":
     case "upstream_merge_conflict":
       return "merge_conflict";
-  }
-  if (!["error", "warning", "note", "success"].includes(
-    head.commit.completed?.conclusion || ""
-  )) {
-    return "pending";
+    case "noop":
+      return "success";
+    // Completed success outcomes are handled below
+    case "error":
+    case "warning":
+    case "note":
+    case "success": {
+      break;
+    }
+    // Unknown conclusions are fatal
+    default:
+      return "failure";
   }
   for (const step of ["build", "lint", "test"]) {
     const stepData = head[step];
@@ -33119,7 +33162,7 @@ function categorize(head, base) {
     }
   }
   for (const check of ["build", "lint", "test"]) {
-    if ((!base?.[check] || base[check]?.status === "completed" && base[check]?.completed.conclusion === "success") && head[check] && head[check].status === "completed" && head[check].completed.conclusion === "failure") {
+    if ((!base?.[check] || base[check]?.status === "completed" && base[check]?.completed.conclusion === "success") && head[check] && head[check].status === "completed" && head[check].completed.conclusion !== "success") {
       return "regression";
     }
   }
@@ -33184,6 +33227,20 @@ async function upsertComment({
       body
     });
   }
+}
+function areCommentsEqual(a, b) {
+  return a.split("\n").slice(0, -2).join("\n") === b.split("\n").slice(0, -2).join("\n");
+}
+function commentThrottler(token) {
+  let lastComment = null;
+  let lastCommentTime = null;
+  return async ({ body, force = false }) => {
+    if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
+      await upsertComment({ body, token });
+      lastComment = body;
+      lastCommentTime = /* @__PURE__ */ new Date();
+    }
+  };
 }
 
 // src/config.ts
@@ -33395,12 +33452,11 @@ async function* runBuilds({
         timeout: 3 * 60 * 1e3
       }
     );
-    for (const waitFor of ["postgen", "completed"]) {
-      const { outcomes, documentedSpec } = await pollBuild({
-        stainless,
-        build,
-        waitFor
-      });
+    for await (const { outcomes, documentedSpec } of pollBuild({
+      stainless,
+      build,
+      label: "head"
+    })) {
       yield {
         baseOutcomes: null,
         outcomes,
@@ -33414,7 +33470,7 @@ async function* runBuilds({
       console.log("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
-          branch,
+          branch: baseBranch,
           spec: oasContent
         })
       )[0]?.content;
@@ -33463,86 +33519,133 @@ async function* runBuilds({
       timeout: 3 * 60 * 1e3
     }
   );
-  for (const waitFor of ["postgen", "completed"]) {
-    const results = await Promise.all([
-      pollBuild({ stainless, build: base, waitFor }),
-      pollBuild({ stainless, build: head, waitFor })
-    ]);
-    yield {
-      baseOutcomes: results[0].outcomes,
-      outcomes: results[1].outcomes,
-      documentedSpec: results[1].documentedSpec
-    };
+  let lastBaseOutcome = null;
+  let lastOutcome = null;
+  let lastDocumentedSpec = null;
+  for await (const { index, value } of combineAsyncIterators(
+    pollBuild({ stainless, build: base, label: "base" }),
+    pollBuild({ stainless, build: head, label: "head" })
+  )) {
+    if (index === 0) {
+      lastBaseOutcome = value.outcomes;
+    } else {
+      lastOutcome = value.outcomes;
+      lastDocumentedSpec = value.documentedSpec;
+    }
+    if (lastOutcome) {
+      yield {
+        baseOutcomes: lastBaseOutcome,
+        outcomes: lastOutcome,
+        documentedSpec: lastDocumentedSpec
+      };
+    }
   }
   return;
 }
-async function pollBuild({
+var combineAsyncIterators = async function* (...args) {
+  const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
+  let count = iters.length;
+  const never = new Promise(() => {
+  });
+  const next = (iter, index) => iter.next().then((result) => ({ index, result }));
+  const results = iters.map(next);
+  while (count) {
+    const { index, result } = await Promise.race(results);
+    if (result.done) {
+      results[index] = never;
+      count--;
+    } else {
+      results[index] = next(iters[index], index);
+      yield { index, value: result.value };
+    }
+  }
+};
+async function* pollBuild({
   stainless,
   build,
-  waitFor,
+  label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
-  const outcomes = {};
   let documentedSpec = null;
   const buildId = build.id;
   const languages = Object.keys(build.targets);
+  const outcomes = Object.fromEntries(
+    languages.map((lang) => [
+      lang,
+      { ...build.targets[lang], commit: null, diagnostics: [] }
+    ])
+  );
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`
+      `[${label}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
   } else {
     console.log(`No new build was created; exiting.`);
-    return { outcomes, documentedSpec };
+    yield { outcomes, documentedSpec };
+    return;
   }
   const pollingStart = Date.now();
-  while (Object.keys(outcomes).length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while (Object.values(outcomes).filter(({ status }) => status === "completed").length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+    let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {
-      if (!(language in outcomes)) {
-        const buildOutput = build2.targets[language];
+      const existing = outcomes[language];
+      const buildOutput = build2.targets[language];
+      outcomes[language] = {
+        ...buildOutput,
+        commit: existing.commit,
+        diagnostics: existing.diagnostics
+      };
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
         console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
+          `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
-        if ([waitFor, "completed"].includes(buildOutput.status) && buildOutput.commit.status === "completed") {
-          console.log(
-            `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput)
-          );
-          const diagnostics = [];
-          try {
-            for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId
-            )) {
-              diagnostics.push(diagnostic);
-            }
-          } catch (e) {
-            console.error(
-              `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e
-            );
+      }
+      for (const step of ["build", "lint", "test"]) {
+        if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
+          hasChange = true;
+        }
+      }
+      if (existing?.commit?.status !== "completed" && buildOutput.commit.status === "completed") {
+        console.log(
+          `[${label}] Build for ${language} has output:`,
+          JSON.stringify(buildOutput)
+        );
+        outcomes[language].commit = buildOutput.commit;
+        outcomes[language].diagnostics = [];
+        try {
+          for await (const diagnostic of stainless.builds.diagnostics.list(
+            buildId
+          )) {
+            outcomes[language].diagnostics.push(diagnostic);
           }
-          outcomes[language] = {
-            ...buildOutput,
-            commit: buildOutput.commit,
-            diagnostics
-          };
+        } catch (e) {
+          console.error(
+            `[${label}] Error getting diagnostics, continuing anyway`,
+            e
+          );
         }
       }
     }
     if (!documentedSpec && build2.documented_spec) {
+      hasChange = true;
       documentedSpec = await Stainless.unwrapFile(build2.documented_spec);
+    }
+    if (hasChange) {
+      yield { outcomes, documentedSpec };
     }
     await new Promise(
       (resolve) => setTimeout(resolve, pollingIntervalSeconds * 1e3)
     );
   }
   const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes)
+    (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
   );
   for (const language of languagesWithoutOutcome) {
     console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
+      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
     );
     outcomes[language] = {
       object: "build_target",
@@ -33562,7 +33665,8 @@ async function pollBuild({
           url: null
         }
       },
-      diagnostics: []
+      diagnostics: [],
+      ...outcomes[language]
     };
   }
   return { outcomes, documentedSpec };
@@ -33575,11 +33679,13 @@ function checkResults({
     return true;
   }
   const failedLanguages = Object.entries(outcomes).filter(([_, outcome]) => {
-    if (!outcome.commit || outcome.commit.completed.conclusion === "noop") {
+    if (!outcome.commit) {
       return true;
     }
     if (failRunOn === "error" || failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "error") return true;
+      if (outcome.commit.completed.conclusion === "error" || outcome.commit.completed.conclusion === "fatal" || outcome.commit.completed.conclusion === "timed_out") {
+        return true;
+      }
     }
     if (failRunOn === "warning" || failRunOn === "note") {
       if (outcome.commit.completed.conclusion === "warning") return true;
@@ -33689,23 +33795,14 @@ async function main() {
       commitMessage
     });
     let latestRun;
+    const upsert = commentThrottler(githubToken);
     while (true) {
-      (0, import_core.startGroup)("Running builds");
       const run = await generator.next();
-      (0, import_core.endGroup)();
-      if (run.done) {
-        const { outcomes, baseOutcomes } = latestRun;
-        (0, import_core.setOutput)("outcomes", outcomes);
-        (0, import_core.setOutput)("base_outcomes", baseOutcomes);
-        if (!checkResults({ outcomes, failRunOn })) {
-          process.exit(1);
-        }
-        break;
+      if (run.value) {
+        latestRun = run.value;
       }
-      latestRun = run.value;
       if (makeComment) {
         const { outcomes, baseOutcomes } = latestRun;
-        (0, import_core.startGroup)("Updating comment");
         const comment = await retrieveComment({ token: githubToken });
         if (comment.commitMessage) {
           commitMessage = comment.commitMessage;
@@ -33718,8 +33815,16 @@ async function main() {
           outcomes,
           baseOutcomes
         });
-        await upsertComment({ body: commentBody, token: githubToken });
-        (0, import_core.endGroup)();
+        await upsert({ body: commentBody, force: run.done });
+      }
+      if (run.done) {
+        const { outcomes, baseOutcomes } = latestRun;
+        (0, import_core.setOutput)("outcomes", outcomes);
+        (0, import_core.setOutput)("base_outcomes", baseOutcomes);
+        if (!checkResults({ outcomes, failRunOn })) {
+          process.exit(1);
+        }
+        break;
       }
     }
   } catch (error) {
