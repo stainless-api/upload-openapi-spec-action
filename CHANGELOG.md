@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.2.0...v1.2.1) (2025-07-16)
+
+
+### Bug Fixes
+
+* fix preview action checking for saved config ([#83](https://github.com/stainless-api/upload-openapi-spec-action/issues/83)) ([d8f0fba](https://github.com/stainless-api/upload-openapi-spec-action/commit/d8f0fbaa30e35d21b7f43d4aa592a796b1a962e5))
+
 ## [1.2.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.1.1...v1.2.0) (2025-07-16)
 
 
