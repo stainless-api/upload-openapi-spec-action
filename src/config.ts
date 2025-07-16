@@ -24,21 +24,21 @@ export async function saveConfig({
   oasPath?: string;
   configPath?: string;
 }) {
-  let savedOAS = false;
-  let savedConfig = false;
+  let hasOAS = false;
+  let hasConfig = false;
   let savedSha: string | null = null;
 
   if (oasPath && fs.existsSync(oasPath)) {
-    savedOAS = true;
+    hasOAS = true;
     await exec.exec("git", ["add", oasPath], { silent: true });
   }
 
   if (configPath && fs.existsSync(configPath)) {
-    savedConfig = true;
+    hasConfig = true;
     await exec.exec("git", ["add", configPath], { silent: true });
   }
 
-  if (savedOAS || savedConfig) {
+  if (hasOAS || hasConfig) {
     savedSha = (
       await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
     ).stdout.trim();
@@ -62,15 +62,24 @@ export async function saveConfig({
       { silent: true },
     );
 
-    await exec.exec(
-      "git",
-      ["commit", "--allow-empty", "-m", "Save generated config"],
-      { silent: true },
-    );
-    await exec.exec("git", ["tag", tag], { silent: true });
+    const hadChanges =
+      (
+        await exec.getExecOutput(
+          "git",
+          ["commit", "-m", "Save generated config"],
+          { silent: true },
+        )
+      ).exitCode === 0;
+
+    if (hadChanges) {
+      await exec.exec("git", ["tag", tag], { silent: true });
+    } else {
+      savedSha = null;
+      console.log("No changes to save");
+    }
   }
 
-  return { savedOAS, savedConfig, savedSha };
+  return { hasOAS, hasConfig, savedSha };
 }
 
 /**
