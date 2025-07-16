@@ -29,11 +29,11 @@ async function main() {
     }
 
     // Callers come in from checkout-pr-ref against base; save the config.
-    const { savedOAS, savedSha } = await saveConfig({ oasPath, configPath });
-    if (!savedOAS) {
+    const { hasOAS, savedSha } = await saveConfig({ oasPath, configPath });
+    if (!hasOAS) {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
-    if (savedSha !== mergeBaseSha) {
+    if (savedSha && savedSha !== mergeBaseSha) {
       throw new Error(
         `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`,
       );

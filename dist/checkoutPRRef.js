@@ -19822,18 +19822,18 @@ async function saveConfig({
   oasPath,
   configPath
 }) {
-  let savedOAS = false;
-  let savedConfig = false;
+  let hasOAS = false;
+  let hasConfig = false;
   let savedSha = null;
   if (oasPath && fs.existsSync(oasPath)) {
-    savedOAS = true;
+    hasOAS = true;
     await exec.exec("git", ["add", oasPath], { silent: true });
   }
   if (configPath && fs.existsSync(configPath)) {
-    savedConfig = true;
+    hasConfig = true;
     await exec.exec("git", ["add", configPath], { silent: true });
   }
-  if (savedOAS || savedConfig) {
+  if (hasOAS || hasConfig) {
     savedSha = (await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })).stdout.trim();
     const tag = getConfigTag(savedSha);
     console.log("Saving generated config to", tag);
@@ -19862,7 +19862,7 @@ async function saveConfig({
       console.log("No changes to save");
     }
   }
-  return { savedOAS, savedConfig, savedSha };
+  return { hasOAS, hasConfig, savedSha };
 }
 async function getMergeBase({
   baseSha,
@@ -19915,11 +19915,11 @@ async function main() {
       await exec3.exec("git", ["checkout", mergeBaseSha], { silent: true });
       return;
     }
-    const { savedOAS, savedSha } = await saveConfig({ oasPath, configPath });
-    if (!savedOAS) {
+    const { hasOAS, savedSha } = await saveConfig({ oasPath, configPath });
+    if (!hasOAS) {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
-    if (savedSha !== mergeBaseSha) {
+    if (savedSha && savedSha !== mergeBaseSha) {
       throw new Error(
         `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`
       );
