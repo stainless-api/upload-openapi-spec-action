@@ -8,6 +8,75 @@ export type Config = {
   configHash?: string;
 };
 
+function getConfigTag(sha: string) {
+  return `stainless-generated-config-from-${sha}`;
+}
+
+/**
+ * Sometimes the spec and config files aren't checked in to git, e.g. if they're
+ * generated via a build step. We commit these files and tag them, so later
+ * actions of the workflow can use them.
+ */
+export async function saveConfig({
+  oasPath,
+  configPath,
+}: {
+  oasPath?: string;
+  configPath?: string;
+}) {
+  let savedOAS = false;
+  let savedConfig = false;
+  let savedSha: string | null = null;
+
+  if (oasPath && fs.existsSync(oasPath)) {
+    savedOAS = true;
+    await exec.exec("git", ["add", oasPath], { silent: true });
+  }
+
+  if (configPath && fs.existsSync(configPath)) {
+    savedConfig = true;
+    await exec.exec("git", ["add", configPath], { silent: true });
+  }
+
+  if (savedOAS || savedConfig) {
+    savedSha = (
+      await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
+    ).stdout.trim();
+    const tag = getConfigTag(savedSha);
+    console.log("Saving generated config to", tag);
+
+    // Don't commit any files other than the OAS and config:
+    await exec.exec("git", ["restore", "."], { silent: true });
+
+    // Need a name and email to commit:
+    await exec.exec("git", ["config", "user.name", "stainless-app[bot]"], {
+      silent: true,
+    });
+    await exec.exec(
+      "git",
+      [
+        "config",
+        "user.email",
+        "142633134+stainless-app[bot]@users.noreply.github.com",
+      ],
+      { silent: true },
+    );
+
+    await exec.exec(
+      "git",
+      ["commit", "--allow-empty", "-m", "Save generated config"],
+      { silent: true },
+    );
+    await exec.exec("git", ["tag", tag], { silent: true });
+  }
+
+  return { savedOAS, savedConfig, savedSha };
+}
+
+/**
+ * Spec and config files can either exist checked-in at the given SHA, or it
+ * might have been saved by `saveConfig`; this handles reading both.
+ */
 export async function readConfig({
   oasPath,
   configPath,
@@ -22,7 +91,7 @@ export async function readConfig({
 
   const results: Config = {};
 
-  for (const ref of [sha]) {
+  for (const ref of [sha, getConfigTag(sha)]) {
     try {
       await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
         silent: true,

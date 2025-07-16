@@ -1,0 +1,32 @@
+name: Stainless — Checkout PR ref
+description: Git checkout the base or head of a pull request
+runs:
+  using: node20
+  main: ../dist/checkoutPRRef.js
+inputs:
+  ref:
+    description: >-
+      Which ref to checkout. Options: 'base', 'head'.
+    required: true
+  oas_path:
+    description: Path to your OpenAPI spec.
+    required: true
+  config_path:
+    description: >-
+      Path to your Stainless config. Optional; only provide this if you are
+      building or maintaining the ground truth Stainless config in your own
+      repo.
+    required: false
+
+  # We think it's unlikely you'll need to use non-default inputs for these:
+  base_sha:
+    description: >-
+      The base SHA for the pull request. Used to create a base build.
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  head_sha:
+    description: >-
+      The head SHA for the pull request. Used to get the OpenAPI spec and
+      Stainless config for the preview build.
+    required: false
+    default: ${{ github.event.pull_request.head.sha }}

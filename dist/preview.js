@@ -33184,6 +33184,50 @@ async function upsertComment({
 // src/config.ts
 var exec = __toESM(require_exec());
 var fs = __toESM(require("node:fs"));
+function getConfigTag(sha) {
+  return `stainless-generated-config-from-${sha}`;
+}
+async function saveConfig({
+  oasPath,
+  configPath
+}) {
+  let savedOAS = false;
+  let savedConfig = false;
+  let savedSha = null;
+  if (oasPath && fs.existsSync(oasPath)) {
+    savedOAS = true;
+    await exec.exec("git", ["add", oasPath], { silent: true });
+  }
+  if (configPath && fs.existsSync(configPath)) {
+    savedConfig = true;
+    await exec.exec("git", ["add", configPath], { silent: true });
+  }
+  if (savedOAS || savedConfig) {
+    savedSha = (await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })).stdout.trim();
+    const tag = getConfigTag(savedSha);
+    console.log("Saving generated config to", tag);
+    await exec.exec("git", ["restore", "."], { silent: true });
+    await exec.exec("git", ["config", "user.name", "stainless-app[bot]"], {
+      silent: true
+    });
+    await exec.exec(
+      "git",
+      [
+        "config",
+        "user.email",
+        "142633134+stainless-app[bot]@users.noreply.github.com"
+      ],
+      { silent: true }
+    );
+    await exec.exec(
+      "git",
+      ["commit", "--allow-empty", "-m", "Save generated config"],
+      { silent: true }
+    );
+    await exec.exec("git", ["tag", tag], { silent: true });
+  }
+  return { savedOAS, savedConfig, savedSha };
+}
 async function readConfig({
   oasPath,
   configPath,
@@ -33192,7 +33236,7 @@ async function readConfig({
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
   console.log("Reading config at", sha);
   const results = {};
-  for (const ref of [sha]) {
+  for (const ref of [sha, getConfigTag(sha)]) {
     try {
       await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
         silent: true
@@ -33564,6 +33608,10 @@ async function main() {
     const branch = (0, import_core.getInput)("branch", { required: true });
     if (makeComment && !githubToken) {
       throw new Error("github_token is required to make a comment");
+    }
+    const { savedSha } = await saveConfig({ oasPath, configPath });
+    if (savedSha !== null && savedSha !== headSha) {
+      throw new Error(`Expected HEAD to be ${headSha}, but was ${savedSha}`);
     }
     const stainless = new Stainless({
       project: projectName,

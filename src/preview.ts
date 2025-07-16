@@ -14,6 +14,7 @@ import {
   getNonMainBaseRef,
   isConfigChanged,
   readConfig,
+  saveConfig,
 } from "./config";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
@@ -38,6 +39,13 @@ async function main() {
 
     if (makeComment && !githubToken) {
       throw new Error("github_token is required to make a comment");
+    }
+
+    // If we came from the checkout-pr-ref action, we might need to save the
+    // generated config files.
+    const { savedSha } = await saveConfig({ oasPath, configPath });
+    if (savedSha !== null && savedSha !== headSha) {
+      throw new Error(`Expected HEAD to be ${headSha}, but was ${savedSha}`);
     }
 
     const stainless = new Stainless({

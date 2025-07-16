@@ -96,7 +96,7 @@ and integration with docs platforms, see the [examples directory](./examples).
 
 ## Actions
 
-This repository provides three GitHub actions.
+This repository provides four GitHub actions.
 
 - `stainless-api/upload-openapi-spec-action/build`: Build SDKs for a Stainless
 project. This action is also usable in GitLab CI. For information about the
@@ -110,6 +110,11 @@ the [action definition](./preview/action.yml).
 a pull request. For information about the input parameters, see the [action
 definition](./merge/action.yml).
 
+- `stainless-api/upload-openapi-spec-action/checkout-pr-ref`: Checkout the base
+or head commit for previewing a pull request's changes, saving changes to the
+config when needed. For information about the input parameters, see the [action
+definition](./checkout-pr-ref/action.yml).
+
 ### Workflow permissions
 
 The GitHub actions use the following
@@ -120,14 +125,14 @@ will comment on the pull request with the build results. This is set to true by
 default. The actions use the `github_token` input to make a comment, and the
 comment must have the `pull-requests: write` permission.
 
-- The `preview` action relies on being in a Git repository that can fetch from
-the remote to determine base revisions. This will be the case if you use the
-[`actions/checkout`](https://github.com/actions/checkout) GitHub action
-beforehand. That action needs the `contents: read` permission.
+- The `preview` and `checkout-pr-ref` actions rely on being in a Git repository
+that can fetch from the remote to determine base revisions. This will be the
+case if you use the [`actions/checkout`](https://github.com/actions/checkout)
+GitHub action beforehand. That action needs the `contents: read` permission.
 
 ### Versioning policy
 
-This action uses [semantic versioning](https://semver.org/), and you can pin
+These actions use [semantic versioning](https://semver.org/), and you can pin
 your action to a major (`v1`), minor (`v1.0`), or patch (`v1.0.0`) version.
 The public API includes:
 

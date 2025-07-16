@@ -1,12 +1,6 @@
 # Example workflows
 
-There's two kinds of workflows, depending on how you manage your GitHub repo. Both workflows require you to:
-
-* Provide your Stainless org and project names, as well as a Stainless API key.
-
-* Have a consistent path to an OpenAPI spec in your repo contents.
-
-* Provide a commit message, preferably in [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) format. (Commit messages that aren't in the Conventional Commits format will have `feat:` prepended to them.)
+There's two kinds of workflows, depending on how you manage your GitHub repo. Both workflows require you to provide your Stainless org and project names, as well as a Stainless API key.
 
 ## Pull request workflows
 
@@ -17,6 +11,12 @@ The main kind of workflows are the pull-request-based workflows, such as [pull_r
 * `merge`, which runs when a pull request is merged. The job creates a build of the SDK with the changes from the pull request, along with any [custom code](https://app.stainless.com/docs/guides/patch-custom-code#project-branches) added to the preview build.
 
 By default, the pull request workflow uses the title of the pull request as the commit message, but you can edit the comment on the pull request to change the commit message.
+
+### Generated OpenAPI specs
+
+If your OpenAPI spec is generated from your GitHub repo, via a shell script or other GitHub action, you will need to do some extra setup. This is because the action needs access to both the old OpenAPI spec and the new OpenAPI spec. See the example at [pull_request_generated.yml](./pull_request_generated.yml).
+
+Here, `checkout-pr-ref` will checkout the relevant base Git commit. The first command runs against the base Git commit, generating the old OpenAPI spec. Then, `checkout-pr-ref` will checkout the relevant head Git commit. The second command runs against the head Git commit, generating the new OpenAPI spec.
 
 ## Push workflows
 
