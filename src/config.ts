@@ -62,12 +62,21 @@ export async function saveConfig({
       { silent: true },
     );
 
-    await exec.exec(
-      "git",
-      ["commit", "--allow-empty", "-m", "Save generated config"],
-      { silent: true },
-    );
-    await exec.exec("git", ["tag", tag], { silent: true });
+    const hadChanges =
+      (
+        await exec.getExecOutput(
+          "git",
+          ["commit", "-m", "Save generated config"],
+          { silent: true },
+        )
+      ).exitCode === 0;
+
+    if (hadChanges) {
+      await exec.exec("git", ["tag", tag], { silent: true });
+    } else {
+      savedSha = null;
+      console.log("No changes to save");
+    }
   }
 
   return { savedOAS, savedConfig, savedSha };
