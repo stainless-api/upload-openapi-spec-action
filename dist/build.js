@@ -28925,6 +28925,9 @@ async function readConfig({
   sha
 }) {
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
+  if (!sha) {
+    throw new Error("Unable to determine current SHA; is there a git repo?");
+  }
   console.log("Reading config at", sha);
   const results = {};
   const addToResults = async (file, filePath, via) => {

@@ -19831,6 +19831,9 @@ async function saveConfig({
   let hasOAS = false;
   let hasConfig = false;
   const savedSha = (await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })).stdout.trim();
+  if (!savedSha) {
+    throw new Error("Unable to determine current SHA; is there a git repo?");
+  }
   console.log("Saving generated config for", savedSha);
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
@@ -19850,9 +19853,15 @@ async function getMergeBase({
   baseSha,
   headSha
 }) {
-  await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
-    silent: true
-  });
+  try {
+    await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
+      silent: true
+    });
+  } catch {
+    throw new Error(
+      `Cannot fetch ${baseSha} from origin, is there a git repo?`
+    );
+  }
   let mergeBaseSha;
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
