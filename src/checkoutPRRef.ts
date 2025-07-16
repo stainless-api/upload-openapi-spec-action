@@ -33,9 +33,9 @@ async function main() {
     if (!hasOAS) {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
-    if (savedSha && savedSha !== mergeBaseSha) {
-      throw new Error(
-        `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}`,
+    if (savedSha !== null && savedSha !== mergeBaseSha) {
+      console.warn(
+        `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}. This might cause issues with getting the base revision.`,
       );
     }
 

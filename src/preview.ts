@@ -45,7 +45,9 @@ async function main() {
     // generated config files.
     const { savedSha } = await saveConfig({ oasPath, configPath });
     if (savedSha !== null && savedSha !== headSha) {
-      throw new Error(`Expected HEAD to be ${headSha}, but was ${savedSha}`);
+      console.warn(
+        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
+      );
     }
 
     const stainless = new Stainless({

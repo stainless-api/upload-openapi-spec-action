@@ -1,5 +1,7 @@
 import * as exec from "@actions/exec";
 import * as fs from "node:fs";
+import { tmpdir } from "node:os";
+import * as path from "node:path";
 
 export type Config = {
   oas?: string;
@@ -8,14 +10,18 @@ export type Config = {
   configHash?: string;
 };
 
-function getConfigTag(sha: string) {
-  return `stainless-generated-config-from-${sha}`;
+function getSavedFilePath(file: "oas" | "config", sha: string) {
+  return path.join(
+    tmpdir(),
+    "stainless-generated-config",
+    `${file}-${sha}.yml`,
+  );
 }
 
 /**
  * Sometimes the spec and config files aren't checked in to git, e.g. if they're
- * generated via a build step. We commit these files and tag them, so later
- * actions of the workflow can use them.
+ * generated via a build step. We move these files to a fixed location, so that
+ * later invocations of the action can read them.
  */
 export async function saveConfig({
   oasPath,
@@ -26,57 +32,24 @@ export async function saveConfig({
 }) {
   let hasOAS = false;
   let hasConfig = false;
-  let savedSha: string | null = null;
+
+  const savedSha = (
+    await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
+  ).stdout.trim();
+  console.log("Saving generated config for", savedSha);
 
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
-    await exec.exec("git", ["add", oasPath], { silent: true });
+    const savedFilePath = getSavedFilePath("oas", savedSha);
+    fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
+    fs.copyFileSync(oasPath, savedFilePath);
   }
 
   if (configPath && fs.existsSync(configPath)) {
     hasConfig = true;
-    await exec.exec("git", ["add", configPath], { silent: true });
-  }
-
-  if (hasOAS || hasConfig) {
-    savedSha = (
-      await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
-    ).stdout.trim();
-    const tag = getConfigTag(savedSha);
-    console.log("Saving generated config to", tag);
-
-    // Don't commit any files other than the OAS and config:
-    await exec.exec("git", ["restore", "."], { silent: true });
-
-    // Need a name and email to commit:
-    await exec.exec("git", ["config", "user.name", "stainless-app[bot]"], {
-      silent: true,
-    });
-    await exec.exec(
-      "git",
-      [
-        "config",
-        "user.email",
-        "142633134+stainless-app[bot]@users.noreply.github.com",
-      ],
-      { silent: true },
-    );
-
-    const hadChanges =
-      (
-        await exec.getExecOutput(
-          "git",
-          ["commit", "-m", "Save generated config"],
-          { silent: true },
-        )
-      ).exitCode === 0;
-
-    if (hadChanges) {
-      await exec.exec("git", ["tag", tag], { silent: true });
-    } else {
-      savedSha = null;
-      console.log("No changes to save");
-    }
+    const savedFilePath = getSavedFilePath("config", savedSha);
+    fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
+    fs.copyFileSync(configPath, savedFilePath);
   }
 
   return { hasOAS, hasConfig, savedSha };
@@ -100,36 +73,42 @@ export async function readConfig({
 
   const results: Config = {};
 
-  for (const ref of [sha, getConfigTag(sha)]) {
-    try {
-      await exec.exec("git", ["fetch", "--depth=1", "origin", sha], {
-        silent: true,
-      });
-    } catch {
-      // ignore; it's the next command whose failure we care about
+  const addToResults = async (
+    file: "oas" | "config",
+    filePath: string | undefined,
+    via: string,
+  ) => {
+    if (results[file]) {
+      return;
     }
-    try {
-      await exec.exec("git", ["checkout", ref], { silent: true });
-    } catch {
-      console.log("Could not checkout", ref);
-      break;
+    if (!filePath || !fs.existsSync(filePath)) {
+      console.log("Skipping missing", file, "at", filePath);
+      return;
     }
+    results[file] = fs.readFileSync(filePath, "utf-8");
+    results[`${file}Hash`] = (
+      await exec.getExecOutput("md5sum", [filePath], { silent: true })
+    ).stdout.split(" ")[0];
+    console.log(`Using ${file} via`, via, "hash", results[`${file}Hash`]);
+  };
 
-    if (!results.oas && oasPath && fs.existsSync(oasPath)) {
-      results.oas = fs.readFileSync(oasPath, "utf-8");
-      results.oasHash = (
-        await exec.getExecOutput("md5sum", [oasPath], { silent: true })
-      ).stdout.split(" ")[0];
-      console.log("Using OAS at", ref, "hash", results.oasHash);
-    }
+  try {
+    await exec
+      .exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true })
+      .catch(() => null);
+    await exec.exec("git", ["checkout", sha], { silent: true });
 
-    if (!results.config && configPath && fs.existsSync(configPath)) {
-      results.config = fs.readFileSync(configPath, "utf-8");
-      results.configHash = (
-        await exec.getExecOutput("md5sum", [configPath], { silent: true })
-      ).stdout.split(" ")[0];
-      console.log("Using config at", ref, "hash", results.configHash);
-    }
+    addToResults("oas", oasPath, `git ${sha}`);
+    addToResults("config", configPath, `git ${sha}`);
+  } catch {
+    console.log("Could not checkout", sha);
+  }
+
+  try {
+    addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
+    addToResults("config", getSavedFilePath("config", sha), `saved ${sha}`);
+  } catch {
+    console.log("Could not get config from saved file path");
   }
 
   return results;
