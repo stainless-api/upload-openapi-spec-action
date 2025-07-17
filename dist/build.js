@@ -29269,7 +29269,8 @@ async function main() {
       apiKey,
       logLevel: "warn"
     });
-    const generator = runBuilds({
+    let lastValue;
+    for await (const value of runBuilds({
       stainless,
       projectName,
       baseRevision,
@@ -29280,16 +29281,8 @@ async function main() {
       configContent: config.config,
       guessConfig,
       commitMessage
-    });
-    let lastValue;
-    while (true) {
-      const nextValue = await generator.next();
-      if (nextValue.value) {
-        lastValue = nextValue.value;
-      }
-      if (nextValue.done) {
-        break;
-      }
+    })) {
+      lastValue = value;
     }
     const { baseOutcomes, outcomes, documentedSpec } = lastValue;
     setOutput2("outcomes", outcomes);

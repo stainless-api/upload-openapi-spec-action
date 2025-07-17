@@ -36,7 +36,9 @@ async function main() {
       logLevel: "warn",
     });
 
-    const generator = runBuilds({
+    let lastValue: RunResult;
+
+    for await (const value of runBuilds({
       stainless,
       projectName,
       baseRevision,
@@ -47,19 +49,8 @@ async function main() {
       configContent: config.config,
       guessConfig,
       commitMessage,
-    });
-
-    let lastValue: RunResult;
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const nextValue = await generator.next();
-      if (nextValue.value) {
-        lastValue = nextValue.value;
-      }
-      if (nextValue.done) {
-        break;
-      }
+    })) {
+      lastValue = value;
     }
 
     const { baseOutcomes, outcomes, documentedSpec } = lastValue!;
