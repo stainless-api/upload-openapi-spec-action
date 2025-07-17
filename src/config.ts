@@ -103,12 +103,12 @@ export async function readConfig({
       .exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true })
       .catch(() => null);
     await exec.exec("git", ["checkout", sha], { silent: true });
-
-    await addToResults("oas", oasPath, `git ${sha}`);
-    await addToResults("config", configPath, `git ${sha}`);
   } catch {
     console.log("Could not checkout", sha);
   }
+
+  await addToResults("oas", oasPath, `git ${sha}`);
+  await addToResults("config", configPath, `git ${sha}`);
 
   try {
     await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
