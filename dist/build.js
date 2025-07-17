@@ -29028,12 +29028,11 @@ async function* runBuilds({
         timeout: 3 * 60 * 1e3
       }
     );
-    for (const waitFor of ["postgen", "completed"]) {
-      const { outcomes, documentedSpec } = await pollBuild({
-        stainless,
-        build,
-        waitFor
-      });
+    for await (const { outcomes, documentedSpec } of pollBuild({
+      stainless,
+      build,
+      label: "head"
+    })) {
       yield {
         baseOutcomes: null,
         outcomes,
@@ -29047,7 +29046,7 @@ async function* runBuilds({
       console.log("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
-          branch,
+          branch: baseBranch,
           spec: oasContent
         })
       )[0]?.content;
@@ -29096,86 +29095,133 @@ async function* runBuilds({
       timeout: 3 * 60 * 1e3
     }
   );
-  for (const waitFor of ["postgen", "completed"]) {
-    const results = await Promise.all([
-      pollBuild({ stainless, build: base, waitFor }),
-      pollBuild({ stainless, build: head, waitFor })
-    ]);
-    yield {
-      baseOutcomes: results[0].outcomes,
-      outcomes: results[1].outcomes,
-      documentedSpec: results[1].documentedSpec
-    };
+  let lastBaseOutcome = null;
+  let lastOutcome = null;
+  let lastDocumentedSpec = null;
+  for await (const { index, value } of combineAsyncIterators(
+    pollBuild({ stainless, build: base, label: "base" }),
+    pollBuild({ stainless, build: head, label: "head" })
+  )) {
+    if (index === 0) {
+      lastBaseOutcome = value.outcomes;
+    } else {
+      lastOutcome = value.outcomes;
+      lastDocumentedSpec = value.documentedSpec;
+    }
+    if (lastOutcome) {
+      yield {
+        baseOutcomes: lastBaseOutcome,
+        outcomes: lastOutcome,
+        documentedSpec: lastDocumentedSpec
+      };
+    }
   }
   return;
 }
-async function pollBuild({
+var combineAsyncIterators = async function* (...args) {
+  const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
+  let count = iters.length;
+  const never = new Promise(() => {
+  });
+  const next = (iter, index) => iter.next().then((result) => ({ index, result }));
+  const results = iters.map(next);
+  while (count) {
+    const { index, result } = await Promise.race(results);
+    if (result.done) {
+      results[index] = never;
+      count--;
+    } else {
+      results[index] = next(iters[index], index);
+      yield { index, value: result.value };
+    }
+  }
+};
+async function* pollBuild({
   stainless,
   build,
-  waitFor,
+  label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
-  const outcomes = {};
   let documentedSpec = null;
   const buildId = build.id;
   const languages = Object.keys(build.targets);
+  const outcomes = Object.fromEntries(
+    languages.map((lang) => [
+      lang,
+      { ...build.targets[lang], commit: null, diagnostics: [] }
+    ])
+  );
   if (buildId) {
     console.log(
-      `[${buildId}] Created build against ${build.config_commit} for languages: ${languages.join(", ")}`
+      `[${label}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
   } else {
     console.log(`No new build was created; exiting.`);
-    return { outcomes, documentedSpec };
+    yield { outcomes, documentedSpec };
+    return;
   }
   const pollingStart = Date.now();
-  while (Object.keys(outcomes).length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while (Object.values(outcomes).filter(({ status }) => status === "completed").length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+    let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {
-      if (!(language in outcomes)) {
-        const buildOutput = build2.targets[language];
+      const existing = outcomes[language];
+      const buildOutput = build2.targets[language];
+      outcomes[language] = {
+        ...buildOutput,
+        commit: existing.commit,
+        diagnostics: existing.diagnostics
+      };
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
         console.log(
-          `[${buildId}] Build for ${language} has status ${buildOutput.status}`
+          `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
-        if ([waitFor, "completed"].includes(buildOutput.status) && buildOutput.commit.status === "completed") {
-          console.log(
-            `[${buildId}] Build has output:`,
-            JSON.stringify(buildOutput)
-          );
-          const diagnostics = [];
-          try {
-            for await (const diagnostic of stainless.builds.diagnostics.list(
-              buildId
-            )) {
-              diagnostics.push(diagnostic);
-            }
-          } catch (e) {
-            console.error(
-              `[${buildId}] Error getting diagnostics, continuing anyway`,
-              e
-            );
+      }
+      for (const step of ["build", "lint", "test"]) {
+        if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
+          hasChange = true;
+        }
+      }
+      if (existing?.commit?.status !== "completed" && buildOutput.commit.status === "completed") {
+        console.log(
+          `[${label}] Build for ${language} has output:`,
+          JSON.stringify(buildOutput)
+        );
+        outcomes[language].commit = buildOutput.commit;
+        outcomes[language].diagnostics = [];
+        try {
+          for await (const diagnostic of stainless.builds.diagnostics.list(
+            buildId
+          )) {
+            outcomes[language].diagnostics.push(diagnostic);
           }
-          outcomes[language] = {
-            ...buildOutput,
-            commit: buildOutput.commit,
-            diagnostics
-          };
+        } catch (e) {
+          console.error(
+            `[${label}] Error getting diagnostics, continuing anyway`,
+            e
+          );
         }
       }
     }
     if (!documentedSpec && build2.documented_spec) {
+      hasChange = true;
       documentedSpec = await Stainless.unwrapFile(build2.documented_spec);
+    }
+    if (hasChange) {
+      yield { outcomes, documentedSpec };
     }
     await new Promise(
       (resolve) => setTimeout(resolve, pollingIntervalSeconds * 1e3)
     );
   }
   const languagesWithoutOutcome = languages.filter(
-    (language) => !(language in outcomes)
+    (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
   );
   for (const language of languagesWithoutOutcome) {
     console.log(
-      `[${buildId}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
+      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
     );
     outcomes[language] = {
       object: "build_target",
@@ -29195,7 +29241,8 @@ async function pollBuild({
           url: null
         }
       },
-      diagnostics: []
+      diagnostics: [],
+      ...outcomes[language]
     };
   }
   return { outcomes, documentedSpec };
@@ -29222,7 +29269,8 @@ async function main() {
       apiKey,
       logLevel: "warn"
     });
-    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
+    let lastValue;
+    for await (const value of runBuilds({
       stainless,
       projectName,
       baseRevision,
@@ -29234,23 +29282,25 @@ async function main() {
       guessConfig,
       commitMessage
     })) {
-      setOutput2("outcomes", outcomes);
-      setOutput2("base_outcomes", baseOutcomes);
-      if (documentedSpec && outputDir) {
-        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs2.mkdirSync(outputDir, { recursive: true });
-        fs2.writeFileSync(documentedSpecPath, documentedSpec);
-        setOutput2("documented_spec_path", documentedSpecPath);
-      }
-      if (documentedSpec && documentedSpecOutputPath) {
-        const documentedSpecOutput = !(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml")) ? JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2) : documentedSpec;
-        fs2.writeFileSync(
-          documentedSpecOutputPath,
-          import_yaml.default.stringify(documentedSpecOutput)
-        );
-      } else if (documentedSpecOutputPath) {
-        console.error("No documented spec found.");
-      }
+      lastValue = value;
+    }
+    const { baseOutcomes, outcomes, documentedSpec } = lastValue;
+    setOutput2("outcomes", outcomes);
+    setOutput2("base_outcomes", baseOutcomes);
+    if (documentedSpec && outputDir) {
+      const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+      fs2.mkdirSync(outputDir, { recursive: true });
+      fs2.writeFileSync(documentedSpecPath, documentedSpec);
+      setOutput2("documented_spec_path", documentedSpecPath);
+    }
+    if (documentedSpec && documentedSpecOutputPath) {
+      const documentedSpecOutput = !(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml")) ? JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2) : documentedSpec;
+      fs2.writeFileSync(
+        documentedSpecOutputPath,
+        import_yaml.default.stringify(documentedSpecOutput)
+      );
+    } else if (documentedSpecOutputPath) {
+      console.error("No documented spec found.");
     }
   } catch (error) {
     console.error("Error interacting with API:", error);

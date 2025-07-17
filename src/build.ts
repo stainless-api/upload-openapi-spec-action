@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { readConfig } from "./config";
-import { runBuilds } from "./runBuilds";
+import { runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
   try {
@@ -36,7 +36,9 @@ async function main() {
       logLevel: "warn",
     });
 
-    for await (const { baseOutcomes, outcomes, documentedSpec } of runBuilds({
+    let lastValue: RunResult;
+
+    for await (const value of runBuilds({
       stainless,
       projectName,
       baseRevision,
@@ -48,32 +50,36 @@ async function main() {
       guessConfig,
       commitMessage,
     })) {
-      setOutput("outcomes", outcomes);
-      setOutput("base_outcomes", baseOutcomes);
+      lastValue = value;
+    }
 
-      if (documentedSpec && outputDir) {
-        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs.mkdirSync(outputDir, { recursive: true });
-        fs.writeFileSync(documentedSpecPath, documentedSpec);
-        setOutput("documented_spec_path", documentedSpecPath);
-      }
+    const { baseOutcomes, outcomes, documentedSpec } = lastValue!;
 
-      if (documentedSpec && documentedSpecOutputPath) {
-        // Decorated spec is currently always YAML, so convert it to JSON if needed.
-        const documentedSpecOutput = !(
-          documentedSpecOutputPath.endsWith(".yml") ||
-          documentedSpecOutputPath.endsWith(".yaml")
-        )
-          ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
-          : documentedSpec;
+    setOutput("outcomes", outcomes);
+    setOutput("base_outcomes", baseOutcomes);
 
-        fs.writeFileSync(
-          documentedSpecOutputPath,
-          YAML.stringify(documentedSpecOutput),
-        );
-      } else if (documentedSpecOutputPath) {
-        console.error("No documented spec found.");
-      }
+    if (documentedSpec && outputDir) {
+      const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+      fs.mkdirSync(outputDir, { recursive: true });
+      fs.writeFileSync(documentedSpecPath, documentedSpec);
+      setOutput("documented_spec_path", documentedSpecPath);
+    }
+
+    if (documentedSpec && documentedSpecOutputPath) {
+      // Decorated spec is currently always YAML, so convert it to JSON if needed.
+      const documentedSpecOutput = !(
+        documentedSpecOutputPath.endsWith(".yml") ||
+        documentedSpecOutputPath.endsWith(".yaml")
+      )
+        ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
+        : documentedSpec;
+
+      fs.writeFileSync(
+        documentedSpecOutputPath,
+        YAML.stringify(documentedSpecOutput),
+      );
+    } else if (documentedSpecOutputPath) {
+      console.error("No documented spec found.");
     }
   } catch (error) {
     console.error("Error interacting with API:", error);
