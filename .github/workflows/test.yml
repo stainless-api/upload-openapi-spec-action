@@ -13,5 +13,7 @@ jobs:
           node-version: "22"
       - name: Install dependencies
         run: npm install
+      - name: Run linting
+        run: npm run lint
       - name: Run tests
         run: npm run test
