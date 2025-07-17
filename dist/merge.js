@@ -33226,14 +33226,18 @@ async function readConfig({
   try {
     await exec.exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true }).catch(() => null);
     await exec.exec("git", ["checkout", sha], { silent: true });
-    addToResults("oas", oasPath, `git ${sha}`);
-    addToResults("config", configPath, `git ${sha}`);
+    await addToResults("oas", oasPath, `git ${sha}`);
+    await addToResults("config", configPath, `git ${sha}`);
   } catch {
     console.log("Could not checkout", sha);
   }
   try {
-    addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
-    addToResults("config", getSavedFilePath("config", sha), `saved ${sha}`);
+    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
+    await addToResults(
+      "config",
+      getSavedFilePath("config", sha),
+      `saved ${sha}`
+    );
   } catch {
     console.log("Could not get config from saved file path");
   }
