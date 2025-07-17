@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.2.2...v1.3.0) (2025-07-17)
+
+
+### Features
+
+* show more things in the comment while pending  ([#87](https://github.com/stainless-api/upload-openapi-spec-action/issues/87)) ([a0975f0](https://github.com/stainless-api/upload-openapi-spec-action/commit/a0975f0883327437a0dc469d1fd8369af459c998))
+
+
+### Bug Fixes
+
+* await for config reads before comparing ([#88](https://github.com/stainless-api/upload-openapi-spec-action/issues/88)) ([deb361d](https://github.com/stainless-api/upload-openapi-spec-action/commit/deb361d06abef732d0305c225d7ae76ce2f09d1f))
+
 ## [1.2.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.2.1...v1.2.2) (2025-07-16)
 
 
