@@ -195,7 +195,7 @@ export async function isConfigChanged({
 }): Promise<boolean> {
   let changed = false;
 
-  console.log(before, after, before.oasHash !== after.oasHash);
+  console.log(before.oasHash, after.oasHash, before.oasHash !== after.oasHash);
 
   if (before.oasHash !== after.oasHash) {
     console.log("OAS file changed");
