@@ -33319,7 +33319,6 @@ async function isConfigChanged({
   after
 }) {
   let changed = false;
-  console.log(before.oasHash, after.oasHash, before.oasHash !== after.oasHash);
   if (before.oasHash !== after.oasHash) {
     console.log("OAS file changed");
     changed = true;
