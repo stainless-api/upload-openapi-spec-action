@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.0...v1.3.1) (2025-07-17)
+
+
+### Bug Fixes
+
+* read oas and config even if not checked into git ([#91](https://github.com/stainless-api/upload-openapi-spec-action/issues/91)) ([0206ac3](https://github.com/stainless-api/upload-openapi-spec-action/commit/0206ac303878206499d68f55109377c8723e9ae4))
+
 ## [1.3.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.2.2...v1.3.0) (2025-07-17)
 
 
