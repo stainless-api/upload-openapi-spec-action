@@ -176,7 +176,7 @@ var require_file_command = __commonJS({
     };
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.prepareKeyValueMessage = exports2.issueFileCommand = void 0;
-    var crypto = __importStar(require("crypto"));
+    var crypto2 = __importStar(require("crypto"));
     var fs3 = __importStar(require("fs"));
     var os = __importStar(require("os"));
     var utils_1 = require_utils();
@@ -194,7 +194,7 @@ var require_file_command = __commonJS({
     }
     exports2.issueFileCommand = issueFileCommand;
     function prepareKeyValueMessage(key, value) {
-      const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+      const delimiter = `ghadelimiter_${crypto2.randomUUID()}`;
       const convertedValue = (0, utils_1.toCommandValue)(value);
       if (key.includes(delimiter)) {
         throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
@@ -3629,11 +3629,11 @@ var require_util2 = __commonJS({
     var assert = require("assert");
     var { isUint8Array } = require("util/types");
     var supportedHashes = [];
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("crypto");
+      crypto2 = require("crypto");
       const possibleRelevantHashes = ["sha256", "sha384", "sha512"];
-      supportedHashes = crypto.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
+      supportedHashes = crypto2.getHashes().filter((hash) => possibleRelevantHashes.includes(hash));
     } catch {
     }
     function responseURL(response) {
@@ -3910,7 +3910,7 @@ var require_util2 = __commonJS({
       }
     }
     function bytesMatch(bytes, metadataList) {
-      if (crypto === void 0) {
+      if (crypto2 === void 0) {
         return true;
       }
       const parsedMetadata = parseMetadata(metadataList);
@@ -3925,7 +3925,7 @@ var require_util2 = __commonJS({
       for (const item of metadata) {
         const algorithm = item.algo;
         const expectedValue = item.hash;
-        let actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
+        let actualValue = crypto2.createHash(algorithm).update(bytes).digest("base64");
         if (actualValue[actualValue.length - 1] === "=") {
           if (actualValue[actualValue.length - 2] === "=") {
             actualValue = actualValue.slice(0, -2);
@@ -5271,8 +5271,8 @@ var require_body = __commonJS({
     var { parseMIMEType, serializeAMimeType } = require_dataURL();
     var random;
     try {
-      const crypto = require("node:crypto");
-      random = (max) => crypto.randomInt(0, max);
+      const crypto2 = require("node:crypto");
+      random = (max) => crypto2.randomInt(0, max);
     } catch {
       random = (max) => Math.floor(Math.random(max));
     }
@@ -16322,9 +16322,9 @@ var require_connection = __commonJS({
     channels.open = diagnosticsChannel.channel("undici:websocket:open");
     channels.close = diagnosticsChannel.channel("undici:websocket:close");
     channels.socketError = diagnosticsChannel.channel("undici:websocket:socket_error");
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("crypto");
+      crypto2 = require("crypto");
     } catch {
     }
     function establishWebSocketConnection(url, protocols, ws, onEstablish, options) {
@@ -16343,7 +16343,7 @@ var require_connection = __commonJS({
         const headersList = new Headers2(options.headers)[kHeadersList];
         request.headersList = headersList;
       }
-      const keyValue = crypto.randomBytes(16).toString("base64");
+      const keyValue = crypto2.randomBytes(16).toString("base64");
       request.headersList.append("sec-websocket-key", keyValue);
       request.headersList.append("sec-websocket-version", "13");
       for (const protocol of protocols) {
@@ -16372,7 +16372,7 @@ var require_connection = __commonJS({
             return;
           }
           const secWSAccept = response.headersList.get("Sec-WebSocket-Accept");
-          const digest = crypto.createHash("sha1").update(keyValue + uid).digest("base64");
+          const digest = crypto2.createHash("sha1").update(keyValue + uid).digest("base64");
           if (secWSAccept !== digest) {
             failWebsocketConnection(ws, "Incorrect hash received in Sec-WebSocket-Accept header.");
             return;
@@ -16452,9 +16452,9 @@ var require_frame = __commonJS({
   "node_modules/undici/lib/websocket/frame.js"(exports2, module2) {
     "use strict";
     var { maxUnsigned16Bit } = require_constants5();
-    var crypto;
+    var crypto2;
     try {
-      crypto = require("crypto");
+      crypto2 = require("crypto");
     } catch {
     }
     var WebsocketFrameSend = class {
@@ -16463,7 +16463,7 @@ var require_frame = __commonJS({
        */
       constructor(data) {
         this.frameData = data;
-        this.maskKey = crypto.randomBytes(4);
+        this.maskKey = crypto2.randomBytes(4);
       }
       createFrame(opcode) {
         const bodyLength = this.frameData?.byteLength ?? 0;
@@ -29151,13 +29151,13 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
 
 // node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid4 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid4 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid4 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
@@ -31734,13 +31734,13 @@ var Comments = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
 var uuid42 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid42 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid42 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
@@ -32783,14 +32783,14 @@ function noop3() {
 }
 function logGitHub(level, msg, arg) {
   let obj = {};
-  if (typeof arg !== "object") {
-    msg = `${msg} ${arg}`;
-  } else if (arg !== null) {
+  if (arg && typeof arg === "object") {
     obj = arg;
+  } else if (arg) {
+    msg = `${msg} ${arg}`;
   }
   const now = /* @__PURE__ */ new Date();
   const msgStr = [
-    "[",
+    "\x1B[90m[",
     now.getHours().toString().padStart(2, "0"),
     ":",
     now.getMinutes().toString().padStart(2, "0"),
@@ -32798,7 +32798,7 @@ function logGitHub(level, msg, arg) {
     now.getSeconds().toString().padStart(2, "0"),
     ".",
     now.getMilliseconds().toString().padStart(3, "0"),
-    "] ",
+    "]\x1B[39m ",
     levelStrs[level],
     " ",
     msg
@@ -33380,7 +33380,7 @@ async function readConfig({
       return;
     }
     if (!filePath || !fs.existsSync(filePath)) {
-      logger.info(`Skipping missing ${file}`, { filePath });
+      logger.info(`Skip missing file`, { file, filePath });
       return;
     }
     results[file] = fs.readFileSync(filePath, "utf-8");
@@ -33393,15 +33393,11 @@ async function readConfig({
   } catch {
     logger.info("Could not checkout", sha);
   }
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
+  await addToResults("oas", oasPath, "git");
+  await addToResults("config", configPath, "git");
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha),
-      `saved ${sha}`
-    );
+    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
+    await addToResults("config", getSavedFilePath("config", sha), "saved");
   } catch {
     logger.info("Could not get config from saved file path");
   }
@@ -33413,17 +33409,24 @@ async function isConfigChanged({
 }) {
   let changed = false;
   if (before.oasHash !== after.oasHash) {
-    logger.info("OAS file changed");
+    logger.info("OAS file changed", {
+      before: before.oasHash,
+      after: after.oasHash
+    });
     changed = true;
   }
   if (before.configHash !== after.configHash) {
-    logger.info("Config file changed");
+    logger.info("Config file changed", {
+      before: before.configHash,
+      after: after.configHash
+    });
     changed = true;
   }
   return changed;
 }
 
 // src/runBuilds.ts
+var crypto = __toESM(require("node:crypto"));
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
   /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
 );
@@ -33510,6 +33513,9 @@ async function* runBuilds({
           spec: oasContent
         })
       )[0]?.content;
+      logger.info("Guessed config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex")
+      });
     } else {
       logger.info("Saving config before branch reset");
       configContent = Object.values(
@@ -33517,15 +33523,20 @@ async function* runBuilds({
           branch
         })
       )[0]?.content;
+      logger.info("Saved config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex")
+      });
     }
   }
-  logger.info(`Hard resetting ${branch} to ${baseRevision}`);
-  const { config_commit } = await stainless.projects.branches.create({
+  const branchObj = await stainless.projects.branches.create({
     branch_from: baseRevision,
     branch,
     force: true
   });
-  logger.info(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.info(`Hard reset ${branch}`, {
+    baseRevision,
+    configCommit: branchObj.config_commit
+  });
   const { base, head } = await stainless.builds.compare(
     {
       base: {
@@ -33613,10 +33624,7 @@ async function* pollBuild({
     ])
   );
   if (buildId) {
-    logger.info(
-      `[${label}] Created build ${buildId} against ${build.config_commit}`,
-      { languages }
-    );
+    logger.info(`[${label}] Created build ${buildId}`, build);
   } else {
     logger.info(`No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
@@ -33634,11 +33642,13 @@ async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
-      if (!existing?.status || existing.status !== buildOutput.status) {
-        hasChange = true;
+      if (existing.status !== "completed") {
         logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
+      }
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
@@ -33646,10 +33656,7 @@ async function* pollBuild({
         }
       }
       if (existing?.commit?.status !== "completed" && buildOutput.commit.status === "completed") {
-        logger.info(
-          `[${label}] Build for ${language} has output:`,
-          buildOutput
-        );
+        logger.info(`[${label}] Build for ${language} finished`, buildOutput);
         outcomes[language].commit = buildOutput.commit;
         outcomes[language].diagnostics = [];
         try {
@@ -33734,7 +33741,7 @@ function checkResults({
   });
   if (failedLanguages.length > 0) {
     logger.info(`Some languages did not build successfully`, {
-      languages: failedLanguages
+      languages: failedLanguages.map(([language]) => language)
     });
     return false;
   }

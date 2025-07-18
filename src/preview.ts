@@ -1,10 +1,4 @@
-import {
-  endGroup,
-  getBooleanInput,
-  getInput,
-  setOutput,
-  startGroup,
-} from "@actions/core";
+import { getBooleanInput, getInput, setOutput } from "@actions/core";
 import * as github from "@actions/github";
 import { Stainless } from "@stainless-api/sdk";
 import {
@@ -60,9 +54,8 @@ async function main() {
       project: projectName,
       apiKey,
       logger,
+      logLevel: "info",
     });
-
-    startGroup("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
@@ -91,8 +84,6 @@ async function main() {
         github.context.payload.pull_request!.action !== "opened" &&
         makeComment
       ) {
-        startGroup("Updating comment");
-
         const commentBody = printComment({ noChanges: true });
 
         await upsertComment({
@@ -100,8 +91,6 @@ async function main() {
           token: githubToken,
           skipCreate: true,
         });
-
-        endGroup();
       }
 
       return;
@@ -115,8 +104,6 @@ async function main() {
       oasPath,
       configPath,
     });
-
-    endGroup();
 
     let commitMessage = defaultCommitMessage;
 

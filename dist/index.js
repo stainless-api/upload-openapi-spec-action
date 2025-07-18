@@ -28934,14 +28934,14 @@ function noop2() {
 }
 function logGitHub(level, msg, arg) {
   let obj = {};
-  if (typeof arg !== "object") {
-    msg = `${msg} ${arg}`;
-  } else if (arg !== null) {
+  if (arg && typeof arg === "object") {
     obj = arg;
+  } else if (arg) {
+    msg = `${msg} ${arg}`;
   }
   const now = /* @__PURE__ */ new Date();
   const msgStr = [
-    "[",
+    "\x1B[90m[",
     now.getHours().toString().padStart(2, "0"),
     ":",
     now.getMinutes().toString().padStart(2, "0"),
@@ -28949,7 +28949,7 @@ function logGitHub(level, msg, arg) {
     now.getSeconds().toString().padStart(2, "0"),
     ".",
     now.getMilliseconds().toString().padStart(3, "0"),
-    "] ",
+    "]\x1B[39m ",
     levelStrs[level],
     " ",
     msg

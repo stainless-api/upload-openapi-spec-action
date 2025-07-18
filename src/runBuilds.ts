@@ -1,3 +1,4 @@
+import * as crypto from "node:crypto";
 import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
 
@@ -123,6 +124,9 @@ export async function* runBuilds({
           spec: oasContent!,
         }),
       )[0]?.content;
+      logger.info("Guessed config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex"),
+      });
     } else {
       logger.info("Saving config before branch reset");
       configContent = Object.values(
@@ -130,16 +134,21 @@ export async function* runBuilds({
           branch,
         }),
       )[0]?.content;
+      logger.info("Saved config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex"),
+      });
     }
   }
 
-  logger.info(`Hard resetting ${branch} to ${baseRevision}`);
-  const { config_commit } = await stainless.projects.branches.create({
+  const branchObj = await stainless.projects.branches.create({
     branch_from: baseRevision,
     branch: branch!,
     force: true,
   });
-  logger.info(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.info(`Hard reset ${branch}`, {
+    baseRevision,
+    configCommit: branchObj.config_commit,
+  });
 
   const { base, head } = await stainless.builds.compare(
     {
@@ -253,10 +262,7 @@ async function* pollBuild({
   );
 
   if (buildId) {
-    logger.info(
-      `[${label}] Created build ${buildId} against ${build.config_commit}`,
-      { languages },
-    );
+    logger.info(`[${label}] Created build ${buildId}`, build);
   } else {
     logger.info(`No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
@@ -282,11 +288,14 @@ async function* pollBuild({
         diagnostics: existing.diagnostics,
       };
 
-      if (!existing?.status || existing.status !== buildOutput.status) {
-        hasChange = true;
+      if (existing.status !== "completed") {
         logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`,
         );
+      }
+
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
       }
 
       // Also has a change if any of the checks have changed:
@@ -303,10 +312,7 @@ async function* pollBuild({
         existing?.commit?.status !== "completed" &&
         buildOutput.commit.status === "completed"
       ) {
-        logger.info(
-          `[${label}] Build for ${language} has output:`,
-          buildOutput,
-        );
+        logger.info(`[${label}] Build for ${language} finished`, buildOutput);
 
         // This is the only time we modify `commit` and `diagnostics`.
         outcomes[language].commit = buildOutput.commit;
@@ -415,7 +421,7 @@ export function checkResults({
 
   if (failedLanguages.length > 0) {
     logger.info(`Some languages did not build successfully`, {
-      languages: failedLanguages,
+      languages: failedLanguages.map(([language]) => language),
     });
     return false;
   }

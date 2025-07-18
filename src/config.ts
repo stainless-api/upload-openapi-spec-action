@@ -89,7 +89,7 @@ export async function readConfig({
       return;
     }
     if (!filePath || !fs.existsSync(filePath)) {
-      logger.info(`Skipping missing ${file}`, { filePath });
+      logger.info(`Skip missing file`, { file, filePath });
       return;
     }
     results[file] = fs.readFileSync(filePath, "utf-8");
@@ -108,16 +108,12 @@ export async function readConfig({
     logger.info("Could not checkout", sha);
   }
 
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
+  await addToResults("oas", oasPath, "git");
+  await addToResults("config", configPath, "git");
 
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha),
-      `saved ${sha}`,
-    );
+    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
+    await addToResults("config", getSavedFilePath("config", sha), "saved");
   } catch {
     logger.info("Could not get config from saved file path");
   }
@@ -201,12 +197,18 @@ export async function isConfigChanged({
   let changed = false;
 
   if (before.oasHash !== after.oasHash) {
-    logger.info("OAS file changed");
+    logger.info("OAS file changed", {
+      before: before.oasHash,
+      after: after.oasHash,
+    });
     changed = true;
   }
 
   if (before.configHash !== after.configHash) {
-    logger.info("Config file changed");
+    logger.info("Config file changed", {
+      before: before.configHash,
+      after: after.configHash,
+    });
     changed = true;
   }
 
