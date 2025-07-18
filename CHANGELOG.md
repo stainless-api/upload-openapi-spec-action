@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.1...v1.3.2) (2025-07-18)
+
+
+### Bug Fixes
+
+* trigger release ([#97](https://github.com/stainless-api/upload-openapi-spec-action/issues/97)) ([309add6](https://github.com/stainless-api/upload-openapi-spec-action/commit/309add646574e0ceef714e937ce7c9f496cd18f2))
+
 ## [1.3.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.0...v1.3.1) (2025-07-17)
 
 
