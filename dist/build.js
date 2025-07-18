@@ -28963,7 +28963,7 @@ function logGitHub(level, msg, arg) {
   });
   msgLines.unshift(`::group::${msgStr}`);
   msgLines.push(`::endgroup::`);
-  console.info([msgLines].join("\n"));
+  console.info(msgLines.join("\n"));
 }
 function makeLogFn2(level, maxLevel) {
   if (levelNumbers2[level] > levelNumbers2[maxLevel]) {

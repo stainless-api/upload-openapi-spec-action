@@ -77,7 +77,7 @@ function logGitHub(level: LogLevel, msg: string, arg?: unknown) {
 
   // All logging should be in stdout, because GitHub actions mix up stderr and
   // stdout, so we use console.info instead of the level-specific methods.
-  console.info([msgLines].join("\n"));
+  console.info(msgLines.join("\n"));
 }
 
 function makeLogFn(level: keyof Logger, maxLevel: LogLevel) {
