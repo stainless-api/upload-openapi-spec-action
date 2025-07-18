@@ -33319,7 +33319,7 @@ async function upsertComment({
     repo: github.context.repo.repo,
     resources: [Comments]
   });
-  logger.info("Upserting comment on PR:", github.context.issue.number);
+  logger.info("Upserting comment on PR", { pr: github.context.issue.number });
   const { data: comments } = await client.repos.issues.comments.list(
     github.context.issue.number
   );
@@ -33328,7 +33328,7 @@ async function upsertComment({
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
-    logger.info("Updating existing comment:", existingComment.id);
+    logger.info("Updating existing comment", { id: existingComment.id });
     await client.repos.issues.comments.update(existingComment.id, { body });
   } else if (!skipCreate) {
     logger.info("Creating new comment");
@@ -33642,13 +33642,11 @@ async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
-      if (existing.status !== "completed") {
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
         logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
-      }
-      if (!existing?.status || existing.status !== buildOutput.status) {
-        hasChange = true;
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {

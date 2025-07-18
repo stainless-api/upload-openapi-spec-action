@@ -54,7 +54,6 @@ async function main() {
       project: projectName,
       apiKey,
       logger,
-      logLevel: "info",
     });
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });

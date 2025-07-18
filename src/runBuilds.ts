@@ -288,14 +288,11 @@ async function* pollBuild({
         diagnostics: existing.diagnostics,
       };
 
-      if (existing.status !== "completed") {
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
         logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`,
         );
-      }
-
-      if (!existing?.status || existing.status !== buildOutput.status) {
-        hasChange = true;
       }
 
       // Also has a change if any of the checks have changed:

@@ -29262,13 +29262,11 @@ async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
-      if (existing.status !== "completed") {
+      if (!existing?.status || existing.status !== buildOutput.status) {
+        hasChange = true;
         logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
-      }
-      if (!existing?.status || existing.status !== buildOutput.status) {
-        hasChange = true;
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {

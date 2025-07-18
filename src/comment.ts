@@ -607,7 +607,7 @@ export async function upsertComment({
     resources: [GitHubComments],
   });
 
-  logger.info("Upserting comment on PR:", github.context.issue.number);
+  logger.info("Upserting comment on PR", { pr: github.context.issue.number });
 
   const { data: comments } = await client.repos.issues.comments.list(
     github.context.issue.number,
@@ -619,7 +619,7 @@ export async function upsertComment({
   );
 
   if (existingComment) {
-    logger.info("Updating existing comment:", existingComment.id);
+    logger.info("Updating existing comment", { id: existingComment.id });
     await client.repos.issues.comments.update(existingComment.id, { body });
   } else if (!skipCreate) {
     logger.info("Creating new comment");
