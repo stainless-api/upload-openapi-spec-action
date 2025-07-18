@@ -33410,7 +33410,8 @@ async function* runBuilds({
   oasContent,
   configContent,
   guessConfig = false,
-  commitMessage
+  commitMessage,
+  allowEmpty = true
 }) {
   if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
@@ -33449,7 +33450,7 @@ async function* runBuilds({
         },
         branch,
         commit_message: commitMessage,
-        allow_empty: true
+        allow_empty: allowEmpty
       },
       {
         // For very large specs, writing the config files can take a while.
