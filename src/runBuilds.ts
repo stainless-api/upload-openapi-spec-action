@@ -38,6 +38,7 @@ export async function* runBuilds({
   configContent,
   guessConfig = false,
   commitMessage,
+  allowEmpty = true,
 }: {
   stainless: Stainless;
   projectName: string;
@@ -49,6 +50,7 @@ export async function* runBuilds({
   configContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
+  allowEmpty?: boolean;
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
@@ -90,7 +92,7 @@ export async function* runBuilds({
             },
         branch,
         commit_message: commitMessage,
-        allow_empty: true,
+        allow_empty: allowEmpty,
       },
       {
         // For very large specs, writing the config files can take a while.
