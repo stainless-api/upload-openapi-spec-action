@@ -49,6 +49,7 @@ async function main() {
       configContent: config.config,
       guessConfig,
       commitMessage,
+      allowEmpty: false,
     })) {
       lastValue = value;
     }
@@ -82,8 +83,16 @@ async function main() {
       console.error("No documented spec found.");
     }
   } catch (error) {
-    console.error("Error interacting with API:", error);
-    process.exit(1);
+    if (
+      error instanceof Stainless.BadRequestError &&
+      error.message.includes("No changes to commit")
+    ) {
+      console.log("No changes to commit, skipping build.");
+      process.exit(0);
+    } else {
+      console.error("Error interacting with API:", error);
+      process.exit(1);
+    }
   }
 }
 
