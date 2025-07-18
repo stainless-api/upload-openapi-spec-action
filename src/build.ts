@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { readConfig } from "./config";
+import { logger } from "./logger";
 import { runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
@@ -33,7 +34,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     let lastValue: RunResult;
@@ -79,10 +80,10 @@ async function main() {
         YAML.stringify(documentedSpecOutput),
       );
     } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
+      logger.error("No documented spec found.");
     }
   } catch (error) {
-    console.error("Error interacting with API:", error);
+    logger.error("Error interacting with API:", { error });
     process.exit(1);
   }
 }

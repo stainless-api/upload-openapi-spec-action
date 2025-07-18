@@ -3,6 +3,7 @@ import { error, info, warn } from "node:console";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
 import { getBooleanInput, getInput, isGitLabCI } from "./compat";
+import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
@@ -117,7 +118,7 @@ async function uploadSpecAndConfig(
   const stainless = new Stainless({ apiKey: token, project: projectName });
   const specContent = readFileSync(specPath, "utf8");
 
-  let configContent;
+  let configContent: string | undefined;
 
   if (guessConfig) {
     configContent = Object.values(
@@ -209,8 +210,8 @@ async function uploadSpecAndConfig(
 }
 
 if (require.main === module) {
-  main().catch((err) => {
-    console.error(err);
+  main().catch((error) => {
+    logger.error("got error", { error });
     process.exit(1);
   });
 }

@@ -2,8 +2,9 @@ import * as github from "@actions/github";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
 import { createClient as createGitHubClient } from "@stainless-api/github-internal/tree-shakable";
 import type { Stainless } from "@stainless-api/sdk";
-import { Outcomes } from "./runBuilds";
+import { logger } from "./logger";
 import * as MD from "./markdown";
+import { Outcomes } from "./runBuilds";
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless SDK previews`,
@@ -606,7 +607,7 @@ export async function upsertComment({
     resources: [GitHubComments],
   });
 
-  console.log("Upserting comment on PR:", github.context.issue.number);
+  logger.info("Upserting comment on PR:", github.context.issue.number);
 
   const { data: comments } = await client.repos.issues.comments.list(
     github.context.issue.number,
@@ -618,10 +619,10 @@ export async function upsertComment({
   );
 
   if (existingComment) {
-    console.log("Updating existing comment:", existingComment.id);
+    logger.info("Updating existing comment:", existingComment.id);
     await client.repos.issues.comments.update(existingComment.id, { body });
   } else if (!skipCreate) {
-    console.log("Creating new comment");
+    logger.info("Creating new comment");
     await client.repos.issues.comments.create(github.context.issue.number, {
       body,
     });
