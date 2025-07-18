@@ -37,7 +37,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });

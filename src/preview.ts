@@ -59,7 +59,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     startGroup("Getting parent revision");
