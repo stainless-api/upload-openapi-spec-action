@@ -1,4 +1,6 @@
+import * as crypto from "node:crypto";
 import { Stainless } from "@stainless-api/sdk";
+import { logger } from "./logger";
 
 type Build = Stainless.Builds.BuildObject;
 export type Outcomes = Record<
@@ -64,7 +66,7 @@ export async function* runBuilds({
     throw new Error("Cannot specify both base_revision and merge_branch");
   }
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    console.warn(
+    logger.warn(
       `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`,
     );
     commitMessage = `feat: ${commitMessage}`;
@@ -115,30 +117,38 @@ export async function* runBuilds({
 
   if (!configContent) {
     if (guessConfig) {
-      console.log("Guessing config before branch reset");
+      logger.info("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
           branch: baseBranch,
           spec: oasContent!,
         }),
       )[0]?.content;
+      logger.info("Guessed config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex"),
+      });
     } else {
-      console.log("Saving config before branch reset");
+      logger.info("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
         }),
       )[0]?.content;
+      logger.info("Saved config", {
+        hash: crypto.createHash("md5").update(configContent).digest("hex"),
+      });
     }
   }
 
-  console.log(`Hard resetting ${branch} to ${baseRevision}`);
-  const { config_commit } = await stainless.projects.branches.create({
+  const branchObj = await stainless.projects.branches.create({
     branch_from: baseRevision,
     branch: branch!,
     force: true,
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.info(`Hard reset ${branch}`, {
+    baseRevision,
+    configCommit: branchObj.config_commit,
+  });
 
   const { base, head } = await stainless.builds.compare(
     {
@@ -252,13 +262,9 @@ async function* pollBuild({
   );
 
   if (buildId) {
-    console.log(
-      `[${label}] Created build ${buildId} against ${
-        build.config_commit
-      } for languages: ${languages.join(", ")}`,
-    );
+    logger.info(`[${label}] Created build ${buildId}`, build);
   } else {
-    console.log(`No new build was created; exiting.`);
+    logger.info(`No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -284,7 +290,7 @@ async function* pollBuild({
 
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        console.log(
+        logger.info(
           `[${label}] Build for ${language} has status ${buildOutput.status}`,
         );
       }
@@ -303,10 +309,7 @@ async function* pollBuild({
         existing?.commit?.status !== "completed" &&
         buildOutput.commit.status === "completed"
       ) {
-        console.log(
-          `[${label}] Build for ${language} has output:`,
-          JSON.stringify(buildOutput),
-        );
+        logger.info(`[${label}] Build for ${language} finished`, buildOutput);
 
         // This is the only time we modify `commit` and `diagnostics`.
         outcomes[language].commit = buildOutput.commit;
@@ -319,9 +322,9 @@ async function* pollBuild({
             outcomes[language].diagnostics.push(diagnostic);
           }
         } catch (e) {
-          console.error(
+          logger.error(
             `[${label}] Error getting diagnostics, continuing anyway`,
-            e,
+            { error: e },
           );
         }
       }
@@ -347,7 +350,7 @@ async function* pollBuild({
       !outcomes[language] || outcomes[language].commit?.status !== "completed",
   );
   for (const language of languagesWithoutOutcome) {
-    console.log(
+    logger.info(
       `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`,
     );
     outcomes[language] = {
@@ -414,11 +417,9 @@ export function checkResults({
   });
 
   if (failedLanguages.length > 0) {
-    console.log(
-      `The following languages did not build successfully: ${failedLanguages
-        .map(([lang]) => lang)
-        .join(", ")}`,
-    );
+    logger.info(`Some languages did not build successfully`, {
+      languages: failedLanguages.map(([language]) => language),
+    });
     return false;
   }
 

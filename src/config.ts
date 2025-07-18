@@ -2,6 +2,7 @@ import * as exec from "@actions/exec";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
+import { logger } from "./logger";
 
 export type Config = {
   oas?: string;
@@ -39,7 +40,7 @@ export async function saveConfig({
   if (!savedSha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  console.log("Saving generated config for", savedSha);
+  logger.info("Saving generated config for", savedSha);
 
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
@@ -75,7 +76,7 @@ export async function readConfig({
   if (!sha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  console.log("Reading config at", sha);
+  logger.info("Reading config at", sha);
 
   const results: Config = {};
 
@@ -88,14 +89,14 @@ export async function readConfig({
       return;
     }
     if (!filePath || !fs.existsSync(filePath)) {
-      console.log("Skipping missing", file, "at", filePath);
+      logger.info(`Skip missing file`, { file, filePath });
       return;
     }
     results[file] = fs.readFileSync(filePath, "utf-8");
     results[`${file}Hash`] = (
       await exec.getExecOutput("md5sum", [filePath], { silent: true })
     ).stdout.split(" ")[0];
-    console.log(`Using ${file} via`, via, "hash", results[`${file}Hash`]);
+    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
   };
 
   try {
@@ -104,21 +105,17 @@ export async function readConfig({
       .catch(() => null);
     await exec.exec("git", ["checkout", sha], { silent: true });
   } catch {
-    console.log("Could not checkout", sha);
+    logger.info("Could not checkout", sha);
   }
 
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
+  await addToResults("oas", oasPath, "git");
+  await addToResults("config", configPath, "git");
 
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha),
-      `saved ${sha}`,
-    );
+    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
+    await addToResults("config", getSavedFilePath("config", sha), "saved");
   } catch {
-    console.log("Could not get config from saved file path");
+    logger.info("Could not get config from saved file path");
   }
 
   return results;
@@ -168,7 +165,7 @@ export async function getMergeBase({
     throw new Error("Could not determine merge base SHA");
   }
 
-  console.log(`Merge base: ${mergeBaseSha}`);
+  logger.info(`Merge base: ${mergeBaseSha}`);
 
   return { mergeBaseSha };
 }
@@ -184,7 +181,7 @@ export async function getNonMainBaseRef({
 
   if (baseRef !== defaultBranch) {
     nonMainBaseRef = `preview/${baseRef}`;
-    console.log(`Non-main base ref: ${nonMainBaseRef}`);
+    logger.info(`Non-main base ref: ${nonMainBaseRef}`);
   }
 
   return { nonMainBaseRef };
@@ -200,12 +197,18 @@ export async function isConfigChanged({
   let changed = false;
 
   if (before.oasHash !== after.oasHash) {
-    console.log("OAS file changed");
+    logger.info("OAS file changed", {
+      before: before.oasHash,
+      after: after.oasHash,
+    });
     changed = true;
   }
 
   if (before.configHash !== after.configHash) {
-    console.log("Config file changed");
+    logger.info("Config file changed", {
+      before: before.configHash,
+      after: after.configHash,
+    });
     changed = true;
   }
 
