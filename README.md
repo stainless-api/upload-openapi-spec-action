@@ -96,7 +96,7 @@ and integration with docs platforms, see the [examples directory](./examples).
 
 ## Actions
 
-This repository provides four GitHub actions:
+This repository provides four GitHub actions.
 
 - `stainless-api/upload-openapi-spec-action/build`: Build SDKs for a Stainless
 project. This action is also usable in GitLab CI. For information about the
