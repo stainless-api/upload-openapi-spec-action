@@ -40,7 +40,10 @@ Edit this comment to update it.
 <blockquote>
 
 <i>There was a regression in your SDK.</i>
-<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>)
+<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
+\`\`\`bash
+npm install https://github.com/test-org/test-sdk.git#feature-branch
+\`\`\`
 <details>
 <summary>New diagnostics (1 error, 1 warning)</summary>
 
@@ -52,14 +55,6 @@ Edit this comment to update it.
 <td>⚠️ <b>Warning</b>: Other warning</td>
 </tr>
 </table>
-
-</details>
-<details>
-<summary>Installation</summary>
-
-\`\`\`bash
-npm install https://github.com/test-org/test-sdk.git#feature-branch
-\`\`\`
 
 </details>
 

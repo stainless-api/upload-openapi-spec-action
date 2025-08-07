@@ -217,8 +217,8 @@ function Result({
     body: [
       Description,
       StatusLine(base, head),
-      base ? DiagnosticsDetails(head, base) : null,
       InstallationDetails(head, lang),
+      base ? DiagnosticsDetails(head, base) : null,
     ]
       .filter((value): value is NonNullable<typeof value> => Boolean(value))
       .join("\n"),
@@ -247,9 +247,9 @@ function StatusLine(
 ): string {
   return [
     StatusStep(base, head, "generate"),
+    StatusStep(base, head, "build"),
     StatusStep(base, head, "lint"),
     StatusStep(base, head, "test"),
-    StatusStep(base, head, "build"),
   ]
     .filter((value): value is NonNullable<typeof value> => Boolean(value))
     .join(` ${MD.Symbol.RightwardsArrow} `);
@@ -393,6 +393,8 @@ function MergeConflictLink(outcome: Outcomes[string]): string | null {
   });
 }
 
+const diagnosticLevels = ["fatal", "error", "warning", "note"] as const;
+
 function DiagnosticsDetails(
   head: Outcomes[string],
   base: Outcomes[string],
@@ -428,13 +430,12 @@ function DiagnosticsDetails(
     .map(([level, count]) => `${count} ${level}`);
 
   const diagnosticList = newDiagnostics
+    .sort(
+      (a, b) =>
+        diagnosticLevels.indexOf(a.level) - diagnosticLevels.indexOf(b.level),
+    )
     .slice(0, 10)
-    .map((d) => {
-      if (d.level === "note") {
-        return null;
-      }
-      return `${DiagnosticIcon[d.level]} ${MD.Bold(d.code)}: ${d.message}`;
-    })
+    .map((d) => `${DiagnosticIcon[d.level]} ${MD.Bold(d.code)}: ${d.message}`)
     .filter(Boolean) as string[];
 
   const tableRows = diagnosticList
@@ -481,11 +482,7 @@ function InstallationDetails(
     }
   }
 
-  return MD.Details({
-    summary: "Installation",
-    body: MD.CodeBlock({ content: installation, language: "bash" }),
-    indent: false,
-  });
+  return MD.CodeBlock({ content: installation, language: "bash" });
 }
 
 function categorize(

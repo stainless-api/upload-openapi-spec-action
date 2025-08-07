@@ -32955,8 +32955,8 @@ function Result({
     body: [
       Description,
       StatusLine(base, head),
-      base ? DiagnosticsDetails(head, base) : null,
-      InstallationDetails(head, lang)
+      InstallationDetails(head, lang),
+      base ? DiagnosticsDetails(head, base) : null
     ].filter((value) => Boolean(value)).join("\n"),
     open: category !== "success" && category !== "pending"
   });
@@ -32978,9 +32978,9 @@ function ResultIcon(category) {
 function StatusLine(base, head) {
   return [
     StatusStep(base, head, "generate"),
+    StatusStep(base, head, "build"),
     StatusStep(base, head, "lint"),
-    StatusStep(base, head, "test"),
-    StatusStep(base, head, "build")
+    StatusStep(base, head, "test")
   ].filter((value) => Boolean(value)).join(` ${Symbol2.RightwardsArrow} `);
 }
 function StatusStep(base, head, step) {
@@ -33069,6 +33069,7 @@ function MergeConflictLink(outcome) {
     href: `https://github.com/${owner}/${name}/pull/${number}`
   });
 }
+var diagnosticLevels = ["fatal", "error", "warning", "note"];
 function DiagnosticsDetails(head, base) {
   if (!base.diagnostics || !head.diagnostics) return null;
   const newDiagnostics = head.diagnostics.filter(
@@ -33087,12 +33088,9 @@ function DiagnosticsDetails(head, base) {
     levelCounts[d.level]++;
   }
   const diagnosticCounts = Object.entries(levelCounts).filter(([, count]) => count > 0).map(([level, count]) => `${count} ${level}`);
-  const diagnosticList = newDiagnostics.slice(0, 10).map((d) => {
-    if (d.level === "note") {
-      return null;
-    }
-    return `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`;
-  }).filter(Boolean);
+  const diagnosticList = newDiagnostics.sort(
+    (a, b) => diagnosticLevels.indexOf(a.level) - diagnosticLevels.indexOf(b.level)
+  ).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
   const tableRows = diagnosticList.map((diagnostic) => `<tr>
 <td>${diagnostic}</td>
 </tr>`).join("\n");
@@ -33131,11 +33129,7 @@ function InstallationDetails(head, lang) {
       return null;
     }
   }
-  return Details({
-    summary: "Installation",
-    body: CodeBlock({ content: installation, language: "bash" }),
-    indent: false
-  });
+  return CodeBlock({ content: installation, language: "bash" });
 }
 function categorize(head, base) {
   if (head.commit?.status !== "completed") {
