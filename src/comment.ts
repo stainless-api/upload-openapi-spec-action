@@ -6,7 +6,7 @@ import { Outcomes } from "./runBuilds";
 import * as MD from "./markdown";
 
 const COMMENT_TITLE = MD.Heading(
-  `${MD.Symbol.HeavyAsterisk} Stainless SDK previews`,
+  `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,
 );
 
 const COMMENT_FOOTER_DIVIDER = MD.Comment("stainless-preview-footer");
@@ -48,7 +48,7 @@ export function printComment({
 
         ${MD.CodeBlock(commitMessage)}
 
-        ${canEdit ? "Edit this comment to update it." : ""}
+        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
       `,
       Results({ orgName, projectName, branch, outcomes, baseOutcomes }),
     ]
@@ -306,10 +306,13 @@ function StatusSymbol(
   if (step === "generate") {
     switch (outcome.commit.completed.conclusion) {
       case "fatal":
+      case "error":
+      case "cancelled":
         return MD.Symbol.Exclamation;
       case "merge_conflict":
         return MD.Symbol.Zap;
       case "upstream_merge_conflict":
+      case "warning":
         return MD.Symbol.Warning;
       default:
         return MD.Symbol.WhiteCheckMark;
@@ -334,11 +337,11 @@ function StatusURL(
   outcome: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ) {
-  if (step === "generate") {
-    return outcome.commit?.completed?.url;
-  }
-
-  if (!outcome[step] || outcome[step].status !== "completed") {
+  if (
+    step === "generate" ||
+    !outcome[step] ||
+    outcome[step].status !== "completed"
+  ) {
     return null;
   }
 
@@ -454,27 +457,32 @@ function InstallationDetails(
   head: Outcomes[string],
   lang: string,
 ): string | null {
-  if (!head.commit?.completed.commit) {
-    return null;
+  let githubGoURL: string | null = null;
+  let installation: string | null = null;
+
+  if (head.commit?.completed.commit) {
+    const { repo, sha } = head.commit.completed.commit;
+    githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
   }
 
-  const { repo, sha } = head.commit.completed.commit;
-  const githubHTTPURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
-  const githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
-
-  let installation: string | null = null;
   switch (lang) {
     case "typescript":
     case "node": {
-      installation = `npm install ${githubHTTPURL}`;
+      if (head.install_url) {
+        installation = `npm install ${head.install_url}`;
+      }
       break;
     }
     case "python": {
-      installation = `pip install git+${githubHTTPURL}`;
+      if (head.install_url) {
+        installation = `pip install ${head.install_url}`;
+      }
       break;
     }
     case "go": {
-      installation = `go get ${githubGoURL}`;
+      if (githubGoURL) {
+        installation = `go get ${githubGoURL}`;
+      }
       break;
     }
     default: {
@@ -482,6 +490,7 @@ function InstallationDetails(
     }
   }
 
+  if (!installation) return null;
   return MD.CodeBlock({ content: installation, language: "bash" });
 }
 

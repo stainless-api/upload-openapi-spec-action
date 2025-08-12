@@ -28,7 +28,7 @@ describe("printComment", () => {
 
   it("should print no changes comment", () => {
     expect(printComment({ noChanges: true })).toMatchInlineSnapshot(`
-      "<h3>✱ Stainless SDK previews</h3>
+      "<h3>✱ Stainless preview builds</h3>
 
       No changes were made to the SDKs.
 
@@ -58,15 +58,12 @@ describe("printComment", () => {
               },
             },
             merge_conflict_pr: null,
-            url: "https://github.com/test-org/test-sdk/actions/runs/199",
           },
         },
         build: {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/200",
           },
         },
@@ -74,8 +71,6 @@ describe("printComment", () => {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/201",
           },
         },
@@ -83,8 +78,6 @@ describe("printComment", () => {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/202",
           },
         },
@@ -96,6 +89,7 @@ describe("printComment", () => {
             ignored: false,
           },
         ],
+        install_url: "https://pkg.stainless.com/pkg/s/test-sdk/abc123",
       },
     } satisfies Outcomes;
 
@@ -109,7 +103,6 @@ describe("printComment", () => {
             conclusion: "fatal",
             commit: null,
             merge_conflict_pr: null,
-            url: null,
           },
         },
         lint: {
@@ -119,6 +112,7 @@ describe("printComment", () => {
           status: "not_started",
         },
         diagnostics: [],
+        install_url: null,
       },
       go: {
         object: "build_target",
@@ -135,7 +129,6 @@ describe("printComment", () => {
                 name: "test-sdk",
               },
             },
-            url: null,
           },
         },
         lint: {
@@ -145,6 +138,7 @@ describe("printComment", () => {
           status: "not_started",
         },
         diagnostics: [],
+        install_url: null,
       },
       typescript: {
         object: "build_target",
@@ -162,15 +156,12 @@ describe("printComment", () => {
               },
             },
             merge_conflict_pr: null,
-            url: "https://github.com/test-org/test-sdk/actions/runs/210",
           },
         },
         build: {
           status: "completed",
           completed: {
             conclusion: "failure",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/211",
           },
         },
@@ -181,8 +172,6 @@ describe("printComment", () => {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
           },
         },
@@ -206,6 +195,7 @@ describe("printComment", () => {
             ignored: false,
           },
         ],
+        install_url: "https://pkg.stainless.com/pkg/s/test-sdk/abc123",
       },
       java: {
         object: "build_target",
@@ -223,15 +213,12 @@ describe("printComment", () => {
               },
             },
             merge_conflict_pr: null,
-            url: null,
           },
         },
         lint: {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
           },
         },
@@ -239,6 +226,7 @@ describe("printComment", () => {
           status: "not_started",
         },
         diagnostics: [],
+        install_url: null,
       },
       kotlin: {
         object: "build_target",
@@ -256,15 +244,12 @@ describe("printComment", () => {
               },
             },
             merge_conflict_pr: null,
-            url: null,
           },
         },
         lint: {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
           },
         },
@@ -272,12 +257,11 @@ describe("printComment", () => {
           status: "completed",
           completed: {
             conclusion: "success",
-            commit: null,
-            merge_conflict_pr: null,
             url: "https://github.com/test-org/test-sdk/actions/runs/214",
           },
         },
         diagnostics: [],
+        install_url: null,
       },
     } satisfies Outcomes;
 

@@ -13,6 +13,7 @@ import {
   retrieveComment,
   upsertComment,
 } from "./comment";
+import { makeCommitMessageConventional } from "./commitMessage";
 import {
   Config,
   getMergeBase,
@@ -126,6 +127,7 @@ async function main() {
       }
     }
 
+    commitMessage = makeCommitMessageConventional(commitMessage);
     console.log("Using commit message:", commitMessage);
 
     const generator = runBuilds({
@@ -157,7 +159,7 @@ async function main() {
         // In case the comment was updated between polls:
         const comment = await retrieveComment({ token: githubToken });
         if (comment.commitMessage) {
-          commitMessage = comment.commitMessage;
+          commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
 
         const commentBody = printComment({

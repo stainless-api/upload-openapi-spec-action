@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`printComment > should print comment 1`] = `
-"<h3>✱ Stainless SDK previews</h3>
+"<h3>✱ Stainless preview builds</h3>
 
 This PR will update the <code>test-project</code> SDKs with the following commit message.
 
@@ -9,7 +9,7 @@ This PR will update the <code>test-project</code> SDKs with the following commit
 Update API endpoints
 \`\`\`
 
-Edit this comment to update it.
+Edit this comment to update it. It will appear in the SDK's changelogs.
 
 <details open>
 <summary>❗ <b>test-project-python</b> <a href="https://app.stainless.com/test-org/test-project/studio?language=python&branch=feature-branch">studio</a></summary>
@@ -40,9 +40,9 @@ Edit this comment to update it.
 <blockquote>
 
 <i>There was a regression in your SDK.</i>
-<a href="https://github.com/test-org/test-sdk/actions/runs/210"><code>generate ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
+<code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
 \`\`\`bash
-npm install https://github.com/test-org/test-sdk.git#feature-branch
+npm install https://pkg.stainless.com/pkg/s/test-sdk/abc123
 \`\`\`
 <details>
 <summary>New diagnostics (1 error, 1 warning)</summary>

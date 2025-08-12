@@ -29326,7 +29326,7 @@ var safeJSON = (text) => {
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.11";
+var VERSION = "0.1.0-alpha.12";
 
 // node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform() {
@@ -30315,14 +30315,6 @@ var Builds = class extends APIResource {
 Builds.Diagnostics = Diagnostics;
 Builds.TargetOutputs = TargetOutputs;
 
-// node_modules/@stainless-api/sdk/resources/generate.mjs
-var Generate = class extends APIResource {
-  createSpec(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/generate/spec", { body: { project, ...body }, ...options });
-  }
-};
-
 // node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs = class extends APIResource {
   /**
@@ -30354,6 +30346,23 @@ var Branches = class extends APIResource {
   retrieve(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
     return this._client.get(path`/v0/projects/${project}/branches/${branch}`, options);
+  }
+  /**
+   * List project branches
+   */
+  list(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.getAPIList(path`/v0/projects/${project}/branches`, Page, {
+      query,
+      ...options
+    });
+  }
+  /**
+   * Delete a project branch
+   */
+  delete(branch, params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.delete(path`/v0/projects/${project}/branches/${branch}`, options);
   }
 };
 
@@ -30503,12 +30512,17 @@ var _Stainless_instances;
 var _a;
 var _Stainless_encoder;
 var _Stainless_baseURLOverridden;
+var environments = {
+  production: "https://api.stainless.com",
+  staging: "https://staging.stainless.com"
+};
 var Stainless = class {
   /**
    * API Client for interfacing with the Stainless API.
    *
    * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
    * @param {string | null | undefined} [opts.project]
+   * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
    * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
    * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
    * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
@@ -30523,14 +30537,17 @@ var Stainless = class {
     this.projects = new Projects(this);
     this.builds = new Builds(this);
     this.orgs = new Orgs(this);
-    this.generate = new Generate(this);
     const options = {
       apiKey,
       project,
       ...opts,
-      baseURL: baseURL || `https://api.stainless.com`
+      baseURL,
+      environment: opts.environment ?? "production"
     };
-    this.baseURL = options.baseURL;
+    if (baseURL && opts.environment) {
+      throw new StainlessError("Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null");
+    }
+    this.baseURL = options.baseURL || environments[options.environment || "production"];
     this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT;
     this.logger = options.logger ?? console;
     const defaultLogLevel = "warn";
@@ -30548,9 +30565,10 @@ var Stainless = class {
    * Create a new client instance re-using the same options given to the current client with optional overriding.
    */
   withOptions(options) {
-    return new this.constructor({
+    const client = new this.constructor({
       ...this._options,
-      baseURL: this.baseURL,
+      environment: options.environment ? options.environment : void 0,
+      baseURL: options.environment ? void 0 : this.baseURL,
       maxRetries: this.maxRetries,
       timeout: this.timeout,
       logger: this.logger,
@@ -30561,6 +30579,7 @@ var Stainless = class {
       project: this.project,
       ...options
     });
+    return client;
   }
   defaultQuery() {
     return this._options.defaultQuery;
@@ -30574,7 +30593,7 @@ var Stainless = class {
     }
     throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
   }
-  authHeaders(opts) {
+  async authHeaders(opts) {
     if (this.apiKey == null) {
       return void 0;
     }
@@ -30647,7 +30666,9 @@ var Stainless = class {
       retriesRemaining = maxRetries;
     }
     await this.prepareOptions(options);
-    const { req, url, timeout } = this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
+    const { req, url, timeout } = await this.buildRequest(options, {
+      retryCount: maxRetries - retriesRemaining
+    });
     await this.prepareRequest(req, { url, options });
     const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
     const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
@@ -30695,7 +30716,7 @@ var Stainless = class {
     }
     const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
     if (!response.ok) {
-      const shouldRetry = this.shouldRetry(response);
+      const shouldRetry = await this.shouldRetry(response);
       if (retriesRemaining && shouldRetry) {
         const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
         await CancelReadableStream(response.body);
@@ -30763,7 +30784,7 @@ var Stainless = class {
       clearTimeout(timeout);
     }
   }
-  shouldRetry(response) {
+  async shouldRetry(response) {
     const shouldRetryHeader = response.headers.get("x-should-retry");
     if (shouldRetryHeader === "true")
       return true;
@@ -30812,7 +30833,7 @@ var Stainless = class {
     const jitter = 1 - Math.random() * 0.25;
     return sleepSeconds * jitter * 1e3;
   }
-  buildRequest(inputOptions, { retryCount = 0 } = {}) {
+  async buildRequest(inputOptions, { retryCount = 0 } = {}) {
     const options = { ...inputOptions };
     const { method, path: path4, query, defaultBaseURL } = options;
     const url = this.buildURL(path4, query, defaultBaseURL);
@@ -30820,7 +30841,7 @@ var Stainless = class {
       validatePositiveInteger("timeout", options.timeout);
     options.timeout = options.timeout ?? this.timeout;
     const { bodyHeaders, body } = this.buildBody({ options });
-    const reqHeaders = this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+    const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
     const req = {
       method,
       headers: reqHeaders,
@@ -30832,7 +30853,7 @@ var Stainless = class {
     };
     return { req, url, timeout: options.timeout };
   }
-  buildHeaders({ options, method, bodyHeaders, retryCount }) {
+  async buildHeaders({ options, method, bodyHeaders, retryCount }) {
     let idempotencyHeaders = {};
     if (this.idempotencyHeader && method !== "get") {
       if (!options.idempotencyKey)
@@ -30848,7 +30869,7 @@ var Stainless = class {
         ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
         ...getPlatformHeaders()
       },
-      this.authHeaders(options),
+      await this.authHeaders(options),
       this._options.defaultHeaders,
       bodyHeaders,
       options.headers
@@ -30879,7 +30900,7 @@ var Stainless = class {
   }
 };
 _a = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
-  return this.baseURL !== "https://api.stainless.com";
+  return this.baseURL !== environments[this._options.environment || "production"];
 };
 Stainless.Stainless = _a;
 Stainless.DEFAULT_TIMEOUT = 6e4;
@@ -30901,7 +30922,6 @@ Stainless.unwrapFile = unwrapFile;
 Stainless.Projects = Projects;
 Stainless.Builds = Builds;
 Stainless.Orgs = Orgs;
-Stainless.Generate = Generate;
 
 // src/comment.ts
 var github = __toESM(require_github());
@@ -32804,7 +32824,7 @@ var Rule = () => `<hr />`;
 
 // src/comment.ts
 var COMMENT_TITLE = Heading(
-  `${Symbol2.HeavyAsterisk} Stainless SDK previews`
+  `${Symbol2.HeavyAsterisk} Stainless preview builds`
 );
 var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
 function printComment({
@@ -32827,7 +32847,7 @@ function printComment({
 
         ${CodeBlock(commitMessage)}
 
-        ${canEdit ? "Edit this comment to update it." : ""}
+        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
       `,
       Results({ orgName, projectName, branch, outcomes, baseOutcomes })
     ].filter((f) => f !== null).join(`
@@ -33009,10 +33029,13 @@ function StatusSymbol(outcome, step) {
   if (step === "generate") {
     switch (outcome.commit.completed.conclusion) {
       case "fatal":
+      case "error":
+      case "cancelled":
         return Symbol2.Exclamation;
       case "merge_conflict":
         return Symbol2.Zap;
       case "upstream_merge_conflict":
+      case "warning":
         return Symbol2.Warning;
       default:
         return Symbol2.WhiteCheckMark;
@@ -33028,10 +33051,7 @@ function StatusSymbol(outcome, step) {
   return Symbol2.HourglassFlowingSand;
 }
 function StatusURL(outcome, step) {
-  if (step === "generate") {
-    return outcome.commit?.completed?.url;
-  }
-  if (!outcome[step] || outcome[step].status !== "completed") {
+  if (step === "generate" || !outcome[step] || outcome[step].status !== "completed") {
     return null;
   }
   return outcome[step]?.completed?.url;
@@ -33102,31 +33122,37 @@ ${tableRows}
   });
 }
 function InstallationDetails(head, lang) {
-  if (!head.commit?.completed.commit) {
-    return null;
-  }
-  const { repo, sha } = head.commit.completed.commit;
-  const githubHTTPURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
-  const githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
+  let githubGoURL = null;
   let installation = null;
+  if (head.commit?.completed.commit) {
+    const { repo, sha } = head.commit.completed.commit;
+    githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
+  }
   switch (lang) {
     case "typescript":
     case "node": {
-      installation = `npm install ${githubHTTPURL}`;
+      if (head.install_url) {
+        installation = `npm install ${head.install_url}`;
+      }
       break;
     }
     case "python": {
-      installation = `pip install git+${githubHTTPURL}`;
+      if (head.install_url) {
+        installation = `pip install ${head.install_url}`;
+      }
       break;
     }
     case "go": {
-      installation = `go get ${githubGoURL}`;
+      if (githubGoURL) {
+        installation = `go get ${githubGoURL}`;
+      }
       break;
     }
     default: {
       return null;
     }
   }
+  if (!installation) return null;
   return CodeBlock({ content: installation, language: "bash" });
 }
 function categorize(head, base) {
@@ -33239,6 +33265,20 @@ function commentThrottler(token) {
       lastCommentTime = /* @__PURE__ */ new Date();
     }
   };
+}
+
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    console.warn(
+      `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
 }
 
 // src/config.ts
@@ -33386,12 +33426,6 @@ async function isConfigChanged({
 }
 
 // src/runBuilds.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-var isValidConventionalCommitMessage = (message) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 10 * 60;
 async function* runBuilds({
@@ -33419,12 +33453,6 @@ async function* runBuilds({
   }
   if (baseRevision && mergeBranch) {
     throw new Error("Cannot specify both base_revision and merge_branch");
-  }
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    console.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    commitMessage = `feat: ${commitMessage}`;
   }
   if (!baseRevision) {
     const build = await stainless.builds.create(
@@ -33781,6 +33809,7 @@ async function main() {
         commitMessage = comment.commitMessage;
       }
     }
+    commitMessage = makeCommitMessageConventional(commitMessage);
     console.log("Using commit message:", commitMessage);
     const generator = runBuilds({
       stainless,
@@ -33804,7 +33833,7 @@ async function main() {
         const { outcomes, baseOutcomes } = latestRun;
         const comment = await retrieveComment({ token: githubToken });
         if (comment.commitMessage) {
-          commitMessage = comment.commitMessage;
+          commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
         const commentBody = printComment({
           orgName,
