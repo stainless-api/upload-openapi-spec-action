@@ -41,6 +41,9 @@ Edit this comment to update it. It will appear in the SDK's changelogs.
 
 <i>There was a regression in your SDK.</i>
 <code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
+\`\`\`bash
+npm install https://pkg.stainless.com/pkg/s/test-sdk/abc123
+\`\`\`
 <details>
 <summary>New diagnostics (1 error, 1 warning)</summary>
 

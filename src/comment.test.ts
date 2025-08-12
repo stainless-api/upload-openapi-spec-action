@@ -195,7 +195,7 @@ describe("printComment", () => {
             ignored: false,
           },
         ],
-        install_url: null,
+        install_url: "https://pkg.stainless.com/pkg/s/test-sdk/abc123",
       },
       java: {
         object: "build_target",
