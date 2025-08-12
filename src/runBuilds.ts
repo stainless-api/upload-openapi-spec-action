@@ -9,15 +9,6 @@ export type Outcomes = Record<
   }
 >;
 
-// https://www.conventionalcommits.org/en/v1.0.0/
-const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
-);
-
-const isValidConventionalCommitMessage = (message: string) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-
 const POLLING_INTERVAL_SECONDS = 5;
 const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
 
@@ -64,12 +55,6 @@ export async function* runBuilds({
   }
   if (baseRevision && mergeBranch) {
     throw new Error("Cannot specify both base_revision and merge_branch");
-  }
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    console.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`,
-    );
-    commitMessage = `feat: ${commitMessage}`;
   }
 
   if (!baseRevision) {
