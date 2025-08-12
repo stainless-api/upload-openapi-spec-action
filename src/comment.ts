@@ -307,6 +307,7 @@ function StatusSymbol(
     switch (outcome.commit.completed.conclusion) {
       case "fatal":
       case "error":
+      case "cancelled":
         return MD.Symbol.Exclamation;
       case "merge_conflict":
         return MD.Symbol.Zap;
@@ -456,13 +457,11 @@ function InstallationDetails(
   head: Outcomes[string],
   lang: string,
 ): string | null {
-  let githubHTTPURL: string | null = null;
   let githubGoURL: string | null = null;
   let installation: string | null = null;
 
   if (head.commit?.completed.commit) {
     const { repo, sha } = head.commit.completed.commit;
-    githubHTTPURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
     githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
   }
 
@@ -471,16 +470,12 @@ function InstallationDetails(
     case "node": {
       if (head.install_url) {
         installation = `npm install ${head.install_url}`;
-      } else if (githubHTTPURL) {
-        installation = `npm install ${githubHTTPURL}`;
       }
       break;
     }
     case "python": {
       if (head.install_url) {
         installation = `pip install ${head.install_url}`;
-      } else if (githubHTTPURL) {
-        installation = `pip install git+${githubHTTPURL}`;
       }
       break;
     }

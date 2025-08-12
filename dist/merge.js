@@ -33032,6 +33032,7 @@ function StatusSymbol(outcome, step) {
     switch (outcome.commit.completed.conclusion) {
       case "fatal":
       case "error":
+      case "cancelled":
         return Symbol2.Exclamation;
       case "merge_conflict":
         return Symbol2.Zap;
@@ -33123,12 +33124,10 @@ ${tableRows}
   });
 }
 function InstallationDetails(head, lang) {
-  let githubHTTPURL = null;
   let githubGoURL = null;
   let installation = null;
   if (head.commit?.completed.commit) {
     const { repo, sha } = head.commit.completed.commit;
-    githubHTTPURL = `https://github.com/${repo.owner}/${repo.name}.git#${repo.branch}`;
     githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
   }
   switch (lang) {
@@ -33136,16 +33135,12 @@ function InstallationDetails(head, lang) {
     case "node": {
       if (head.install_url) {
         installation = `npm install ${head.install_url}`;
-      } else if (githubHTTPURL) {
-        installation = `npm install ${githubHTTPURL}`;
       }
       break;
     }
     case "python": {
       if (head.install_url) {
         installation = `pip install ${head.install_url}`;
-      } else if (githubHTTPURL) {
-        installation = `pip install git+${githubHTTPURL}`;
       }
       break;
     }
