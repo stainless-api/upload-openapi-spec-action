@@ -1,7 +1,8 @@
 # Build Stainless SDKs from GitHub Actions
 
 GitHub Actions for building [Stainless](https://stainless.com/) SDKs and
-previewing changes to an SDK from a pull request.
+previewing changes to an SDK from a pull request.  Refer to [our
+docs on automating builds](https://www.stainless.com/docs/guides/automate-updates) for more information.
 
 Limited support for GitLab CI is available. See the
 [GitLab example](./examples/push_gitlab.yml).
@@ -87,6 +88,9 @@ jobs:
 
 Then, pull requests to your GitHub repository that update OpenAPI spec or
 Stainless config will build your SDKs and make a comment with the results.
+
+Note: the `merge` job depends on the `preview` job, so you can't use just
+the `merge` job alone.  See [our docs](https://www.stainless.com/docs/guides/automate-updates) for more details.
 
 For more details about the input parameters, see the
 [example workflow](./examples/pull_request.yml) file.
