@@ -33910,7 +33910,8 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn"
+      logLevel: "warn",
+      environment: "staging"
     });
     startGroup2("Getting parent revision");
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
