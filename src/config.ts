@@ -10,7 +10,7 @@ export type Config = {
   configHash?: string;
 };
 
-function getSavedFilePath(file: "oas" | "config", sha: string) {
+function getSavedFilePath(file: string, sha: string) {
   return path.join(
     tmpdir(),
     "stainless-generated-config",

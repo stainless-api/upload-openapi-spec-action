@@ -2,5 +2,6 @@ image: node:20-alpine
 
 .build-sdk:
   script:
+    - apk add --no-cache git
     - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/build.js
     - node build.js
