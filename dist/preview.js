@@ -31003,6 +31003,16 @@ function getGitHostToken() {
   }
   return token;
 }
+function getPRNumber() {
+  if (getInput2("make_comment") && isGitLabCI()) {
+    if (!process.env["MR_NUMBER"]) {
+      throw new Error("MR_NUMBER is required to make a comment");
+    }
+    return parseInt(process.env["MR_NUMBER"]);
+  } else {
+    return github.context.payload.pull_request.number;
+  }
+}
 function setOutput2(name, value) {
   if (isGitLabCI()) {
   } else {
@@ -31030,17 +31040,11 @@ function endGroup2() {
     core.endGroup();
   }
 }
-function createCommentClient(token) {
+function createCommentClient(token, prNumber) {
   if (isGitLabCI()) {
-    return new GitLabCommentClient(token);
+    return new GitLabCommentClient(token, prNumber);
   }
-  return new GitHubCommentClient(token);
-}
-function getPRNumber() {
-  if (isGitLabCI()) {
-    return parseInt(process.env.CI_MERGE_REQUEST_IID);
-  }
-  return github.context.issue.number;
+  return new GitHubCommentClient(token, prNumber);
 }
 function getPRTerm() {
   if (isGitLabCI()) {
@@ -31058,22 +31062,24 @@ function getCITerm() {
 }
 var GitHubCommentClient = class {
   client;
-  constructor(token) {
+  prNumber;
+  constructor(token, prNumber) {
     this.client = createClient({
       authToken: token,
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       resources: [Comments]
     });
+    this.prNumber = prNumber;
   }
   async listComments() {
     const { data: comments } = await this.client.repos.issues.comments.list(
-      getPRNumber()
+      this.prNumber
     );
     return comments.map((c) => ({ id: c.id, body: c.body }));
   }
   async createComment(body) {
-    await this.client.repos.issues.comments.create(getPRNumber(), { body });
+    await this.client.repos.issues.comments.create(this.prNumber, { body });
   }
   async updateComment(id, body) {
     await this.client.repos.issues.comments.update(id, { body });
@@ -31082,9 +31088,11 @@ var GitHubCommentClient = class {
 var GitLabCommentClient = class {
   token;
   baseUrl;
-  constructor(token) {
+  prNumber;
+  constructor(token, prNumber) {
     this.token = token;
     this.baseUrl = process.env.CI_API_V4_URL || "https://gitlab.com/api/v4";
+    this.prNumber = prNumber;
   }
   async gitlabRequest(method, endpoint, body) {
     const projectId = process.env.CI_PROJECT_ID;
@@ -31107,19 +31115,19 @@ var GitLabCommentClient = class {
   async listComments() {
     const notes = await this.gitlabRequest(
       "GET",
-      `/merge_requests/${getPRNumber()}/notes`
+      `/merge_requests/${this.prNumber}/notes`
     );
     return notes.map((note) => ({ id: note.id, body: note.body }));
   }
   async createComment(body) {
-    await this.gitlabRequest("POST", `/merge_requests/${getPRNumber()}/notes`, {
+    await this.gitlabRequest("POST", `/merge_requests/${this.prNumber}/notes`, {
       body
     });
   }
   async updateComment(id, body) {
     await this.gitlabRequest(
       "PUT",
-      `/merge_requests/${getPRNumber()}/notes/${id}`,
+      `/merge_requests/${this.prNumber}/notes/${id}`,
       {
         body
       }
@@ -33372,8 +33380,11 @@ function categorize(head, base) {
 function parseCommitMessage(body) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
-async function retrieveComment({ token }) {
-  const client = createCommentClient(token);
+async function retrieveComment({
+  token,
+  prNumber
+}) {
+  const client = createCommentClient(token, prNumber);
   const comments = await client.listComments();
   const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
   return {
@@ -33384,10 +33395,11 @@ async function retrieveComment({ token }) {
 async function upsertComment({
   body,
   token,
+  prNumber,
   skipCreate = false
 }) {
-  const client = createCommentClient(token);
-  console.log(`Upserting comment on ${getPRTerm()}:`, getPRNumber());
+  const client = createCommentClient(token, prNumber);
+  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
   const comments = await client.listComments();
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
@@ -33404,12 +33416,12 @@ async function upsertComment({
 function areCommentsEqual(a, b) {
   return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
 }
-function commentThrottler(token) {
+function commentThrottler(token, prNumber) {
   let lastComment = null;
   let lastCommentTime = null;
   return async ({ body, force = false }) => {
     if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
-      await upsertComment({ body, token });
+      await upsertComment({ body, token, prNumber });
       lastComment = body;
       lastCommentTime = /* @__PURE__ */ new Date();
     }
@@ -33898,6 +33910,7 @@ async function main() {
     const defaultBranch = getInput2("default_branch", { required: true });
     const headSha = getInput2("head_sha", { required: true });
     const branch = getInput2("branch", { required: true });
+    const prNumber = getPRNumber();
     const { savedSha } = await saveConfig({
       oasPath,
       configPath
@@ -33937,7 +33950,8 @@ async function main() {
         await upsertComment({
           body: commentBody,
           token: gitHostToken,
-          skipCreate: true
+          skipCreate: true,
+          prNumber
         });
         endGroup2();
       }
@@ -33954,7 +33968,7 @@ async function main() {
     endGroup2();
     let commitMessage = defaultCommitMessage;
     if (makeComment) {
-      const comment = await retrieveComment({ token: gitHostToken });
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -33973,7 +33987,7 @@ async function main() {
       commitMessage
     });
     let latestRun;
-    const upsert = commentThrottler(gitHostToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
     while (true) {
       const run = await generator.next();
       if (run.value) {
@@ -33981,7 +33995,10 @@ async function main() {
       }
       if (makeComment) {
         const { outcomes, baseOutcomes } = latestRun;
-        const comment = await retrieveComment({ token: gitHostToken });
+        const comment = await retrieveComment({
+          token: gitHostToken,
+          prNumber
+        });
         if (comment.commitMessage) {
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }

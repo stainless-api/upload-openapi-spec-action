@@ -1,12 +1,7 @@
 import type { Stainless } from "@stainless-api/sdk";
 import { Outcomes } from "./runBuilds";
 import * as MD from "./markdown";
-import {
-  createCommentClient,
-  getCITerm,
-  getPRNumber,
-  getPRTerm,
-} from "./compat";
+import { createCommentClient, getCITerm, getPRTerm } from "./compat";
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless preview builds`
@@ -591,8 +586,14 @@ export function parseCommitMessage(body?: string | null) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
 
-export async function retrieveComment({ token }: { token: string }) {
-  const client = createCommentClient(token);
+export async function retrieveComment({
+  token,
+  prNumber,
+}: {
+  token: string;
+  prNumber: number;
+}) {
+  const client = createCommentClient(token, prNumber);
   const comments = await client.listComments();
 
   const existingComment =
@@ -607,15 +608,17 @@ export async function retrieveComment({ token }: { token: string }) {
 export async function upsertComment({
   body,
   token,
+  prNumber,
   skipCreate = false,
 }: {
   body: string;
   token: string;
+  prNumber: number;
   skipCreate?: boolean;
 }) {
-  const client = createCommentClient(token);
+  const client = createCommentClient(token, prNumber);
 
-  console.log(`Upserting comment on ${getPRTerm()}:`, getPRNumber());
+  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
 
   const comments = await client.listComments();
 
@@ -641,7 +644,7 @@ function areCommentsEqual(a: string, b: string) {
   );
 }
 
-export function commentThrottler(token: string) {
+export function commentThrottler(token: string, prNumber: number) {
   let lastComment: string | null = null;
   let lastCommentTime: Date | null = null;
 
@@ -654,7 +657,7 @@ export function commentThrottler(token: string) {
         Date.now() - lastCommentTime.getTime() > 10 * 1000) ||
       Date.now() - lastCommentTime.getTime() > 30 * 1000
     ) {
-      await upsertComment({ body, token });
+      await upsertComment({ body, token, prNumber });
       lastComment = body;
       lastCommentTime = new Date();
     }

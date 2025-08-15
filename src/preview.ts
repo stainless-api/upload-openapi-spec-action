@@ -6,6 +6,7 @@ import {
   startGroup,
   endGroup,
   getGitHostToken,
+  getPRNumber,
 } from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import {
@@ -43,6 +44,7 @@ async function main() {
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const branch = getInput("branch", { required: true });
+    const prNumber = getPRNumber();
 
     // If we came from the checkout-pr-ref action, we might need to save the
     // generated config files.
@@ -97,6 +99,7 @@ async function main() {
           body: commentBody,
           token: gitHostToken,
           skipCreate: true,
+          prNumber,
         });
 
         endGroup();
@@ -119,7 +122,7 @@ async function main() {
     let commitMessage = defaultCommitMessage;
 
     if (makeComment) {
-      const comment = await retrieveComment({ token: gitHostToken });
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -141,7 +144,7 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(gitHostToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -155,7 +158,10 @@ async function main() {
         const { outcomes, baseOutcomes } = latestRun!;
 
         // In case the comment was updated between polls:
-        const comment = await retrieveComment({ token: gitHostToken });
+        const comment = await retrieveComment({
+          token: gitHostToken,
+          prNumber,
+        });
         if (comment.commitMessage) {
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }

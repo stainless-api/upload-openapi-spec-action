@@ -2,6 +2,7 @@ import {
   getBooleanInput,
   getGitHostToken,
   getInput,
+  getPRNumber,
   setOutput,
 } from "./compat";
 import { Stainless } from "@stainless-api/sdk";
@@ -29,10 +30,17 @@ async function main() {
     const headSha = getInput("head_sha", { required: true });
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
+    const prNumber = getPRNumber();
 
     if (baseRef !== defaultBranch) {
       console.log("Not merging to default branch, skipping merge");
       return;
+    }
+
+    if (makeComment && !getPRNumber()) {
+      throw new Error(
+        "This action requires a pull request number to make a comment."
+      );
     }
 
     const stainless = new Stainless({
@@ -56,7 +64,7 @@ async function main() {
     let commitMessage = defaultCommitMessage;
 
     if (makeComment && gitHostToken) {
-      const comment = await retrieveComment({ token: gitHostToken });
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -76,7 +84,7 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(gitHostToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
