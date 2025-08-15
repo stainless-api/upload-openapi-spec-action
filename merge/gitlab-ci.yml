@@ -1,0 +1,15 @@
+image: node:20-alpine
+
+.preview:
+  script:
+    - apk add --no-cache git
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/refs/heads/meorphis/shards/dist/merge.js
+    - node merge.js
+  variables:
+    # defaults
+    BASE_SHA: $CI_MERGE_REQUEST_DIFF_BASE_SHA
+    BASE_REF: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    BRANCH: "preview/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
+    BASE_BRANCH: "preview/base/${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}"
+    DEFAULT_BRANCH: main
+    HEAD_SHA: $CI_COMMIT_SHA

@@ -1,4 +1,9 @@
-import { getBooleanInput, getInput, setOutput } from "@actions/core";
+import {
+  getBooleanInput,
+  getGitHostToken,
+  getInput,
+  setOutput,
+} from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
@@ -17,17 +22,13 @@ async function main() {
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const failRunOn = getInput("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const githubToken = getInput("github_token", { required: false });
+    const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
-
-    if (makeComment && !githubToken) {
-      throw new Error("github_token is required to make a comment");
-    }
 
     if (baseRef !== defaultBranch) {
       console.log("Not merging to default branch, skipping merge");
@@ -54,8 +55,8 @@ async function main() {
 
     let commitMessage = defaultCommitMessage;
 
-    if (makeComment && githubToken) {
-      const comment = await retrieveComment({ token: githubToken });
+    if (makeComment && gitHostToken) {
+      const comment = await retrieveComment({ token: gitHostToken });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -75,7 +76,7 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(githubToken);
+    const upsert = commentThrottler(gitHostToken);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
