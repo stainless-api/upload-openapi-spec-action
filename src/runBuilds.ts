@@ -45,12 +45,12 @@ export async function* runBuilds({
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path",
+      "Cannot specify both merge_branch and oas_path or config_path"
     );
   }
   if (guessConfig && (configContent || !oasContent)) {
     throw new Error(
-      "If guess_config is true, must have oas_path and no config_path",
+      "If guess_config is true, must have oas_path and no config_path"
     );
   }
   if (baseRevision && mergeBranch) {
@@ -82,7 +82,7 @@ export async function* runBuilds({
       {
         // For very large specs, writing the config files can take a while.
         timeout: 3 * 60 * 1000,
-      },
+      }
     );
 
     for await (const { outcomes, documentedSpec } of pollBuild({
@@ -107,14 +107,14 @@ export async function* runBuilds({
         await stainless.projects.configs.guess({
           branch: baseBranch,
           spec: oasContent!,
-        }),
+        })
       )[0]?.content;
     } else {
       console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
-        }),
+        })
       )[0]?.content;
     }
   }
@@ -154,7 +154,7 @@ export async function* runBuilds({
     {
       // For very large specs, writing the config files can take a while.
       timeout: 3 * 60 * 1000,
-    },
+    }
   );
 
   let lastBaseOutcome: Outcomes | null = null;
@@ -163,7 +163,7 @@ export async function* runBuilds({
 
   for await (const { index, value } of combineAsyncIterators(
     pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" }),
+    pollBuild({ stainless, build: head, label: "head" })
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -235,14 +235,14 @@ async function* pollBuild({
     languages.map((lang) => [
       lang,
       { ...build.targets[lang]!, commit: null, diagnostics: [] },
-    ]),
+    ])
   );
 
   if (buildId) {
     console.log(
       `[${label}] Created build ${buildId} against ${
         build.config_commit
-      } for languages: ${languages.join(", ")}`,
+      } for languages: ${languages.join(", ")}`
     );
   } else {
     console.log(`No new build was created; exiting.`);
@@ -272,7 +272,7 @@ async function* pollBuild({
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
         console.log(
-          `[${label}] Build for ${language} has status ${buildOutput.status}`,
+          `[${label}] Build for ${language} has status ${buildOutput.status}`
         );
       }
 
@@ -292,7 +292,7 @@ async function* pollBuild({
       ) {
         console.log(
           `[${label}] Build for ${language} has output:`,
-          JSON.stringify(buildOutput),
+          JSON.stringify(buildOutput)
         );
 
         // This is the only time we modify `commit` and `diagnostics`.
@@ -301,14 +301,14 @@ async function* pollBuild({
 
         try {
           for await (const diagnostic of stainless.builds.diagnostics.list(
-            buildId,
+            buildId
           )) {
             outcomes[language].diagnostics.push(diagnostic);
           }
         } catch (e) {
           console.error(
             `[${label}] Error getting diagnostics, continuing anyway`,
-            e,
+            e
           );
         }
       }
@@ -325,17 +325,17 @@ async function* pollBuild({
 
     // wait a bit before polling again
     await new Promise((resolve) =>
-      setTimeout(resolve, pollingIntervalSeconds * 1000),
+      setTimeout(resolve, pollingIntervalSeconds * 1000)
     );
   }
 
   const languagesWithoutOutcome = languages.filter(
     (language) =>
-      !outcomes[language] || outcomes[language].commit?.status !== "completed",
+      !outcomes[language] || outcomes[language].commit?.status !== "completed"
   );
   for (const language of languagesWithoutOutcome) {
     console.log(
-      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`,
+      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
     );
     outcomes[language] = {
       object: "build_target",
@@ -404,7 +404,7 @@ export function checkResults({
     console.log(
       `The following languages did not build successfully: ${failedLanguages
         .map(([lang]) => lang)
-        .join(", ")}`,
+        .join(", ")}`
     );
     return false;
   }

@@ -19674,7 +19674,7 @@ var require_core = __commonJS({
       process.env["PATH"] = `${inputPath}${path4.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
-    function getInput2(name, options) {
+    function getInput3(name, options) {
       const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
       if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
@@ -19684,19 +19684,19 @@ var require_core = __commonJS({
       }
       return val.trim();
     }
-    exports2.getInput = getInput2;
+    exports2.getInput = getInput3;
     function getMultilineInput(name, options) {
-      const inputs = getInput2(name, options).split("\n").filter((x) => x !== "");
+      const inputs = getInput3(name, options).split("\n").filter((x) => x !== "");
       if (options && options.trimWhitespace === false) {
         return inputs;
       }
       return inputs.map((input) => input.trim());
     }
     exports2.getMultilineInput = getMultilineInput;
-    function getBooleanInput2(name, options) {
+    function getBooleanInput3(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
-      const val = getInput2(name, options);
+      const val = getInput3(name, options);
       if (trueValue.includes(val))
         return true;
       if (falseValue.includes(val))
@@ -19704,8 +19704,8 @@ var require_core = __commonJS({
       throw new TypeError(`Input does not meet YAML 1.2 "Core Schema" specification: ${name}
 Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     }
-    exports2.getBooleanInput = getBooleanInput2;
-    function setOutput2(name, value) {
+    exports2.getBooleanInput = getBooleanInput3;
+    function setOutput3(name, value) {
       const filePath = process.env["GITHUB_OUTPUT"] || "";
       if (filePath) {
         return (0, file_command_1.issueFileCommand)("OUTPUT", (0, file_command_1.prepareKeyValueMessage)(name, value));
@@ -19713,7 +19713,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(os.EOL);
       (0, command_1.issueCommand)("set-output", { name }, (0, utils_1.toCommandValue)(value));
     }
-    exports2.setOutput = setOutput2;
+    exports2.setOutput = setOutput3;
     function setCommandEcho(enabled) {
       (0, command_1.issue)("echo", enabled ? "on" : "off");
     }
@@ -19747,22 +19747,22 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(message + os.EOL);
     }
     exports2.info = info;
-    function startGroup(name) {
+    function startGroup2(name) {
       (0, command_1.issue)("group", name);
     }
-    exports2.startGroup = startGroup;
-    function endGroup() {
+    exports2.startGroup = startGroup2;
+    function endGroup2() {
       (0, command_1.issue)("endgroup");
     }
-    exports2.endGroup = endGroup;
+    exports2.endGroup = endGroup2;
     function group(name, fn) {
       return __awaiter(this, void 0, void 0, function* () {
-        startGroup(name);
+        startGroup2(name);
         let result;
         try {
           result = yield fn();
         } finally {
-          endGroup();
+          endGroup2();
         }
         return result;
       });
@@ -29128,10 +29128,22 @@ var require_dist = __commonJS({
   }
 });
 
-// src/merge.ts
-var import_core = __toESM(require_core());
+// src/compat.ts
+var core = __toESM(require_core());
+var github = __toESM(require_github());
 
-// node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/@stainless-api/github-internal/core/resource.mjs
+var APIResource = /* @__PURE__ */ (() => {
+  class APIResource3 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource3._key = [];
+  return APIResource3;
+})();
+
+// node_modules/@stainless-api/github-internal/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -29149,19 +29161,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
-var uuid4 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid4 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -29192,10 +29192,13 @@ var castToError = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/sdk/core/error.mjs
-var StainlessError = class extends Error {
-};
-var APIError = class _APIError extends StainlessError {
+// node_modules/@stainless-api/github-internal/core/error.mjs
+var GitHubError = /* @__PURE__ */ (() => {
+  class GitHubError2 extends Error {
+  }
+  return GitHubError2;
+})();
+var APIError = class _APIError extends GitHubError {
   constructor(status, error, message, headers) {
     super(`${_APIError.makeMessage(status, error, message)}`);
     this.status = status;
@@ -29281,7 +29284,7 @@ var RateLimitError = class extends APIError {
 var InternalServerError = class extends APIError {
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
   return startsWithSchemeRegexp.test(url);
@@ -29306,10 +29309,10 @@ function hasOwn(obj, key) {
 }
 var validatePositiveInteger = (name, n) => {
   if (typeof n !== "number" || !Number.isInteger(n)) {
-    throw new StainlessError(`${name} must be an integer`);
+    throw new GitHubError(`${name} must be an integer`);
   }
   if (n < 0) {
-    throw new StainlessError(`${name} must be a positive integer`);
+    throw new GitHubError(`${name} must be a positive integer`);
   }
   return n;
 };
@@ -29321,13 +29324,657 @@ var safeJSON = (text) => {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
+var levelNumbers = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn(levelNumbers, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
+  return void 0;
+};
+function noop() {
+}
+function makeLogFn(fnLevel, logger, logLevel) {
+  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+    return noop;
+  } else {
+    return logger[fnLevel].bind(logger);
+  }
+}
+var noopLogger = {
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop
+};
+var cachedLoggers = /* @__PURE__ */ new WeakMap();
+function loggerFor(client) {
+  const logger = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger) {
+    return noopLogger;
+  }
+  const cachedLogger = cachedLoggers.get(logger);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn("error", logger, logLevel),
+    warn: makeLogFn("warn", logger, logLevel),
+    info: makeLogFn("info", logger, logLevel),
+    debug: makeLogFn("debug", logger, logLevel)
+  };
+  cachedLoggers.set(logger, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
+
+// node_modules/@stainless-api/github-internal/internal/parse.mjs
+async function defaultParseResponse(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/@stainless-api/github-internal/core/api-promise.mjs
+var _APIPromise_client;
+var APIPromise = /* @__PURE__ */ (() => {
+  class APIPromise3 extends Promise {
+    constructor(client, responsePromise, parseResponse = defaultParseResponse) {
+      super((resolve) => {
+        resolve(null);
+      });
+      this.responsePromise = responsePromise;
+      this.parseResponse = parseResponse;
+      _APIPromise_client.set(this, void 0);
+      __classPrivateFieldSet(this, _APIPromise_client, client, "f");
+    }
+    _thenUnwrap(transform) {
+      return new APIPromise3(__classPrivateFieldGet(this, _APIPromise_client, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+    }
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    asResponse() {
+      return this.responsePromise.then((p) => p.response);
+    }
+    /**
+     * Gets the parsed response data and the raw `Response` instance.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    async withResponse() {
+      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+      return { data, response };
+    }
+    parse() {
+      if (!this.parsedPromise) {
+        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet(this, _APIPromise_client, "f"), data));
+      }
+      return this.parsedPromise;
+    }
+    then(onfulfilled, onrejected) {
+      return this.parse().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+      return this.parse().catch(onrejected);
+    }
+    finally(onfinally) {
+      return this.parse().finally(onfinally);
+    }
+  }
+  _APIPromise_client = /* @__PURE__ */ new WeakMap();
+  return APIPromise3;
+})();
+
+// node_modules/@stainless-api/github-internal/core/pagination.mjs
+var _AbstractPage_client;
+var AbstractPage = /* @__PURE__ */ (() => {
+  class AbstractPage3 {
+    constructor(client, response, body, options) {
+      _AbstractPage_client.set(this, void 0);
+      __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
+      this.options = options;
+      this.response = response;
+      this.body = body;
+    }
+    hasNextPage() {
+      const items = this.getPaginatedItems();
+      if (!items.length)
+        return false;
+      return this.nextPageRequestOptions() != null;
+    }
+    async getNextPage() {
+      const nextOptions = this.nextPageRequestOptions();
+      if (!nextOptions) {
+        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
+      }
+      return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
+    }
+    async *iterPages() {
+      let page = this;
+      yield page;
+      while (page.hasNextPage()) {
+        page = await page.getNextPage();
+        yield page;
+      }
+    }
+    async *[(_AbstractPage_client = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
+      for await (const page of this.iterPages()) {
+        for (const item of page.getPaginatedItems()) {
+          yield item;
+        }
+      }
+    }
+  }
+  return AbstractPage3;
+})();
+var PagePromise = /* @__PURE__ */ (() => {
+  class PagePromise3 extends APIPromise {
+    constructor(client, request, Page2) {
+      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse(client2, props), props.options));
+    }
+    /**
+     * Allow auto-paginating iteration on an unawaited list call, eg:
+     *
+     *    for await (const item of client.items.list()) {
+     *      console.log(item)
+     *    }
+     */
+    async *[Symbol.asyncIterator]() {
+      const page = await this;
+      for await (const item of page) {
+        yield item;
+      }
+    }
+  }
+  return PagePromise3;
+})();
+var NumberedPage = class extends AbstractPage {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body || [];
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const query = this.options.query;
+    const currentPage = query?.page ?? 1;
+    return {
+      ...this.options,
+      query: {
+        ...maybeObj(this.options.query),
+        page: currentPage + 1
+      }
+    };
+  }
+};
+
+// node_modules/@stainless-api/github-internal/internal/headers.mjs
+var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
+function encodeURIPath(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction = (pathEncoder = encodeURIPath) => function path4(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path5 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path5.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new GitHubError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path5}
+${underline}`);
+  }
+  return path5;
+};
+var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
+
+// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
+var BaseReactions = /* @__PURE__ */ (() => {
+  class BaseReactions8 extends APIResource {
+    /**
+     * Create a reaction to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     * A response with an HTTP `200` status means that you already added the reaction
+     * type to this issue comment.
+     *
+     * @example
+     * ```ts
+     * const reaction =
+     *   await client.repos.issues.comments.reactions.create(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     content: 'heart',
+     *   });
+     * ```
+     */
+    create(commentID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * List the reactions to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const reactionListResponse of client.repos.issues.comments.reactions.list(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
+    }
+    /**
+     * > [!NOTE] You can also specify a repository by `repository_id` using the route
+     * > `DELETE delete /repositories/:repository_id/issues/comments/:comment_id/reactions/:reaction_id`.
+     *
+     * Delete a reaction to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     *
+     * @example
+     * ```ts
+     * await client.repos.issues.comments.reactions.delete(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   comment_id: 0,
+     * });
+     * ```
+     */
+    delete(reactionID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
+    }
+  }
+  BaseReactions8._key = Object.freeze(["repos", "issues", "comments", "reactions"]);
+  return BaseReactions8;
+})();
+var Reactions = class extends BaseReactions {
+};
+
+// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
+var BaseComments = /* @__PURE__ */ (() => {
+  class BaseComments7 extends APIResource {
+    /**
+     * You can use the REST API to create comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.create(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    create(issueNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * You can use the REST API to get comments on issues and pull requests. Every pull
+     * request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.retrieve(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *   });
+     * ```
+     */
+    retrieve(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
+    }
+    /**
+     * You can use the REST API to update comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.update(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    update(commentID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.patch(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        body,
+        ...options
+      });
+    }
+    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
+      const comments = await this.list(issueNumber);
+      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
+      if (match) {
+        return this.update(match.id, updateParams, options);
+      } else {
+        return this.create(issueNumber, createParams, options);
+      }
+    }
+    /**
+     * You can use the REST API to list comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * Issue comments are ordered by ascending ID.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const issueComment of client.repos.issues.comments.list(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(issueNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
+    }
+    /**
+     * You can use the REST API to delete comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * @example
+     * ```ts
+     * await client.repos.issues.comments.delete(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    delete(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        ...options,
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+  }
+  BaseComments7._key = Object.freeze(["repos", "issues", "comments"]);
+  return BaseComments7;
+})();
+var Comments = /* @__PURE__ */ (() => {
+  class Comments7 extends BaseComments {
+    constructor() {
+      super(...arguments);
+      this.reactions = new Reactions(this._client);
+    }
+  }
+  Comments7.Reactions = Reactions;
+  Comments7.BaseReactions = BaseReactions;
+  return Comments7;
+})();
+
+// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
+var uuid4 = function() {
+  const { crypto } = globalThis;
+  if (crypto?.randomUUID) {
+    uuid4 = crypto.randomUUID.bind(crypto);
+    return crypto.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.12";
+// node_modules/@stainless-api/github-internal/version.mjs
+var VERSION = "0.12.1";
 
-// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
 function getDetectedPlatform() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -29453,12 +30100,12 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/@stainless-api/github-internal/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
   }
-  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new Stainless({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitHub({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
 }
 function makeReadableStream(...args) {
   const ReadableStream = globalThis.ReadableStream;
@@ -29498,7 +30145,7 @@ async function CancelReadableStream(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/@stainless-api/github-internal/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -29508,7 +30155,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -29517,7 +30164,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -29596,7 +30243,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -29874,616 +30521,10 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
-var levelNumbers = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn(levelNumbers, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
-  return void 0;
-};
-function noop() {
-}
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
-    return noop;
-  } else {
-    return logger[fnLevel].bind(logger);
-  }
-}
-var noopLogger = {
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop
-};
-var cachedLoggers = /* @__PURE__ */ new WeakMap();
-function loggerFor(client) {
-  const logger = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger) {
-    return noopLogger;
-  }
-  const cachedLogger = cachedLoggers.get(logger);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
-  };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
+// node_modules/@stainless-api/github-internal/lib/secrets.mjs
+var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
-// node_modules/@stainless-api/sdk/internal/parse.mjs
-async function defaultParseResponse(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/sdk/core/api-promise.mjs
-var _APIPromise_client;
-var APIPromise = class _APIPromise extends Promise {
-  constructor(client, responsePromise, parseResponse = defaultParseResponse) {
-    super((resolve) => {
-      resolve(null);
-    });
-    this.responsePromise = responsePromise;
-    this.parseResponse = parseResponse;
-    _APIPromise_client.set(this, void 0);
-    __classPrivateFieldSet(this, _APIPromise_client, client, "f");
-  }
-  _thenUnwrap(transform) {
-    return new _APIPromise(__classPrivateFieldGet(this, _APIPromise_client, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-  }
-  /**
-   * Gets the raw `Response` instance instead of parsing the response
-   * data.
-   *
-   * If you want to parse the response body but still get the `Response`
-   * instance, you can use {@link withResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  asResponse() {
-    return this.responsePromise.then((p) => p.response);
-  }
-  /**
-   * Gets the parsed response data and the raw `Response` instance.
-   *
-   * If you just want to get the raw `Response` instance without parsing it,
-   * you can use {@link asResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  async withResponse() {
-    const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-    return { data, response };
-  }
-  parse() {
-    if (!this.parsedPromise) {
-      this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet(this, _APIPromise_client, "f"), data));
-    }
-    return this.parsedPromise;
-  }
-  then(onfulfilled, onrejected) {
-    return this.parse().then(onfulfilled, onrejected);
-  }
-  catch(onrejected) {
-    return this.parse().catch(onrejected);
-  }
-  finally(onfinally) {
-    return this.parse().finally(onfinally);
-  }
-};
-_APIPromise_client = /* @__PURE__ */ new WeakMap();
-
-// node_modules/@stainless-api/sdk/core/pagination.mjs
-var _AbstractPage_client;
-var AbstractPage = class {
-  constructor(client, response, body, options) {
-    _AbstractPage_client.set(this, void 0);
-    __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
-    this.options = options;
-    this.response = response;
-    this.body = body;
-  }
-  hasNextPage() {
-    const items = this.getPaginatedItems();
-    if (!items.length)
-      return false;
-    return this.nextPageRequestOptions() != null;
-  }
-  async getNextPage() {
-    const nextOptions = this.nextPageRequestOptions();
-    if (!nextOptions) {
-      throw new StainlessError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-    }
-    return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
-  }
-  async *iterPages() {
-    let page = this;
-    yield page;
-    while (page.hasNextPage()) {
-      page = await page.getNextPage();
-      yield page;
-    }
-  }
-  async *[(_AbstractPage_client = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-    for await (const page of this.iterPages()) {
-      for (const item of page.getPaginatedItems()) {
-        yield item;
-      }
-    }
-  }
-};
-var PagePromise = class extends APIPromise {
-  constructor(client, request, Page2) {
-    super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse(client2, props), props.options));
-  }
-  /**
-   * Allow auto-paginating iteration on an unawaited list call, eg:
-   *
-   *    for await (const item of client.items.list()) {
-   *      console.log(item)
-   *    }
-   */
-  async *[Symbol.asyncIterator]() {
-    const page = await this;
-    for await (const item of page) {
-      yield item;
-    }
-  }
-};
-var Page = class extends AbstractPage {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body.data || [];
-    this.next_cursor = body.next_cursor || "";
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const cursor = this.next_cursor;
-    if (!cursor) {
-      return null;
-    }
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj(this.options.query),
-        cursor
-      }
-    };
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/uploads.mjs
-var checkFileSupport = () => {
-  if (typeof File === "undefined") {
-    const { process: process2 } = globalThis;
-    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
-    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
-  }
-};
-function makeFile(fileBits, fileName, options) {
-  checkFileSupport();
-  return new File(fileBits, fileName ?? "unknown_file", options);
-}
-function getName(value) {
-  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
-}
-var isAsyncIterable = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
-
-// node_modules/@stainless-api/sdk/internal/to-file.mjs
-var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
-var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
-var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
-async function toFile(value, name, options) {
-  checkFileSupport();
-  value = await value;
-  if (isFileLike(value)) {
-    if (value instanceof File) {
-      return value;
-    }
-    return makeFile([await value.arrayBuffer()], value.name);
-  }
-  if (isResponseLike(value)) {
-    const blob = await value.blob();
-    name || (name = new URL(value.url).pathname.split(/[\\/]/).pop());
-    return makeFile(await getBytes(blob), name, options);
-  }
-  const parts = await getBytes(value);
-  name || (name = getName(value));
-  if (!options?.type) {
-    const type = parts.find((part) => typeof part === "object" && "type" in part && part.type);
-    if (typeof type === "string") {
-      options = { ...options, type };
-    }
-  }
-  return makeFile(parts, name, options);
-}
-async function getBytes(value) {
-  let parts = [];
-  if (typeof value === "string" || ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
-  value instanceof ArrayBuffer) {
-    parts.push(value);
-  } else if (isBlobLike(value)) {
-    parts.push(value instanceof Blob ? value : await value.arrayBuffer());
-  } else if (isAsyncIterable(value)) {
-    for await (const chunk of value) {
-      parts.push(...await getBytes(chunk));
-    }
-  } else {
-    const constructor = value?.constructor?.name;
-    throw new Error(`Unexpected data type: ${typeof value}${constructor ? `; constructor: ${constructor}` : ""}${propsForError(value)}`);
-  }
-  return parts;
-}
-function propsForError(value) {
-  if (typeof value !== "object" || value === null)
-    return "";
-  const props = Object.getOwnPropertyNames(value);
-  return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
-}
-
-// node_modules/@stainless-api/sdk/core/resource.mjs
-var APIResource = class {
-  constructor(client) {
-    this._client = client;
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/path.mjs
-function encodeURIPath(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction = (pathEncoder = encodeURIPath) => function path4(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path5 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path5.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new StainlessError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path5}
-${underline}`);
-  }
-  return path5;
-};
-var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
-
-// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
-var Diagnostics = class extends APIResource {
-  /**
-   * Get diagnostics for a build
-   */
-  list(buildID, query = {}, options) {
-    return this._client.getAPIList(path`/v0/builds/${buildID}/diagnostics`, Page, {
-      query,
-      ...options
-    });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
-var TargetOutputs = class extends APIResource {
-  /**
-   * Download the output of a build target
-   */
-  retrieve(query, options) {
-    return this._client.get("/v0/build_target_outputs", { query, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
-var Builds = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.diagnostics = new Diagnostics(this._client);
-    this.targetOutputs = new TargetOutputs(this._client);
-  }
-  /**
-   * Create a new build
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
-  }
-  /**
-   * Retrieve a build by ID
-   */
-  retrieve(buildID, options) {
-    return this._client.get(path`/v0/builds/${buildID}`, options);
-  }
-  /**
-   * List builds for a project
-   */
-  list(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList("/v0/builds", Page, {
-      query: { project, ...query },
-      ...options
-    });
-  }
-  /**
-   * Creates two builds whose outputs can be compared directly
-   */
-  compare(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds/compare", { body: { project, ...body }, ...options });
-  }
-};
-Builds.Diagnostics = Diagnostics;
-Builds.TargetOutputs = TargetOutputs;
-
-// node_modules/@stainless-api/sdk/resources/orgs.mjs
-var Orgs = class extends APIResource {
-  /**
-   * Retrieve an organization by name
-   */
-  retrieve(org, options) {
-    return this._client.get(path`/v0/orgs/${org}`, options);
-  }
-  /**
-   * List organizations the user has access to
-   */
-  list(options) {
-    return this._client.get("/v0/orgs", options);
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
-var Branches = class extends APIResource {
-  /**
-   * Create a new branch for a project
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/branches`, { body, ...options });
-  }
-  /**
-   * Retrieve a project branch
-   */
-  retrieve(branch, params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/branches/${branch}`, options);
-  }
-  /**
-   * List project branches
-   */
-  list(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList(path`/v0/projects/${project}/branches`, Page, {
-      query,
-      ...options
-    });
-  }
-  /**
-   * Delete a project branch
-   */
-  delete(branch, params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.delete(path`/v0/projects/${project}/branches/${branch}`, options);
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
-var Configs = class extends APIResource {
-  /**
-   * Retrieve configuration files for a project
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/configs`, { query, ...options });
-  }
-  /**
-   * Generate configuration suggestions based on an OpenAPI spec
-   */
-  guess(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/configs/guess`, { body, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
-var Projects = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.branches = new Branches(this._client);
-    this.configs = new Configs(this._client);
-  }
-  /**
-   * Create a new project
-   */
-  create(body, options) {
-    return this._client.post("/v0/projects", { body, ...options });
-  }
-  /**
-   * Retrieve a project by name
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}`, options);
-  }
-  /**
-   * Update a project's properties
-   */
-  update(params = {}, options) {
-    const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path`/v0/projects/${project}`, { body, ...options });
-  }
-  /**
-   * List projects in an organization, from oldest to newest
-   */
-  list(query = {}, options) {
-    return this._client.getAPIList("/v0/projects", Page, { query, ...options });
-  }
-};
-Projects.Branches = Branches;
-Projects.Configs = Configs;
-
-// node_modules/@stainless-api/sdk/internal/headers.mjs
-var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/@stainless-api/github-internal/internal/utils/env.mjs
 var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -30494,452 +30535,586 @@ var readEnv = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/sdk/lib/unwrap.mjs
-async function unwrapFile(value) {
-  if (value === null) {
-    return null;
-  }
-  if (value.type === "content") {
-    return value.content;
-  }
-  const response = await fetch(value.url);
-  return response.text();
-}
-
-// node_modules/@stainless-api/sdk/client.mjs
-var _Stainless_instances;
-var _a;
-var _Stainless_encoder;
-var _Stainless_baseURLOverridden;
-var environments = {
-  production: "https://api.stainless.com",
-  staging: "https://staging.stainless.com"
-};
-var Stainless = class {
-  /**
-   * API Client for interfacing with the Stainless API.
-   *
-   * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
-   * @param {string | null | undefined} [opts.project]
-   * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
-   * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
-   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
-   * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
-   * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
-   * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
-   * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
-   * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
-   */
-  constructor({ baseURL = readEnv("STAINLESS_BASE_URL"), apiKey = readEnv("STAINLESS_API_KEY") ?? null, project = null, ...opts } = {}) {
-    _Stainless_instances.add(this);
-    _Stainless_encoder.set(this, void 0);
-    this.projects = new Projects(this);
-    this.builds = new Builds(this);
-    this.orgs = new Orgs(this);
-    const options = {
-      apiKey,
-      project,
-      ...opts,
-      baseURL,
-      environment: opts.environment ?? "production"
-    };
-    if (baseURL && opts.environment) {
-      throw new StainlessError("Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null");
+// node_modules/@stainless-api/github-internal/client.mjs
+var _BaseGitHub_instances;
+var _BaseGitHub_encoder;
+var _BaseGitHub_baseURLOverridden;
+var BaseGitHub = /* @__PURE__ */ (() => {
+  class BaseGitHub2 {
+    /**
+     * API Client for interfacing with the GitHub API.
+     *
+     * @param {string | null | undefined} [opts.authToken=process.env['GITHUB_AUTH_TOKEN'] ?? null]
+     * @param {string | null | undefined} [opts.owner]
+     * @param {string | null | undefined} [opts.repo]
+     * @param {string} [opts.baseURL=process.env['GITHUB_BASE_URL'] ?? https://api.github.com] - Override the default base URL for the API.
+     * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+     * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+     */
+    constructor({ baseURL = readEnv("GITHUB_BASE_URL"), authToken = readEnv("GITHUB_AUTH_TOKEN") ?? null, owner = null, repo = null, ...opts } = {}) {
+      _BaseGitHub_instances.add(this);
+      _BaseGitHub_encoder.set(this, void 0);
+      const options = {
+        authToken,
+        owner,
+        repo,
+        ...opts,
+        baseURL: baseURL || `https://api.github.com`
+      };
+      this.baseURL = options.baseURL;
+      this.timeout = options.timeout ?? BaseGitHub2.DEFAULT_TIMEOUT;
+      this.logger = options.logger ?? console;
+      const defaultLogLevel = "warn";
+      this.logLevel = defaultLogLevel;
+      this.logLevel = parseLogLevel(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel(readEnv("GITHUB_LOG"), "process.env['GITHUB_LOG']", this) ?? defaultLogLevel;
+      this.fetchOptions = options.fetchOptions;
+      this.maxRetries = options.maxRetries ?? 2;
+      this.fetch = options.fetch ?? getDefaultFetch();
+      __classPrivateFieldSet(this, _BaseGitHub_encoder, FallbackEncoder, "f");
+      this._options = options;
+      this.authToken = authToken;
+      this.owner = owner;
+      this.repo = repo;
     }
-    this.baseURL = options.baseURL || environments[options.environment || "production"];
-    this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT;
-    this.logger = options.logger ?? console;
-    const defaultLogLevel = "warn";
-    this.logLevel = defaultLogLevel;
-    this.logLevel = parseLogLevel(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel(readEnv("STAINLESS_LOG"), "process.env['STAINLESS_LOG']", this) ?? defaultLogLevel;
-    this.fetchOptions = options.fetchOptions;
-    this.maxRetries = options.maxRetries ?? 2;
-    this.fetch = options.fetch ?? getDefaultFetch();
-    __classPrivateFieldSet(this, _Stainless_encoder, FallbackEncoder, "f");
-    this._options = options;
-    this.apiKey = apiKey;
-    this.project = project;
-  }
-  /**
-   * Create a new client instance re-using the same options given to the current client with optional overriding.
-   */
-  withOptions(options) {
-    const client = new this.constructor({
-      ...this._options,
-      environment: options.environment ? options.environment : void 0,
-      baseURL: options.environment ? void 0 : this.baseURL,
-      maxRetries: this.maxRetries,
-      timeout: this.timeout,
-      logger: this.logger,
-      logLevel: this.logLevel,
-      fetch: this.fetch,
-      fetchOptions: this.fetchOptions,
-      apiKey: this.apiKey,
-      project: this.project,
-      ...options
-    });
-    return client;
-  }
-  defaultQuery() {
-    return this._options.defaultQuery;
-  }
-  validateHeaders({ values, nulls }) {
-    if (this.apiKey && values.get("authorization")) {
+    /**
+     * Create a new client instance re-using the same options given to the current client with optional overriding.
+     */
+    withOptions(options) {
+      return new this.constructor({
+        ...this._options,
+        baseURL: this.baseURL,
+        maxRetries: this.maxRetries,
+        timeout: this.timeout,
+        logger: this.logger,
+        logLevel: this.logLevel,
+        fetch: this.fetch,
+        fetchOptions: this.fetchOptions,
+        authToken: this.authToken,
+        owner: this.owner,
+        repo: this.repo,
+        ...options
+      });
+    }
+    /**
+     * Get Hypermedia links to resources accessible in GitHub's REST API
+     */
+    retrieve(options) {
+      return this.get("/", options);
+    }
+    /**
+     * Get a random sentence from the Zen of GitHub
+     */
+    zen(options) {
+      return this.get("/zen", {
+        ...options,
+        headers: buildHeaders([{ Accept: "text/plain" }, options?.headers])
+      });
+    }
+    defaultQuery() {
+      return this._options.defaultQuery;
+    }
+    validateHeaders({ values, nulls }) {
       return;
     }
-    if (nulls.has("authorization")) {
-      return;
+    authHeaders(opts) {
+      if (this.authToken == null) {
+        return void 0;
+      }
+      return buildHeaders([{ Authorization: `Bearer ${this.authToken}` }]);
     }
-    throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
-  }
-  async authHeaders(opts) {
-    if (this.apiKey == null) {
-      return void 0;
+    stringifyQuery(query) {
+      return stringify(query, { arrayFormat: "comma" });
     }
-    return buildHeaders([{ Authorization: `Bearer ${this.apiKey}` }]);
-  }
-  stringifyQuery(query) {
-    return stringify(query, { arrayFormat: "comma" });
-  }
-  getUserAgent() {
-    return `${this.constructor.name}/JS ${VERSION}`;
-  }
-  defaultIdempotencyKey() {
-    return `stainless-node-retry-${uuid4()}`;
-  }
-  makeStatusError(status, error, message, headers) {
-    return APIError.generate(status, error, message, headers);
-  }
-  buildURL(path4, query, defaultBaseURL) {
-    const baseURL = !__classPrivateFieldGet(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-    const url = isAbsoluteURL(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
-    const defaultQuery = this.defaultQuery();
-    if (!isEmptyObj(defaultQuery)) {
-      query = { ...defaultQuery, ...query };
+    getUserAgent() {
+      return `${this.constructor.name}/JS ${VERSION}`;
     }
-    if (typeof query === "object" && query && !Array.isArray(query)) {
-      url.search = this.stringifyQuery(query);
+    defaultIdempotencyKey() {
+      return `stainless-node-retry-${uuid4()}`;
     }
-    return url.toString();
-  }
-  /**
-   * Used as a callback for mutating the given `FinalRequestOptions` object.
-   */
-  async prepareOptions(options) {
-  }
-  /**
-   * Used as a callback for mutating the given `RequestInit` object.
-   *
-   * This is useful for cases where you want to add certain headers based off of
-   * the request properties, e.g. `method` or `url`.
-   */
-  async prepareRequest(request, { url, options }) {
-  }
-  get(path4, opts) {
-    return this.methodRequest("get", path4, opts);
-  }
-  post(path4, opts) {
-    return this.methodRequest("post", path4, opts);
-  }
-  patch(path4, opts) {
-    return this.methodRequest("patch", path4, opts);
-  }
-  put(path4, opts) {
-    return this.methodRequest("put", path4, opts);
-  }
-  delete(path4, opts) {
-    return this.methodRequest("delete", path4, opts);
-  }
-  methodRequest(method, path4, opts) {
-    return this.request(Promise.resolve(opts).then((opts2) => {
-      return { method, path: path4, ...opts2 };
-    }));
-  }
-  request(options, remainingRetries = null) {
-    return new APIPromise(this, this.makeRequest(options, remainingRetries, void 0));
-  }
-  async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
-    const options = await optionsInput;
-    const maxRetries = options.maxRetries ?? this.maxRetries;
-    if (retriesRemaining == null) {
-      retriesRemaining = maxRetries;
+    makeStatusError(status, error, message, headers) {
+      return APIError.generate(status, error, message, headers);
     }
-    await this.prepareOptions(options);
-    const { req, url, timeout } = await this.buildRequest(options, {
-      retryCount: maxRetries - retriesRemaining
-    });
-    await this.prepareRequest(req, { url, options });
-    const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
-    const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
-    const startTime = Date.now();
-    loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({
-      retryOfRequestLogID,
-      method: options.method,
-      url,
-      options,
-      headers: req.headers
-    }));
-    if (options.signal?.aborted) {
-      throw new APIUserAbortError();
+    buildURL(path4, query, defaultBaseURL) {
+      const baseURL = !__classPrivateFieldGet(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+      const url = isAbsoluteURL(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
+      const defaultQuery = this.defaultQuery();
+      if (!isEmptyObj(defaultQuery)) {
+        query = { ...defaultQuery, ...query };
+      }
+      if (typeof query === "object" && query && !Array.isArray(query)) {
+        url.search = this.stringifyQuery(query);
+      }
+      return url.toString();
     }
-    const controller = new AbortController();
-    const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
-    const headersTime = Date.now();
-    if (response instanceof Error) {
-      const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+    /**
+     * Used as a callback for mutating the given `FinalRequestOptions` object.
+     */
+    async prepareOptions(options) {
+    }
+    /**
+     * Used as a callback for mutating the given `RequestInit` object.
+     *
+     * This is useful for cases where you want to add certain headers based off of
+     * the request properties, e.g. `method` or `url`.
+     */
+    async prepareRequest(request, { url, options }) {
+    }
+    get(path4, opts) {
+      return this.methodRequest("get", path4, opts);
+    }
+    post(path4, opts) {
+      return this.methodRequest("post", path4, opts);
+    }
+    patch(path4, opts) {
+      return this.methodRequest("patch", path4, opts);
+    }
+    put(path4, opts) {
+      return this.methodRequest("put", path4, opts);
+    }
+    delete(path4, opts) {
+      return this.methodRequest("delete", path4, opts);
+    }
+    methodRequest(method, path4, opts) {
+      return this.request(Promise.resolve(opts).then((opts2) => {
+        return { method, path: path4, ...opts2 };
+      }));
+    }
+    request(options, remainingRetries = null) {
+      return new APIPromise(this, this.makeRequest(options, remainingRetries, void 0));
+    }
+    async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
+      const options = await optionsInput;
+      const maxRetries = options.maxRetries ?? this.maxRetries;
+      if (retriesRemaining == null) {
+        retriesRemaining = maxRetries;
+      }
+      await this.prepareOptions(options);
+      const { req, url, timeout } = this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
+      await this.prepareRequest(req, { url, options });
+      const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
+      const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
+      const startTime = Date.now();
+      loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({
+        retryOfRequestLogID,
+        method: options.method,
+        url,
+        options,
+        headers: req.headers
+      }));
       if (options.signal?.aborted) {
         throw new APIUserAbortError();
       }
-      const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
-      if (retriesRemaining) {
-        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
-        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
+      const controller = new AbortController();
+      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
+      const headersTime = Date.now();
+      if (response instanceof Error) {
+        const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+        if (options.signal?.aborted) {
+          throw new APIUserAbortError();
+        }
+        const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+        if (retriesRemaining) {
+          loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+          loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
+            retryOfRequestLogID,
+            url,
+            durationMs: headersTime - startTime,
+            message: response.message
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
+        }
+        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails({
           retryOfRequestLogID,
           url,
           durationMs: headersTime - startTime,
           message: response.message
         }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
+        if (isTimeout) {
+          throw new APIConnectionTimeoutError();
+        }
+        throw new APIConnectionError({ cause: response });
       }
-      loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
-      loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails({
-        retryOfRequestLogID,
-        url,
-        durationMs: headersTime - startTime,
-        message: response.message
-      }));
-      if (isTimeout) {
-        throw new APIConnectionTimeoutError();
-      }
-      throw new APIConnectionError({ cause: response });
-    }
-    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
-    if (!response.ok) {
-      const shouldRetry = await this.shouldRetry(response);
-      if (retriesRemaining && shouldRetry) {
-        const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
-        await CancelReadableStream(response.body);
-        loggerFor(this).info(`${responseInfo} - ${retryMessage2}`);
-        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails({
+      const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
+      if (!response.ok) {
+        const shouldRetry = this.shouldRetry(response);
+        if (retriesRemaining && shouldRetry) {
+          const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
+          await CancelReadableStream(response.body);
+          loggerFor(this).info(`${responseInfo} - ${retryMessage2}`);
+          loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails({
+            retryOfRequestLogID,
+            url: response.url,
+            status: response.status,
+            headers: response.headers,
+            durationMs: headersTime - startTime
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+        }
+        const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
+        loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
+        const errText = await response.text().catch((err2) => castToError(err2).message);
+        const errJSON = safeJSON(errText);
+        const errMessage = errJSON ? void 0 : errText;
+        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({
           retryOfRequestLogID,
           url: response.url,
           status: response.status,
           headers: response.headers,
-          durationMs: headersTime - startTime
+          message: errMessage,
+          durationMs: Date.now() - startTime
         }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+        const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
+        throw err;
       }
-      const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
-      loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
-      const errText = await response.text().catch((err2) => castToError(err2).message);
-      const errJSON = safeJSON(errText);
-      const errMessage = errJSON ? void 0 : errText;
-      loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({
+      loggerFor(this).info(responseInfo);
+      loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({
         retryOfRequestLogID,
         url: response.url,
         status: response.status,
         headers: response.headers,
-        message: errMessage,
-        durationMs: Date.now() - startTime
+        durationMs: headersTime - startTime
       }));
-      const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
-      throw err;
+      return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
     }
-    loggerFor(this).info(responseInfo);
-    loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({
-      retryOfRequestLogID,
-      url: response.url,
-      status: response.status,
-      headers: response.headers,
-      durationMs: headersTime - startTime
-    }));
-    return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
-  }
-  getAPIList(path4, Page2, opts) {
-    return this.requestAPIList(Page2, { method: "get", path: path4, ...opts });
-  }
-  requestAPIList(Page2, options) {
-    const request = this.makeRequest(options, null, void 0);
-    return new PagePromise(this, request, Page2);
-  }
-  async fetchWithTimeout(url, init, ms, controller) {
-    const { signal, method, ...options } = init || {};
-    if (signal)
-      signal.addEventListener("abort", () => controller.abort());
-    const timeout = setTimeout(() => controller.abort(), ms);
-    const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
-    const fetchOptions = {
-      signal: controller.signal,
-      ...isReadableBody ? { duplex: "half" } : {},
-      method: "GET",
-      ...options
-    };
-    if (method) {
-      fetchOptions.method = method.toUpperCase();
+    getAPIList(path4, Page2, opts) {
+      return this.requestAPIList(Page2, { method: "get", path: path4, ...opts });
     }
-    try {
-      return await this.fetch.call(void 0, url, fetchOptions);
-    } finally {
-      clearTimeout(timeout);
+    requestAPIList(Page2, options) {
+      const request = this.makeRequest(options, null, void 0);
+      return new PagePromise(this, request, Page2);
     }
-  }
-  async shouldRetry(response) {
-    const shouldRetryHeader = response.headers.get("x-should-retry");
-    if (shouldRetryHeader === "true")
-      return true;
-    if (shouldRetryHeader === "false")
+    async fetchWithTimeout(url, init, ms, controller) {
+      const { signal, method, ...options } = init || {};
+      if (signal)
+        signal.addEventListener("abort", () => controller.abort());
+      const timeout = setTimeout(() => controller.abort(), ms);
+      const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
+      const fetchOptions = {
+        signal: controller.signal,
+        ...isReadableBody ? { duplex: "half" } : {},
+        method: "GET",
+        ...options
+      };
+      if (method) {
+        fetchOptions.method = method.toUpperCase();
+      }
+      try {
+        return await this.fetch.call(void 0, url, fetchOptions);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    shouldRetry(response) {
+      const shouldRetryHeader = response.headers.get("x-should-retry");
+      if (shouldRetryHeader === "true")
+        return true;
+      if (shouldRetryHeader === "false")
+        return false;
+      if (response.status === 408)
+        return true;
+      if (response.status === 409)
+        return true;
+      if (response.status === 429)
+        return true;
+      if (response.status >= 500)
+        return true;
       return false;
-    if (response.status === 408)
-      return true;
-    if (response.status === 409)
-      return true;
-    if (response.status === 429)
-      return true;
-    if (response.status >= 500)
-      return true;
-    return false;
-  }
-  async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
-    let timeoutMillis;
-    const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
-    if (retryAfterMillisHeader) {
-      const timeoutMs = parseFloat(retryAfterMillisHeader);
-      if (!Number.isNaN(timeoutMs)) {
-        timeoutMillis = timeoutMs;
-      }
     }
-    const retryAfterHeader = responseHeaders?.get("retry-after");
-    if (retryAfterHeader && !timeoutMillis) {
-      const timeoutSeconds = parseFloat(retryAfterHeader);
-      if (!Number.isNaN(timeoutSeconds)) {
-        timeoutMillis = timeoutSeconds * 1e3;
+    async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
+      let timeoutMillis;
+      const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
+      if (retryAfterMillisHeader) {
+        const timeoutMs = parseFloat(retryAfterMillisHeader);
+        if (!Number.isNaN(timeoutMs)) {
+          timeoutMillis = timeoutMs;
+        }
+      }
+      const retryAfterHeader = responseHeaders?.get("retry-after");
+      if (retryAfterHeader && !timeoutMillis) {
+        const timeoutSeconds = parseFloat(retryAfterHeader);
+        if (!Number.isNaN(timeoutSeconds)) {
+          timeoutMillis = timeoutSeconds * 1e3;
+        } else {
+          timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+        }
+      }
+      if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
+        const maxRetries = options.maxRetries ?? this.maxRetries;
+        timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+      }
+      await sleep(timeoutMillis);
+      return this.makeRequest(options, retriesRemaining - 1, requestLogID);
+    }
+    calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+      const initialRetryDelay = 0.5;
+      const maxRetryDelay = 8;
+      const numRetries = maxRetries - retriesRemaining;
+      const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+      const jitter = 1 - Math.random() * 0.25;
+      return sleepSeconds * jitter * 1e3;
+    }
+    buildRequest(inputOptions, { retryCount = 0 } = {}) {
+      const options = { ...inputOptions };
+      const { method, path: path4, query, defaultBaseURL } = options;
+      const url = this.buildURL(path4, query, defaultBaseURL);
+      if ("timeout" in options)
+        validatePositiveInteger("timeout", options.timeout);
+      options.timeout = options.timeout ?? this.timeout;
+      const { bodyHeaders, body } = this.buildBody({ options });
+      const reqHeaders = this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+      const req = {
+        method,
+        headers: reqHeaders,
+        ...options.signal && { signal: options.signal },
+        ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
+        ...body && { body },
+        ...this.fetchOptions ?? {},
+        ...options.fetchOptions ?? {}
+      };
+      return { req, url, timeout: options.timeout };
+    }
+    buildHeaders({ options, method, bodyHeaders, retryCount }) {
+      let idempotencyHeaders = {};
+      if (this.idempotencyHeader && method !== "get") {
+        if (!options.idempotencyKey)
+          options.idempotencyKey = this.defaultIdempotencyKey();
+        idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
+      }
+      const headers = buildHeaders([
+        idempotencyHeaders,
+        {
+          Accept: "application/json",
+          "User-Agent": this.getUserAgent(),
+          "X-Stainless-Retry-Count": String(retryCount),
+          ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
+          ...getPlatformHeaders()
+        },
+        this.authHeaders(options),
+        this._options.defaultHeaders,
+        bodyHeaders,
+        options.headers
+      ]);
+      this.validateHeaders(headers);
+      return headers.values;
+    }
+    buildBody({ options: { body, headers: rawHeaders } }) {
+      if (!body) {
+        return { bodyHeaders: void 0, body: void 0 };
+      }
+      const headers = buildHeaders([rawHeaders]);
+      if (
+        // Pass raw type verbatim
+        ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
+        headers.values.has("content-type") || // `Blob` is superset of `File`
+        body instanceof Blob || // `FormData` -> `multipart/form-data`
+        body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
+        body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
+        globalThis.ReadableStream && body instanceof globalThis.ReadableStream
+      ) {
+        return { bodyHeaders: void 0, body };
+      } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
+        return { bodyHeaders: void 0, body: ReadableStreamFrom(body) };
       } else {
-        timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+        return __classPrivateFieldGet(this, _BaseGitHub_encoder, "f").call(this, { body, headers });
       }
     }
-    if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
-      const maxRetries = options.maxRetries ?? this.maxRetries;
-      timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
-    }
-    await sleep(timeoutMillis);
-    return this.makeRequest(options, retriesRemaining - 1, requestLogID);
   }
-  calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
-    const initialRetryDelay = 0.5;
-    const maxRetryDelay = 8;
-    const numRetries = maxRetries - retriesRemaining;
-    const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
-    const jitter = 1 - Math.random() * 0.25;
-    return sleepSeconds * jitter * 1e3;
-  }
-  async buildRequest(inputOptions, { retryCount = 0 } = {}) {
-    const options = { ...inputOptions };
-    const { method, path: path4, query, defaultBaseURL } = options;
-    const url = this.buildURL(path4, query, defaultBaseURL);
-    if ("timeout" in options)
-      validatePositiveInteger("timeout", options.timeout);
-    options.timeout = options.timeout ?? this.timeout;
-    const { bodyHeaders, body } = this.buildBody({ options });
-    const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
-    const req = {
-      method,
-      headers: reqHeaders,
-      ...options.signal && { signal: options.signal },
-      ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
-      ...body && { body },
-      ...this.fetchOptions ?? {},
-      ...options.fetchOptions ?? {}
-    };
-    return { req, url, timeout: options.timeout };
-  }
-  async buildHeaders({ options, method, bodyHeaders, retryCount }) {
-    let idempotencyHeaders = {};
-    if (this.idempotencyHeader && method !== "get") {
-      if (!options.idempotencyKey)
-        options.idempotencyKey = this.defaultIdempotencyKey();
-      idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
-    }
-    const headers = buildHeaders([
-      idempotencyHeaders,
-      {
-        Accept: "application/json",
-        "User-Agent": this.getUserAgent(),
-        "X-Stainless-Retry-Count": String(retryCount),
-        ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
-        ...getPlatformHeaders()
-      },
-      await this.authHeaders(options),
-      this._options.defaultHeaders,
-      bodyHeaders,
-      options.headers
-    ]);
-    this.validateHeaders(headers);
-    return headers.values;
-  }
-  buildBody({ options: { body, headers: rawHeaders } }) {
-    if (!body) {
-      return { bodyHeaders: void 0, body: void 0 };
-    }
-    const headers = buildHeaders([rawHeaders]);
-    if (
-      // Pass raw type verbatim
-      ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
-      headers.values.has("content-type") || // `Blob` is superset of `File`
-      body instanceof Blob || // `FormData` -> `multipart/form-data`
-      body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
-      body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
-      globalThis.ReadableStream && body instanceof globalThis.ReadableStream
-    ) {
-      return { bodyHeaders: void 0, body };
-    } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
-      return { bodyHeaders: void 0, body: ReadableStreamFrom(body) };
-    } else {
-      return __classPrivateFieldGet(this, _Stainless_encoder, "f").call(this, { body, headers });
-    }
-  }
-};
-_a = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
-  return this.baseURL !== environments[this._options.environment || "production"];
-};
-Stainless.Stainless = _a;
-Stainless.DEFAULT_TIMEOUT = 6e4;
-Stainless.StainlessError = StainlessError;
-Stainless.APIError = APIError;
-Stainless.APIConnectionError = APIConnectionError;
-Stainless.APIConnectionTimeoutError = APIConnectionTimeoutError;
-Stainless.APIUserAbortError = APIUserAbortError;
-Stainless.NotFoundError = NotFoundError;
-Stainless.ConflictError = ConflictError;
-Stainless.RateLimitError = RateLimitError;
-Stainless.BadRequestError = BadRequestError;
-Stainless.AuthenticationError = AuthenticationError;
-Stainless.InternalServerError = InternalServerError;
-Stainless.PermissionDeniedError = PermissionDeniedError;
-Stainless.UnprocessableEntityError = UnprocessableEntityError;
-Stainless.toFile = toFile;
-Stainless.unwrapFile = unwrapFile;
-Stainless.Projects = Projects;
-Stainless.Builds = Builds;
-Stainless.Orgs = Orgs;
-
-// src/merge.ts
-var fs2 = __toESM(require("node:fs"));
-
-// src/comment.ts
-var github = __toESM(require_github());
-
-// node_modules/@stainless-api/github-internal/core/resource.mjs
-var APIResource2 = /* @__PURE__ */ (() => {
-  class APIResource3 {
-    constructor(client) {
-      this._client = client;
-    }
-  }
-  APIResource3._key = [];
-  return APIResource3;
+  _BaseGitHub_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitHub_instances = /* @__PURE__ */ new WeakSet(), _BaseGitHub_baseURLOverridden = function _BaseGitHub_baseURLOverridden2() {
+    return this.baseURL !== "https://api.github.com";
+  };
+  BaseGitHub2.DEFAULT_TIMEOUT = 6e4;
+  return BaseGitHub2;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/tslib.mjs
+// node_modules/@stainless-api/github-internal/tree-shakable.mjs
+function createClient(options) {
+  const client = new BaseGitHub(options);
+  for (const ResourceClass of options.resources) {
+    const resourceInstance = new ResourceClass(client);
+    let object = client;
+    for (const part of ResourceClass._key.slice(0, -1)) {
+      if (hasOwn(object, part)) {
+        object = object[part];
+      } else {
+        Object.defineProperty(object, part, {
+          value: object = {},
+          configurable: true,
+          enumerable: true,
+          writable: true
+        });
+      }
+    }
+    const name = ResourceClass._key.at(-1);
+    if (!hasOwn(object, name)) {
+      Object.defineProperty(object, name, {
+        value: resourceInstance,
+        configurable: true,
+        enumerable: true,
+        writable: true
+      });
+    } else {
+      if (object[name] instanceof APIResource) {
+        throw new TypeError(`Resource at ${ResourceClass._key.join(".")} already exists!`);
+      } else {
+        object[name] = Object.assign(resourceInstance, object[name]);
+      }
+    }
+  }
+  return client;
+}
+
+// src/compat.ts
+function isGitLabCI() {
+  return process.env["GITLAB_CI"] === "true";
+}
+function getInput2(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value || "";
+  } else {
+    return core.getInput(name, options);
+  }
+}
+function getBooleanInput2(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`]?.toLowerCase() || process.env[`INPUT_${name.toUpperCase()}`]?.toLowerCase();
+    if (options?.required && value === void 0) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value === "true";
+  } else {
+    return core.getBooleanInput(name, options);
+  }
+}
+function getGitHostToken() {
+  const token = getInput2(isGitLabCI() ? "gitlab_token" : "github_token");
+  if (getInput2("make_comment") && !token) {
+    throw new Error(
+      `${isGitLabCI() ? "GITLAB_TOKEN" : "github_token"} is required to make a comment`
+    );
+  }
+  return token;
+}
+function getPRNumber() {
+  if (getInput2("make_comment") && isGitLabCI()) {
+    if (!process.env["MR_NUMBER"]) {
+      throw new Error("MR_NUMBER is required to make a comment");
+    }
+    return parseInt(process.env["MR_NUMBER"]);
+  } else {
+    return github.context.payload.pull_request.number;
+  }
+}
+function setOutput2(name, value) {
+  if (isGitLabCI()) {
+  } else {
+    core.setOutput(name, value);
+  }
+}
+function createCommentClient(token, prNumber) {
+  if (isGitLabCI()) {
+    return new GitLabCommentClient(token, prNumber);
+  }
+  return new GitHubCommentClient(token, prNumber);
+}
+function getPRTerm() {
+  if (isGitLabCI()) {
+    return "MR";
+  } else {
+    return "PR";
+  }
+}
+function getCITerm() {
+  if (isGitLabCI()) {
+    return "GitLab CI";
+  } else {
+    return "GitHub Actions";
+  }
+}
+var GitHubCommentClient = class {
+  client;
+  prNumber;
+  constructor(token, prNumber) {
+    this.client = createClient({
+      authToken: token,
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      resources: [Comments]
+    });
+    this.prNumber = prNumber;
+  }
+  async listComments() {
+    const { data: comments } = await this.client.repos.issues.comments.list(
+      this.prNumber
+    );
+    return comments.map((c) => ({ id: c.id, body: c.body }));
+  }
+  async createComment(body) {
+    await this.client.repos.issues.comments.create(this.prNumber, { body });
+  }
+  async updateComment(id, body) {
+    await this.client.repos.issues.comments.update(id, { body });
+  }
+};
+var GitLabCommentClient = class {
+  token;
+  baseUrl;
+  prNumber;
+  constructor(token, prNumber) {
+    this.token = token;
+    this.baseUrl = process.env.CI_API_V4_URL || "https://gitlab.com/api/v4";
+    this.prNumber = prNumber;
+  }
+  async gitlabRequest(method, endpoint, body) {
+    const projectId = process.env.CI_PROJECT_ID;
+    const url = `${this.baseUrl}/projects/${projectId}${endpoint}`;
+    const response = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        "Content-Type": "application/json"
+      },
+      body: body ? JSON.stringify(body) : void 0
+    });
+    if (!response.ok) {
+      throw new Error(
+        `GitLab API error: ${response.status} ${response.statusText}`
+      );
+    }
+    return response.json();
+  }
+  async listComments() {
+    const notes = await this.gitlabRequest(
+      "GET",
+      `/merge_requests/${this.prNumber}/notes`
+    );
+    return notes.map((note) => ({ id: note.id, body: note.body }));
+  }
+  async createComment(body) {
+    await this.gitlabRequest("POST", `/merge_requests/${this.prNumber}/notes`, {
+      body
+    });
+  }
+  async updateComment(id, body) {
+    await this.gitlabRequest(
+      "PUT",
+      `/merge_requests/${this.prNumber}/notes/${id}`,
+      {
+        body
+      }
+    );
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -30957,7 +31132,19 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/github-internal/internal/errors.mjs
+// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+var uuid42 = function() {
+  const { crypto } = globalThis;
+  if (crypto?.randomUUID) {
+    uuid42 = crypto.randomUUID.bind(crypto);
+    return crypto.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError2(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -30988,13 +31175,10 @@ var castToError2 = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/github-internal/core/error.mjs
-var GitHubError = /* @__PURE__ */ (() => {
-  class GitHubError2 extends Error {
-  }
-  return GitHubError2;
-})();
-var APIError2 = class _APIError extends GitHubError {
+// node_modules/@stainless-api/sdk/core/error.mjs
+var StainlessError = class extends Error {
+};
+var APIError2 = class _APIError extends StainlessError {
   constructor(status, error, message, headers) {
     super(`${_APIError.makeMessage(status, error, message)}`);
     this.status = status;
@@ -31080,7 +31264,7 @@ var RateLimitError2 = class extends APIError2 {
 var InternalServerError2 = class extends APIError2 {
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
+// node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL2 = (url) => {
   return startsWithSchemeRegexp2.test(url);
@@ -31105,10 +31289,10 @@ function hasOwn2(obj, key) {
 }
 var validatePositiveInteger2 = (name, n) => {
   if (typeof n !== "number" || !Number.isInteger(n)) {
-    throw new GitHubError(`${name} must be an integer`);
+    throw new StainlessError(`${name} must be an integer`);
   }
   if (n < 0) {
-    throw new GitHubError(`${name} must be a positive integer`);
+    throw new StainlessError(`${name} must be a positive integer`);
   }
   return n;
 };
@@ -31120,657 +31304,13 @@ var safeJSON2 = (text) => {
   }
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
-var levelNumbers2 = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel2 = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn2(levelNumbers2, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
-  return void 0;
-};
-function noop2() {
-}
-function makeLogFn2(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
-    return noop2;
-  } else {
-    return logger[fnLevel].bind(logger);
-  }
-}
-var noopLogger2 = {
-  error: noop2,
-  warn: noop2,
-  info: noop2,
-  debug: noop2
-};
-var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
-function loggerFor2(client) {
-  const logger = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger) {
-    return noopLogger2;
-  }
-  const cachedLogger = cachedLoggers2.get(logger);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn2("error", logger, logLevel),
-    warn: makeLogFn2("warn", logger, logLevel),
-    info: makeLogFn2("info", logger, logLevel),
-    debug: makeLogFn2("debug", logger, logLevel)
-  };
-  cachedLoggers2.set(logger, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails2 = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-
-// node_modules/@stainless-api/github-internal/internal/parse.mjs
-async function defaultParseResponse2(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/github-internal/core/api-promise.mjs
-var _APIPromise_client2;
-var APIPromise2 = /* @__PURE__ */ (() => {
-  class APIPromise3 extends Promise {
-    constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
-      super((resolve) => {
-        resolve(null);
-      });
-      this.responsePromise = responsePromise;
-      this.parseResponse = parseResponse;
-      _APIPromise_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
-    }
-    _thenUnwrap(transform) {
-      return new APIPromise3(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-    }
-    /**
-     * Gets the raw `Response` instance instead of parsing the response
-     * data.
-     *
-     * If you want to parse the response body but still get the `Response`
-     * instance, you can use {@link withResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    asResponse() {
-      return this.responsePromise.then((p) => p.response);
-    }
-    /**
-     * Gets the parsed response data and the raw `Response` instance.
-     *
-     * If you just want to get the raw `Response` instance without parsing it,
-     * you can use {@link asResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    async withResponse() {
-      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-      return { data, response };
-    }
-    parse() {
-      if (!this.parsedPromise) {
-        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
-      }
-      return this.parsedPromise;
-    }
-    then(onfulfilled, onrejected) {
-      return this.parse().then(onfulfilled, onrejected);
-    }
-    catch(onrejected) {
-      return this.parse().catch(onrejected);
-    }
-    finally(onfinally) {
-      return this.parse().finally(onfinally);
-    }
-  }
-  _APIPromise_client2 = /* @__PURE__ */ new WeakMap();
-  return APIPromise3;
-})();
-
-// node_modules/@stainless-api/github-internal/core/pagination.mjs
-var _AbstractPage_client2;
-var AbstractPage2 = /* @__PURE__ */ (() => {
-  class AbstractPage3 {
-    constructor(client, response, body, options) {
-      _AbstractPage_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
-      this.options = options;
-      this.response = response;
-      this.body = body;
-    }
-    hasNextPage() {
-      const items = this.getPaginatedItems();
-      if (!items.length)
-        return false;
-      return this.nextPageRequestOptions() != null;
-    }
-    async getNextPage() {
-      const nextOptions = this.nextPageRequestOptions();
-      if (!nextOptions) {
-        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-      }
-      return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
-    }
-    async *iterPages() {
-      let page = this;
-      yield page;
-      while (page.hasNextPage()) {
-        page = await page.getNextPage();
-        yield page;
-      }
-    }
-    async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-      for await (const page of this.iterPages()) {
-        for (const item of page.getPaginatedItems()) {
-          yield item;
-        }
-      }
-    }
-  }
-  return AbstractPage3;
-})();
-var PagePromise2 = /* @__PURE__ */ (() => {
-  class PagePromise3 extends APIPromise2 {
-    constructor(client, request, Page2) {
-      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
-    }
-    /**
-     * Allow auto-paginating iteration on an unawaited list call, eg:
-     *
-     *    for await (const item of client.items.list()) {
-     *      console.log(item)
-     *    }
-     */
-    async *[Symbol.asyncIterator]() {
-      const page = await this;
-      for await (const item of page) {
-        yield item;
-      }
-    }
-  }
-  return PagePromise3;
-})();
-var NumberedPage = class extends AbstractPage2 {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body || [];
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const query = this.options.query;
-    const currentPage = query?.page ?? 1;
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj2(this.options.query),
-        page: currentPage + 1
-      }
-    };
-  }
-};
-
-// node_modules/@stainless-api/github-internal/internal/headers.mjs
-var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders2(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders2 in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray2(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders2 = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders2(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
-function encodeURIPath2(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path4(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path5 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path5.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new GitHubError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path5}
-${underline}`);
-  }
-  return path5;
-};
-var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
-var BaseReactions = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
-    /**
-     * Create a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     * A response with an HTTP `200` status means that you already added the reaction
-     * type to this issue comment.
-     *
-     * @example
-     * ```ts
-     * const reaction =
-     *   await client.repos.issues.comments.reactions.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     content: 'heart',
-     *   });
-     * ```
-     */
-    create(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * List the reactions to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const reactionListResponse of client.repos.issues.comments.reactions.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
-    }
-    /**
-     * > [!NOTE] You can also specify a repository by `repository_id` using the route
-     * > `DELETE delete /repositories/:repository_id/issues/comments/:comment_id/reactions/:reaction_id`.
-     *
-     * Delete a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.reactions.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   comment_id: 0,
-     * });
-     * ```
-     */
-    delete(reactionID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
-    }
-  }
-  BaseReactions8._key = Object.freeze(["repos", "issues", "comments", "reactions"]);
-  return BaseReactions8;
-})();
-var Reactions = class extends BaseReactions {
-};
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
-var BaseComments = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
-    /**
-     * You can use the REST API to create comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    create(issueNumber, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * You can use the REST API to get comments on issues and pull requests. Every pull
-     * request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.retrieve(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *   });
-     * ```
-     */
-    retrieve(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
-    }
-    /**
-     * You can use the REST API to update comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.update(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    update(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        body,
-        ...options
-      });
-    }
-    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
-      const comments = await this.list(issueNumber);
-      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
-      if (match) {
-        return this.update(match.id, updateParams, options);
-      } else {
-        return this.create(issueNumber, createParams, options);
-      }
-    }
-    /**
-     * You can use the REST API to list comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * Issue comments are ordered by ascending ID.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const issueComment of client.repos.issues.comments.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(issueNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
-    }
-    /**
-     * You can use the REST API to delete comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * });
-     * ```
-     */
-    delete(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
-      });
-    }
-  }
-  BaseComments7._key = Object.freeze(["repos", "issues", "comments"]);
-  return BaseComments7;
-})();
-var Comments = /* @__PURE__ */ (() => {
-  class Comments7 extends BaseComments {
-    constructor() {
-      super(...arguments);
-      this.reactions = new Reactions(this._client);
-    }
-  }
-  Comments7.Reactions = Reactions;
-  Comments7.BaseReactions = BaseReactions;
-  return Comments7;
-})();
-
-// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
-var uuid42 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid42 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
+// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/github-internal/version.mjs
-var VERSION2 = "0.12.1";
+// node_modules/@stainless-api/sdk/version.mjs
+var VERSION2 = "0.1.0-alpha.12";
 
-// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
+// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform2() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -31896,12 +31436,12 @@ var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
 
-// node_modules/@stainless-api/github-internal/internal/shims.mjs
+// node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch2() {
   if (typeof fetch !== "undefined") {
     return fetch;
   }
-  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitHub({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new Stainless({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
 }
 function makeReadableStream2(...args) {
   const ReadableStream = globalThis.ReadableStream;
@@ -31941,7 +31481,7 @@ async function CancelReadableStream2(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/github-internal/internal/request-options.mjs
+// node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder2 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -31951,7 +31491,7 @@ var FallbackEncoder2 = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
+// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format2 = "RFC3986";
 var default_formatter2 = (v) => String(v);
 var formatters2 = {
@@ -31960,7 +31500,7 @@ var formatters2 = {
 };
 var RFC17382 = "RFC1738";
 
-// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
+// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
 var hex_table2 = /* @__PURE__ */ (() => {
   const array = [];
@@ -32039,7 +31579,7 @@ function maybe_map2(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
+// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators2 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -32317,10 +31857,616 @@ function stringify2(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/github-internal/lib/secrets.mjs
-var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
+// node_modules/@stainless-api/sdk/internal/utils/log.mjs
+var levelNumbers2 = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel2 = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn2(levelNumbers2, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
+  return void 0;
+};
+function noop2() {
+}
+function makeLogFn2(fnLevel, logger, logLevel) {
+  if (!logger || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
+    return noop2;
+  } else {
+    return logger[fnLevel].bind(logger);
+  }
+}
+var noopLogger2 = {
+  error: noop2,
+  warn: noop2,
+  info: noop2,
+  debug: noop2
+};
+var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
+function loggerFor2(client) {
+  const logger = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger) {
+    return noopLogger2;
+  }
+  const cachedLogger = cachedLoggers2.get(logger);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn2("error", logger, logLevel),
+    warn: makeLogFn2("warn", logger, logLevel),
+    info: makeLogFn2("info", logger, logLevel),
+    debug: makeLogFn2("debug", logger, logLevel)
+  };
+  cachedLoggers2.set(logger, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails2 = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
 
-// node_modules/@stainless-api/github-internal/internal/utils/env.mjs
+// node_modules/@stainless-api/sdk/internal/parse.mjs
+async function defaultParseResponse2(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/@stainless-api/sdk/core/api-promise.mjs
+var _APIPromise_client2;
+var APIPromise2 = class _APIPromise extends Promise {
+  constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
+    super((resolve) => {
+      resolve(null);
+    });
+    this.responsePromise = responsePromise;
+    this.parseResponse = parseResponse;
+    _APIPromise_client2.set(this, void 0);
+    __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
+  }
+  _thenUnwrap(transform) {
+    return new _APIPromise(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+  }
+  /**
+   * Gets the raw `Response` instance instead of parsing the response
+   * data.
+   *
+   * If you want to parse the response body but still get the `Response`
+   * instance, you can use {@link withResponse()}.
+   *
+   * 👋 Getting the wrong TypeScript type for `Response`?
+   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+   * to your `tsconfig.json`.
+   */
+  asResponse() {
+    return this.responsePromise.then((p) => p.response);
+  }
+  /**
+   * Gets the parsed response data and the raw `Response` instance.
+   *
+   * If you just want to get the raw `Response` instance without parsing it,
+   * you can use {@link asResponse()}.
+   *
+   * 👋 Getting the wrong TypeScript type for `Response`?
+   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+   * to your `tsconfig.json`.
+   */
+  async withResponse() {
+    const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+    return { data, response };
+  }
+  parse() {
+    if (!this.parsedPromise) {
+      this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
+    }
+    return this.parsedPromise;
+  }
+  then(onfulfilled, onrejected) {
+    return this.parse().then(onfulfilled, onrejected);
+  }
+  catch(onrejected) {
+    return this.parse().catch(onrejected);
+  }
+  finally(onfinally) {
+    return this.parse().finally(onfinally);
+  }
+};
+_APIPromise_client2 = /* @__PURE__ */ new WeakMap();
+
+// node_modules/@stainless-api/sdk/core/pagination.mjs
+var _AbstractPage_client2;
+var AbstractPage2 = class {
+  constructor(client, response, body, options) {
+    _AbstractPage_client2.set(this, void 0);
+    __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
+    this.options = options;
+    this.response = response;
+    this.body = body;
+  }
+  hasNextPage() {
+    const items = this.getPaginatedItems();
+    if (!items.length)
+      return false;
+    return this.nextPageRequestOptions() != null;
+  }
+  async getNextPage() {
+    const nextOptions = this.nextPageRequestOptions();
+    if (!nextOptions) {
+      throw new StainlessError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
+    }
+    return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
+  }
+  async *iterPages() {
+    let page = this;
+    yield page;
+    while (page.hasNextPage()) {
+      page = await page.getNextPage();
+      yield page;
+    }
+  }
+  async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
+    for await (const page of this.iterPages()) {
+      for (const item of page.getPaginatedItems()) {
+        yield item;
+      }
+    }
+  }
+};
+var PagePromise2 = class extends APIPromise2 {
+  constructor(client, request, Page2) {
+    super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
+  }
+  /**
+   * Allow auto-paginating iteration on an unawaited list call, eg:
+   *
+   *    for await (const item of client.items.list()) {
+   *      console.log(item)
+   *    }
+   */
+  async *[Symbol.asyncIterator]() {
+    const page = await this;
+    for await (const item of page) {
+      yield item;
+    }
+  }
+};
+var Page = class extends AbstractPage2 {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body.data || [];
+    this.next_cursor = body.next_cursor || "";
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const cursor = this.next_cursor;
+    if (!cursor) {
+      return null;
+    }
+    return {
+      ...this.options,
+      query: {
+        ...maybeObj2(this.options.query),
+        cursor
+      }
+    };
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/uploads.mjs
+var checkFileSupport2 = () => {
+  if (typeof File === "undefined") {
+    const { process: process2 } = globalThis;
+    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
+    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
+  }
+};
+function makeFile2(fileBits, fileName, options) {
+  checkFileSupport2();
+  return new File(fileBits, fileName ?? "unknown_file", options);
+}
+function getName2(value) {
+  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
+}
+var isAsyncIterable2 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
+
+// node_modules/@stainless-api/sdk/internal/to-file.mjs
+var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
+var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
+var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
+async function toFile2(value, name, options) {
+  checkFileSupport2();
+  value = await value;
+  if (isFileLike(value)) {
+    if (value instanceof File) {
+      return value;
+    }
+    return makeFile2([await value.arrayBuffer()], value.name);
+  }
+  if (isResponseLike(value)) {
+    const blob = await value.blob();
+    name || (name = new URL(value.url).pathname.split(/[\\/]/).pop());
+    return makeFile2(await getBytes(blob), name, options);
+  }
+  const parts = await getBytes(value);
+  name || (name = getName2(value));
+  if (!options?.type) {
+    const type = parts.find((part) => typeof part === "object" && "type" in part && part.type);
+    if (typeof type === "string") {
+      options = { ...options, type };
+    }
+  }
+  return makeFile2(parts, name, options);
+}
+async function getBytes(value) {
+  let parts = [];
+  if (typeof value === "string" || ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
+  value instanceof ArrayBuffer) {
+    parts.push(value);
+  } else if (isBlobLike(value)) {
+    parts.push(value instanceof Blob ? value : await value.arrayBuffer());
+  } else if (isAsyncIterable2(value)) {
+    for await (const chunk of value) {
+      parts.push(...await getBytes(chunk));
+    }
+  } else {
+    const constructor = value?.constructor?.name;
+    throw new Error(`Unexpected data type: ${typeof value}${constructor ? `; constructor: ${constructor}` : ""}${propsForError(value)}`);
+  }
+  return parts;
+}
+function propsForError(value) {
+  if (typeof value !== "object" || value === null)
+    return "";
+  const props = Object.getOwnPropertyNames(value);
+  return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
+}
+
+// node_modules/@stainless-api/sdk/core/resource.mjs
+var APIResource2 = class {
+  constructor(client) {
+    this._client = client;
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/path.mjs
+function encodeURIPath2(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path4(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path5 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path5.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new StainlessError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path5}
+${underline}`);
+  }
+  return path5;
+};
+var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
+
+// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+var Diagnostics = class extends APIResource2 {
+  /**
+   * Get diagnostics for a build
+   */
+  list(buildID, query = {}, options) {
+    return this._client.getAPIList(path2`/v0/builds/${buildID}/diagnostics`, Page, {
+      query,
+      ...options
+    });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+var TargetOutputs = class extends APIResource2 {
+  /**
+   * Download the output of a build target
+   */
+  retrieve(query, options) {
+    return this._client.get("/v0/build_target_outputs", { query, ...options });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+var Builds2 = class extends APIResource2 {
+  constructor() {
+    super(...arguments);
+    this.diagnostics = new Diagnostics(this._client);
+    this.targetOutputs = new TargetOutputs(this._client);
+  }
+  /**
+   * Create a new build
+   */
+  create(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
+  }
+  /**
+   * Retrieve a build by ID
+   */
+  retrieve(buildID, options) {
+    return this._client.get(path2`/v0/builds/${buildID}`, options);
+  }
+  /**
+   * List builds for a project
+   */
+  list(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.getAPIList("/v0/builds", Page, {
+      query: { project, ...query },
+      ...options
+    });
+  }
+  /**
+   * Creates two builds whose outputs can be compared directly
+   */
+  compare(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post("/v0/builds/compare", { body: { project, ...body }, ...options });
+  }
+};
+Builds2.Diagnostics = Diagnostics;
+Builds2.TargetOutputs = TargetOutputs;
+
+// node_modules/@stainless-api/sdk/resources/orgs.mjs
+var Orgs2 = class extends APIResource2 {
+  /**
+   * Retrieve an organization by name
+   */
+  retrieve(org, options) {
+    return this._client.get(path2`/v0/orgs/${org}`, options);
+  }
+  /**
+   * List organizations the user has access to
+   */
+  list(options) {
+    return this._client.get("/v0/orgs", options);
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+var Branches2 = class extends APIResource2 {
+  /**
+   * Create a new branch for a project
+   */
+  create(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post(path2`/v0/projects/${project}/branches`, { body, ...options });
+  }
+  /**
+   * Retrieve a project branch
+   */
+  retrieve(branch, params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.get(path2`/v0/projects/${project}/branches/${branch}`, options);
+  }
+  /**
+   * List project branches
+   */
+  list(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.getAPIList(path2`/v0/projects/${project}/branches`, Page, {
+      query,
+      ...options
+    });
+  }
+  /**
+   * Delete a project branch
+   */
+  delete(branch, params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.delete(path2`/v0/projects/${project}/branches/${branch}`, options);
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+var Configs = class extends APIResource2 {
+  /**
+   * Retrieve configuration files for a project
+   */
+  retrieve(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.get(path2`/v0/projects/${project}/configs`, { query, ...options });
+  }
+  /**
+   * Generate configuration suggestions based on an OpenAPI spec
+   */
+  guess(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post(path2`/v0/projects/${project}/configs/guess`, { body, ...options });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+var Projects = class extends APIResource2 {
+  constructor() {
+    super(...arguments);
+    this.branches = new Branches2(this._client);
+    this.configs = new Configs(this._client);
+  }
+  /**
+   * Create a new project
+   */
+  create(body, options) {
+    return this._client.post("/v0/projects", { body, ...options });
+  }
+  /**
+   * Retrieve a project by name
+   */
+  retrieve(params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.get(path2`/v0/projects/${project}`, options);
+  }
+  /**
+   * Update a project's properties
+   */
+  update(params = {}, options) {
+    const { project = this._client.project, ...body } = params ?? {};
+    return this._client.patch(path2`/v0/projects/${project}`, { body, ...options });
+  }
+  /**
+   * List projects in an organization, from oldest to newest
+   */
+  list(query = {}, options) {
+    return this._client.getAPIList("/v0/projects", Page, { query, ...options });
+  }
+};
+Projects.Branches = Branches2;
+Projects.Configs = Configs;
+
+// node_modules/@stainless-api/sdk/internal/headers.mjs
+var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders2(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders2 in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray2(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders2 = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders2(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv2 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -32331,438 +32477,436 @@ var readEnv2 = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/github-internal/client.mjs
-var _BaseGitHub_instances;
-var _BaseGitHub_encoder;
-var _BaseGitHub_baseURLOverridden;
-var BaseGitHub = /* @__PURE__ */ (() => {
-  class BaseGitHub2 {
-    /**
-     * API Client for interfacing with the GitHub API.
-     *
-     * @param {string | null | undefined} [opts.authToken=process.env['GITHUB_AUTH_TOKEN'] ?? null]
-     * @param {string | null | undefined} [opts.owner]
-     * @param {string | null | undefined} [opts.repo]
-     * @param {string} [opts.baseURL=process.env['GITHUB_BASE_URL'] ?? https://api.github.com] - Override the default base URL for the API.
-     * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
-     * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
-     * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
-     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
-     * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
-     * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
-     */
-    constructor({ baseURL = readEnv2("GITHUB_BASE_URL"), authToken = readEnv2("GITHUB_AUTH_TOKEN") ?? null, owner = null, repo = null, ...opts } = {}) {
-      _BaseGitHub_instances.add(this);
-      _BaseGitHub_encoder.set(this, void 0);
-      const options = {
-        authToken,
-        owner,
-        repo,
-        ...opts,
-        baseURL: baseURL || `https://api.github.com`
-      };
-      this.baseURL = options.baseURL;
-      this.timeout = options.timeout ?? BaseGitHub2.DEFAULT_TIMEOUT;
-      this.logger = options.logger ?? console;
-      const defaultLogLevel = "warn";
-      this.logLevel = defaultLogLevel;
-      this.logLevel = parseLogLevel2(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel2(readEnv2("GITHUB_LOG"), "process.env['GITHUB_LOG']", this) ?? defaultLogLevel;
-      this.fetchOptions = options.fetchOptions;
-      this.maxRetries = options.maxRetries ?? 2;
-      this.fetch = options.fetch ?? getDefaultFetch2();
-      __classPrivateFieldSet2(this, _BaseGitHub_encoder, FallbackEncoder2, "f");
-      this._options = options;
-      this.authToken = authToken;
-      this.owner = owner;
-      this.repo = repo;
+// node_modules/@stainless-api/sdk/lib/unwrap.mjs
+async function unwrapFile(value) {
+  if (value === null) {
+    return null;
+  }
+  if (value.type === "content") {
+    return value.content;
+  }
+  const response = await fetch(value.url);
+  return response.text();
+}
+
+// node_modules/@stainless-api/sdk/client.mjs
+var _Stainless_instances;
+var _a;
+var _Stainless_encoder;
+var _Stainless_baseURLOverridden;
+var environments = {
+  production: "https://api.stainless.com",
+  staging: "https://staging.stainless.com"
+};
+var Stainless = class {
+  /**
+   * API Client for interfacing with the Stainless API.
+   *
+   * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
+   * @param {string | null | undefined} [opts.project]
+   * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
+   * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
+   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+   * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+   * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+   * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+   * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+   * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+   */
+  constructor({ baseURL = readEnv2("STAINLESS_BASE_URL"), apiKey = readEnv2("STAINLESS_API_KEY") ?? null, project = null, ...opts } = {}) {
+    _Stainless_instances.add(this);
+    _Stainless_encoder.set(this, void 0);
+    this.projects = new Projects(this);
+    this.builds = new Builds2(this);
+    this.orgs = new Orgs2(this);
+    const options = {
+      apiKey,
+      project,
+      ...opts,
+      baseURL,
+      environment: opts.environment ?? "production"
+    };
+    if (baseURL && opts.environment) {
+      throw new StainlessError("Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null");
     }
-    /**
-     * Create a new client instance re-using the same options given to the current client with optional overriding.
-     */
-    withOptions(options) {
-      return new this.constructor({
-        ...this._options,
-        baseURL: this.baseURL,
-        maxRetries: this.maxRetries,
-        timeout: this.timeout,
-        logger: this.logger,
-        logLevel: this.logLevel,
-        fetch: this.fetch,
-        fetchOptions: this.fetchOptions,
-        authToken: this.authToken,
-        owner: this.owner,
-        repo: this.repo,
-        ...options
-      });
-    }
-    /**
-     * Get Hypermedia links to resources accessible in GitHub's REST API
-     */
-    retrieve(options) {
-      return this.get("/", options);
-    }
-    /**
-     * Get a random sentence from the Zen of GitHub
-     */
-    zen(options) {
-      return this.get("/zen", {
-        ...options,
-        headers: buildHeaders2([{ Accept: "text/plain" }, options?.headers])
-      });
-    }
-    defaultQuery() {
-      return this._options.defaultQuery;
-    }
-    validateHeaders({ values, nulls }) {
+    this.baseURL = options.baseURL || environments[options.environment || "production"];
+    this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT;
+    this.logger = options.logger ?? console;
+    const defaultLogLevel = "warn";
+    this.logLevel = defaultLogLevel;
+    this.logLevel = parseLogLevel2(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel2(readEnv2("STAINLESS_LOG"), "process.env['STAINLESS_LOG']", this) ?? defaultLogLevel;
+    this.fetchOptions = options.fetchOptions;
+    this.maxRetries = options.maxRetries ?? 2;
+    this.fetch = options.fetch ?? getDefaultFetch2();
+    __classPrivateFieldSet2(this, _Stainless_encoder, FallbackEncoder2, "f");
+    this._options = options;
+    this.apiKey = apiKey;
+    this.project = project;
+  }
+  /**
+   * Create a new client instance re-using the same options given to the current client with optional overriding.
+   */
+  withOptions(options) {
+    const client = new this.constructor({
+      ...this._options,
+      environment: options.environment ? options.environment : void 0,
+      baseURL: options.environment ? void 0 : this.baseURL,
+      maxRetries: this.maxRetries,
+      timeout: this.timeout,
+      logger: this.logger,
+      logLevel: this.logLevel,
+      fetch: this.fetch,
+      fetchOptions: this.fetchOptions,
+      apiKey: this.apiKey,
+      project: this.project,
+      ...options
+    });
+    return client;
+  }
+  defaultQuery() {
+    return this._options.defaultQuery;
+  }
+  validateHeaders({ values, nulls }) {
+    if (this.apiKey && values.get("authorization")) {
       return;
     }
-    authHeaders(opts) {
-      if (this.authToken == null) {
-        return void 0;
-      }
-      return buildHeaders2([{ Authorization: `Bearer ${this.authToken}` }]);
+    if (nulls.has("authorization")) {
+      return;
     }
-    stringifyQuery(query) {
-      return stringify2(query, { arrayFormat: "comma" });
+    throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
+  }
+  async authHeaders(opts) {
+    if (this.apiKey == null) {
+      return void 0;
     }
-    getUserAgent() {
-      return `${this.constructor.name}/JS ${VERSION2}`;
+    return buildHeaders2([{ Authorization: `Bearer ${this.apiKey}` }]);
+  }
+  stringifyQuery(query) {
+    return stringify2(query, { arrayFormat: "comma" });
+  }
+  getUserAgent() {
+    return `${this.constructor.name}/JS ${VERSION2}`;
+  }
+  defaultIdempotencyKey() {
+    return `stainless-node-retry-${uuid42()}`;
+  }
+  makeStatusError(status, error, message, headers) {
+    return APIError2.generate(status, error, message, headers);
+  }
+  buildURL(path4, query, defaultBaseURL) {
+    const baseURL = !__classPrivateFieldGet2(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+    const url = isAbsoluteURL2(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
+    const defaultQuery = this.defaultQuery();
+    if (!isEmptyObj2(defaultQuery)) {
+      query = { ...defaultQuery, ...query };
     }
-    defaultIdempotencyKey() {
-      return `stainless-node-retry-${uuid42()}`;
+    if (typeof query === "object" && query && !Array.isArray(query)) {
+      url.search = this.stringifyQuery(query);
     }
-    makeStatusError(status, error, message, headers) {
-      return APIError2.generate(status, error, message, headers);
+    return url.toString();
+  }
+  /**
+   * Used as a callback for mutating the given `FinalRequestOptions` object.
+   */
+  async prepareOptions(options) {
+  }
+  /**
+   * Used as a callback for mutating the given `RequestInit` object.
+   *
+   * This is useful for cases where you want to add certain headers based off of
+   * the request properties, e.g. `method` or `url`.
+   */
+  async prepareRequest(request, { url, options }) {
+  }
+  get(path4, opts) {
+    return this.methodRequest("get", path4, opts);
+  }
+  post(path4, opts) {
+    return this.methodRequest("post", path4, opts);
+  }
+  patch(path4, opts) {
+    return this.methodRequest("patch", path4, opts);
+  }
+  put(path4, opts) {
+    return this.methodRequest("put", path4, opts);
+  }
+  delete(path4, opts) {
+    return this.methodRequest("delete", path4, opts);
+  }
+  methodRequest(method, path4, opts) {
+    return this.request(Promise.resolve(opts).then((opts2) => {
+      return { method, path: path4, ...opts2 };
+    }));
+  }
+  request(options, remainingRetries = null) {
+    return new APIPromise2(this, this.makeRequest(options, remainingRetries, void 0));
+  }
+  async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
+    const options = await optionsInput;
+    const maxRetries = options.maxRetries ?? this.maxRetries;
+    if (retriesRemaining == null) {
+      retriesRemaining = maxRetries;
     }
-    buildURL(path4, query, defaultBaseURL) {
-      const baseURL = !__classPrivateFieldGet2(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-      const url = isAbsoluteURL2(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
-      const defaultQuery = this.defaultQuery();
-      if (!isEmptyObj2(defaultQuery)) {
-        query = { ...defaultQuery, ...query };
-      }
-      if (typeof query === "object" && query && !Array.isArray(query)) {
-        url.search = this.stringifyQuery(query);
-      }
-      return url.toString();
+    await this.prepareOptions(options);
+    const { req, url, timeout } = await this.buildRequest(options, {
+      retryCount: maxRetries - retriesRemaining
+    });
+    await this.prepareRequest(req, { url, options });
+    const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
+    const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
+    const startTime = Date.now();
+    loggerFor2(this).debug(`[${requestLogID}] sending request`, formatRequestDetails2({
+      retryOfRequestLogID,
+      method: options.method,
+      url,
+      options,
+      headers: req.headers
+    }));
+    if (options.signal?.aborted) {
+      throw new APIUserAbortError2();
     }
-    /**
-     * Used as a callback for mutating the given `FinalRequestOptions` object.
-     */
-    async prepareOptions(options) {
-    }
-    /**
-     * Used as a callback for mutating the given `RequestInit` object.
-     *
-     * This is useful for cases where you want to add certain headers based off of
-     * the request properties, e.g. `method` or `url`.
-     */
-    async prepareRequest(request, { url, options }) {
-    }
-    get(path4, opts) {
-      return this.methodRequest("get", path4, opts);
-    }
-    post(path4, opts) {
-      return this.methodRequest("post", path4, opts);
-    }
-    patch(path4, opts) {
-      return this.methodRequest("patch", path4, opts);
-    }
-    put(path4, opts) {
-      return this.methodRequest("put", path4, opts);
-    }
-    delete(path4, opts) {
-      return this.methodRequest("delete", path4, opts);
-    }
-    methodRequest(method, path4, opts) {
-      return this.request(Promise.resolve(opts).then((opts2) => {
-        return { method, path: path4, ...opts2 };
-      }));
-    }
-    request(options, remainingRetries = null) {
-      return new APIPromise2(this, this.makeRequest(options, remainingRetries, void 0));
-    }
-    async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
-      const options = await optionsInput;
-      const maxRetries = options.maxRetries ?? this.maxRetries;
-      if (retriesRemaining == null) {
-        retriesRemaining = maxRetries;
-      }
-      await this.prepareOptions(options);
-      const { req, url, timeout } = this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
-      await this.prepareRequest(req, { url, options });
-      const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
-      const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
-      const startTime = Date.now();
-      loggerFor2(this).debug(`[${requestLogID}] sending request`, formatRequestDetails2({
-        retryOfRequestLogID,
-        method: options.method,
-        url,
-        options,
-        headers: req.headers
-      }));
+    const controller = new AbortController();
+    const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
+    const headersTime = Date.now();
+    if (response instanceof Error) {
+      const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
       if (options.signal?.aborted) {
         throw new APIUserAbortError2();
       }
-      const controller = new AbortController();
-      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
-      const headersTime = Date.now();
-      if (response instanceof Error) {
-        const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
-        if (options.signal?.aborted) {
-          throw new APIUserAbortError2();
-        }
-        const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
-        if (retriesRemaining) {
-          loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
-          loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails2({
-            retryOfRequestLogID,
-            url,
-            durationMs: headersTime - startTime,
-            message: response.message
-          }));
-          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
-        }
-        loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
-        loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails2({
+      const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+      if (retriesRemaining) {
+        loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+        loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails2({
           retryOfRequestLogID,
           url,
           durationMs: headersTime - startTime,
           message: response.message
         }));
-        if (isTimeout) {
-          throw new APIConnectionTimeoutError2();
-        }
-        throw new APIConnectionError2({ cause: response });
+        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
       }
-      const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
-      if (!response.ok) {
-        const shouldRetry = this.shouldRetry(response);
-        if (retriesRemaining && shouldRetry) {
-          const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
-          await CancelReadableStream2(response.body);
-          loggerFor2(this).info(`${responseInfo} - ${retryMessage2}`);
-          loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails2({
-            retryOfRequestLogID,
-            url: response.url,
-            status: response.status,
-            headers: response.headers,
-            durationMs: headersTime - startTime
-          }));
-          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
-        }
-        const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
-        loggerFor2(this).info(`${responseInfo} - ${retryMessage}`);
-        const errText = await response.text().catch((err2) => castToError2(err2).message);
-        const errJSON = safeJSON2(errText);
-        const errMessage = errJSON ? void 0 : errText;
-        loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails2({
+      loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+      loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails2({
+        retryOfRequestLogID,
+        url,
+        durationMs: headersTime - startTime,
+        message: response.message
+      }));
+      if (isTimeout) {
+        throw new APIConnectionTimeoutError2();
+      }
+      throw new APIConnectionError2({ cause: response });
+    }
+    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
+    if (!response.ok) {
+      const shouldRetry = await this.shouldRetry(response);
+      if (retriesRemaining && shouldRetry) {
+        const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
+        await CancelReadableStream2(response.body);
+        loggerFor2(this).info(`${responseInfo} - ${retryMessage2}`);
+        loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails2({
           retryOfRequestLogID,
           url: response.url,
           status: response.status,
           headers: response.headers,
-          message: errMessage,
-          durationMs: Date.now() - startTime
+          durationMs: headersTime - startTime
         }));
-        const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
-        throw err;
+        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
       }
-      loggerFor2(this).info(responseInfo);
-      loggerFor2(this).debug(`[${requestLogID}] response start`, formatRequestDetails2({
+      const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
+      loggerFor2(this).info(`${responseInfo} - ${retryMessage}`);
+      const errText = await response.text().catch((err2) => castToError2(err2).message);
+      const errJSON = safeJSON2(errText);
+      const errMessage = errJSON ? void 0 : errText;
+      loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails2({
         retryOfRequestLogID,
         url: response.url,
         status: response.status,
         headers: response.headers,
-        durationMs: headersTime - startTime
+        message: errMessage,
+        durationMs: Date.now() - startTime
       }));
-      return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
+      const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
+      throw err;
     }
-    getAPIList(path4, Page2, opts) {
-      return this.requestAPIList(Page2, { method: "get", path: path4, ...opts });
+    loggerFor2(this).info(responseInfo);
+    loggerFor2(this).debug(`[${requestLogID}] response start`, formatRequestDetails2({
+      retryOfRequestLogID,
+      url: response.url,
+      status: response.status,
+      headers: response.headers,
+      durationMs: headersTime - startTime
+    }));
+    return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
+  }
+  getAPIList(path4, Page2, opts) {
+    return this.requestAPIList(Page2, { method: "get", path: path4, ...opts });
+  }
+  requestAPIList(Page2, options) {
+    const request = this.makeRequest(options, null, void 0);
+    return new PagePromise2(this, request, Page2);
+  }
+  async fetchWithTimeout(url, init, ms, controller) {
+    const { signal, method, ...options } = init || {};
+    if (signal)
+      signal.addEventListener("abort", () => controller.abort());
+    const timeout = setTimeout(() => controller.abort(), ms);
+    const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
+    const fetchOptions = {
+      signal: controller.signal,
+      ...isReadableBody ? { duplex: "half" } : {},
+      method: "GET",
+      ...options
+    };
+    if (method) {
+      fetchOptions.method = method.toUpperCase();
     }
-    requestAPIList(Page2, options) {
-      const request = this.makeRequest(options, null, void 0);
-      return new PagePromise2(this, request, Page2);
+    try {
+      return await this.fetch.call(void 0, url, fetchOptions);
+    } finally {
+      clearTimeout(timeout);
     }
-    async fetchWithTimeout(url, init, ms, controller) {
-      const { signal, method, ...options } = init || {};
-      if (signal)
-        signal.addEventListener("abort", () => controller.abort());
-      const timeout = setTimeout(() => controller.abort(), ms);
-      const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
-      const fetchOptions = {
-        signal: controller.signal,
-        ...isReadableBody ? { duplex: "half" } : {},
-        method: "GET",
-        ...options
-      };
-      if (method) {
-        fetchOptions.method = method.toUpperCase();
-      }
-      try {
-        return await this.fetch.call(void 0, url, fetchOptions);
-      } finally {
-        clearTimeout(timeout);
-      }
-    }
-    shouldRetry(response) {
-      const shouldRetryHeader = response.headers.get("x-should-retry");
-      if (shouldRetryHeader === "true")
-        return true;
-      if (shouldRetryHeader === "false")
-        return false;
-      if (response.status === 408)
-        return true;
-      if (response.status === 409)
-        return true;
-      if (response.status === 429)
-        return true;
-      if (response.status >= 500)
-        return true;
+  }
+  async shouldRetry(response) {
+    const shouldRetryHeader = response.headers.get("x-should-retry");
+    if (shouldRetryHeader === "true")
+      return true;
+    if (shouldRetryHeader === "false")
       return false;
-    }
-    async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
-      let timeoutMillis;
-      const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
-      if (retryAfterMillisHeader) {
-        const timeoutMs = parseFloat(retryAfterMillisHeader);
-        if (!Number.isNaN(timeoutMs)) {
-          timeoutMillis = timeoutMs;
-        }
-      }
-      const retryAfterHeader = responseHeaders?.get("retry-after");
-      if (retryAfterHeader && !timeoutMillis) {
-        const timeoutSeconds = parseFloat(retryAfterHeader);
-        if (!Number.isNaN(timeoutSeconds)) {
-          timeoutMillis = timeoutSeconds * 1e3;
-        } else {
-          timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
-        }
-      }
-      if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
-        const maxRetries = options.maxRetries ?? this.maxRetries;
-        timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
-      }
-      await sleep2(timeoutMillis);
-      return this.makeRequest(options, retriesRemaining - 1, requestLogID);
-    }
-    calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
-      const initialRetryDelay = 0.5;
-      const maxRetryDelay = 8;
-      const numRetries = maxRetries - retriesRemaining;
-      const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
-      const jitter = 1 - Math.random() * 0.25;
-      return sleepSeconds * jitter * 1e3;
-    }
-    buildRequest(inputOptions, { retryCount = 0 } = {}) {
-      const options = { ...inputOptions };
-      const { method, path: path4, query, defaultBaseURL } = options;
-      const url = this.buildURL(path4, query, defaultBaseURL);
-      if ("timeout" in options)
-        validatePositiveInteger2("timeout", options.timeout);
-      options.timeout = options.timeout ?? this.timeout;
-      const { bodyHeaders, body } = this.buildBody({ options });
-      const reqHeaders = this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
-      const req = {
-        method,
-        headers: reqHeaders,
-        ...options.signal && { signal: options.signal },
-        ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
-        ...body && { body },
-        ...this.fetchOptions ?? {},
-        ...options.fetchOptions ?? {}
-      };
-      return { req, url, timeout: options.timeout };
-    }
-    buildHeaders({ options, method, bodyHeaders, retryCount }) {
-      let idempotencyHeaders = {};
-      if (this.idempotencyHeader && method !== "get") {
-        if (!options.idempotencyKey)
-          options.idempotencyKey = this.defaultIdempotencyKey();
-        idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
-      }
-      const headers = buildHeaders2([
-        idempotencyHeaders,
-        {
-          Accept: "application/json",
-          "User-Agent": this.getUserAgent(),
-          "X-Stainless-Retry-Count": String(retryCount),
-          ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
-          ...getPlatformHeaders2()
-        },
-        this.authHeaders(options),
-        this._options.defaultHeaders,
-        bodyHeaders,
-        options.headers
-      ]);
-      this.validateHeaders(headers);
-      return headers.values;
-    }
-    buildBody({ options: { body, headers: rawHeaders } }) {
-      if (!body) {
-        return { bodyHeaders: void 0, body: void 0 };
-      }
-      const headers = buildHeaders2([rawHeaders]);
-      if (
-        // Pass raw type verbatim
-        ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
-        headers.values.has("content-type") || // `Blob` is superset of `File`
-        body instanceof Blob || // `FormData` -> `multipart/form-data`
-        body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
-        body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
-        globalThis.ReadableStream && body instanceof globalThis.ReadableStream
-      ) {
-        return { bodyHeaders: void 0, body };
-      } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
-        return { bodyHeaders: void 0, body: ReadableStreamFrom2(body) };
-      } else {
-        return __classPrivateFieldGet2(this, _BaseGitHub_encoder, "f").call(this, { body, headers });
-      }
-    }
+    if (response.status === 408)
+      return true;
+    if (response.status === 409)
+      return true;
+    if (response.status === 429)
+      return true;
+    if (response.status >= 500)
+      return true;
+    return false;
   }
-  _BaseGitHub_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitHub_instances = /* @__PURE__ */ new WeakSet(), _BaseGitHub_baseURLOverridden = function _BaseGitHub_baseURLOverridden2() {
-    return this.baseURL !== "https://api.github.com";
-  };
-  BaseGitHub2.DEFAULT_TIMEOUT = 6e4;
-  return BaseGitHub2;
-})();
-
-// node_modules/@stainless-api/github-internal/tree-shakable.mjs
-function createClient(options) {
-  const client = new BaseGitHub(options);
-  for (const ResourceClass of options.resources) {
-    const resourceInstance = new ResourceClass(client);
-    let object = client;
-    for (const part of ResourceClass._key.slice(0, -1)) {
-      if (hasOwn2(object, part)) {
-        object = object[part];
-      } else {
-        Object.defineProperty(object, part, {
-          value: object = {},
-          configurable: true,
-          enumerable: true,
-          writable: true
-        });
+  async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
+    let timeoutMillis;
+    const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
+    if (retryAfterMillisHeader) {
+      const timeoutMs = parseFloat(retryAfterMillisHeader);
+      if (!Number.isNaN(timeoutMs)) {
+        timeoutMillis = timeoutMs;
       }
     }
-    const name = ResourceClass._key.at(-1);
-    if (!hasOwn2(object, name)) {
-      Object.defineProperty(object, name, {
-        value: resourceInstance,
-        configurable: true,
-        enumerable: true,
-        writable: true
-      });
+    const retryAfterHeader = responseHeaders?.get("retry-after");
+    if (retryAfterHeader && !timeoutMillis) {
+      const timeoutSeconds = parseFloat(retryAfterHeader);
+      if (!Number.isNaN(timeoutSeconds)) {
+        timeoutMillis = timeoutSeconds * 1e3;
+      } else {
+        timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+      }
+    }
+    if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
+      const maxRetries = options.maxRetries ?? this.maxRetries;
+      timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+    }
+    await sleep2(timeoutMillis);
+    return this.makeRequest(options, retriesRemaining - 1, requestLogID);
+  }
+  calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+    const initialRetryDelay = 0.5;
+    const maxRetryDelay = 8;
+    const numRetries = maxRetries - retriesRemaining;
+    const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+    const jitter = 1 - Math.random() * 0.25;
+    return sleepSeconds * jitter * 1e3;
+  }
+  async buildRequest(inputOptions, { retryCount = 0 } = {}) {
+    const options = { ...inputOptions };
+    const { method, path: path4, query, defaultBaseURL } = options;
+    const url = this.buildURL(path4, query, defaultBaseURL);
+    if ("timeout" in options)
+      validatePositiveInteger2("timeout", options.timeout);
+    options.timeout = options.timeout ?? this.timeout;
+    const { bodyHeaders, body } = this.buildBody({ options });
+    const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+    const req = {
+      method,
+      headers: reqHeaders,
+      ...options.signal && { signal: options.signal },
+      ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
+      ...body && { body },
+      ...this.fetchOptions ?? {},
+      ...options.fetchOptions ?? {}
+    };
+    return { req, url, timeout: options.timeout };
+  }
+  async buildHeaders({ options, method, bodyHeaders, retryCount }) {
+    let idempotencyHeaders = {};
+    if (this.idempotencyHeader && method !== "get") {
+      if (!options.idempotencyKey)
+        options.idempotencyKey = this.defaultIdempotencyKey();
+      idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
+    }
+    const headers = buildHeaders2([
+      idempotencyHeaders,
+      {
+        Accept: "application/json",
+        "User-Agent": this.getUserAgent(),
+        "X-Stainless-Retry-Count": String(retryCount),
+        ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
+        ...getPlatformHeaders2()
+      },
+      await this.authHeaders(options),
+      this._options.defaultHeaders,
+      bodyHeaders,
+      options.headers
+    ]);
+    this.validateHeaders(headers);
+    return headers.values;
+  }
+  buildBody({ options: { body, headers: rawHeaders } }) {
+    if (!body) {
+      return { bodyHeaders: void 0, body: void 0 };
+    }
+    const headers = buildHeaders2([rawHeaders]);
+    if (
+      // Pass raw type verbatim
+      ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
+      headers.values.has("content-type") || // `Blob` is superset of `File`
+      body instanceof Blob || // `FormData` -> `multipart/form-data`
+      body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
+      body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
+      globalThis.ReadableStream && body instanceof globalThis.ReadableStream
+    ) {
+      return { bodyHeaders: void 0, body };
+    } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
+      return { bodyHeaders: void 0, body: ReadableStreamFrom2(body) };
     } else {
-      if (object[name] instanceof APIResource2) {
-        throw new TypeError(`Resource at ${ResourceClass._key.join(".")} already exists!`);
-      } else {
-        object[name] = Object.assign(resourceInstance, object[name]);
-      }
+      return __classPrivateFieldGet2(this, _Stainless_encoder, "f").call(this, { body, headers });
     }
   }
-  return client;
-}
+};
+_a = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
+  return this.baseURL !== environments[this._options.environment || "production"];
+};
+Stainless.Stainless = _a;
+Stainless.DEFAULT_TIMEOUT = 6e4;
+Stainless.StainlessError = StainlessError;
+Stainless.APIError = APIError2;
+Stainless.APIConnectionError = APIConnectionError2;
+Stainless.APIConnectionTimeoutError = APIConnectionTimeoutError2;
+Stainless.APIUserAbortError = APIUserAbortError2;
+Stainless.NotFoundError = NotFoundError2;
+Stainless.ConflictError = ConflictError2;
+Stainless.RateLimitError = RateLimitError2;
+Stainless.BadRequestError = BadRequestError2;
+Stainless.AuthenticationError = AuthenticationError2;
+Stainless.InternalServerError = InternalServerError2;
+Stainless.PermissionDeniedError = PermissionDeniedError2;
+Stainless.UnprocessableEntityError = UnprocessableEntityError2;
+Stainless.toFile = toFile2;
+Stainless.unwrapFile = unwrapFile;
+Stainless.Projects = Projects;
+Stainless.Builds = Builds2;
+Stainless.Orgs = Orgs2;
+
+// src/merge.ts
+var fs2 = __toESM(require("node:fs"));
 
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
@@ -32845,7 +32989,9 @@ function printComment({
     const canEdit = !!baseOutcomes;
     return [
       Dedent`
-        This PR will update the ${CodeInline(projectName)} SDKs with the following commit message.
+        This ${getPRTerm()} will update the ${CodeInline(
+        projectName
+      )} SDKs with the following commit message.
 
         ${CodeBlock(commitMessage)}
 
@@ -32866,7 +33012,7 @@ function printComment({
     ${COMMENT_FOOTER_DIVIDER}
 
     ${Italic(
-    `This comment is auto-generated by GitHub Actions and is automatically kept up to date as you push.<br/>Last updated: ${(/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC")}`
+    `This comment is auto-generated by ${getCITerm()} and is automatically kept up to date as you push.<br/>Last updated: ${(/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC")}`
   )}
   `;
   return fullComment;
@@ -32933,7 +33079,9 @@ function Result({
             return Italic("Timed out.");
           default:
             return Italic(
-              `Unknown conclusion (${CodeInline(head.commit?.completed?.conclusion || "unknown")}).`
+              `Unknown conclusion (${CodeInline(
+                head.commit?.completed?.conclusion || "unknown"
+              )}).`
             );
         }
       }
@@ -32945,7 +33093,10 @@ function Result({
             `There was a conflict between your custom code and your generated changes.`
           ),
           Italic(
-            `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({ text: "here", href: "https://www.stainless.com/docs/guides/add-custom-code" })}.`
+            `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({
+              text: "here",
+              href: "https://www.stainless.com/docs/guides/add-custom-code"
+            })}.`
           )
         ].join("\n");
       case "regression": {
@@ -33065,7 +33216,9 @@ function GitHubLink(outcome) {
   } = outcome.commit.completed.commit;
   return Link({
     text: "code",
-    href: `https://github.com/${owner}/${name}/tree/${encodeURIComponent(branch)}`
+    href: `https://github.com/${owner}/${name}/tree/${encodeURIComponent(
+      branch
+    )}`
   });
 }
 function CompareLink(base, head) {
@@ -33209,16 +33362,12 @@ function categorize(head, base) {
 function parseCommitMessage(body) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
-async function retrieveComment({ token }) {
-  const client = createClient({
-    authToken: token,
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    resources: [Comments]
-  });
-  const { data: comments } = await client.repos.issues.comments.list(
-    github.context.issue.number
-  );
+async function retrieveComment({
+  token,
+  prNumber
+}) {
+  const client = createCommentClient(token, prNumber);
+  const comments = await client.listComments();
   const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
   return {
     id: existingComment?.id,
@@ -33228,41 +33377,33 @@ async function retrieveComment({ token }) {
 async function upsertComment({
   body,
   token,
+  prNumber,
   skipCreate = false
 }) {
-  const client = createClient({
-    authToken: token,
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    resources: [Comments]
-  });
-  console.log("Upserting comment on PR:", github.context.issue.number);
-  const { data: comments } = await client.repos.issues.comments.list(
-    github.context.issue.number
-  );
+  const client = createCommentClient(token, prNumber);
+  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
+  const comments = await client.listComments();
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
     console.log("Updating existing comment:", existingComment.id);
-    await client.repos.issues.comments.update(existingComment.id, { body });
+    await client.updateComment(existingComment.id, body);
   } else if (!skipCreate) {
     console.log("Creating new comment");
-    await client.repos.issues.comments.create(github.context.issue.number, {
-      body
-    });
+    await client.createComment(body);
   }
 }
 function areCommentsEqual(a, b) {
   return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
 }
-function commentThrottler(token) {
+function commentThrottler(token, prNumber) {
   let lastComment = null;
   let lastCommentTime = null;
   return async ({ body, force = false }) => {
     if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
-      await upsertComment({ body, token });
+      await upsertComment({ body, token, prNumber });
       lastComment = body;
       lastCommentTime = /* @__PURE__ */ new Date();
     }
@@ -33663,27 +33804,30 @@ function checkResults({
 // src/merge.ts
 async function main() {
   try {
-    const apiKey = (0, import_core.getInput)("stainless_api_key", { required: true });
-    const orgName = (0, import_core.getInput)("org", { required: false });
-    const projectName = (0, import_core.getInput)("project", { required: true });
-    const oasPath = (0, import_core.getInput)("oas_path", { required: false });
-    const configPath = (0, import_core.getInput)("config_path", { required: false }) || void 0;
-    const defaultCommitMessage = (0, import_core.getInput)("commit_message", { required: true });
-    const failRunOn = (0, import_core.getInput)("fail_on", { required: true }) || "error";
-    const makeComment = (0, import_core.getBooleanInput)("make_comment", { required: true });
-    const githubToken = (0, import_core.getInput)("github_token", { required: false });
-    const baseSha = (0, import_core.getInput)("base_sha", { required: true });
-    const baseRef = (0, import_core.getInput)("base_ref", { required: true });
-    const defaultBranch = (0, import_core.getInput)("default_branch", { required: true });
-    const headSha = (0, import_core.getInput)("head_sha", { required: true });
-    const mergeBranch = (0, import_core.getInput)("merge_branch", { required: true });
-    const outputDir = (0, import_core.getInput)("output_dir", { required: false }) || void 0;
-    if (makeComment && !githubToken) {
-      throw new Error("github_token is required to make a comment");
-    }
+    const apiKey = getInput2("stainless_api_key", { required: true });
+    const orgName = getInput2("org", { required: false });
+    const projectName = getInput2("project", { required: true });
+    const oasPath = getInput2("oas_path", { required: false });
+    const configPath = getInput2("config_path", { required: false }) || void 0;
+    const defaultCommitMessage = getInput2("commit_message", { required: true });
+    const failRunOn = getInput2("fail_on", { required: true }) || "error";
+    const makeComment = getBooleanInput2("make_comment", { required: true });
+    const gitHostToken = getGitHostToken();
+    const baseSha = getInput2("base_sha", { required: true });
+    const baseRef = getInput2("base_ref", { required: true });
+    const defaultBranch = getInput2("default_branch", { required: true });
+    const headSha = getInput2("head_sha", { required: true });
+    const mergeBranch = getInput2("merge_branch", { required: true });
+    const outputDir = getInput2("output_dir", { required: false }) || void 0;
+    const prNumber = getPRNumber();
     if (baseRef !== defaultBranch) {
       console.log("Not merging to default branch, skipping merge");
       return;
+    }
+    if (makeComment && !getPRNumber()) {
+      throw new Error(
+        "This action requires a pull request number to make a comment."
+      );
     }
     const stainless = new Stainless({
       project: projectName,
@@ -33701,8 +33845,8 @@ async function main() {
       return;
     }
     let commitMessage = defaultCommitMessage;
-    if (makeComment && githubToken) {
-      const comment = await retrieveComment({ token: githubToken });
+    if (makeComment && gitHostToken) {
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -33719,7 +33863,7 @@ async function main() {
       guessConfig: false
     });
     let latestRun;
-    const upsert = commentThrottler(githubToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
     while (true) {
       const run = await generator.next();
       if (run.value) {
@@ -33738,12 +33882,12 @@ async function main() {
       }
       if (run.done) {
         const { outcomes, documentedSpec } = latestRun;
-        (0, import_core.setOutput)("outcomes", outcomes);
+        setOutput2("outcomes", outcomes);
         if (documentedSpec && outputDir) {
           const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
           fs2.mkdirSync(outputDir, { recursive: true });
           fs2.writeFileSync(documentedSpecPath, documentedSpec);
-          (0, import_core.setOutput)("documented_spec_path", documentedSpecPath);
+          setOutput2("documented_spec_path", documentedSpecPath);
         }
         if (!checkResults({ outcomes, failRunOn })) {
           process.exit(1);

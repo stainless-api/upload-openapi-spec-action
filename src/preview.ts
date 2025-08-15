@@ -1,11 +1,13 @@
 import {
-  endGroup,
   getBooleanInput,
   getInput,
+  isPullRequestOpenedEvent,
   setOutput,
   startGroup,
-} from "@actions/core";
-import * as github from "@actions/github";
+  endGroup,
+  getGitHostToken,
+  getPRNumber,
+} from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import {
   commentThrottler,
@@ -29,30 +31,30 @@ async function main() {
     const apiKey = getInput("stainless_api_key", { required: true });
     const orgName = getInput("org", { required: true });
     const projectName = getInput("project", { required: true });
-    const oasPath = getInput("oas_path", { required: true });
+    const oasPath = getInput("oas_path", { required: false }) || undefined;
     const configPath =
       getInput("config_path", { required: false }) || undefined;
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const failRunOn = getInput("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const githubToken = getInput("github_token", { required: false });
+    const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
     const baseBranch = getInput("base_branch", { required: true });
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const branch = getInput("branch", { required: true });
-
-    if (makeComment && !githubToken) {
-      throw new Error("github_token is required to make a comment");
-    }
+    const prNumber = getPRNumber();
 
     // If we came from the checkout-pr-ref action, we might need to save the
     // generated config files.
-    const { savedSha } = await saveConfig({ oasPath, configPath });
+    const { savedSha } = await saveConfig({
+      oasPath,
+      configPath,
+    });
     if (savedSha !== null && savedSha !== headSha) {
       console.warn(
-        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
+        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
       );
     }
 
@@ -87,18 +89,16 @@ async function main() {
       // In this case, we only want to make a comment if there's an existing
       // comment---which can happen if the changes introduced by the PR
       // disappear for some reason.
-      if (
-        github.context.payload.pull_request!.action !== "opened" &&
-        makeComment
-      ) {
+      if (isPullRequestOpenedEvent() && makeComment) {
         startGroup("Updating comment");
 
         const commentBody = printComment({ noChanges: true });
 
         await upsertComment({
           body: commentBody,
-          token: githubToken,
+          token: gitHostToken,
           skipCreate: true,
+          prNumber,
         });
 
         endGroup();
@@ -121,7 +121,7 @@ async function main() {
     let commitMessage = defaultCommitMessage;
 
     if (makeComment) {
-      const comment = await retrieveComment({ token: githubToken });
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -138,12 +138,12 @@ async function main() {
       baseRevision,
       baseBranch,
       branch,
-      guessConfig: !configPath,
+      guessConfig: !configPath && !!oasPath,
       commitMessage,
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(githubToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -157,7 +157,10 @@ async function main() {
         const { outcomes, baseOutcomes } = latestRun!;
 
         // In case the comment was updated between polls:
-        const comment = await retrieveComment({ token: githubToken });
+        const comment = await retrieveComment({
+          token: gitHostToken,
+          prNumber,
+        });
         if (comment.commitMessage) {
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
