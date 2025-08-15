@@ -15,7 +15,7 @@ async function main() {
       getInput("config_path", { required: false }) || undefined;
     const projectName = getInput("project", { required: true });
     const commitMessage = makeCommitMessageConventional(
-      getInput("commit_message", { required: false }) || undefined
+      getInput("commit_message", { required: false }) || undefined,
     );
     const guessConfig =
       getBooleanInput("guess_config", { required: false }) || false;
@@ -79,7 +79,7 @@ async function main() {
 
       fs.writeFileSync(
         documentedSpecOutputPath,
-        YAML.stringify(documentedSpecOutput)
+        YAML.stringify(documentedSpecOutput),
       );
     } else if (documentedSpecOutputPath) {
       console.error("No documented spec found.");

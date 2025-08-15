@@ -14,7 +14,7 @@ function getSavedFilePath(file: string, sha: string) {
   return path.join(
     tmpdir(),
     "stainless-generated-config",
-    `${file}-${sha}.yml`
+    `${file}-${sha}.yml`,
   );
 }
 
@@ -82,7 +82,7 @@ export async function readConfig({
   const addToResults = async (
     file: "oas" | "config",
     filePath: string | undefined,
-    via: string
+    via: string,
   ) => {
     if (results[file]) {
       return;
@@ -115,7 +115,7 @@ export async function readConfig({
     await addToResults(
       "config",
       getSavedFilePath("config", sha),
-      `saved ${sha}`
+      `saved ${sha}`,
     );
   } catch {
     console.log("Could not get config from saved file path");
@@ -137,7 +137,7 @@ export async function getMergeBase({
     });
   } catch {
     throw new Error(
-      `Cannot fetch ${baseSha} from origin, is there a git repo?`
+      `Cannot fetch ${baseSha} from origin, is there a git repo?`,
     );
   }
 
@@ -148,7 +148,7 @@ export async function getMergeBase({
       const output = await exec.getExecOutput(
         "git",
         ["merge-base", headSha, baseSha],
-        { silent: true }
+        { silent: true },
       );
       mergeBaseSha = output.stdout.trim();
       if (mergeBaseSha) break;
@@ -160,7 +160,7 @@ export async function getMergeBase({
     await exec.exec(
       "git",
       ["fetch", "--quiet", "--deepen=10", "origin", baseSha, headSha],
-      { silent: true }
+      { silent: true },
     );
   }
 

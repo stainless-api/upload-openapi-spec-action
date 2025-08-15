@@ -31055,7 +31055,10 @@ var GitHubCommentClient = class {
     const { data: comments } = await this.client.repos.issues.comments.list(
       this.prNumber
     );
-    return comments.map((c) => ({ id: c.id, body: c.body }));
+    return comments.map((c) => ({
+      id: c.id,
+      body: c.body ?? ""
+    }));
   }
   async createComment(body) {
     await this.client.repos.issues.comments.create(this.prNumber, { body });
@@ -31096,7 +31099,10 @@ var GitLabCommentClient = class {
       "GET",
       `/merge_requests/${this.prNumber}/notes`
     );
-    return notes.map((note) => ({ id: note.id, body: note.body }));
+    return notes.map((note) => ({
+      id: note.id,
+      body: note.body
+    }));
   }
   async createComment(body) {
     await this.gitlabRequest("POST", `/merge_requests/${this.prNumber}/notes`, {

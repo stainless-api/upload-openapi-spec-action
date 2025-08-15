@@ -39,7 +39,7 @@ async function main() {
 
     if (makeComment && !getPRNumber()) {
       throw new Error(
-        "This action requires a pull request number to make a comment."
+        "This action requires a pull request number to make a comment.",
       );
     }
 

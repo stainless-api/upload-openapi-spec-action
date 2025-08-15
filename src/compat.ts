@@ -1,7 +1,10 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
-import { createClient as createGitHubClient } from "@stainless-api/github-internal/tree-shakable";
+import {
+  createClient as createGitHubClient,
+  type PartialGitHub,
+} from "@stainless-api/github-internal/tree-shakable";
 
 interface Comment {
   id: string | number;
@@ -56,7 +59,7 @@ export function getGitHostToken(): string {
     throw new Error(
       `${
         isGitLabCI() ? "GITLAB_TOKEN" : "github_token"
-      } is required to make a comment`
+      } is required to make a comment`,
     );
   }
   return token;
@@ -109,7 +112,7 @@ export function endGroup() {
 
 export function createCommentClient(
   token: string,
-  prNumber: number
+  prNumber: number,
 ): CommentClient {
   if (isGitLabCI()) {
     return new GitLabCommentClient(token, prNumber);
@@ -136,7 +139,9 @@ export function getCITerm(): string {
 
 // GitHub comment client implementation
 class GitHubCommentClient implements CommentClient {
-  private client: any;
+  private client: PartialGitHub<{
+    repos: { issues: { comments: GitHubComments } };
+  }>;
   private prNumber: number;
 
   constructor(token: string, prNumber: number) {
@@ -151,16 +156,19 @@ class GitHubCommentClient implements CommentClient {
 
   async listComments(): Promise<Comment[]> {
     const { data: comments } = await this.client.repos.issues.comments.list(
-      this.prNumber
+      this.prNumber,
     );
-    return comments.map((c: any) => ({ id: c.id, body: c.body }));
+    return comments.map((c) => ({
+      id: c.id,
+      body: c.body ?? "",
+    }));
   }
 
   async createComment(body: string): Promise<void> {
     await this.client.repos.issues.comments.create(this.prNumber, { body });
   }
 
-  async updateComment(id: string | number, body: string): Promise<void> {
+  async updateComment(id: number, body: string): Promise<void> {
     await this.client.repos.issues.comments.update(id, { body });
   }
 }
@@ -180,7 +188,7 @@ class GitLabCommentClient implements CommentClient {
   private async gitlabRequest(
     method: string,
     endpoint: string,
-    body?: unknown
+    body?: unknown,
   ) {
     const projectId = process.env.CI_PROJECT_ID!;
     const url = `${this.baseUrl}/projects/${projectId}${endpoint}`;
@@ -196,7 +204,7 @@ class GitLabCommentClient implements CommentClient {
 
     if (!response.ok) {
       throw new Error(
-        `GitLab API error: ${response.status} ${response.statusText}`
+        `GitLab API error: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -206,9 +214,12 @@ class GitLabCommentClient implements CommentClient {
   async listComments(): Promise<Comment[]> {
     const notes = await this.gitlabRequest(
       "GET",
-      `/merge_requests/${this.prNumber}/notes`
+      `/merge_requests/${this.prNumber}/notes`,
     );
-    return notes.map((note: any) => ({ id: note.id, body: note.body }));
+    return (notes as { id: string; body: string }[]).map((note) => ({
+      id: note.id,
+      body: note.body,
+    }));
   }
 
   async createComment(body: string): Promise<void> {
@@ -217,13 +228,13 @@ class GitLabCommentClient implements CommentClient {
     });
   }
 
-  async updateComment(id: string | number, body: string): Promise<void> {
+  async updateComment(id: number, body: string): Promise<void> {
     await this.gitlabRequest(
       "PUT",
       `/merge_requests/${this.prNumber}/notes/${id}`,
       {
         body,
-      }
+      },
     );
   }
 }

@@ -54,7 +54,7 @@ async function main() {
     });
     if (savedSha !== null && savedSha !== headSha) {
       console.warn(
-        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
+        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
       );
     }
 
