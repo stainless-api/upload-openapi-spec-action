@@ -64,7 +64,7 @@ async function main() {
       logLevel: "warn",
     });
 
-    startGroup("Getting parent revision");
+    startGroup("parent-revision", "Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
@@ -90,7 +90,7 @@ async function main() {
       // comment---which can happen if the changes introduced by the PR
       // disappear for some reason.
       if (isPullRequestOpenedEvent() && makeComment) {
-        startGroup("Updating comment");
+        startGroup("update-comment", "Updating comment");
 
         const commentBody = printComment({ noChanges: true });
 
@@ -101,7 +101,7 @@ async function main() {
           prNumber,
         });
 
-        endGroup();
+        endGroup("update-comment");
       }
 
       return;
@@ -116,7 +116,7 @@ async function main() {
       configPath,
     });
 
-    endGroup();
+    endGroup("parent-revision");
 
     let commitMessage = defaultCommitMessage;
 

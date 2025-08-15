@@ -20,10 +20,6 @@ inputs:
       Path to your OpenAPI spec. If omitted, and `merge_branch` is false,
       will use the existing OpenAPI spec on the Stainless branch.
     required: false
-  shard_paths:
-    description: >-
-      Comma delineated paths to your OpenAPI shards.
-    required: false
   config_path:
     description: >-
       Path to your Stainless config. If omitted, and `merge_branch` is false,

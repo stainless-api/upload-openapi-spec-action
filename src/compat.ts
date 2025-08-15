@@ -94,17 +94,17 @@ export function isPullRequestOpenedEvent(): boolean {
   }
 }
 
-export function startGroup(name: string) {
+export function startGroup(id: string, name: string) {
   if (isGitLabCI()) {
-    console.log(`::group::${name}`);
+    console.log(`\x1b[0Ksection_start:${Date.now()}:${id}\r\x1b[0K${name}`);
   } else {
     core.startGroup(name);
   }
 }
 
-export function endGroup() {
+export function endGroup(id: string) {
   if (isGitLabCI()) {
-    console.log("::endgroup::");
+    console.log(`\x1b[0Ksection_end:${Date.now()}:${id}\r\x1b[0K`);
   } else {
     core.endGroup();
   }

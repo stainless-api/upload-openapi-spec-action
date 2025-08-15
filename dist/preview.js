@@ -31026,16 +31026,16 @@ function isPullRequestOpenedEvent() {
     return github.context.payload.action === "opened";
   }
 }
-function startGroup2(name) {
+function startGroup2(id, name) {
   if (isGitLabCI()) {
-    console.log(`::group::${name}`);
+    console.log(`\x1B[0Ksection_start:${Date.now()}:${id}\r\x1B[0K${name}`);
   } else {
     core.startGroup(name);
   }
 }
-function endGroup2() {
+function endGroup2(id) {
   if (isGitLabCI()) {
-    console.log("::endgroup::");
+    console.log(`\x1B[0Ksection_end:${Date.now()}:${id}\r\x1B[0K`);
   } else {
     core.endGroup();
   }
@@ -33931,7 +33931,7 @@ async function main() {
       apiKey,
       logLevel: "warn"
     });
-    startGroup2("Getting parent revision");
+    startGroup2("parent-revision", "Getting parent revision");
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
       baseRef,
@@ -33950,7 +33950,7 @@ async function main() {
     if (!configChanged) {
       console.log("No config files changed, skipping preview");
       if (isPullRequestOpenedEvent() && makeComment) {
-        startGroup2("Updating comment");
+        startGroup2("update-comment", "Updating comment");
         const commentBody = printComment({ noChanges: true });
         await upsertComment({
           body: commentBody,
@@ -33958,7 +33958,7 @@ async function main() {
           skipCreate: true,
           prNumber
         });
-        endGroup2();
+        endGroup2("update-comment");
       }
       return;
     }
@@ -33970,7 +33970,7 @@ async function main() {
       oasPath,
       configPath
     });
-    endGroup2();
+    endGroup2("parent-revision");
     let commitMessage = defaultCommitMessage;
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken, prNumber });
