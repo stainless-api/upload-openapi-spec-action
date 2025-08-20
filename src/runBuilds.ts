@@ -21,24 +21,28 @@ export type RunResult = {
 export async function* runBuilds({
   stainless,
   projectName,
-  baseRevision,
   baseBranch,
   mergeBranch,
   branch,
+  branchFrom,
   oasContent,
   configContent,
+  baseOasContent,
+  baseConfigContent,
   guessConfig = false,
   commitMessage,
   allowEmpty = true,
 }: {
   stainless: Stainless;
   projectName: string;
-  baseRevision?: string;
   baseBranch?: string;
   mergeBranch?: string;
   branch?: string;
+  branchFrom?: string;
   oasContent?: string;
   configContent?: string;
+  baseOasContent?: string;
+  baseConfigContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
   allowEmpty?: boolean;
@@ -53,11 +57,11 @@ export async function* runBuilds({
       "If guess_config is true, must have oas_path and no config_path",
     );
   }
-  if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
+  if (branchFrom && mergeBranch) {
+    throw new Error("Cannot specify both branch_from and merge_branch");
   }
 
-  if (!baseRevision) {
+  if (!branchFrom) {
     const build = await stainless.builds.create(
       {
         project: projectName,
@@ -105,7 +109,7 @@ export async function* runBuilds({
       console.log("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
-          branch: baseBranch,
+          branch: branchFrom,
           spec: oasContent!,
         }),
       )[0]?.content;
@@ -119,9 +123,9 @@ export async function* runBuilds({
     }
   }
 
-  console.log(`Hard resetting ${branch} to ${baseRevision}`);
+  console.log(`Hard resetting ${branch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
-    branch_from: baseRevision,
+    branch_from: branchFrom,
     branch: branch!,
     force: true,
   });
@@ -130,7 +134,18 @@ export async function* runBuilds({
   const { base, head } = await stainless.builds.compare(
     {
       base: {
-        revision: baseRevision,
+        revision: {
+          ...(baseOasContent && {
+            "openapi.yml": {
+              content: baseOasContent,
+            },
+          }),
+          ...(baseConfigContent && {
+            "openapi.stainless.yml": {
+              content: baseConfigContent,
+            },
+          }),
+        },
         branch: baseBranch,
         commit_message: commitMessage,
       },
