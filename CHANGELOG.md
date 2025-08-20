@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.2...v1.4.0) (2025-08-20)
+
+
+### Features
+
+* use install_url in preview comment  ([#101](https://github.com/stainless-api/upload-openapi-spec-action/issues/101)) ([a897e5c](https://github.com/stainless-api/upload-openapi-spec-action/commit/a897e5cd5229d563f47403800a7e368cf18cd428))
+
+
+### Bug Fixes
+
+* improve comment format ([#100](https://github.com/stainless-api/upload-openapi-spec-action/issues/100)) ([caaf31f](https://github.com/stainless-api/upload-openapi-spec-action/commit/caaf31fca3ed970e0a2d80b8f0242d4e1feb6a2c))
+* trigger release ([#97](https://github.com/stainless-api/upload-openapi-spec-action/issues/97)) ([309add6](https://github.com/stainless-api/upload-openapi-spec-action/commit/309add646574e0ceef714e937ce7c9f496cd18f2))
+
 ## [1.3.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.1...v1.3.2) (2025-07-18)
 
 
