@@ -107,7 +107,7 @@ async function main() {
       return;
     }
 
-    const baseRevision = await computeBaseRevision({
+    const branchFrom = await computeBranchFrom({
       stainless,
       projectName,
       mergeBaseConfig,
@@ -134,8 +134,10 @@ async function main() {
       stainless,
       oasContent: headConfig.oas,
       configContent: headConfig.config,
+      baseOasContent: mergeBaseConfig.oas,
+      baseConfigContent: mergeBaseConfig.config,
       projectName,
-      baseRevision,
+      branchFrom,
       baseBranch,
       branch,
       guessConfig: !configPath && !!oasPath,
@@ -196,7 +198,7 @@ async function main() {
   }
 }
 
-async function computeBaseRevision({
+async function computeBranchFrom({
   stainless,
   projectName,
   mergeBaseConfig,
