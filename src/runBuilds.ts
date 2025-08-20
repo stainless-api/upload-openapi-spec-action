@@ -129,7 +129,17 @@ export async function* runBuilds({
     branch: branch!,
     force: true,
   });
+
   console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+
+  const { config_commit: base_config_commit } =
+    await stainless.projects.branches.create({
+      branch_from: branchFrom,
+      branch: baseBranch!,
+      force: true,
+    });
+
+  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
 
   const { base, head } = await stainless.builds.compare(
     {
