@@ -123,7 +123,7 @@ export async function* runBuilds({
     }
   }
 
-  console.log(`Hard resetting ${branch} to ${branchFrom}`);
+  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: branch!,
