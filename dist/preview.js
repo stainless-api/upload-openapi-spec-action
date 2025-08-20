@@ -33598,12 +33598,14 @@ var MAX_POLLING_SECONDS = 10 * 60;
 async function* runBuilds({
   stainless,
   projectName,
-  baseRevision,
   baseBranch,
   mergeBranch,
   branch,
+  branchFrom,
   oasContent,
   configContent,
+  baseOasContent,
+  baseConfigContent,
   guessConfig = false,
   commitMessage,
   allowEmpty = true
@@ -33618,10 +33620,10 @@ async function* runBuilds({
       "If guess_config is true, must have oas_path and no config_path"
     );
   }
-  if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
+  if (branchFrom && mergeBranch) {
+    throw new Error("Cannot specify both branch_from and merge_branch");
   }
-  if (!baseRevision) {
+  if (!branchFrom) {
     const build = await stainless.builds.create(
       {
         project: projectName,
@@ -33664,7 +33666,7 @@ async function* runBuilds({
       console.log("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
-          branch: baseBranch,
+          branch: branchFrom,
           spec: oasContent
         })
       )[0]?.content;
@@ -33677,17 +33679,34 @@ async function* runBuilds({
       )[0]?.content;
     }
   }
-  console.log(`Hard resetting ${branch} to ${baseRevision}`);
+  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
-    branch_from: baseRevision,
+    branch_from: branchFrom,
     branch,
     force: true
   });
   console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  const { config_commit: base_config_commit } = await stainless.projects.branches.create({
+    branch_from: branchFrom,
+    branch: baseBranch,
+    force: true
+  });
+  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
   const { base, head } = await stainless.builds.compare(
     {
       base: {
-        revision: baseRevision,
+        revision: {
+          ...baseOasContent && {
+            "openapi.yml": {
+              content: baseOasContent
+            }
+          },
+          ...baseConfigContent && {
+            "openapi.stainless.yml": {
+              content: baseConfigContent
+            }
+          }
+        },
         branch: baseBranch,
         commit_message: commitMessage
       },
@@ -33962,7 +33981,7 @@ async function main() {
       }
       return;
     }
-    const baseRevision = await computeBaseRevision({
+    const branchFrom = await computeBranchFrom({
       stainless,
       projectName,
       mergeBaseConfig,
@@ -33984,8 +34003,10 @@ async function main() {
       stainless,
       oasContent: headConfig.oas,
       configContent: headConfig.config,
+      baseOasContent: mergeBaseConfig.oas,
+      baseConfigContent: mergeBaseConfig.config,
       projectName,
-      baseRevision,
+      branchFrom,
       baseBranch,
       branch,
       guessConfig: !configPath && !!oasPath,
@@ -34032,7 +34053,7 @@ async function main() {
     process.exit(1);
   }
 }
-async function computeBaseRevision({
+async function computeBranchFrom({
   stainless,
   projectName,
   mergeBaseConfig,
