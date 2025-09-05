@@ -45,14 +45,14 @@ export async function saveConfig({
     hasOAS = true;
     const savedFilePath = getSavedFilePath("oas", savedSha);
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
-    fs.copyFileSync(oasPath, savedFilePath);
+    fs.renameSync(oasPath, savedFilePath);
   }
 
   if (configPath && fs.existsSync(configPath)) {
     hasConfig = true;
     const savedFilePath = getSavedFilePath("config", savedSha);
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
-    fs.copyFileSync(configPath, savedFilePath);
+    fs.renameSync(configPath, savedFilePath);
   }
 
   return { hasOAS, hasConfig, savedSha };
