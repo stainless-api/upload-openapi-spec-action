@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.0...v1.4.1) (2025-09-05)
+
+
+### Bug Fixes
+
+* do not stringify YAML twice ([#105](https://github.com/stainless-api/upload-openapi-spec-action/issues/105)) ([5238e56](https://github.com/stainless-api/upload-openapi-spec-action/commit/5238e564a822898f088c84611f6b075f13977b55))
+
 ## [1.4.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.2...v1.4.0) (2025-08-20)
 
 
