@@ -77,10 +77,7 @@ async function main() {
         ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
         : documentedSpec;
 
-      fs.writeFileSync(
-        documentedSpecOutputPath,
-        documentedSpecOutput,
-      );
+      fs.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
       console.error("No documented spec found.");
     }
