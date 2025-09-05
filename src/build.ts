@@ -79,7 +79,7 @@ async function main() {
 
       fs.writeFileSync(
         documentedSpecOutputPath,
-        YAML.stringify(documentedSpecOutput),
+        documentedSpecOutput,
       );
     } else if (documentedSpecOutputPath) {
       console.error("No documented spec found.");
