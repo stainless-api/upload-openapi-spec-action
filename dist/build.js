@@ -38617,10 +38617,7 @@ async function main() {
     }
     if (documentedSpec && documentedSpecOutputPath) {
       const documentedSpecOutput = !(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml")) ? JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2) : documentedSpec;
-      fs2.writeFileSync(
-        documentedSpecOutputPath,
-        import_yaml.default.stringify(documentedSpecOutput)
-      );
+      fs2.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
       console.error("No documented spec found.");
     }
