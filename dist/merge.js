@@ -33435,11 +33435,11 @@ var exec = __toESM(require_exec());
 var fs = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
 var path3 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha) {
+function getSavedFilePath(file, sha, extension) {
   return path3.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
-    `${file}-${sha}.yml`
+    `${file}-${sha}.${extension}`
   );
 }
 async function readConfig({
@@ -33474,10 +33474,14 @@ async function readConfig({
   await addToResults("oas", oasPath, `git ${sha}`);
   await addToResults("config", configPath, `git ${sha}`);
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
+    await addToResults(
+      "oas",
+      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
+      `saved ${sha}`
+    );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha),
+      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
       `saved ${sha}`
     );
   } catch {
