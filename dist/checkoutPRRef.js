@@ -29136,7 +29136,7 @@ async function saveConfig({
       oasPath.split(".").pop()
     );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
-    fs.cpSync(oasPath, savedFilePath);
+    fs.copyFileSync(oasPath, savedFilePath);
     fs.rmSync(oasPath);
   }
   if (configPath && fs.existsSync(configPath)) {
@@ -29147,7 +29147,7 @@ async function saveConfig({
       configPath.split(".").pop()
     );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
-    fs.cpSync(configPath, savedFilePath);
+    fs.copyFileSync(configPath, savedFilePath);
     fs.rmSync(configPath);
   }
   return { hasOAS, hasConfig, savedSha };

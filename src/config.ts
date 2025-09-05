@@ -49,7 +49,7 @@ export async function saveConfig({
       oasPath.split(".").pop()!,
     );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
-    fs.cpSync(oasPath, savedFilePath);
+    fs.copyFileSync(oasPath, savedFilePath);
     fs.rmSync(oasPath);
   }
 
@@ -61,7 +61,7 @@ export async function saveConfig({
       configPath.split(".").pop()!,
     );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
-    fs.cpSync(configPath, savedFilePath);
+    fs.copyFileSync(configPath, savedFilePath);
     fs.rmSync(configPath);
   }
 
