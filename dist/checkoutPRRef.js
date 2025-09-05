@@ -29110,11 +29110,11 @@ var exec = __toESM(require_exec());
 var fs = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
 var path2 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha) {
+function getSavedFilePath(file, sha, extension) {
   return path2.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
-    `${file}-${sha}.yml`
+    `${file}-${sha}.${extension}`
   );
 }
 async function saveConfig({
@@ -29130,15 +29130,25 @@ async function saveConfig({
   console.log("Saving generated config for", savedSha);
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
-    const savedFilePath = getSavedFilePath("oas", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "oas",
+      savedSha,
+      oasPath.split(".").pop()
+    );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
-    fs.renameSync(oasPath, savedFilePath);
+    fs.cpSync(oasPath, savedFilePath);
+    fs.rmSync(oasPath);
   }
   if (configPath && fs.existsSync(configPath)) {
     hasConfig = true;
-    const savedFilePath = getSavedFilePath("config", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "config",
+      savedSha,
+      configPath.split(".").pop()
+    );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
-    fs.renameSync(configPath, savedFilePath);
+    fs.cpSync(configPath, savedFilePath);
+    fs.rmSync(configPath);
   }
   return { hasOAS, hasConfig, savedSha };
 }
