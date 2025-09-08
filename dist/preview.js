@@ -31060,6 +31060,9 @@ function getCITerm() {
     return "GitHub Actions";
   }
 }
+function getRepoPath(owner, repo) {
+  return process.env.GITLAB_STAGING_REPO_PATH ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
+}
 var GitHubCommentClient = class {
   client;
   prNumber;
@@ -33240,9 +33243,7 @@ function GitHubLink(outcome) {
   } = outcome.commit.completed.commit;
   return Link({
     text: "code",
-    href: `https://github.com/${owner}/${name}/tree/${encodeURIComponent(
-      branch
-    )}`
+    href: `${getRepoPath(owner, name)}/tree/${encodeURIComponent(branch)}`
   });
 }
 function CompareLink(base, head) {
@@ -33252,7 +33253,7 @@ function CompareLink(base, head) {
   const { repo } = head.commit.completed.commit;
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
-  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+  const compareURL = `${getRepoPath(repo.owner, repo.name)}/compare/${baseBranch}..${headBranch}`;
   return Link({ text: "diff", href: compareURL });
 }
 function MergeConflictLink(outcome) {
