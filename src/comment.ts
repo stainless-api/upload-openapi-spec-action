@@ -377,7 +377,7 @@ function GitHubLink(outcome: Outcomes[string]): string | null {
   } = outcome.commit.completed.commit;
   return MD.Link({
     text: "code",
-    href: `${getRepoPath(owner, name)}/${encodeURIComponent(branch)}`,
+    href: `${getRepoPath(owner, name)}/tree/${encodeURIComponent(branch)}`,
   });
 }
 
