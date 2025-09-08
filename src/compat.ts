@@ -137,6 +137,12 @@ export function getCITerm(): string {
   }
 }
 
+export function getRepoPath(owner: string, repo: string): string {
+  return process.env.GITLAB_STAGING_REPO_PATH
+    ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}`
+    : `https://github.com/${owner}/${repo}`;
+}
+
 // GitHub comment client implementation
 class GitHubCommentClient implements CommentClient {
   private client: PartialGitHub<{

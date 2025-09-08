@@ -1,7 +1,12 @@
 import type { Stainless } from "@stainless-api/sdk";
 import { Outcomes } from "./runBuilds";
 import * as MD from "./markdown";
-import { createCommentClient, getCITerm, getPRTerm } from "./compat";
+import {
+  createCommentClient,
+  getCITerm,
+  getPRTerm,
+  getRepoPath,
+} from "./compat";
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,
@@ -372,13 +377,7 @@ function GitHubLink(outcome: Outcomes[string]): string | null {
   } = outcome.commit.completed.commit;
   return MD.Link({
     text: "code",
-    href: process.env.GITLAB_STAGING_REPO_PATH
-      ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}/tree/${encodeURIComponent(
-          branch,
-        )}`
-      : `https://github.com/${owner}/${name}/tree/${encodeURIComponent(
-          branch,
-        )}`,
+    href: `${getRepoPath(owner, name)}/${encodeURIComponent(branch)}`,
   });
 }
 
@@ -393,9 +392,7 @@ function CompareLink(
   const { repo } = head.commit.completed.commit;
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
-  const compareURL = process.env.GITLAB_STAGING_REPO_PATH
-    ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}/compare/${baseBranch}...${headBranch}`
-    : `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+  const compareURL = `${getRepoPath(repo.owner, repo.name)}/compare/${baseBranch}..${headBranch}`;
   return MD.Link({ text: "diff", href: compareURL });
 }
 
