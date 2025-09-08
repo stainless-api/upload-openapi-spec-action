@@ -33453,11 +33453,11 @@ var exec = __toESM(require_exec());
 var fs = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
 var path3 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha) {
+function getSavedFilePath(file, sha, extension) {
   return path3.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
-    `${file}-${sha}.yml`
+    `${file}-${sha}.${extension}`
   );
 }
 async function saveConfig({
@@ -33473,15 +33473,25 @@ async function saveConfig({
   console.log("Saving generated config for", savedSha);
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
-    const savedFilePath = getSavedFilePath("oas", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "oas",
+      savedSha,
+      oasPath.split(".").pop()
+    );
     fs.mkdirSync(path3.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
+    fs.rmSync(oasPath);
   }
   if (configPath && fs.existsSync(configPath)) {
     hasConfig = true;
-    const savedFilePath = getSavedFilePath("config", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "config",
+      savedSha,
+      configPath.split(".").pop()
+    );
     fs.mkdirSync(path3.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
+    fs.rmSync(configPath);
   }
   return { hasOAS, hasConfig, savedSha };
 }
@@ -33517,10 +33527,14 @@ async function readConfig({
   await addToResults("oas", oasPath, `git ${sha}`);
   await addToResults("config", configPath, `git ${sha}`);
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), `saved ${sha}`);
+    await addToResults(
+      "oas",
+      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
+      `saved ${sha}`
+    );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha),
+      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
       `saved ${sha}`
     );
   } catch {
