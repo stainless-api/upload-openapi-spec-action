@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.1...v1.5.0) (2025-09-08)
+
+
+### Features
+
+* env variable to swap in a gitlab staging repo URL ([#108](https://github.com/stainless-api/upload-openapi-spec-action/issues/108)) ([4a2579d](https://github.com/stainless-api/upload-openapi-spec-action/commit/4a2579d2993503bba9a1d8c7fe1264e23c483269))
+
+
+### Bug Fixes
+
+* support checkout ref for gitlab and fix some bugs ([#110](https://github.com/stainless-api/upload-openapi-spec-action/issues/110)) ([d9d20d0](https://github.com/stainless-api/upload-openapi-spec-action/commit/d9d20d05de458020b8987d899b5bbfeb2f39ffac))
+
 ## [1.4.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.0...v1.4.1) (2025-09-05)
 
 
