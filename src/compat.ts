@@ -139,7 +139,7 @@ export function getCITerm(): string {
 
 export function getRepoPath(owner: string, repo: string): string {
   return process.env.GITLAB_STAGING_REPO_PATH
-    ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}`
+    ? `${process.env.GITLAB_BASE_URL}/${process.env.GITLAB_STAGING_REPO_PATH}`
     : `https://github.com/${owner}/${repo}`;
 }
 
@@ -187,7 +187,7 @@ class GitLabCommentClient implements CommentClient {
 
   constructor(token: string, prNumber: number) {
     this.token = token;
-    this.baseUrl = process.env.CI_API_V4_URL || "https://gitlab.com/api/v4";
+    this.baseUrl = `${process.env.GITLAB_BASE_URL}/api/v4`;
     this.prNumber = prNumber;
   }
 
