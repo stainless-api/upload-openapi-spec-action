@@ -1,6 +1,6 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import * as util from "node:util";
-import { getInput } from "./compat";
+import { endGroupStr, getInput, startGroupStr } from "./compat";
 
 type LogFn = (message: string, obj?: unknown) => void;
 type Logger = {
@@ -71,9 +71,9 @@ function logGitHub(level: LogLevel, msg: string, arg?: unknown) {
     return lines;
   });
 
-  // The ::group:: makes it collapsible in GitHub action logging.
-  msgLines.unshift(`::group::${msgStr}`);
-  msgLines.push(`::endgroup::`);
+  // This makes it collapsible in logging.
+  msgLines.unshift(startGroupStr("obj", msgStr));
+  msgLines.push(endGroupStr("obj"));
 
   // All logging should be in stdout, because GitHub actions mix up stderr and
   // stdout, so we use console.info instead of the level-specific methods.
