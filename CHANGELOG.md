@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.0...v1.5.1) (2025-09-12)
+
+
+### Bug Fixes
+
+* **preview:** allow explicitly guess config behavior  ([#112](https://github.com/stainless-api/upload-openapi-spec-action/issues/112)) ([b631d55](https://github.com/stainless-api/upload-openapi-spec-action/commit/b631d55463f3dcecc5a43a66f8404cb409d60deb))
+* **preview:** guess against given branch if it exists ([#114](https://github.com/stainless-api/upload-openapi-spec-action/issues/114)) ([10b507a](https://github.com/stainless-api/upload-openapi-spec-action/commit/10b507ae30d9ca060870fa236b790b5fde90c345))
+
 ## [1.5.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.1...v1.5.0) (2025-09-08)
 
 
