@@ -33579,12 +33579,25 @@ async function* runBuilds({
   if (!configContent) {
     if (guessConfig) {
       console.log("Guessing config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.guess({
-          branch: branchFrom,
-          spec: oasContent
-        })
-      )[0]?.content;
+      if (
+        // If the `branch` already exists, we should guess against it, in case
+        // there were changes made via the studio.
+        branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200
+      ) {
+        configContent = Object.values(
+          await stainless.projects.configs.guess({
+            branch,
+            spec: oasContent
+          })
+        )[0]?.content;
+      } else {
+        configContent = Object.values(
+          await stainless.projects.configs.guess({
+            branch: branchFrom,
+            spec: oasContent
+          })
+        )[0]?.content;
+      }
     } else {
       console.log("Saving config before branch reset");
       configContent = Object.values(
