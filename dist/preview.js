@@ -9606,13 +9606,8 @@ var require_api_request = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { callback, opaque, abort, context: context3, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { callback, opaque, abort, context: context2, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -9766,13 +9761,8 @@ var require_api_stream = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { factory, opaque, context: context3, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { factory, opaque, context: context2, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -19684,11 +19674,7 @@ var require_core = __commonJS({
       process.env["PATH"] = `${inputPath}${path4.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
-<<<<<<< HEAD
-    function getInput4(name, options) {
-=======
     function getInput3(name, options) {
->>>>>>> main
       const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
       if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
@@ -19698,15 +19684,9 @@ var require_core = __commonJS({
       }
       return val.trim();
     }
-<<<<<<< HEAD
-    exports2.getInput = getInput4;
-    function getMultilineInput(name, options) {
-      const inputs = getInput4(name, options).split("\n").filter((x) => x !== "");
-=======
     exports2.getInput = getInput3;
     function getMultilineInput(name, options) {
       const inputs = getInput3(name, options).split("\n").filter((x) => x !== "");
->>>>>>> main
       if (options && options.trimWhitespace === false) {
         return inputs;
       }
@@ -19716,11 +19696,7 @@ var require_core = __commonJS({
     function getBooleanInput3(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
-<<<<<<< HEAD
-      const val = getInput4(name, options);
-=======
       const val = getInput3(name, options);
->>>>>>> main
       if (trueValue.includes(val))
         return true;
       if (falseValue.includes(val))
@@ -19771,19 +19747,6 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
       process.stdout.write(message + os.EOL);
     }
     exports2.info = info;
-<<<<<<< HEAD
-    function startGroup(name) {
-      (0, command_1.issue)("group", name);
-    }
-    exports2.startGroup = startGroup;
-    function endGroup() {
-      (0, command_1.issue)("endgroup");
-    }
-    exports2.endGroup = endGroup;
-    function group(name, fn) {
-      return __awaiter(this, void 0, void 0, function* () {
-        startGroup(name);
-=======
     function startGroup3(name) {
       (0, command_1.issue)("group", name);
     }
@@ -19795,16 +19758,11 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
     function group(name, fn) {
       return __awaiter(this, void 0, void 0, function* () {
         startGroup3(name);
->>>>>>> main
         let result;
         try {
           result = yield fn();
         } finally {
-<<<<<<< HEAD
-          endGroup();
-=======
           endGroup3();
->>>>>>> main
         }
         return result;
       });
@@ -29172,7 +29130,7 @@ var require_dist = __commonJS({
 
 // src/compat.ts
 var core = __toESM(require_core());
-var github = __toESM(require_github());
+var github2 = __toESM(require_github());
 
 // node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
@@ -29203,23 +29161,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-<<<<<<< HEAD
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
-var uuid4 = function() {
-  const { crypto: crypto2 } = globalThis;
-  if (crypto2?.randomUUID) {
-    uuid4 = crypto2.randomUUID.bind(crypto2);
-    return crypto2.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/sdk/internal/errors.mjs
-=======
 // node_modules/@stainless-api/github-internal/internal/errors.mjs
->>>>>>> main
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -29402,11 +29344,11 @@ var parseLogLevel = (maybeLevel, sourceName, client) => {
 };
 function noop() {
 }
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+function makeLogFn(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
     return noop;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger = {
@@ -29417,22 +29359,22 @@ var noopLogger = {
 };
 var cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger;
   }
-  const cachedLogger = cachedLoggers.get(logger);
+  const cachedLogger = cachedLoggers.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
+    error: makeLogFn("error", logger2, logLevel),
+    warn: makeLogFn("warn", logger2, logLevel),
+    info: makeLogFn("info", logger2, logLevel),
+    debug: makeLogFn("debug", logger2, logLevel)
   };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
+  cachedLoggers.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails = (details) => {
@@ -30016,13 +29958,13 @@ var Comments = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
 var uuid4 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid4 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid4 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
@@ -30579,83 +30521,8 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-<<<<<<< HEAD
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
-var levelNumbers = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn(levelNumbers, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
-  return void 0;
-};
-function noop() {
-}
-function makeLogFn(fnLevel, logger2, logLevel) {
-  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
-    return noop;
-  } else {
-    return logger2[fnLevel].bind(logger2);
-  }
-}
-var noopLogger = {
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop
-};
-var cachedLoggers = /* @__PURE__ */ new WeakMap();
-function loggerFor(client) {
-  const logger2 = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger2) {
-    return noopLogger;
-  }
-  const cachedLogger = cachedLoggers.get(logger2);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn("error", logger2, logLevel),
-    warn: makeLogFn("warn", logger2, logLevel),
-    info: makeLogFn("info", logger2, logLevel),
-    debug: makeLogFn("debug", logger2, logLevel)
-  };
-  cachedLoggers.set(logger2, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-=======
 // node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
->>>>>>> main
 
 // node_modules/@stainless-api/github-internal/internal/utils/env.mjs
 var readEnv = (env) => {
@@ -31101,11 +30968,95 @@ function createClient(options) {
   return client;
 }
 
+// src/logger.ts
+var util = __toESM(require("node:util"));
+var levelNumbers2 = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var levelStrs = {
+  off: "\x1B[90moff  \x1B[39m",
+  error: "\x1B[31merror\x1B[39m",
+  warn: "\x1B[33mwarn \x1B[39m",
+  info: "\x1B[34minfo \x1B[39m",
+  debug: "\x1B[90mdebug\x1B[39m"
+};
+function noop2() {
+}
+function logGitHub(level, msg, arg) {
+  let obj = {};
+  if (arg && typeof arg === "object") {
+    obj = arg;
+  } else if (arg) {
+    msg = `${msg} ${arg}`;
+  }
+  const now = /* @__PURE__ */ new Date();
+  const msgStr = [
+    "\x1B[90m[",
+    now.getHours().toString().padStart(2, "0"),
+    ":",
+    now.getMinutes().toString().padStart(2, "0"),
+    ":",
+    now.getSeconds().toString().padStart(2, "0"),
+    ".",
+    now.getMilliseconds().toString().padStart(3, "0"),
+    "]\x1B[39m ",
+    levelStrs[level],
+    " ",
+    msg
+  ].join("");
+  const msgLines = Object.entries(obj).flatMap(([key, value]) => {
+    const lines = util.inspect(value, { colors: true, compact: false, depth: null }).replace(/\\\\/gi, "\\").split("\n").map((line, i) => i === 0 ? line : "  " + line);
+    const keyStr = `\x1B[35m${key}\x1B[39m`;
+    if (lines.length > 0) {
+      lines[0] = `  ${keyStr}:${lines[0].startsWith("\n") ? "" : " "}${lines[0]}`;
+    }
+    return lines;
+  });
+  msgLines.unshift(`::group::${msgStr}`);
+  msgLines.push(`::endgroup::`);
+  console.info(msgLines.join("\n"));
+}
+function makeLogFn2(level, maxLevel) {
+  if (levelNumbers2[level] > levelNumbers2[maxLevel]) {
+    return noop2;
+  }
+  return logGitHub.bind(null, level);
+}
+function getLogger() {
+  const maybeLogLevel = getInput("log_level", { required: false });
+  const [level, shouldWarn] = (() => {
+    if (!maybeLogLevel) {
+      return ["info", false];
+    }
+    if (maybeLogLevel in levelNumbers2) {
+      return [maybeLogLevel, false];
+    }
+    return ["info", true];
+  })();
+  const logger2 = {
+    error: makeLogFn2("error", level),
+    warn: makeLogFn2("warn", level),
+    info: makeLogFn2("info", level),
+    debug: makeLogFn2("debug", level)
+  };
+  if (shouldWarn) {
+    logger2.warn(
+      `got log level ${maybeLogLevel}, expected one of ${Object.keys(levelNumbers2)}`
+    );
+  }
+  return logger2;
+}
+var logger = getLogger();
+
 // src/compat.ts
 function isGitLabCI() {
   return process.env["GITLAB_CI"] === "true";
 }
-function getInput2(name, options) {
+function getInput(name, options) {
   if (isGitLabCI()) {
     const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
     if (options?.required && !value) {
@@ -31128,8 +31079,8 @@ function getBooleanInput2(name, options) {
   }
 }
 function getGitHostToken() {
-  const token = getInput2(isGitLabCI() ? "gitlab_token" : "github_token");
-  if (getInput2("make_comment") && !token) {
+  const token = getInput(isGitLabCI() ? "gitlab_token" : "github_token");
+  if (getInput("make_comment") && !token) {
     throw new Error(
       `${isGitLabCI() ? "GITLAB_TOKEN" : "github_token"} is required to make a comment`
     );
@@ -31137,13 +31088,13 @@ function getGitHostToken() {
   return token;
 }
 function getPRNumber() {
-  if (getInput2("make_comment") && isGitLabCI()) {
+  if (getInput("make_comment") && isGitLabCI()) {
     if (!process.env["MR_NUMBER"]) {
       throw new Error("MR_NUMBER is required to make a comment");
     }
     return parseInt(process.env["MR_NUMBER"]);
   } else {
-    return github.context.payload.pull_request.number;
+    return github2.context.payload.pull_request.number;
   }
 }
 function setOutput2(name, value) {
@@ -31156,19 +31107,19 @@ function isPullRequestOpenedEvent() {
   if (isGitLabCI()) {
     return process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened";
   } else {
-    return github.context.payload.action === "opened";
+    return github2.context.payload.action === "opened";
   }
 }
 function startGroup2(id, name) {
   if (isGitLabCI()) {
-    console.log(`\x1B[0Ksection_start:${Date.now()}:${id}\r\x1B[0K${name}`);
+    logger.info(`\x1B[0Ksection_start:${Date.now()}:${id}\r\x1B[0K${name}`);
   } else {
     core.startGroup(name);
   }
 }
 function endGroup2(id) {
   if (isGitLabCI()) {
-    console.log(`\x1B[0Ksection_end:${Date.now()}:${id}\r\x1B[0K`);
+    logger.info(`\x1B[0Ksection_end:${Date.now()}:${id}\r\x1B[0K`);
   } else {
     core.endGroup();
   }
@@ -31202,8 +31153,8 @@ var GitHubCommentClient = class {
   constructor(token, prNumber) {
     this.client = createClient({
       authToken: token,
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: github2.context.repo.owner,
+      repo: github2.context.repo.repo,
       resources: [Comments]
     });
     this.prNumber = prNumber;
@@ -31297,13 +31248,13 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
 
 // node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid42 = function() {
-  const { crypto } = globalThis;
-  if (crypto?.randomUUID) {
-    uuid42 = crypto.randomUUID.bind(crypto);
-    return crypto.randomUUID();
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid42 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto ? () => crypto.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
@@ -31467,655 +31418,7 @@ var safeJSON2 = (text) => {
   }
 };
 
-<<<<<<< HEAD
-// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
-var levelNumbers2 = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel2 = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn2(levelNumbers2, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
-  return void 0;
-};
-function noop2() {
-}
-function makeLogFn2(fnLevel, logger2, logLevel) {
-  if (!logger2 || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
-    return noop2;
-  } else {
-    return logger2[fnLevel].bind(logger2);
-  }
-}
-var noopLogger2 = {
-  error: noop2,
-  warn: noop2,
-  info: noop2,
-  debug: noop2
-};
-var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
-function loggerFor2(client) {
-  const logger2 = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger2) {
-    return noopLogger2;
-  }
-  const cachedLogger = cachedLoggers2.get(logger2);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn2("error", logger2, logLevel),
-    warn: makeLogFn2("warn", logger2, logLevel),
-    info: makeLogFn2("info", logger2, logLevel),
-    debug: makeLogFn2("debug", logger2, logLevel)
-  };
-  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails2 = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-
-// node_modules/@stainless-api/github-internal/internal/parse.mjs
-async function defaultParseResponse2(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/github-internal/core/api-promise.mjs
-var _APIPromise_client2;
-var APIPromise2 = /* @__PURE__ */ (() => {
-  class APIPromise3 extends Promise {
-    constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
-      super((resolve) => {
-        resolve(null);
-      });
-      this.responsePromise = responsePromise;
-      this.parseResponse = parseResponse;
-      _APIPromise_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
-    }
-    _thenUnwrap(transform) {
-      return new APIPromise3(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-    }
-    /**
-     * Gets the raw `Response` instance instead of parsing the response
-     * data.
-     *
-     * If you want to parse the response body but still get the `Response`
-     * instance, you can use {@link withResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    asResponse() {
-      return this.responsePromise.then((p) => p.response);
-    }
-    /**
-     * Gets the parsed response data and the raw `Response` instance.
-     *
-     * If you just want to get the raw `Response` instance without parsing it,
-     * you can use {@link asResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    async withResponse() {
-      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-      return { data, response };
-    }
-    parse() {
-      if (!this.parsedPromise) {
-        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
-      }
-      return this.parsedPromise;
-    }
-    then(onfulfilled, onrejected) {
-      return this.parse().then(onfulfilled, onrejected);
-    }
-    catch(onrejected) {
-      return this.parse().catch(onrejected);
-    }
-    finally(onfinally) {
-      return this.parse().finally(onfinally);
-    }
-  }
-  _APIPromise_client2 = /* @__PURE__ */ new WeakMap();
-  return APIPromise3;
-})();
-
-// node_modules/@stainless-api/github-internal/core/pagination.mjs
-var _AbstractPage_client2;
-var AbstractPage2 = /* @__PURE__ */ (() => {
-  class AbstractPage3 {
-    constructor(client, response, body, options) {
-      _AbstractPage_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
-      this.options = options;
-      this.response = response;
-      this.body = body;
-    }
-    hasNextPage() {
-      const items = this.getPaginatedItems();
-      if (!items.length)
-        return false;
-      return this.nextPageRequestOptions() != null;
-    }
-    async getNextPage() {
-      const nextOptions = this.nextPageRequestOptions();
-      if (!nextOptions) {
-        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-      }
-      return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
-    }
-    async *iterPages() {
-      let page = this;
-      yield page;
-      while (page.hasNextPage()) {
-        page = await page.getNextPage();
-        yield page;
-      }
-    }
-    async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-      for await (const page of this.iterPages()) {
-        for (const item of page.getPaginatedItems()) {
-          yield item;
-        }
-      }
-    }
-  }
-  return AbstractPage3;
-})();
-var PagePromise2 = /* @__PURE__ */ (() => {
-  class PagePromise3 extends APIPromise2 {
-    constructor(client, request, Page2) {
-      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
-    }
-    /**
-     * Allow auto-paginating iteration on an unawaited list call, eg:
-     *
-     *    for await (const item of client.items.list()) {
-     *      console.log(item)
-     *    }
-     */
-    async *[Symbol.asyncIterator]() {
-      const page = await this;
-      for await (const item of page) {
-        yield item;
-      }
-    }
-  }
-  return PagePromise3;
-})();
-var NumberedPage = class extends AbstractPage2 {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body || [];
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const query = this.options.query;
-    const currentPage = query?.page ?? 1;
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj2(this.options.query),
-        page: currentPage + 1
-      }
-    };
-  }
-};
-
-// node_modules/@stainless-api/github-internal/internal/headers.mjs
-var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders2(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders2 in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray2(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders2 = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders2(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
-function encodeURIPath2(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path4(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path5 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path5.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new GitHubError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path5}
-${underline}`);
-  }
-  return path5;
-};
-var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
-var BaseReactions = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
-    /**
-     * Create a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     * A response with an HTTP `200` status means that you already added the reaction
-     * type to this issue comment.
-     *
-     * @example
-     * ```ts
-     * const reaction =
-     *   await client.repos.issues.comments.reactions.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     content: 'heart',
-     *   });
-     * ```
-     */
-    create(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * List the reactions to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const reactionListResponse of client.repos.issues.comments.reactions.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
-    }
-    /**
-     * > [!NOTE] You can also specify a repository by `repository_id` using the route
-     * > `DELETE delete /repositories/:repository_id/issues/comments/:comment_id/reactions/:reaction_id`.
-     *
-     * Delete a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.reactions.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   comment_id: 0,
-     * });
-     * ```
-     */
-    delete(reactionID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
-    }
-  }
-  BaseReactions8._key = Object.freeze(["repos", "issues", "comments", "reactions"]);
-  return BaseReactions8;
-})();
-var Reactions = class extends BaseReactions {
-};
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
-var BaseComments = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
-    /**
-     * You can use the REST API to create comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    create(issueNumber, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * You can use the REST API to get comments on issues and pull requests. Every pull
-     * request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.retrieve(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *   });
-     * ```
-     */
-    retrieve(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
-    }
-    /**
-     * You can use the REST API to update comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.update(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    update(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        body,
-        ...options
-      });
-    }
-    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
-      const comments = await this.list(issueNumber);
-      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
-      if (match) {
-        return this.update(match.id, updateParams, options);
-      } else {
-        return this.create(issueNumber, createParams, options);
-      }
-    }
-    /**
-     * You can use the REST API to list comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * Issue comments are ordered by ascending ID.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const issueComment of client.repos.issues.comments.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(issueNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
-    }
-    /**
-     * You can use the REST API to delete comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * });
-     * ```
-     */
-    delete(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
-      });
-    }
-  }
-  BaseComments7._key = Object.freeze(["repos", "issues", "comments"]);
-  return BaseComments7;
-})();
-var Comments = /* @__PURE__ */ (() => {
-  class Comments7 extends BaseComments {
-    constructor() {
-      super(...arguments);
-      this.reactions = new Reactions(this._client);
-    }
-  }
-  Comments7.Reactions = Reactions;
-  Comments7.BaseReactions = BaseReactions;
-  return Comments7;
-})();
-
-// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
-var uuid42 = function() {
-  const { crypto: crypto2 } = globalThis;
-  if (crypto2?.randomUUID) {
-    uuid42 = crypto2.randomUUID.bind(crypto2);
-    return crypto2.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
-=======
 // node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
->>>>>>> main
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // node_modules/@stainless-api/sdk/version.mjs
@@ -32669,7 +31972,7 @@ function stringify2(object, opts = {}) {
 }
 
 // node_modules/@stainless-api/sdk/internal/utils/log.mjs
-var levelNumbers2 = {
+var levelNumbers3 = {
   off: 0,
   error: 200,
   warn: 300,
@@ -32680,45 +31983,45 @@ var parseLogLevel2 = (maybeLevel, sourceName, client) => {
   if (!maybeLevel) {
     return void 0;
   }
-  if (hasOwn2(levelNumbers2, maybeLevel)) {
+  if (hasOwn2(levelNumbers3, maybeLevel)) {
     return maybeLevel;
   }
-  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
+  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers3))}`);
   return void 0;
 };
-function noop2() {
+function noop3() {
 }
-function makeLogFn2(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
-    return noop2;
+function makeLogFn3(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers3[fnLevel] > levelNumbers3[logLevel]) {
+    return noop3;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger2 = {
-  error: noop2,
-  warn: noop2,
-  info: noop2,
-  debug: noop2
+  error: noop3,
+  warn: noop3,
+  info: noop3,
+  debug: noop3
 };
 var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
 function loggerFor2(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger2;
   }
-  const cachedLogger = cachedLoggers2.get(logger);
+  const cachedLogger = cachedLoggers2.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn2("error", logger, logLevel),
-    warn: makeLogFn2("warn", logger, logLevel),
-    info: makeLogFn2("info", logger, logLevel),
-    debug: makeLogFn2("debug", logger, logLevel)
+    error: makeLogFn3("error", logger2, logLevel),
+    warn: makeLogFn3("warn", logger2, logLevel),
+    info: makeLogFn3("info", logger2, logLevel),
+    debug: makeLogFn3("debug", logger2, logLevel)
   };
-  cachedLoggers2.set(logger, [logLevel, levelLogger]);
+  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails2 = (details) => {
@@ -33716,109 +33019,6 @@ Stainless.Projects = Projects;
 Stainless.Builds = Builds2;
 Stainless.Orgs = Orgs2;
 
-// src/logger.ts
-var util = __toESM(require("node:util"));
-
-// src/compat.ts
-var core = __toESM(require_core());
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
-function getInput2(name, options) {
-  if (isGitLabCI()) {
-    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value || "";
-  } else {
-    return core.getInput(name, options);
-  }
-}
-
-// src/logger.ts
-var levelNumbers3 = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var levelStrs = {
-  off: "\x1B[90moff  \x1B[39m",
-  error: "\x1B[31merror\x1B[39m",
-  warn: "\x1B[33mwarn \x1B[39m",
-  info: "\x1B[34minfo \x1B[39m",
-  debug: "\x1B[90mdebug\x1B[39m"
-};
-function noop3() {
-}
-function logGitHub(level, msg, arg) {
-  let obj = {};
-  if (arg && typeof arg === "object") {
-    obj = arg;
-  } else if (arg) {
-    msg = `${msg} ${arg}`;
-  }
-  const now = /* @__PURE__ */ new Date();
-  const msgStr = [
-    "\x1B[90m[",
-    now.getHours().toString().padStart(2, "0"),
-    ":",
-    now.getMinutes().toString().padStart(2, "0"),
-    ":",
-    now.getSeconds().toString().padStart(2, "0"),
-    ".",
-    now.getMilliseconds().toString().padStart(3, "0"),
-    "]\x1B[39m ",
-    levelStrs[level],
-    " ",
-    msg
-  ].join("");
-  const msgLines = Object.entries(obj).flatMap(([key, value]) => {
-    const lines = util.inspect(value, { colors: true, compact: false, depth: null }).replace(/\\\\/gi, "\\").split("\n").map((line, i) => i === 0 ? line : "  " + line);
-    const keyStr = `\x1B[35m${key}\x1B[39m`;
-    if (lines.length > 0) {
-      lines[0] = `  ${keyStr}:${lines[0].startsWith("\n") ? "" : " "}${lines[0]}`;
-    }
-    return lines;
-  });
-  msgLines.unshift(`::group::${msgStr}`);
-  msgLines.push(`::endgroup::`);
-  console.info(msgLines.join("\n"));
-}
-function makeLogFn3(level, maxLevel) {
-  if (levelNumbers3[level] > levelNumbers3[maxLevel]) {
-    return noop3;
-  }
-  return logGitHub.bind(null, level);
-}
-function getLogger() {
-  const maybeLogLevel = getInput2("log_level", { required: false });
-  const [level, shouldWarn] = (() => {
-    if (!maybeLogLevel) {
-      return ["info", false];
-    }
-    if (maybeLogLevel in levelNumbers3) {
-      return [maybeLogLevel, false];
-    }
-    return ["info", true];
-  })();
-  const logger2 = {
-    error: makeLogFn3("error", level),
-    warn: makeLogFn3("warn", level),
-    info: makeLogFn3("info", level),
-    debug: makeLogFn3("debug", level)
-  };
-  if (shouldWarn) {
-    logger2.warn(
-      `got log level ${maybeLogLevel}, expected one of ${Object.keys(levelNumbers3)}`
-    );
-  }
-  return logger2;
-}
-var logger = getLogger();
-
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
@@ -34289,42 +33489,21 @@ async function upsertComment({
   prNumber,
   skipCreate = false
 }) {
-<<<<<<< HEAD
-  const client = createClient({
-    authToken: token,
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    resources: [Comments]
-  });
-  logger.info("Upserting comment on PR", { pr: github.context.issue.number });
-  const { data: comments } = await client.repos.issues.comments.list(
-    github.context.issue.number
-  );
-=======
   const client = createCommentClient(token, prNumber);
-  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
+  logger.info(`Upserting comment on ${getPRTerm()}`, {
+    pr: github.context.issue.number
+  });
   const comments = await client.listComments();
->>>>>>> main
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
-<<<<<<< HEAD
     logger.info("Updating existing comment", { id: existingComment.id });
-    await client.repos.issues.comments.update(existingComment.id, { body });
-  } else if (!skipCreate) {
-    logger.info("Creating new comment");
-    await client.repos.issues.comments.create(github.context.issue.number, {
-      body
-    });
-=======
-    console.log("Updating existing comment:", existingComment.id);
     await client.updateComment(existingComment.id, body);
   } else if (!skipCreate) {
-    console.log("Creating new comment");
+    logger.info("Creating new comment");
     await client.createComment(body);
->>>>>>> main
   }
 }
 function areCommentsEqual(a, b) {
@@ -34348,7 +33527,7 @@ var CONVENTIONAL_COMMIT_REGEX = new RegExp(
 );
 function makeCommitMessageConventional(message) {
   if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    console.warn(
+    logger.warn(
       `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
     );
     return `feat: ${message}`;
@@ -34435,10 +33614,6 @@ async function readConfig({
   await addToResults("oas", oasPath, "git");
   await addToResults("config", configPath, "git");
   try {
-<<<<<<< HEAD
-    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
-    await addToResults("config", getSavedFilePath("config", sha), "saved");
-=======
     await addToResults(
       "oas",
       getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
@@ -34449,7 +33624,6 @@ async function readConfig({
       getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
       `saved ${sha}`
     );
->>>>>>> main
   } catch {
     logger.info("Could not get config from saved file path");
   }
@@ -34526,16 +33700,7 @@ async function isConfigChanged({
 }
 
 // src/runBuilds.ts
-<<<<<<< HEAD
 var crypto = __toESM(require("node:crypto"));
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-var isValidConventionalCommitMessage = (message) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-=======
->>>>>>> main
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 10 * 60;
 async function* runBuilds({
@@ -34566,17 +33731,7 @@ async function* runBuilds({
   if (branchFrom && mergeBranch) {
     throw new Error("Cannot specify both branch_from and merge_branch");
   }
-<<<<<<< HEAD
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    logger.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    commitMessage = `feat: ${commitMessage}`;
-  }
-  if (!baseRevision) {
-=======
   if (!branchFrom) {
->>>>>>> main
     const build = await stainless.builds.create(
       {
         project: projectName,
@@ -34638,31 +33793,19 @@ async function* runBuilds({
       });
     }
   }
-<<<<<<< HEAD
-  const branchObj = await stainless.projects.branches.create({
-    branch_from: baseRevision,
-    branch,
-    force: true
-  });
-  logger.info(`Hard reset ${branch}`, {
-    baseRevision,
-    configCommit: branchObj.config_commit
-  });
-=======
-  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch,
     force: true
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.info(`Hard reset ${branch}, now at ${config_commit.sha}`);
   const { config_commit: base_config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: baseBranch,
     force: true
   });
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
->>>>>>> main
+  logger.info(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
   const { base, head } = await stainless.builds.compare(
     {
       base: {
@@ -34886,21 +34029,21 @@ function checkResults({
 // src/preview.ts
 async function main() {
   try {
-    const apiKey = getInput2("stainless_api_key", { required: true });
-    const orgName = getInput2("org", { required: true });
-    const projectName = getInput2("project", { required: true });
-    const oasPath = getInput2("oas_path", { required: false }) || void 0;
-    const configPath = getInput2("config_path", { required: false }) || void 0;
-    const defaultCommitMessage = getInput2("commit_message", { required: true });
-    const failRunOn = getInput2("fail_on", { required: true }) || "error";
+    const apiKey = getInput("stainless_api_key", { required: true });
+    const orgName = getInput("org", { required: true });
+    const projectName = getInput("project", { required: true });
+    const oasPath = getInput("oas_path", { required: false }) || void 0;
+    const configPath = getInput("config_path", { required: false }) || void 0;
+    const defaultCommitMessage = getInput("commit_message", { required: true });
+    const failRunOn = getInput("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput2("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
-    const baseSha = getInput2("base_sha", { required: true });
-    const baseRef = getInput2("base_ref", { required: true });
-    const baseBranch = getInput2("base_branch", { required: true });
-    const defaultBranch = getInput2("default_branch", { required: true });
-    const headSha = getInput2("head_sha", { required: true });
-    const branch = getInput2("branch", { required: true });
+    const baseSha = getInput("base_sha", { required: true });
+    const baseRef = getInput("base_ref", { required: true });
+    const baseBranch = getInput("base_branch", { required: true });
+    const defaultBranch = getInput("default_branch", { required: true });
+    const headSha = getInput("head_sha", { required: true });
+    const branch = getInput("branch", { required: true });
     const prNumber = getPRNumber();
     const { savedSha } = await saveConfig({
       oasPath,
@@ -34916,10 +34059,7 @@ async function main() {
       apiKey,
       logger
     });
-<<<<<<< HEAD
-=======
     startGroup2("parent-revision", "Getting parent revision");
->>>>>>> main
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
       baseRef,
@@ -34936,14 +34076,9 @@ async function main() {
       after: headConfig
     });
     if (!configChanged) {
-<<<<<<< HEAD
       logger.info("No config files changed, skipping preview");
-      if (github2.context.payload.pull_request.action !== "opened" && makeComment) {
-=======
-      console.log("No config files changed, skipping preview");
       if (isPullRequestOpenedEvent() && makeComment) {
         startGroup2("update-comment", "Updating comment");
->>>>>>> main
         const commentBody = printComment({ noChanges: true });
         await upsertComment({
           body: commentBody,
@@ -34951,10 +34086,7 @@ async function main() {
           skipCreate: true,
           prNumber
         });
-<<<<<<< HEAD
-=======
         endGroup2("update-comment");
->>>>>>> main
       }
       return;
     }
@@ -34966,10 +34098,7 @@ async function main() {
       oasPath,
       configPath
     });
-<<<<<<< HEAD
-=======
     endGroup2("parent-revision");
->>>>>>> main
     let commitMessage = defaultCommitMessage;
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken, prNumber });
@@ -34977,12 +34106,8 @@ async function main() {
         commitMessage = comment.commitMessage;
       }
     }
-<<<<<<< HEAD
-    logger.info("Using commit message:", commitMessage);
-=======
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
->>>>>>> main
+    logger.info("Using commit message:", commitMessage);
     const generator = runBuilds({
       stainless,
       oasContent: headConfig.oas,

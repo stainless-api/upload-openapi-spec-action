@@ -5736,11 +5736,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-<<<<<<< HEAD
-        this.path = query ? util2.buildURL(path2, query) : path2;
-=======
-        this.path = query ? util.buildURL(path3, query) : path3;
->>>>>>> main
+        this.path = query ? util2.buildURL(path3, query) : path3;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -6747,13 +6743,8 @@ var require_RedirectHandler = __commonJS({
         if (!this.location) {
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
-<<<<<<< HEAD
         const { origin, pathname, search } = util2.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path2 = search ? `${pathname}${search}` : pathname;
-=======
-        const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
         const path3 = search ? `${pathname}${search}` : pathname;
->>>>>>> main
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
         this.opts.path = path3;
         this.opts.origin = origin;
@@ -9210,13 +9201,8 @@ var require_readable = __commonJS({
     var assert = require("assert");
     var { Readable } = require("stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError } = require_errors();
-<<<<<<< HEAD
     var util2 = require_util();
-    var { ReadableStreamFrom, toUSVString } = require_util();
-=======
-    var util = require_util();
     var { ReadableStreamFrom: ReadableStreamFrom2, toUSVString } = require_util();
->>>>>>> main
     var Blob2;
     var kConsume = Symbol("kConsume");
     var kReading = Symbol("kReading");
@@ -9365,13 +9351,8 @@ var require_readable = __commonJS({
     function isLocked(self2) {
       return self2[kBody] && self2[kBody].locked === true || self2[kConsume];
     }
-<<<<<<< HEAD
-    function isUnusable(self) {
-      return util2.isDisturbed(self) || isLocked(self);
-=======
     function isUnusable(self2) {
-      return util.isDisturbed(self2) || isLocked(self2);
->>>>>>> main
+      return util2.isDisturbed(self2) || isLocked(self2);
     }
     async function consume(stream, type) {
       if (isUnusable(stream)) {
@@ -9625,13 +9606,8 @@ var require_api_request = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { callback, opaque, abort, context, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { callback, opaque, abort, context: context2, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -9785,13 +9761,8 @@ var require_api_stream = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { factory, opaque, context, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { factory, opaque, context: context2, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -17238,11 +17209,7 @@ var require_undici = __commonJS({
           if (!opts.path.startsWith("/")) {
             path3 = `/${path3}`;
           }
-<<<<<<< HEAD
-          url = new URL(util2.parseOrigin(url).origin + path2);
-=======
-          url = new URL(util.parseOrigin(url).origin + path3);
->>>>>>> main
+          url = new URL(util2.parseOrigin(url).origin + path3);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -19707,11 +19674,7 @@ var require_core = __commonJS({
       process.env["PATH"] = `${inputPath}${path3.delimiter}${process.env["PATH"]}`;
     }
     exports2.addPath = addPath;
-<<<<<<< HEAD
-    function getInput4(name, options) {
-=======
     function getInput3(name, options) {
->>>>>>> main
       const val = process.env[`INPUT_${name.replace(/ /g, "_").toUpperCase()}`] || "";
       if (options && options.required && !val) {
         throw new Error(`Input required and not supplied: ${name}`);
@@ -19721,15 +19684,9 @@ var require_core = __commonJS({
       }
       return val.trim();
     }
-<<<<<<< HEAD
-    exports2.getInput = getInput4;
-    function getMultilineInput(name, options) {
-      const inputs = getInput4(name, options).split("\n").filter((x) => x !== "");
-=======
     exports2.getInput = getInput3;
     function getMultilineInput(name, options) {
       const inputs = getInput3(name, options).split("\n").filter((x) => x !== "");
->>>>>>> main
       if (options && options.trimWhitespace === false) {
         return inputs;
       }
@@ -19739,11 +19696,7 @@ var require_core = __commonJS({
     function getBooleanInput2(name, options) {
       const trueValue = ["true", "True", "TRUE"];
       const falseValue = ["false", "False", "FALSE"];
-<<<<<<< HEAD
-      const val = getInput4(name, options);
-=======
       const val = getInput3(name, options);
->>>>>>> main
       if (trueValue.includes(val))
         return true;
       if (falseValue.includes(val))
@@ -21151,7 +21104,7 @@ var require_dist_node8 = __commonJS({
     var import_graphql = require_dist_node6();
     var import_auth_token = require_dist_node7();
     var VERSION2 = "5.2.1";
-    var noop = () => {
+    var noop2 = () => {
     };
     var consoleWarn = console.warn.bind(console);
     var consoleError = console.error.bind(console);
@@ -21230,8 +21183,8 @@ var require_dist_node8 = __commonJS({
         this.graphql = (0, import_graphql.withCustomRequest)(this.request).defaults(requestDefaults);
         this.log = Object.assign(
           {
-            debug: noop,
-            info: noop,
+            debug: noop2,
+            info: noop2,
             warn: consoleWarn,
             error: consoleError
           },
@@ -29133,53 +29086,8 @@ var github = __toESM(require_github());
 // node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
-// src/compat.ts
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
-function getInput2(name, options) {
-  if (isGitLabCI()) {
-    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value || "";
-  } else {
-    return core.getInput(name, options);
-  }
-}
-
-// src/checkoutPRRef.ts
-var exec3 = __toESM(require_exec());
-
-// src/config.ts
-var exec = __toESM(require_exec());
-var fs = __toESM(require("node:fs"));
-var import_node_os = require("node:os");
-<<<<<<< HEAD
-var path = __toESM(require("node:path"));
-
 // src/logger.ts
 var util = __toESM(require("node:util"));
-
-// src/compat.ts
-var core = __toESM(require_core());
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
-function getInput2(name, options) {
-  if (isGitLabCI()) {
-    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value || "";
-  } else {
-    return core.getInput(name, options);
-  }
-}
-
-// src/logger.ts
 var levelNumbers = {
   off: 0,
   error: 200,
@@ -29237,7 +29145,7 @@ function makeLogFn(level, maxLevel) {
   return logGitHub.bind(null, level);
 }
 function getLogger() {
-  const maybeLogLevel = getInput2("log_level", { required: false });
+  const maybeLogLevel = getInput("log_level", { required: false });
   const [level, shouldWarn] = (() => {
     if (!maybeLogLevel) {
       return ["info", false];
@@ -29262,14 +29170,32 @@ function getLogger() {
 }
 var logger = getLogger();
 
+// src/compat.ts
+function isGitLabCI() {
+  return process.env["GITLAB_CI"] === "true";
+}
+function getInput(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value || "";
+  } else {
+    return core.getInput(name, options);
+  }
+}
+
+// src/checkoutPRRef.ts
+var exec3 = __toESM(require_exec());
+
 // src/config.ts
-function getSavedFilePath(file, sha) {
-  return path.join(
-=======
+var exec = __toESM(require_exec());
+var fs = __toESM(require("node:fs"));
+var import_node_os = require("node:os");
 var path2 = __toESM(require("node:path"));
 function getSavedFilePath(file, sha, extension) {
   return path2.join(
->>>>>>> main
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
     `${file}-${sha}.${extension}`
@@ -29356,11 +29282,11 @@ function assertRef(ref) {
 }
 async function main() {
   try {
-    const ref = getInput2("ref", { required: true });
-    const oasPath = getInput2("oas_path", { required: true });
-    const configPath = getInput2("config_path", { required: false }) || void 0;
-    const baseSha = getInput2("base_sha", { required: true });
-    const headSha = getInput2("head_sha", { required: true });
+    const ref = getInput("ref", { required: true });
+    const oasPath = getInput("oas_path", { required: true });
+    const configPath = getInput("config_path", { required: false }) || void 0;
+    const baseSha = getInput("base_sha", { required: true });
+    const headSha = getInput("head_sha", { required: true });
     assertRef(ref);
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     if (ref === "base") {

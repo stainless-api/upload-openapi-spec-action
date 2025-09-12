@@ -147,7 +147,7 @@ export async function* runBuilds({
       force: true,
     });
 
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
+  logger.info(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
 
   const { base, head } = await stainless.builds.compare(
     {

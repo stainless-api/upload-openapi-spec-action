@@ -13030,11 +13030,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-<<<<<<< HEAD
-        this.path = query ? util2.buildURL(path2, query) : path2;
-=======
-        this.path = query ? util.buildURL(path3, query) : path3;
->>>>>>> main
+        this.path = query ? util2.buildURL(path3, query) : path3;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -14041,13 +14037,8 @@ var require_RedirectHandler = __commonJS({
         if (!this.location) {
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
-<<<<<<< HEAD
         const { origin, pathname, search } = util2.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path2 = search ? `${pathname}${search}` : pathname;
-=======
-        const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
         const path3 = search ? `${pathname}${search}` : pathname;
->>>>>>> main
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
         this.opts.path = path3;
         this.opts.origin = origin;
@@ -16504,13 +16495,8 @@ var require_readable = __commonJS({
     var assert = require("assert");
     var { Readable } = require("stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError } = require_errors2();
-<<<<<<< HEAD
     var util2 = require_util();
-    var { ReadableStreamFrom: ReadableStreamFrom2, toUSVString } = require_util();
-=======
-    var util = require_util();
     var { ReadableStreamFrom: ReadableStreamFrom3, toUSVString } = require_util();
->>>>>>> main
     var Blob2;
     var kConsume = Symbol("kConsume");
     var kReading = Symbol("kReading");
@@ -16659,13 +16645,8 @@ var require_readable = __commonJS({
     function isLocked(self2) {
       return self2[kBody] && self2[kBody].locked === true || self2[kConsume];
     }
-<<<<<<< HEAD
-    function isUnusable(self) {
-      return util2.isDisturbed(self) || isLocked(self);
-=======
     function isUnusable(self2) {
-      return util.isDisturbed(self2) || isLocked(self2);
->>>>>>> main
+      return util2.isDisturbed(self2) || isLocked(self2);
     }
     async function consume(stream, type) {
       if (isUnusable(stream)) {
@@ -16919,13 +16900,8 @@ var require_api_request = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { callback, opaque, abort, context, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { callback, opaque, abort, context: context2, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -17079,13 +17055,8 @@ var require_api_stream = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { factory, opaque, context, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { factory, opaque, context: context2, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -24532,11 +24503,7 @@ var require_undici = __commonJS({
           if (!opts.path.startsWith("/")) {
             path3 = `/${path3}`;
           }
-<<<<<<< HEAD
-          url = new URL(util2.parseOrigin(url).origin + path2);
-=======
-          url = new URL(util.parseOrigin(url).origin + path3);
->>>>>>> main
+          url = new URL(util2.parseOrigin(url).origin + path3);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -28431,7 +28398,7 @@ var require_dist_node8 = __commonJS({
     var import_graphql = require_dist_node6();
     var import_auth_token = require_dist_node7();
     var VERSION3 = "5.2.1";
-    var noop2 = () => {
+    var noop3 = () => {
     };
     var consoleWarn = console.warn.bind(console);
     var consoleError = console.error.bind(console);
@@ -28510,8 +28477,8 @@ var require_dist_node8 = __commonJS({
         this.graphql = (0, import_graphql.withCustomRequest)(this.request).defaults(requestDefaults);
         this.log = Object.assign(
           {
-            debug: noop2,
-            info: noop2,
+            debug: noop3,
+            info: noop3,
             warn: consoleWarn,
             error: consoleError
           },
@@ -38217,33 +38184,6 @@ var github = __toESM(require_github());
 // node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
-// src/compat.ts
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
-function getInput2(name, options) {
-  if (isGitLabCI()) {
-    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value || "";
-  } else {
-    return core.getInput(name, options);
-  }
-}
-function getBooleanInput2(name, options) {
-  if (isGitLabCI()) {
-    const value = process.env[`${name.toUpperCase()}`]?.toLowerCase() || process.env[`INPUT_${name.toUpperCase()}`]?.toLowerCase();
-    if (options?.required && value === void 0) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-    return value === "true";
-  } else {
-    return core.getBooleanInput(name, options);
-  }
-}
-
 // src/logger.ts
 var util = __toESM(require("node:util"));
 var levelNumbers2 = {
@@ -38303,7 +38243,7 @@ function makeLogFn2(level, maxLevel) {
   return logGitHub.bind(null, level);
 }
 function getLogger() {
-  const maybeLogLevel = getInput2("log_level", { required: false });
+  const maybeLogLevel = getInput("log_level", { required: false });
   const [level, shouldWarn] = (() => {
     if (!maybeLogLevel) {
       return ["info", false];
@@ -38328,6 +38268,33 @@ function getLogger() {
 }
 var logger = getLogger();
 
+// src/compat.ts
+function isGitLabCI() {
+  return process.env["GITLAB_CI"] === "true";
+}
+function getInput(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+    if (options?.required && !value) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value || "";
+  } else {
+    return core.getInput(name, options);
+  }
+}
+function getBooleanInput2(name, options) {
+  if (isGitLabCI()) {
+    const value = process.env[`${name.toUpperCase()}`]?.toLowerCase() || process.env[`INPUT_${name.toUpperCase()}`]?.toLowerCase();
+    if (options?.required && value === void 0) {
+      throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return value === "true";
+  } else {
+    return core.getBooleanInput(name, options);
+  }
+}
+
 // src/index.ts
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
   /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
@@ -38336,16 +38303,16 @@ var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
 async function main() {
-  const stainless_api_key = getInput2("stainless_api_key", {
+  const stainless_api_key = getInput("stainless_api_key", {
     required: true
   });
-  const inputPath = getInput2("input_path", { required: true });
-  const configPath = getInput2("config_path", { required: false });
-  let projectName = getInput2("project_name", { required: false });
-  const commitMessage = getInput2("commit_message", { required: false });
+  const inputPath = getInput("input_path", { required: true });
+  const configPath = getInput("config_path", { required: false });
+  let projectName = getInput("project_name", { required: false });
+  const commitMessage = getInput("commit_message", { required: false });
   const guessConfig = getBooleanInput2("guess_config", { required: false }) || false;
-  const branch = getInput2("branch", { required: false }) || "main";
-  const outputPath = getInput2("output_path");
+  const branch = getInput("branch", { required: false }) || "main";
+  const outputPath = getInput("output_path");
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
     (0, import_node_console.error)(errorMsg);

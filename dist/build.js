@@ -13025,11 +13025,7 @@ var require_request = __commonJS({
         this.completed = false;
         this.aborted = false;
         this.upgrade = upgrade || null;
-<<<<<<< HEAD
-        this.path = query ? util2.buildURL(path3, query) : path3;
-=======
-        this.path = query ? util.buildURL(path4, query) : path4;
->>>>>>> main
+        this.path = query ? util2.buildURL(path4, query) : path4;
         this.origin = origin;
         this.idempotent = idempotent == null ? method === "HEAD" || method === "GET" : idempotent;
         this.blocking = blocking == null ? false : blocking;
@@ -14036,13 +14032,8 @@ var require_RedirectHandler = __commonJS({
         if (!this.location) {
           return this.handler.onHeaders(statusCode, headers, resume, statusText);
         }
-<<<<<<< HEAD
         const { origin, pathname, search } = util2.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
-        const path3 = search ? `${pathname}${search}` : pathname;
-=======
-        const { origin, pathname, search } = util.parseURL(new URL(this.location, this.opts.origin && new URL(this.opts.path, this.opts.origin)));
         const path4 = search ? `${pathname}${search}` : pathname;
->>>>>>> main
         this.opts.headers = cleanRequestHeaders(this.opts.headers, statusCode === 303, this.opts.origin !== origin);
         this.opts.path = path4;
         this.opts.origin = origin;
@@ -16499,13 +16490,8 @@ var require_readable = __commonJS({
     var assert = require("assert");
     var { Readable } = require("stream");
     var { RequestAbortedError, NotSupportedError, InvalidArgumentError } = require_errors2();
-<<<<<<< HEAD
     var util2 = require_util();
-    var { ReadableStreamFrom: ReadableStreamFrom2, toUSVString } = require_util();
-=======
-    var util = require_util();
     var { ReadableStreamFrom: ReadableStreamFrom3, toUSVString } = require_util();
->>>>>>> main
     var Blob2;
     var kConsume = Symbol("kConsume");
     var kReading = Symbol("kReading");
@@ -16654,13 +16640,8 @@ var require_readable = __commonJS({
     function isLocked(self2) {
       return self2[kBody] && self2[kBody].locked === true || self2[kConsume];
     }
-<<<<<<< HEAD
-    function isUnusable(self) {
-      return util2.isDisturbed(self) || isLocked(self);
-=======
     function isUnusable(self2) {
-      return util.isDisturbed(self2) || isLocked(self2);
->>>>>>> main
+      return util2.isDisturbed(self2) || isLocked(self2);
     }
     async function consume(stream, type) {
       if (isUnusable(stream)) {
@@ -16914,13 +16895,8 @@ var require_api_request = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { callback, opaque, abort, context, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { callback, opaque, abort, context: context2, responseHeaders, highWaterMark } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -17074,13 +17050,8 @@ var require_api_stream = __commonJS({
         this.context = context2;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-<<<<<<< HEAD
-        const { factory, opaque, context, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
-=======
         const { factory, opaque, context: context2, callback, responseHeaders } = this;
-        const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
->>>>>>> main
+        const headers = responseHeaders === "raw" ? util2.parseRawHeaders(rawHeaders) : util2.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
             this.onInfo({ statusCode, headers });
@@ -24527,11 +24498,7 @@ var require_undici = __commonJS({
           if (!opts.path.startsWith("/")) {
             path4 = `/${path4}`;
           }
-<<<<<<< HEAD
-          url = new URL(util2.parseOrigin(url).origin + path3);
-=======
-          url = new URL(util.parseOrigin(url).origin + path4);
->>>>>>> main
+          url = new URL(util2.parseOrigin(url).origin + path4);
         } else {
           if (!opts) {
             opts = typeof url === "object" ? url : {};
@@ -28426,7 +28393,7 @@ var require_dist_node8 = __commonJS({
     var import_graphql = require_dist_node6();
     var import_auth_token = require_dist_node7();
     var VERSION3 = "5.2.1";
-    var noop2 = () => {
+    var noop3 = () => {
     };
     var consoleWarn = console.warn.bind(console);
     var consoleError = console.error.bind(console);
@@ -28505,8 +28472,8 @@ var require_dist_node8 = __commonJS({
         this.graphql = (0, import_graphql.withCustomRequest)(this.request).defaults(requestDefaults);
         this.log = Object.assign(
           {
-            debug: noop2,
-            info: noop2,
+            debug: noop3,
+            info: noop3,
             warn: consoleWarn,
             error: consoleError
           },
@@ -38197,19 +38164,8 @@ var fs2 = __toESM(require("node:fs"));
 var import_node_os2 = require("node:os");
 var import_yaml = __toESM(require_dist());
 
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    console.warn(
-      `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
+// src/logger.ts
+var util = __toESM(require("node:util"));
 
 // src/compat.ts
 var core = __toESM(require_core());
@@ -38251,15 +38207,7 @@ function setOutput2(name, value) {
   }
 }
 
-// src/config.ts
-var exec = __toESM(require_exec());
-var fs = __toESM(require("node:fs"));
-var import_node_os = require("node:os");
-<<<<<<< HEAD
-var path2 = __toESM(require("node:path"));
-
 // src/logger.ts
-var util = __toESM(require("node:util"));
 var levelNumbers2 = {
   off: 0,
   error: 200,
@@ -38342,14 +38290,27 @@ function getLogger() {
 }
 var logger = getLogger();
 
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
 // src/config.ts
-function getSavedFilePath(file, sha) {
-  return path2.join(
-=======
+var exec = __toESM(require_exec());
+var fs = __toESM(require("node:fs"));
+var import_node_os = require("node:os");
 var path3 = __toESM(require("node:path"));
 function getSavedFilePath(file, sha, extension) {
   return path3.join(
->>>>>>> main
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
     `${file}-${sha}.${extension}`
@@ -38387,10 +38348,6 @@ async function readConfig({
   await addToResults("oas", oasPath, "git");
   await addToResults("config", configPath, "git");
   try {
-<<<<<<< HEAD
-    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
-    await addToResults("config", getSavedFilePath("config", sha), "saved");
-=======
     await addToResults(
       "oas",
       getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
@@ -38401,7 +38358,6 @@ async function readConfig({
       getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
       `saved ${sha}`
     );
->>>>>>> main
   } catch {
     logger.info("Could not get config from saved file path");
   }
@@ -38409,16 +38365,7 @@ async function readConfig({
 }
 
 // src/runBuilds.ts
-<<<<<<< HEAD
 var crypto = __toESM(require("node:crypto"));
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
-);
-var isValidConventionalCommitMessage = (message) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-=======
->>>>>>> main
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 10 * 60;
 async function* runBuilds({
@@ -38449,17 +38396,7 @@ async function* runBuilds({
   if (branchFrom && mergeBranch) {
     throw new Error("Cannot specify both branch_from and merge_branch");
   }
-<<<<<<< HEAD
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    logger.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
-    );
-    commitMessage = `feat: ${commitMessage}`;
-  }
-  if (!baseRevision) {
-=======
   if (!branchFrom) {
->>>>>>> main
     const build = await stainless.builds.create(
       {
         project: projectName,
@@ -38521,31 +38458,19 @@ async function* runBuilds({
       });
     }
   }
-<<<<<<< HEAD
-  const branchObj = await stainless.projects.branches.create({
-    branch_from: baseRevision,
-    branch,
-    force: true
-  });
-  logger.info(`Hard reset ${branch}`, {
-    baseRevision,
-    configCommit: branchObj.config_commit
-  });
-=======
-  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch,
     force: true
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.info(`Hard reset ${branch}, now at ${config_commit.sha}`);
   const { config_commit: base_config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: baseBranch,
     force: true
   });
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
->>>>>>> main
+  logger.info(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
   const { base, head } = await stainless.builds.compare(
     {
       base: {
@@ -38789,18 +38714,13 @@ async function main() {
       logger.error("No documented spec found.");
     }
   } catch (error) {
-<<<<<<< HEAD
-    logger.error("Error interacting with API:", { error });
-    process.exit(1);
-=======
     if (error instanceof Stainless.BadRequestError && error.message.includes("No changes to commit")) {
-      console.log("No changes to commit, skipping build.");
+      logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      console.error("Error interacting with API:", error);
+      logger.error("Error interacting with API:", error);
       process.exit(1);
     }
->>>>>>> main
   }
 }
 main();
