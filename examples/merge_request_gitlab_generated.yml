@@ -1,0 +1,53 @@
+include:
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/preview/gitlab-ci.yml"
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/merge/gitlab-ci.yml"
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/checkout-pr-ref/gitlab-ci.yml"
+
+.common:
+  variables:
+    # Stainless organization name.
+    ORG: YOUR_ORG
+
+    # Stainless project name.
+    PROJECT: YOUR_PROJECT
+
+    # Path to your OpenAPI spec.
+    OAS_PATH: YOUR_OAS_PATH
+
+    # Path to your Stainless config. Optional; only provide this if you prefer
+    # to maintain the ground truth Stainless config in your own repo.
+    CONFIG_PATH: YOUR_CONFIG_PATH
+
+    # When to fail the job based on build conclusion.
+    # Options: "never" | "note" | "warning" | "error" | "fatal".
+    FAIL_ON: error
+
+    # A Stainless API key, which you can generate on the Stainless organization dashboard
+    STAINLESS_API_KEY: $STAINLESS_API_KEY
+
+    # A GitLab token with permissions to read and write merge request comments.
+    GITLAB_TOKEN: $GITLAB_TOKEN
+
+preview:
+  extends: [.common, .preview]
+  script:
+    - apk add --no-cache git
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/checkoutPRRef.js
+
+    - REF="base" node checkoutPRRef.js
+    # generate oas and save to OAS_PATH
+    # { insert your code here }
+    
+    - REF="head" node checkoutPRRef.js
+    # generate oas and save to OAS_PATH
+    # { insert your code here }
+
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/preview.js
+    - node preview.js
+  only:
+    - merge_requests
+
+merge:
+  extends: [.common, .merge]
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"

@@ -2,6 +2,7 @@ import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
+import { makeCommitMessageConventional } from "./commitMessage";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { readConfig } from "./config";
 import { logger } from "./logger";
@@ -14,8 +15,9 @@ async function main() {
     const configPath =
       getInput("config_path", { required: false }) || undefined;
     const projectName = getInput("project", { required: true });
-    const commitMessage =
-      getInput("commit_message", { required: false }) || undefined;
+    const commitMessage = makeCommitMessageConventional(
+      getInput("commit_message", { required: false }) || undefined,
+    );
     const guessConfig =
       getBooleanInput("guess_config", { required: false }) || false;
     const branch = getInput("branch", { required: false }) || "main";
@@ -50,6 +52,7 @@ async function main() {
       configContent: config.config,
       guessConfig,
       commitMessage,
+      allowEmpty: false,
     })) {
       lastValue = value;
     }
@@ -75,16 +78,21 @@ async function main() {
         ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
         : documentedSpec;
 
-      fs.writeFileSync(
-        documentedSpecOutputPath,
-        YAML.stringify(documentedSpecOutput),
-      );
+      fs.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
       logger.error("No documented spec found.");
     }
   } catch (error) {
-    logger.error("Error interacting with API:", { error });
-    process.exit(1);
+    if (
+      error instanceof Stainless.BadRequestError &&
+      error.message.includes("No changes to commit")
+    ) {
+      logger.info("No changes to commit, skipping build.");
+      process.exit(0);
+    } else {
+      logger.error("Error interacting with API:", error);
+      process.exit(1);
+    }
   }
 }
 

@@ -11,11 +11,11 @@ export type Config = {
   configHash?: string;
 };
 
-function getSavedFilePath(file: "oas" | "config", sha: string) {
+function getSavedFilePath(file: string, sha: string, extension: string) {
   return path.join(
     tmpdir(),
     "stainless-generated-config",
-    `${file}-${sha}.yml`,
+    `${file}-${sha}.${extension}`,
   );
 }
 
@@ -44,16 +44,26 @@ export async function saveConfig({
 
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
-    const savedFilePath = getSavedFilePath("oas", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "oas",
+      savedSha,
+      oasPath.split(".").pop()!,
+    );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
+    fs.rmSync(oasPath);
   }
 
   if (configPath && fs.existsSync(configPath)) {
     hasConfig = true;
-    const savedFilePath = getSavedFilePath("config", savedSha);
+    const savedFilePath = getSavedFilePath(
+      "config",
+      savedSha,
+      configPath.split(".").pop()!,
+    );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
+    fs.rmSync(configPath);
   }
 
   return { hasOAS, hasConfig, savedSha };
@@ -112,8 +122,16 @@ export async function readConfig({
   await addToResults("config", configPath, "git");
 
   try {
-    await addToResults("oas", getSavedFilePath("oas", sha), "saved");
-    await addToResults("config", getSavedFilePath("config", sha), "saved");
+    await addToResults(
+      "oas",
+      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()!),
+      `saved ${sha}`,
+    );
+    await addToResults(
+      "config",
+      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()!),
+      `saved ${sha}`,
+    );
   } catch {
     logger.info("Could not get config from saved file path");
   }

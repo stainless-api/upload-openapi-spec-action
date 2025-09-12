@@ -1,7 +1,14 @@
-import { getBooleanInput, getInput, setOutput } from "@actions/core";
+import {
+  getBooleanInput,
+  getGitHostToken,
+  getInput,
+  getPRNumber,
+  setOutput,
+} from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
+import { makeCommitMessageConventional } from "./commitMessage";
 import { isConfigChanged, readConfig } from "./config";
 import { logger } from "./logger";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
@@ -17,21 +24,24 @@ async function main() {
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const failRunOn = getInput("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const githubToken = getInput("github_token", { required: false });
+    const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
-
-    if (makeComment && !githubToken) {
-      throw new Error("github_token is required to make a comment");
-    }
+    const prNumber = getPRNumber();
 
     if (baseRef !== defaultBranch) {
       logger.info("Not merging to default branch, skipping merge");
       return;
+    }
+
+    if (makeComment && !getPRNumber()) {
+      throw new Error(
+        "This action requires a pull request number to make a comment.",
+      );
     }
 
     const stainless = new Stainless({
@@ -54,13 +64,14 @@ async function main() {
 
     let commitMessage = defaultCommitMessage;
 
-    if (makeComment && githubToken) {
-      const comment = await retrieveComment({ token: githubToken });
+    if (makeComment && gitHostToken) {
+      const comment = await retrieveComment({ token: gitHostToken, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
     }
 
+    commitMessage = makeCommitMessageConventional(commitMessage);
     logger.info("Using commit message:", commitMessage);
 
     const generator = runBuilds({
@@ -74,7 +85,7 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(githubToken);
+    const upsert = commentThrottler(gitHostToken, prNumber);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {

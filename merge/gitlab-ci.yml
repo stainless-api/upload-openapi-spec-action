@@ -1,0 +1,18 @@
+image: node:20-alpine
+
+.merge:
+  script:
+    - apk add --no-cache git
+    - export SOURCE_BRANCH=$(git log -1 --pretty=%s | sed -n "s/.*Merge branch '\([^']*\)'.*/\1/p")
+    - if [ -z "$SOURCE_BRANCH" ]; then echo "No source branch found in commit message"; exit 0; fi
+    - export MERGE_BRANCH="preview/${SOURCE_BRANCH}"
+    - export MR_NUMBER=$(git log -1 --pretty=%B | grep "See merge request" | cut -d'!' -f2)
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/merge.js
+    - node merge.js
+  variables:
+    HEAD_SHA: $CI_COMMIT_SHA
+    BASE_REF: $CI_COMMIT_REF_NAME
+    BASE_SHA: $CI_COMMIT_BEFORE_SHA
+    DEFAULT_BRANCH: $CI_DEFAULT_BRANCH
+    COMMIT_MESSAGE: $CI_COMMIT_MESSAGE
+    MAKE_COMMENT: true

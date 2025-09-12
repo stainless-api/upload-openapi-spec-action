@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.5.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.1...v1.5.0) (2025-09-08)
+
+
+### Features
+
+* env variable to swap in a gitlab staging repo URL ([#108](https://github.com/stainless-api/upload-openapi-spec-action/issues/108)) ([4a2579d](https://github.com/stainless-api/upload-openapi-spec-action/commit/4a2579d2993503bba9a1d8c7fe1264e23c483269))
+
+
+### Bug Fixes
+
+* support checkout ref for gitlab and fix some bugs ([#110](https://github.com/stainless-api/upload-openapi-spec-action/issues/110)) ([d9d20d0](https://github.com/stainless-api/upload-openapi-spec-action/commit/d9d20d05de458020b8987d899b5bbfeb2f39ffac))
+
+## [1.4.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.4.0...v1.4.1) (2025-09-05)
+
+
+### Bug Fixes
+
+* do not stringify YAML twice ([#105](https://github.com/stainless-api/upload-openapi-spec-action/issues/105)) ([5238e56](https://github.com/stainless-api/upload-openapi-spec-action/commit/5238e564a822898f088c84611f6b075f13977b55))
+
+## [1.4.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.2...v1.4.0) (2025-08-20)
+
+
+### Features
+
+* use install_url in preview comment  ([#101](https://github.com/stainless-api/upload-openapi-spec-action/issues/101)) ([a897e5c](https://github.com/stainless-api/upload-openapi-spec-action/commit/a897e5cd5229d563f47403800a7e368cf18cd428))
+
+
+### Bug Fixes
+
+* improve comment format ([#100](https://github.com/stainless-api/upload-openapi-spec-action/issues/100)) ([caaf31f](https://github.com/stainless-api/upload-openapi-spec-action/commit/caaf31fca3ed970e0a2d80b8f0242d4e1feb6a2c))
+* trigger release ([#97](https://github.com/stainless-api/upload-openapi-spec-action/issues/97)) ([309add6](https://github.com/stainless-api/upload-openapi-spec-action/commit/309add646574e0ceef714e937ce7c9f496cd18f2))
+
+## [1.3.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.1...v1.3.2) (2025-07-18)
+
+
+### Bug Fixes
+
+* trigger release ([#97](https://github.com/stainless-api/upload-openapi-spec-action/issues/97)) ([309add6](https://github.com/stainless-api/upload-openapi-spec-action/commit/309add646574e0ceef714e937ce7c9f496cd18f2))
+
 ## [1.3.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.3.0...v1.3.1) (2025-07-17)
 
 

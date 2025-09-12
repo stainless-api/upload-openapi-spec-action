@@ -11,15 +11,6 @@ export type Outcomes = Record<
   }
 >;
 
-// https://www.conventionalcommits.org/en/v1.0.0/
-const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
-);
-
-const isValidConventionalCommitMessage = (message: string) => {
-  return CONVENTIONAL_COMMIT_REGEX.test(message);
-};
-
 const POLLING_INTERVAL_SECONDS = 5;
 const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
 
@@ -32,25 +23,31 @@ export type RunResult = {
 export async function* runBuilds({
   stainless,
   projectName,
-  baseRevision,
   baseBranch,
   mergeBranch,
   branch,
+  branchFrom,
   oasContent,
   configContent,
+  baseOasContent,
+  baseConfigContent,
   guessConfig = false,
   commitMessage,
+  allowEmpty = true,
 }: {
   stainless: Stainless;
   projectName: string;
-  baseRevision?: string;
   baseBranch?: string;
   mergeBranch?: string;
   branch?: string;
+  branchFrom?: string;
   oasContent?: string;
   configContent?: string;
+  baseOasContent?: string;
+  baseConfigContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
+  allowEmpty?: boolean;
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasContent || configContent)) {
     throw new Error(
@@ -62,17 +59,11 @@ export async function* runBuilds({
       "If guess_config is true, must have oas_path and no config_path",
     );
   }
-  if (baseRevision && mergeBranch) {
-    throw new Error("Cannot specify both base_revision and merge_branch");
-  }
-  if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
-    logger.warn(
-      `Commit message: "${commitMessage}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`,
-    );
-    commitMessage = `feat: ${commitMessage}`;
+  if (branchFrom && mergeBranch) {
+    throw new Error("Cannot specify both branch_from and merge_branch");
   }
 
-  if (!baseRevision) {
+  if (!branchFrom) {
     const build = await stainless.builds.create(
       {
         project: projectName,
@@ -92,7 +83,7 @@ export async function* runBuilds({
             },
         branch,
         commit_message: commitMessage,
-        allow_empty: true,
+        allow_empty: allowEmpty,
       },
       {
         // For very large specs, writing the config files can take a while.
@@ -120,7 +111,7 @@ export async function* runBuilds({
       logger.info("Guessing config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.guess({
-          branch: baseBranch,
+          branch: branchFrom,
           spec: oasContent!,
         }),
       )[0]?.content;
@@ -140,20 +131,39 @@ export async function* runBuilds({
     }
   }
 
-  const branchObj = await stainless.projects.branches.create({
-    branch_from: baseRevision,
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  const { config_commit } = await stainless.projects.branches.create({
+    branch_from: branchFrom,
     branch: branch!,
     force: true,
   });
-  logger.info(`Hard reset ${branch}`, {
-    baseRevision,
-    configCommit: branchObj.config_commit,
-  });
+
+  logger.info(`Hard reset ${branch}, now at ${config_commit.sha}`);
+
+  const { config_commit: base_config_commit } =
+    await stainless.projects.branches.create({
+      branch_from: branchFrom,
+      branch: baseBranch!,
+      force: true,
+    });
+
+  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
 
   const { base, head } = await stainless.builds.compare(
     {
       base: {
-        revision: baseRevision,
+        revision: {
+          ...(baseOasContent && {
+            "openapi.yml": {
+              content: baseOasContent,
+            },
+          }),
+          ...(baseConfigContent && {
+            "openapi.stainless.yml": {
+              content: baseConfigContent,
+            },
+          }),
+        },
         branch: baseBranch,
         commit_message: commitMessage,
       },

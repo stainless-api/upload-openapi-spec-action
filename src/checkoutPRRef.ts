@@ -1,4 +1,4 @@
-import { getInput } from "@actions/core";
+import { getInput } from "./compat";
 import * as exec from "@actions/exec";
 import { getMergeBase, saveConfig } from "./config";
 import { logger } from "./logger";
