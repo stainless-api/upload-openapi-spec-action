@@ -31040,8 +31040,9 @@ function getCITerm() {
   }
 }
 function getRepoPath(owner, repo) {
-  return process.env.GITLAB_STAGING_REPO_PATH ? `https://gitlab.com/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
+  return process.env.GITLAB_STAGING_REPO_PATH ? `${gitlabBaseUrl()}/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
 }
+var gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
 var GitHubCommentClient = class {
   client;
   prNumber;
@@ -31076,7 +31077,7 @@ var GitLabCommentClient = class {
   prNumber;
   constructor(token, prNumber) {
     this.token = token;
-    this.baseUrl = process.env.CI_API_V4_URL || "https://gitlab.com/api/v4";
+    this.baseUrl = `${gitlabBaseUrl()}/api/v4`;
     this.prNumber = prNumber;
   }
   async gitlabRequest(method, endpoint, body) {
