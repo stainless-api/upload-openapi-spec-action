@@ -33941,6 +33941,8 @@ async function main() {
     const oasPath = getInput2("oas_path", { required: false }) || void 0;
     const configPath = getInput2("config_path", { required: false }) || void 0;
     const defaultCommitMessage = getInput2("commit_message", { required: true });
+    const guessConfigInput = getInput2("guess_config", { required: false });
+    const guessConfig = guessConfigInput === "true" ? true : guessConfigInput === "false" ? false : void 0;
     const failRunOn = getInput2("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput2("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
@@ -34024,7 +34026,7 @@ async function main() {
       branchFrom,
       baseBranch,
       branch,
-      guessConfig: !configPath && !!oasPath,
+      guessConfig: guessConfig ?? (!configPath && !!oasPath),
       commitMessage
     });
     let latestRun;

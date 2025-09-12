@@ -32,6 +32,12 @@ inputs:
       by the commit message specified in the comment.
     required: false
     default: ${{ github.event.pull_request.title }}
+  guess_config:
+    description: >-
+      If true, update the existing Stainless config file based on the OpenAPI
+      spec. Cannot be specified if `config_path` is specified. Defaults to
+      true if `config_path` is not specified, and false otherwise.
+    required: false
   fail_on:
     description: >-
       When to fail the run based on build conclusion. Options: 'note',
