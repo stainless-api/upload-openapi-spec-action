@@ -10,6 +10,7 @@ import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { isConfigChanged, readConfig } from "./config";
+import { logger } from "./logger";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
@@ -33,7 +34,7 @@ async function main() {
     const prNumber = getPRNumber();
 
     if (baseRef !== defaultBranch) {
-      console.log("Not merging to default branch, skipping merge");
+      logger.info("Not merging to default branch, skipping merge");
       return;
     }
 
@@ -46,7 +47,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
@@ -57,7 +58,7 @@ async function main() {
     });
 
     if (!configChanged) {
-      console.log("No config files changed, skipping merge");
+      logger.info("No config files changed, skipping merge");
       return;
     }
 
@@ -71,7 +72,7 @@ async function main() {
     }
 
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
+    logger.info("Using commit message:", commitMessage);
 
     const generator = runBuilds({
       stainless,
@@ -128,7 +129,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in merge action:", error);
+    logger.error("Error in merge action:", { error });
     process.exit(1);
   }
 }

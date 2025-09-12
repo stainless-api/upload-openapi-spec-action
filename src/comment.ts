@@ -1,6 +1,7 @@
 import type { Stainless } from "@stainless-api/sdk";
-import { Outcomes } from "./runBuilds";
+import { logger } from "./logger";
 import * as MD from "./markdown";
+import { Outcomes } from "./runBuilds";
 import {
   createCommentClient,
   getCITerm,
@@ -621,7 +622,9 @@ export async function upsertComment({
 }) {
   const client = createCommentClient(token, prNumber);
 
-  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
+  logger.info(`Upserting comment on ${getPRTerm()}`, {
+    pr: github.context.issue.number,
+  });
 
   const comments = await client.listComments();
 
@@ -631,10 +634,10 @@ export async function upsertComment({
   );
 
   if (existingComment) {
-    console.log("Updating existing comment:", existingComment.id);
+    logger.info("Updating existing comment", { id: existingComment.id });
     await client.updateComment(existingComment.id, body);
   } else if (!skipCreate) {
-    console.log("Creating new comment");
+    logger.info("Creating new comment");
     await client.createComment(body);
   }
 }

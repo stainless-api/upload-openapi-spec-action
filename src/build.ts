@@ -5,6 +5,7 @@ import YAML from "yaml";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { readConfig } from "./config";
+import { logger } from "./logger";
 import { runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
@@ -35,7 +36,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     let lastValue: RunResult;
@@ -79,17 +80,17 @@ async function main() {
 
       fs.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
+      logger.error("No documented spec found.");
     }
   } catch (error) {
     if (
       error instanceof Stainless.BadRequestError &&
       error.message.includes("No changes to commit")
     ) {
-      console.log("No changes to commit, skipping build.");
+      logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      console.error("Error interacting with API:", error);
+      logger.error("Error interacting with API:", error);
       process.exit(1);
     }
   }

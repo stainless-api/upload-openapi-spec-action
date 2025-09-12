@@ -24,6 +24,7 @@ import {
   readConfig,
   saveConfig,
 } from "./config";
+import { logger } from "./logger";
 import { checkResults, runBuilds, RunResult } from "./runBuilds";
 
 async function main() {
@@ -53,7 +54,7 @@ async function main() {
       configPath,
     });
     if (savedSha !== null && savedSha !== headSha) {
-      console.warn(
+      logger.warn(
         `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
       );
     }
@@ -61,7 +62,7 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn",
+      logger,
     });
 
     startGroup("parent-revision", "Getting parent revision");
@@ -84,7 +85,7 @@ async function main() {
     });
 
     if (!configChanged) {
-      console.log("No config files changed, skipping preview");
+      logger.info("No config files changed, skipping preview");
 
       // In this case, we only want to make a comment if there's an existing
       // comment---which can happen if the changes introduced by the PR
@@ -100,7 +101,6 @@ async function main() {
           skipCreate: true,
           prNumber,
         });
-
         endGroup("update-comment");
       }
 
@@ -128,7 +128,7 @@ async function main() {
     }
 
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
+    logger.info("Using commit message:", commitMessage);
 
     const generator = runBuilds({
       stainless,
@@ -193,7 +193,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in preview action:", error);
+    logger.error("Error in preview action:", { error });
     process.exit(1);
   }
 }
@@ -238,7 +238,7 @@ async function computeBranchFrom({
     ).data[0]?.config_commit;
 
     if (configCommit) {
-      console.log(`Found base via merge base SHA: ${configCommit}`);
+      logger.info(`Found base via merge base SHA: ${configCommit}`);
       return configCommit;
     }
   }
@@ -253,7 +253,7 @@ async function computeBranchFrom({
     ).data[0]?.config_commit;
 
     if (configCommit) {
-      console.log(`Found base via non-main base ref: ${configCommit}`);
+      logger.info(`Found base via non-main base ref: ${configCommit}`);
       return configCommit;
     }
   }
@@ -270,7 +270,7 @@ async function computeBranchFrom({
     throw new Error("Could not determine base revision");
   }
 
-  console.log(`Found base via main branch: ${configCommit}`);
+  logger.info(`Found base via main branch: ${configCommit}`);
   return configCommit;
 }
 
