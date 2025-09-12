@@ -35,6 +35,13 @@ async function main() {
     const configPath =
       getInput("config_path", { required: false }) || undefined;
     const defaultCommitMessage = getInput("commit_message", { required: true });
+    const guessConfigInput = getInput("guess_config", { required: false });
+    const guessConfig =
+      guessConfigInput === "true"
+        ? true
+        : guessConfigInput === "false"
+          ? false
+          : undefined;
     const failRunOn = getInput("fail_on", { required: true }) || "error";
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
@@ -140,7 +147,7 @@ async function main() {
       branchFrom,
       baseBranch,
       branch,
-      guessConfig: !configPath && !!oasPath,
+      guessConfig: guessConfig ?? (!configPath && !!oasPath),
       commitMessage,
     });
 
