@@ -1,5 +1,5 @@
+import spawn from "nano-spawn";
 import { getInput } from "./compat.js";
-import * as exec from "@actions/exec";
 import { getMergeBase, saveConfig } from "./config.js";
 
 function assertRef(ref: string): asserts ref is "base" | "head" {
@@ -24,7 +24,7 @@ async function main() {
     if (ref === "base") {
       // Checkout the merge base SHA, which users will generate their OAS and
       // possibly config from.
-      await exec.exec("git", ["checkout", mergeBaseSha], { silent: true });
+      await spawn("git", ["checkout", mergeBaseSha]);
       return;
     }
 
@@ -40,7 +40,7 @@ async function main() {
     }
 
     // Checkout the head SHA.
-    await exec.exec("git", ["checkout", headSha], { silent: true });
+    await spawn("git", ["checkout", headSha]);
   } catch (error) {
     console.error("Error in checkout-pr-ref action:", error);
     process.exit(1);

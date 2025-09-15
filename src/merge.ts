@@ -44,6 +44,12 @@ async function main() {
       );
     }
 
+    if (makeComment && !orgName) {
+      throw new Error(
+        "This action requires an organization name to make a comment.",
+      );
+    }
+
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -85,7 +91,7 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(gitHostToken, prNumber);
+    const upsert = commentThrottler(gitHostToken!, prNumber);
 
     while (true) {
       const run = await generator.next();
@@ -98,7 +104,7 @@ async function main() {
         const { outcomes } = latestRun!;
 
         const commentBody = printComment({
-          orgName,
+          orgName: orgName!,
           projectName,
           branch: "main",
           commitMessage,

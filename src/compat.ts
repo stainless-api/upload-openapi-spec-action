@@ -1,5 +1,6 @@
-import * as core from "@actions/core";
-import * as github from "@actions/github";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import * as crypto from "node:crypto";
+import * as fs from "node:fs";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
 import {
   createClient as createGitHubClient,
@@ -21,51 +22,80 @@ export function isGitLabCI(): boolean {
   return process.env["GITLAB_CI"] === "true";
 }
 
+export function getInput(name: string, options: { required: true }): string;
+export function getInput(
+  name: string,
+  options?: { required: boolean },
+): string | undefined;
 export function getInput(name: string, options?: { required: boolean }) {
-  if (isGitLabCI()) {
-    const value =
-      process.env[`${name.toUpperCase()}`] ||
-      process.env[`INPUT_${name.toUpperCase()}`];
+  const value =
+    process.env[`${name.toUpperCase()}`] ||
+    process.env[`INPUT_${name.toUpperCase()}`];
 
-    if (options?.required && !value) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-
-    return value || "";
-  } else {
-    return core.getInput(name, options);
+  if (options?.required && !value) {
+    throw new Error(`Input required and not supplied: ${name}`);
   }
+
+  return value || undefined;
 }
 
+export function getBooleanInput(
+  name: string,
+  options: { required: true },
+): boolean;
+export function getBooleanInput(
+  name: string,
+  options?: { required: boolean },
+): boolean | undefined;
 export function getBooleanInput(name: string, options?: { required: boolean }) {
-  if (isGitLabCI()) {
-    const value =
-      process.env[`${name.toUpperCase()}`]?.toLowerCase() ||
-      process.env[`INPUT_${name.toUpperCase()}`]?.toLowerCase();
+  const value = getInput(name, options)?.toLowerCase();
 
-    if (options?.required && value === undefined) {
-      throw new Error(`Input required and not supplied: ${name}`);
-    }
-
-    return value === "true";
-  } else {
-    return core.getBooleanInput(name, options);
-  }
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return undefined;
 }
 
-export function getGitHostToken(): string {
-  const token = getInput(isGitLabCI() ? "gitlab_token" : "github_token");
-  if (getInput("make_comment") && !token) {
-    throw new Error(
-      `${
-        isGitLabCI() ? "GITLAB_TOKEN" : "github_token"
-      } is required to make a comment`,
-    );
+export function getGitHostToken() {
+  const input_name = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
+  const token = getInput(input_name);
+
+  const isRequired = getBooleanInput("make_comment", { required: true });
+  if (isRequired && !token) {
+    throw new Error(`Input ${input_name} is required to make a comment`);
   }
+
   return token;
 }
 
-export function getPRNumber(): number {
+let cachedContext:
+  | {
+      payload: Record<string, any>;
+      repo: { owner: string; repo: string };
+    }
+  | undefined = undefined;
+function getGitHubContext() {
+  if (!cachedContext) {
+    const eventPath = process.env.GITHUB_EVENT_PATH;
+
+    let payload: Record<string, any> = {};
+    if (eventPath && fs.existsSync(eventPath)) {
+      payload = JSON.parse(fs.readFileSync(eventPath, "utf-8"));
+    }
+
+    const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
+
+    cachedContext = {
+      payload,
+      repo: {
+        owner: payload.repository?.owner?.login ?? owner,
+        repo: payload.repository?.name ?? repo,
+      },
+    };
+  }
+  return cachedContext!;
+}
+
+export function getPRNumber() {
   if (getInput("make_comment") && isGitLabCI()) {
     if (!process.env["MR_NUMBER"]) {
       throw new Error("MR_NUMBER is required to make a comment");
@@ -73,16 +103,33 @@ export function getPRNumber(): number {
 
     return parseInt(process.env["MR_NUMBER"]);
   } else {
-    return github.context.payload.pull_request!.number;
+    return parseInt(getGitHubContext().payload.pull_request!.number);
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setOutput(name: string, value: any) {
   if (isGitLabCI()) {
     // We don't set outputs in GitLab CI.
+    return;
+  }
+
+  const stringified =
+    value === null || value === undefined
+      ? ""
+      : typeof value === "string"
+        ? value
+        : JSON.stringify(value);
+
+  const filePath = process.env["GITHUB_OUTPUT"];
+  if (filePath && fs.existsSync(filePath)) {
+    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+    fs.appendFileSync(
+      filePath,
+      `${name}<<${delimiter}\n${stringified}\n${delimiter}\n`,
+      "utf-8",
+    );
   } else {
-    core.setOutput(name, value);
+    process.stdout.write(`\n::set-output name=${name}::${stringified}\n`);
   }
 }
 
@@ -90,7 +137,7 @@ export function isPullRequestOpenedEvent(): boolean {
   if (isGitLabCI()) {
     return process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened";
   } else {
-    return github.context.payload.action === "opened";
+    return getGitHubContext().payload.action === "opened";
   }
 }
 
@@ -98,7 +145,7 @@ export function startGroup(id: string, name: string) {
   if (isGitLabCI()) {
     console.log(`\x1b[0Ksection_start:${Date.now()}:${id}\r\x1b[0K${name}`);
   } else {
-    core.startGroup(name);
+    process.stdout.write(`\n::group::${name}\n`);
   }
 }
 
@@ -106,7 +153,7 @@ export function endGroup(id: string) {
   if (isGitLabCI()) {
     console.log(`\x1b[0Ksection_end:${Date.now()}:${id}\r\x1b[0K`);
   } else {
-    core.endGroup();
+    process.stdout.write(`\n::endgroup::\n`);
   }
 }
 
@@ -155,8 +202,8 @@ class GitHubCommentClient implements CommentClient {
   constructor(token: string, prNumber: number) {
     this.client = createGitHubClient({
       authToken: token,
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
+      owner: getGitHubContext().repo.owner,
+      repo: getGitHubContext().repo.repo,
       resources: [GitHubComments],
     });
     this.prNumber = prNumber;
