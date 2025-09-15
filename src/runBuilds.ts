@@ -37,7 +37,7 @@ export async function* runBuilds({
   projectName: string;
   baseBranch?: string;
   mergeBranch?: string;
-  branch?: string;
+  branch: string;
   branchFrom?: string;
   oasContent?: string;
   configContent?: string;
@@ -105,15 +105,16 @@ export async function* runBuilds({
   }
 
   if (!configContent) {
+    const hasBranch =
+      !!branch &&
+      (await stainless.projects.branches.retrieve(branch).asResponse())
+        .status === 200;
+
     if (guessConfig) {
       console.log("Guessing config before branch reset");
-      if (
-        // If the `branch` already exists, we should guess against it, in case
-        // there were changes made via the studio.
-        branch &&
-        (await stainless.projects.branches.retrieve(branch).asResponse())
-          .status === 200
-      ) {
+      // If the `branch` already exists, we should guess against it, in case
+      // there were changes made via the studio.
+      if (hasBranch) {
         configContent = Object.values(
           await stainless.projects.configs.guess({
             branch,
@@ -128,13 +129,15 @@ export async function* runBuilds({
           }),
         )[0]?.content;
       }
-    } else {
+    } else if (hasBranch) {
       console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
         }),
       )[0]?.content;
+    } else {
+      console.log("No existing branch found");
     }
   }
 

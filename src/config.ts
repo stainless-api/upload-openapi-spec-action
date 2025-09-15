@@ -46,7 +46,7 @@ export async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "oas",
       savedSha,
-      oasPath.split(".").pop()!,
+      path.extname(oasPath),
     );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
@@ -58,7 +58,7 @@ export async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "config",
       savedSha,
-      configPath.split(".").pop()!,
+      path.extname(configPath),
     );
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
@@ -76,10 +76,12 @@ export async function readConfig({
   oasPath,
   configPath,
   sha,
+  required = false,
 }: {
   oasPath?: string;
   configPath?: string;
   sha?: string;
+  required?: boolean;
 }): Promise<Config> {
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
   if (!sha) {
@@ -123,16 +125,25 @@ export async function readConfig({
   try {
     await addToResults(
       "oas",
-      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()!),
+      getSavedFilePath("oas", sha, path.extname(oasPath ?? "")),
       `saved ${sha}`,
     );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()!),
+      getSavedFilePath("config", sha, path.extname(configPath ?? "")),
       `saved ${sha}`,
     );
   } catch {
     console.log("Could not get config from saved file path");
+  }
+
+  if (required) {
+    if (oasPath && !results.oas) {
+      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
+    }
+    if (configPath && !results.config) {
+      throw new Error(`Missing config at ${configPath} for ${sha}`);
+    }
   }
 
   return results;

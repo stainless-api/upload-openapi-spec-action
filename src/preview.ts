@@ -84,7 +84,20 @@ async function main() {
       configPath,
       sha: mergeBaseSha,
     });
-    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
+    const headConfig = await readConfig({
+      oasPath,
+      configPath,
+      sha: headSha,
+      required: true,
+    });
+
+    if (oasPath && !headConfig.oas) {
+      throw new Error(`Could not find OAS file at ${oasPath}`);
+    }
+    if (configPath && !headConfig.config) {
+      throw new Error(`Could not find config file at ${configPath}`);
+    }
+
     const configChanged = await isConfigChanged({
       before: mergeBaseConfig,
       after: headConfig,

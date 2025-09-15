@@ -30,7 +30,7 @@ async function main() {
     const documentedSpecOutputPath =
       getInput("documented_spec_path", { required: false }) || undefined;
 
-    const config = await readConfig({ oasPath, configPath });
+    const config = await readConfig({ oasPath, configPath, required: true });
 
     const stainless = new Stainless({
       project: projectName,
@@ -43,7 +43,7 @@ async function main() {
     for await (const value of runBuilds({
       stainless,
       projectName,
-      baseRevision,
+      branchFrom: baseRevision,
       baseBranch,
       mergeBranch,
       branch,

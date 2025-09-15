@@ -29133,7 +29133,7 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "oas",
       savedSha,
-      oasPath.split(".").pop()
+      path2.extname(oasPath)
     );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
@@ -29144,7 +29144,7 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "config",
       savedSha,
-      configPath.split(".").pop()
+      path2.extname(configPath)
     );
     fs.mkdirSync(path2.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
