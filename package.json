@@ -1,7 +1,7 @@
 {
   "name": "upload-openapi-spec-action",
+  "type": "module",
   "version": "1.5.1",
-  "description": "",
   "main": "dist/index.js",
   "scripts": {
     "build": "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview",
@@ -10,32 +10,29 @@
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
-    "lint": "eslint src",
-    "lint:fix": "eslint src --fix",
+    "lint": "tsc && prettier --check src && eslint src",
+    "lint:fix": "prettier --write src && eslint src --fix",
     "test": "vitest"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^22.10.6",
-    "@typescript-eslint/eslint-plugin": "^5.40.0",
-    "@typescript-eslint/parser": "^5.40.0",
-    "esbuild": "^0.25.4",
-    "eslint": "^8.25.0",
-    "eslint-config-prettier": "^10.1.5",
-    "eslint-plugin-prettier": "^5.5.1",
-    "prettier": "^3.6.2",
-    "typescript": "^5.7.3",
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.3",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0",
     "vitest": "^3.2.4"
   },
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
     "@actions/github": "^6.0.1",
-    "@stainless-api/github-internal": "^0.12.1",
+    "@stainless-api/github-internal": "^0.15.0",
     "@stainless-api/sdk": "^0.1.0-alpha.12",
     "ts-dedent": "^2.2.0",
-    "yaml": "^2.8.0"
+    "yaml": "^2.8.1"
   }
 }

@@ -2,7 +2,7 @@ import Stainless from "@stainless-api/sdk";
 import { error, info, warn } from "node:console";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
-import { getBooleanInput, getInput, isGitLabCI } from "./compat";
+import { getBooleanInput, getInput, isGitLabCI } from "./compat.js";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(

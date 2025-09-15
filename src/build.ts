@@ -2,10 +2,11 @@ import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
-import { makeCommitMessageConventional } from "./commitMessage";
-import { getBooleanInput, getInput, setOutput } from "./compat";
-import { readConfig } from "./config";
-import { runBuilds, RunResult } from "./runBuilds";
+import { makeCommitMessageConventional } from "./commitMessage.js";
+import { getBooleanInput, getInput, setOutput } from "./compat.js";
+import { readConfig } from "./config.js";
+import { runBuilds } from "./runBuilds.js";
+import type { RunResult } from "./runBuilds.js";
 
 async function main() {
   try {

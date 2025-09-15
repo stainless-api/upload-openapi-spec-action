@@ -1,12 +1,12 @@
 import type { Stainless } from "@stainless-api/sdk";
-import { Outcomes } from "./runBuilds";
-import * as MD from "./markdown";
+import type { Outcomes } from "./runBuilds.js";
+import * as MD from "./markdown.js";
 import {
   createCommentClient,
   getCITerm,
   getPRTerm,
   getRepoPath,
-} from "./compat";
+} from "./compat.js";
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,

@@ -7,24 +7,25 @@ import {
   endGroup,
   getGitHostToken,
   getPRNumber,
-} from "./compat";
+} from "./compat.js";
 import { Stainless } from "@stainless-api/sdk";
 import {
   commentThrottler,
   printComment,
   retrieveComment,
   upsertComment,
-} from "./comment";
-import { makeCommitMessageConventional } from "./commitMessage";
+} from "./comment.js";
+import { makeCommitMessageConventional } from "./commitMessage.js";
 import {
-  Config,
   getMergeBase,
   getNonMainBaseRef,
   isConfigChanged,
   readConfig,
   saveConfig,
-} from "./config";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
+} from "./config.js";
+import type { Config } from "./config.js";
+import { checkResults, runBuilds } from "./runBuilds.js";
+import type { RunResult } from "./runBuilds.js";
 
 async function main() {
   try {
@@ -167,7 +168,6 @@ async function main() {
     let latestRun: RunResult;
     const upsert = commentThrottler(gitHostToken, prNumber);
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const run = await generator.next();
 

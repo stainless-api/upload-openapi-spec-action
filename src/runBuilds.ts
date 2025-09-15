@@ -395,10 +395,10 @@ async function* pollBuild({
           conclusion: "timed_out",
           commit: null,
           merge_conflict_pr: null,
-          url: null,
         },
       },
       diagnostics: [],
+      install_url: null,
       ...(outcomes[language] as Outcomes[string] | undefined),
     };
   }
@@ -417,7 +417,7 @@ export function checkResults({
     return true;
   }
 
-  const failedLanguages = Object.entries(outcomes).filter(([_, outcome]) => {
+  const failedLanguages = Object.entries(outcomes).filter(([, outcome]) => {
     if (!outcome.commit) {
       return true;
     }

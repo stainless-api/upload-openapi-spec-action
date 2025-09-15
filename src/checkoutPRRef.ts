@@ -1,6 +1,6 @@
-import { getInput } from "./compat";
+import { getInput } from "./compat.js";
 import * as exec from "@actions/exec";
-import { getMergeBase, saveConfig } from "./config";
+import { getMergeBase, saveConfig } from "./config.js";
 
 function assertRef(ref: string): asserts ref is "base" | "head" {
   if (ref !== "base" && ref !== "head") {
