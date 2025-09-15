@@ -130,6 +130,7 @@ export async function* runBuilds({
         )[0]?.content;
       }
     } else if (hasBranch) {
+      console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
