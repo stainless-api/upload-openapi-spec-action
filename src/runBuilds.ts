@@ -107,8 +107,7 @@ export async function* runBuilds({
   if (!configContent) {
     const hasBranch =
       !!branch &&
-      (await stainless.projects.branches.retrieve(branch).asResponse())
-        .status === 200;
+      !!(await stainless.projects.branches.retrieve(branch).catch(() => null));
 
     if (guessConfig) {
       console.log("Guessing config before branch reset");

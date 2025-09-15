@@ -91,13 +91,6 @@ async function main() {
       required: true,
     });
 
-    if (oasPath && !headConfig.oas) {
-      throw new Error(`Could not find OAS file at ${oasPath}`);
-    }
-    if (configPath && !headConfig.config) {
-      throw new Error(`Could not find config file at ${configPath}`);
-    }
-
     const configChanged = await isConfigChanged({
       before: mergeBaseConfig,
       after: headConfig,

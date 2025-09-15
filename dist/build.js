@@ -38227,7 +38227,7 @@ function getSavedFilePath(file, sha, extension) {
   return path3.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
-    `${file}-${sha}.${extension}`
+    `${file}-${sha}${extension}`
   );
 }
 async function readConfig({
@@ -38256,7 +38256,7 @@ async function readConfig({
   };
   try {
     await exec.exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true }).catch(() => null);
-    await exec.exec("git", ["checkout", sha], { silent: true });
+    await exec.exec("git", ["checkout", sha, "--", "."], { silent: true });
   } catch {
     console.log("Could not checkout", sha);
   }
@@ -38357,7 +38357,7 @@ async function* runBuilds({
     return;
   }
   if (!configContent) {
-    const hasBranch = !!branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200;
+    const hasBranch = !!branch && !!await stainless.projects.branches.retrieve(branch).catch(() => null);
     if (guessConfig) {
       console.log("Guessing config before branch reset");
       if (hasBranch) {
