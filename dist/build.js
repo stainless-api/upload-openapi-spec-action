@@ -38233,7 +38233,8 @@ function getSavedFilePath(file, sha, extension) {
 async function readConfig({
   oasPath,
   configPath,
-  sha
+  sha,
+  required = false
 }) {
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
   if (!sha) {
@@ -38264,16 +38265,24 @@ async function readConfig({
   try {
     await addToResults(
       "oas",
-      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
+      getSavedFilePath("oas", sha, path3.extname(oasPath ?? "")),
       `saved ${sha}`
     );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
+      getSavedFilePath("config", sha, path3.extname(configPath ?? "")),
       `saved ${sha}`
     );
   } catch {
     console.log("Could not get config from saved file path");
+  }
+  if (required) {
+    if (oasPath && !results.oas) {
+      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
+    }
+    if (configPath && !results.config) {
+      throw new Error(`Missing config at ${configPath} for ${sha}`);
+    }
   }
   return results;
 }
@@ -38348,13 +38357,10 @@ async function* runBuilds({
     return;
   }
   if (!configContent) {
+    const hasBranch = !!branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200;
     if (guessConfig) {
       console.log("Guessing config before branch reset");
-      if (
-        // If the `branch` already exists, we should guess against it, in case
-        // there were changes made via the studio.
-        branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200
-      ) {
+      if (hasBranch) {
         configContent = Object.values(
           await stainless.projects.configs.guess({
             branch,
@@ -38369,13 +38375,15 @@ async function* runBuilds({
           })
         )[0]?.content;
       }
-    } else {
+    } else if (hasBranch) {
       console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch
         })
       )[0]?.content;
+    } else {
+      console.log("No existing config found for branch");
     }
   }
   console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
@@ -38601,7 +38609,7 @@ async function main() {
     const baseBranch = getInput2("base_branch", { required: false }) || void 0;
     const outputDir = getInput2("output_dir", { required: false }) || (0, import_node_os2.tmpdir)();
     const documentedSpecOutputPath = getInput2("documented_spec_path", { required: false }) || void 0;
-    const config = await readConfig({ oasPath, configPath });
+    const config = await readConfig({ oasPath, configPath, required: true });
     const stainless = new Stainless({
       project: projectName,
       apiKey,
@@ -38611,7 +38619,7 @@ async function main() {
     for await (const value of runBuilds({
       stainless,
       projectName,
-      baseRevision,
+      branchFrom: baseRevision,
       baseBranch,
       mergeBranch,
       branch,

@@ -33478,7 +33478,7 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "oas",
       savedSha,
-      oasPath.split(".").pop()
+      path3.extname(oasPath)
     );
     fs.mkdirSync(path3.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
@@ -33489,7 +33489,7 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "config",
       savedSha,
-      configPath.split(".").pop()
+      path3.extname(configPath)
     );
     fs.mkdirSync(path3.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
@@ -33500,7 +33500,8 @@ async function saveConfig({
 async function readConfig({
   oasPath,
   configPath,
-  sha
+  sha,
+  required = false
 }) {
   sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
   if (!sha) {
@@ -33531,16 +33532,24 @@ async function readConfig({
   try {
     await addToResults(
       "oas",
-      getSavedFilePath("oas", sha, (oasPath ?? "").split(".").pop()),
+      getSavedFilePath("oas", sha, path3.extname(oasPath ?? "")),
       `saved ${sha}`
     );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha, (configPath ?? "").split(".").pop()),
+      getSavedFilePath("config", sha, path3.extname(configPath ?? "")),
       `saved ${sha}`
     );
   } catch {
     console.log("Could not get config from saved file path");
+  }
+  if (required) {
+    if (oasPath && !results.oas) {
+      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
+    }
+    if (configPath && !results.config) {
+      throw new Error(`Missing config at ${configPath} for ${sha}`);
+    }
   }
   return results;
 }
@@ -33678,13 +33687,10 @@ async function* runBuilds({
     return;
   }
   if (!configContent) {
+    const hasBranch = !!branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200;
     if (guessConfig) {
       console.log("Guessing config before branch reset");
-      if (
-        // If the `branch` already exists, we should guess against it, in case
-        // there were changes made via the studio.
-        branch && (await stainless.projects.branches.retrieve(branch).asResponse()).status === 200
-      ) {
+      if (hasBranch) {
         configContent = Object.values(
           await stainless.projects.configs.guess({
             branch,
@@ -33699,13 +33705,15 @@ async function* runBuilds({
           })
         )[0]?.content;
       }
-    } else {
+    } else if (hasBranch) {
       console.log("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch
         })
       )[0]?.content;
+    } else {
+      console.log("No existing config found for branch");
     }
   }
   console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
@@ -33992,7 +34000,18 @@ async function main() {
       configPath,
       sha: mergeBaseSha
     });
-    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
+    const headConfig = await readConfig({
+      oasPath,
+      configPath,
+      sha: headSha,
+      required: true
+    });
+    if (oasPath && !headConfig.oas) {
+      throw new Error(`Could not find OAS file at ${oasPath}`);
+    }
+    if (configPath && !headConfig.config) {
+      throw new Error(`Could not find config file at ${configPath}`);
+    }
     const configChanged = await isConfigChanged({
       before: mergeBaseConfig,
       after: headConfig
