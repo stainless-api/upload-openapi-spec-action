@@ -37,7 +37,7 @@ export async function* runBuilds({
   projectName: string;
   baseBranch?: string;
   mergeBranch?: string;
-  branch?: string;
+  branch: string;
   branchFrom?: string;
   oasContent?: string;
   configContent?: string;
@@ -137,7 +137,7 @@ export async function* runBuilds({
         }),
       )[0]?.content;
     } else {
-      console.log("No existing config found for branch");
+      console.log("No existing branch found");
     }
   }
 

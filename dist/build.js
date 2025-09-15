@@ -38383,7 +38383,7 @@ async function* runBuilds({
         })
       )[0]?.content;
     } else {
-      console.log("No existing config found for branch");
+      console.log("No existing branch found");
     }
   }
   console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
