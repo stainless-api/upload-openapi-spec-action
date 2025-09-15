@@ -14,7 +14,7 @@ function getSavedFilePath(file: string, sha: string, extension: string) {
   return path.join(
     tmpdir(),
     "stainless-generated-config",
-    `${file}-${sha}.${extension}`,
+    `${file}-${sha}${extension}`,
   );
 }
 
@@ -114,7 +114,7 @@ export async function readConfig({
     await exec
       .exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true })
       .catch(() => null);
-    await exec.exec("git", ["checkout", sha], { silent: true });
+    await exec.exec("git", ["checkout", sha, "--", "."], { silent: true });
   } catch {
     console.log("Could not checkout", sha);
   }

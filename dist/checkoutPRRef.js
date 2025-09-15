@@ -29114,7 +29114,7 @@ function getSavedFilePath(file, sha, extension) {
   return path2.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
-    `${file}-${sha}.${extension}`
+    `${file}-${sha}${extension}`
   );
 }
 async function saveConfig({
