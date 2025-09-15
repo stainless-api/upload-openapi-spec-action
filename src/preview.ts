@@ -17,32 +17,26 @@ import {
 } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
 import {
-  Config,
   getMergeBase,
   getNonMainBaseRef,
   isConfigChanged,
   readConfig,
   saveConfig,
 } from "./config";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
+import type { Config } from "./config";
+import { checkResults, runBuilds } from "./runBuilds";
+import type { RunResult } from "./runBuilds";
 
 async function main() {
   try {
     const apiKey = getInput("stainless_api_key", { required: true });
     const orgName = getInput("org", { required: true });
     const projectName = getInput("project", { required: true });
-    const oasPath = getInput("oas_path", { required: false }) || undefined;
-    const configPath =
-      getInput("config_path", { required: false }) || undefined;
+    const oasPath = getInput("oas_path", { required: false });
+    const configPath = getInput("config_path", { required: false });
     const defaultCommitMessage = getInput("commit_message", { required: true });
-    const guessConfigInput = getInput("guess_config", { required: false });
-    const guessConfig =
-      guessConfigInput === "true"
-        ? true
-        : guessConfigInput === "false"
-          ? false
-          : undefined;
-    const failRunOn = getInput("fail_on", { required: true }) || "error";
+    const guessConfig = getBooleanInput("guess_config", { required: false });
+    const failRunOn = getInput("fail_on", { required: false }) || "error";
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
@@ -109,7 +103,7 @@ async function main() {
 
         await upsertComment({
           body: commentBody,
-          token: gitHostToken,
+          token: gitHostToken!,
           skipCreate: true,
           prNumber,
         });
@@ -134,7 +128,7 @@ async function main() {
     let commitMessage = defaultCommitMessage;
 
     if (makeComment) {
-      const comment = await retrieveComment({ token: gitHostToken, prNumber });
+      const comment = await retrieveComment({ token: gitHostToken!, prNumber });
       if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
@@ -158,9 +152,8 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(gitHostToken, prNumber);
+    const upsert = commentThrottler(gitHostToken!, prNumber);
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const run = await generator.next();
 
@@ -173,7 +166,7 @@ async function main() {
 
         // In case the comment was updated between polls:
         const comment = await retrieveComment({
-          token: gitHostToken,
+          token: gitHostToken!,
           prNumber,
         });
         if (comment.commitMessage) {

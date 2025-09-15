@@ -10,7 +10,8 @@ import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { isConfigChanged, readConfig } from "./config";
-import { checkResults, runBuilds, RunResult } from "./runBuilds";
+import { checkResults, runBuilds } from "./runBuilds";
+import type { RunResult } from "./runBuilds";
 
 async function main() {
   try {
@@ -40,6 +41,12 @@ async function main() {
     if (makeComment && !getPRNumber()) {
       throw new Error(
         "This action requires a pull request number to make a comment.",
+      );
+    }
+
+    if (makeComment && !orgName) {
+      throw new Error(
+        "This action requires an organization name to make a comment.",
       );
     }
 
@@ -84,9 +91,8 @@ async function main() {
     });
 
     let latestRun: RunResult;
-    const upsert = commentThrottler(gitHostToken, prNumber);
+    const upsert = commentThrottler(gitHostToken!, prNumber);
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const run = await generator.next();
 
@@ -98,7 +104,7 @@ async function main() {
         const { outcomes } = latestRun!;
 
         const commentBody = printComment({
-          orgName,
+          orgName: orgName!,
           projectName,
           branch: "main",
           commitMessage,
