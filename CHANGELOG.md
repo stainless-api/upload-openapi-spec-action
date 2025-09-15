@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.1...v1.5.2) (2025-09-15)
+
+
+### Bug Fixes
+
+* fix config reading ([#119](https://github.com/stainless-api/upload-openapi-spec-action/issues/119)) ([e6234c4](https://github.com/stainless-api/upload-openapi-spec-action/commit/e6234c480691ebfd534a490249aa74d3009bd3bb))
+* throw if path is given but not found ([#115](https://github.com/stainless-api/upload-openapi-spec-action/issues/115)) ([dfedffa](https://github.com/stainless-api/upload-openapi-spec-action/commit/dfedffaec97d7317ad1f2af53ae83f97c3a113dd))
+
 ## [1.5.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.0...v1.5.1) (2025-09-12)
 
 
