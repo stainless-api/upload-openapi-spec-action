@@ -245,6 +245,7 @@ async function computeBranchFrom({
     const configCommit = (
       await stainless.builds.list({
         project: projectName,
+        branch: nonMainBaseRef ?? "main",
         revision: hashes,
         limit: 1,
       })
