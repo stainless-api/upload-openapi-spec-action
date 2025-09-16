@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.2...v1.5.3) (2025-09-16)
+
+
+### Bug Fixes
+
+* filter by branch when finding base build ([#120](https://github.com/stainless-api/upload-openapi-spec-action/issues/120)) ([b6506ad](https://github.com/stainless-api/upload-openapi-spec-action/commit/b6506adb5cb09b7fcb9e5427592fd1a7ba773e33))
+
 ## [1.5.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.1...v1.5.2) (2025-09-15)
 
 
