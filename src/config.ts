@@ -1,4 +1,4 @@
-import * as exec from "@actions/exec";
+import spawn from "nano-spawn";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import * as path from "node:path";
@@ -33,9 +33,7 @@ export async function saveConfig({
   let hasOAS = false;
   let hasConfig = false;
 
-  const savedSha = (
-    await exec.getExecOutput("git", ["rev-parse", "HEAD"], { silent: true })
-  ).stdout.trim();
+  const savedSha = (await spawn("git", ["rev-parse", "HEAD"])).stdout.trim();
   if (!savedSha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
@@ -83,7 +81,7 @@ export async function readConfig({
   sha?: string;
   required?: boolean;
 }): Promise<Config> {
-  sha ??= (await exec.getExecOutput("git", ["rev-parse", "HEAD"])).stdout;
+  sha ??= (await spawn("git", ["rev-parse", "HEAD"])).stdout;
   if (!sha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
@@ -104,17 +102,15 @@ export async function readConfig({
       return;
     }
     results[file] = fs.readFileSync(filePath, "utf-8");
-    results[`${file}Hash`] = (
-      await exec.getExecOutput("md5sum", [filePath], { silent: true })
-    ).stdout.split(" ")[0];
+    results[`${file}Hash`] = (await spawn("md5sum", [filePath])).stdout.split(
+      " ",
+    )[0];
     console.log(`Using ${file} via`, via, "hash", results[`${file}Hash`]);
   };
 
   try {
-    await exec
-      .exec("git", ["fetch", "--depth=1", "origin", sha], { silent: true })
-      .catch(() => null);
-    await exec.exec("git", ["checkout", sha, "--", "."], { silent: true });
+    await spawn("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
+    await spawn("git", ["checkout", sha, "--", "."]);
   } catch {
     console.log("Could not checkout", sha);
   }
@@ -157,9 +153,7 @@ export async function getMergeBase({
   headSha: string;
 }) {
   try {
-    await exec.exec("git", ["fetch", "--depth=1", "origin", baseSha], {
-      silent: true,
-    });
+    await spawn("git", ["fetch", "--depth=1", "origin", baseSha]);
   } catch {
     throw new Error(
       `Cannot fetch ${baseSha} from origin, is there a git repo?`,
@@ -170,11 +164,7 @@ export async function getMergeBase({
 
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
-      const output = await exec.getExecOutput(
-        "git",
-        ["merge-base", headSha, baseSha],
-        { silent: true },
-      );
+      const output = await spawn("git", ["merge-base", headSha, baseSha]);
       mergeBaseSha = output.stdout.trim();
       if (mergeBaseSha) break;
     } catch {
@@ -182,11 +172,14 @@ export async function getMergeBase({
     }
 
     // deepen fetch until we find merge base
-    await exec.exec(
-      "git",
-      ["fetch", "--quiet", "--deepen=10", "origin", baseSha, headSha],
-      { silent: true },
-    );
+    await spawn("git", [
+      "fetch",
+      "--quiet",
+      "--deepen=10",
+      "origin",
+      baseSha,
+      headSha,
+    ]);
   }
 
   if (!mergeBaseSha) {

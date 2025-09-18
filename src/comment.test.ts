@@ -3,17 +3,7 @@ import type { Outcomes } from "./runBuilds";
 import { parseCommitMessage, printComment } from "./comment";
 import * as MD from "./markdown";
 
-vi.mock("@actions/github", () => {
-  return {
-    context: {
-      repo: {
-        owner: "test-org",
-        repo: "test-sdk",
-      },
-      runId: 200,
-    },
-  };
-});
+vi.stubEnv("GITHUB_REPOSITORY", "test-org/test-sdk");
 
 describe("printComment", () => {
   beforeAll(() => {

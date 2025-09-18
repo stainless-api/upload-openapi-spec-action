@@ -1,5 +1,5 @@
 import type { Stainless } from "@stainless-api/sdk";
-import { Outcomes } from "./runBuilds";
+import type { Outcomes } from "./runBuilds";
 import * as MD from "./markdown";
 import {
   createCommentClient,

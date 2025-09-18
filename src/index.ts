@@ -100,10 +100,10 @@ export async function main() {
 
 async function uploadSpecAndConfig(
   specPath: string,
-  configPath: string,
+  configPath: string | undefined,
   token: string,
   projectName: string,
-  commitMessage: string,
+  commitMessage: string | undefined,
   guessConfig: boolean,
   branch: string,
 ): Promise<{

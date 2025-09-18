@@ -5,7 +5,8 @@ import YAML from "yaml";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { getBooleanInput, getInput, setOutput } from "./compat";
 import { readConfig } from "./config";
-import { runBuilds, RunResult } from "./runBuilds";
+import { runBuilds } from "./runBuilds";
+import type { RunResult } from "./runBuilds";
 
 async function main() {
   try {
