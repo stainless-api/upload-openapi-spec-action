@@ -151,7 +151,7 @@ async function main() {
       commitMessage,
     });
 
-    let latestRun: RunResult;
+    let latestRun: RunResult | null = null;
     const upsert = commentThrottler(gitHostToken!, prNumber);
 
     while (true) {
@@ -161,8 +161,8 @@ async function main() {
         latestRun = run.value;
       }
 
-      if (makeComment) {
-        const { outcomes, baseOutcomes } = latestRun!;
+      if (makeComment && latestRun) {
+        const { outcomes, baseOutcomes } = latestRun;
 
         // In case the comment was updated between polls:
         const comment = await retrieveComment({
@@ -186,6 +186,10 @@ async function main() {
       }
 
       if (run.done) {
+        if (!latestRun) {
+          throw new Error("No latest run found after build finish");
+        }
+
         const { outcomes, baseOutcomes } = latestRun!;
 
         setOutput("outcomes", outcomes);

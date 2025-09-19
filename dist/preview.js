@@ -40827,14 +40827,14 @@ async function main() {
       guessConfig: guessConfig ?? (!configPath && !!oasPath),
       commitMessage
     });
-    let latestRun;
+    let latestRun = null;
     const upsert = commentThrottler(gitHostToken, prNumber);
     while (true) {
       const run = await generator.next();
       if (run.value) {
         latestRun = run.value;
       }
-      if (makeComment) {
+      if (makeComment && latestRun) {
         const { outcomes, baseOutcomes } = latestRun;
         const comment = await retrieveComment({
           token: gitHostToken,
@@ -40854,6 +40854,9 @@ async function main() {
         await upsert({ body: commentBody, force: run.done });
       }
       if (run.done) {
+        if (!latestRun) {
+          throw new Error("No latest run found after build finish");
+        }
         const { outcomes, baseOutcomes } = latestRun;
         setOutput("outcomes", outcomes);
         setOutput("base_outcomes", baseOutcomes);

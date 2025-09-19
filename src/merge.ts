@@ -90,7 +90,7 @@ async function main() {
       guessConfig: false,
     });
 
-    let latestRun: RunResult;
+    let latestRun: RunResult | null = null;
     const upsert = commentThrottler(gitHostToken!, prNumber);
 
     while (true) {
@@ -100,8 +100,8 @@ async function main() {
         latestRun = run.value;
       }
 
-      if (makeComment) {
-        const { outcomes } = latestRun!;
+      if (makeComment && latestRun) {
+        const { outcomes } = latestRun;
 
         const commentBody = printComment({
           orgName: orgName!,
@@ -115,7 +115,11 @@ async function main() {
       }
 
       if (run.done) {
-        const { outcomes, documentedSpec } = latestRun!;
+        if (!latestRun) {
+          throw new Error("No latest run found after build finish");
+        }
+
+        const { outcomes, documentedSpec } = latestRun;
 
         setOutput("outcomes", outcomes);
 
