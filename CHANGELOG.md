@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.4](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.3...v1.5.4) (2025-09-19)
+
+
+### Bug Fixes
+
+* check for latestRun before commenting ([53fef9f](https://github.com/stainless-api/upload-openapi-spec-action/commit/53fef9f3286760d15a66407789430ee6d63e94a4))
+
 ## [1.5.3](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.2...v1.5.3) (2025-09-16)
 
 
