@@ -18863,8 +18863,8 @@ async function* pollBuild({
           merge_conflict_pr: null
         }
       },
-      diagnostics: [],
       install_url: null,
+      diagnostics: [],
       ...outcomes[language]
     };
   }

@@ -39470,6 +39470,84 @@ var Heading = (content) => `<h3>${content}</h3>`;
 var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
 var Rule = () => `<hr />`;
 
+// src/outcomes.ts
+var CheckType = ["build", "lint", "test"];
+var DiagnosticLevel = ["fatal", "error", "warning", "note"];
+function shouldFailRun(failRunOn, outcome) {
+  const conclusion = outcome.commit?.completed?.conclusion;
+  if (!conclusion) {
+    return true;
+  }
+  const diagnosticCounts = countDiagnosticLevels(outcome.diagnostics ?? []);
+  const checkFailures = CheckType.filter(
+    (checkType) => outcome[checkType] && outcome[checkType].status === "completed" && outcome[checkType].completed.conclusion !== "success"
+  );
+  switch (failRunOn) {
+    case "note":
+      if (conclusion === "note" || diagnosticCounts.note > 0) {
+        return true;
+      }
+    // fallthrough
+    case "warning":
+      if (conclusion === "warning" || diagnosticCounts.warning > 0 || checkFailures.includes("test")) {
+        return true;
+      }
+    // fallthrough
+    case "error":
+      if (conclusion === "error" || diagnosticCounts.error > 0 || checkFailures.includes("build") || checkFailures.includes("lint")) {
+        return true;
+      }
+    // fallthrough
+    case "fatal":
+      if (conclusion === "timed_out" || conclusion === "fatal" || diagnosticCounts.fatal > 0) {
+        return true;
+      }
+    // fallthrough
+    case "never":
+      return false;
+  }
+}
+function countDiagnosticLevels(diagnostics) {
+  return diagnostics.reduce(
+    (counts, diag) => {
+      counts[diag.level] = (counts[diag.level] || 0) + 1;
+      return counts;
+    },
+    {
+      fatal: 0,
+      error: 0,
+      warning: 0,
+      note: 0
+    }
+  );
+}
+function getNewDiagnostics(diagnostics, baseDiagnostics) {
+  if (!baseDiagnostics) {
+    return diagnostics;
+  }
+  return diagnostics.filter(
+    (d) => !baseDiagnostics.some(
+      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
+    )
+  );
+}
+function sortDiagnostics(diagnostics) {
+  return diagnostics.sort(
+    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
+  );
+}
+function getNewChecks(outcome, baseOutcome) {
+  const result = {};
+  for (const checkType of CheckType) {
+    const baseConclusion = baseOutcome?.[checkType]?.status === "completed" && baseOutcome?.[checkType].completed.conclusion;
+    const conclusion = outcome[checkType]?.status === "completed" && outcome[checkType].completed.conclusion;
+    if (outcome[checkType] && (!baseConclusion || baseConclusion !== conclusion)) {
+      result[checkType] = outcome[checkType];
+    }
+  }
+  return result;
+}
+
 // src/comment.ts
 var COMMENT_TITLE = Heading(
   `${Symbol2.HeavyAsterisk} Stainless preview builds`
@@ -39742,28 +39820,13 @@ function MergeConflictLink(outcome) {
     href: `https://github.com/${owner}/${name}/pull/${number}`
   });
 }
-var diagnosticLevels = ["fatal", "error", "warning", "note"];
 function DiagnosticsDetails(head, base) {
   if (!base.diagnostics || !head.diagnostics) return null;
-  const newDiagnostics = head.diagnostics.filter(
-    (d) => !base.diagnostics.some(
-      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
-    )
-  );
+  const newDiagnostics = getNewDiagnostics(head.diagnostics, base.diagnostics);
   if (newDiagnostics.length === 0) return null;
-  const levelCounts = {
-    fatal: 0,
-    error: 0,
-    warning: 0,
-    note: 0
-  };
-  for (const d of newDiagnostics) {
-    levelCounts[d.level]++;
-  }
+  const levelCounts = countDiagnosticLevels(newDiagnostics);
   const diagnosticCounts = Object.entries(levelCounts).filter(([, count]) => count > 0).map(([level, count]) => `${count} ${level}`);
-  const diagnosticList = newDiagnostics.sort(
-    (a, b) => diagnosticLevels.indexOf(a.level) - diagnosticLevels.indexOf(b.level)
-  ).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
+  const diagnosticList = sortDiagnostics(newDiagnostics).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
   const tableRows = diagnosticList.map((diagnostic) => `<tr>
 <td>${diagnostic}</td>
 </tr>`).join("\n");
@@ -39834,26 +39897,23 @@ function categorize(head, base) {
     default:
       return "failure";
   }
-  for (const check of ["build", "lint", "test"]) {
-    if ((!base?.[check] || base[check]?.status === "completed" && base[check]?.completed.conclusion === "success") && head[check] && head[check].status === "completed" && head[check].completed.conclusion !== "success") {
-      return "regression";
-    }
-  }
   if (base?.diagnostics && head.diagnostics) {
-    const newDiagnostics = head.diagnostics.filter(
-      (d) => !base.diagnostics.some(
-        (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
-      )
+    const newDiagnostics = getNewDiagnostics(
+      head.diagnostics,
+      base.diagnostics
     );
-    if (newDiagnostics.some(
-      (d) => ["fatal", "error", "warning"].includes(d.level)
-    )) {
+    if (newDiagnostics.some((d) => d.level !== "note")) {
       return "regression";
     }
   }
-  for (const step of ["build", "lint", "test"]) {
-    const stepData = head[step];
-    if (stepData && stepData.status !== "completed") {
+  const newChecks = getNewChecks(head, base);
+  for (const check of Object.values(newChecks)) {
+    if (check.status === "completed" && check.completed.conclusion !== "success") {
+      return "regression";
+    }
+  }
+  for (const check of Object.values(newChecks)) {
+    if (check.status !== "completed") {
       return "pending";
     }
   }
@@ -40586,8 +40646,8 @@ async function* pollBuild({
           merge_conflict_pr: null
         }
       },
-      diagnostics: [],
       install_url: null,
+      diagnostics: [],
       ...outcomes[language]
     };
   }
@@ -40595,28 +40655,23 @@ async function* pollBuild({
 }
 function checkResults({
   outcomes,
+  baseOutcomes,
   failRunOn
 }) {
-  if (failRunOn === "never") {
-    return true;
-  }
-  const failedLanguages = Object.entries(outcomes).filter(([, outcome]) => {
-    if (!outcome.commit) {
-      return true;
+  const failedLanguages = Object.entries(outcomes).filter(
+    ([language, outcome]) => {
+      return shouldFailRun(failRunOn, {
+        commit: outcome.commit,
+        // If we have old diagnostics, only fail run against new diagnostics.
+        diagnostics: getNewDiagnostics(
+          outcome.diagnostics,
+          baseOutcomes?.[language].diagnostics
+        ),
+        // If we have old checks, only fail run against new checks.
+        ...getNewChecks(outcome, baseOutcomes?.[language])
+      });
     }
-    if (failRunOn === "error" || failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "error" || outcome.commit.completed.conclusion === "fatal" || outcome.commit.completed.conclusion === "timed_out") {
-        return true;
-      }
-    }
-    if (failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "warning") return true;
-    }
-    if (failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "note") return true;
-    }
-    return false;
-  });
+  );
   if (failedLanguages.length > 0) {
     console.log(
       `The following languages did not build successfully: ${failedLanguages.map(([lang]) => lang).join(", ")}`
