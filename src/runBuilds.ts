@@ -1,4 +1,4 @@
-import type { Stainless } from "@stainless-api/sdk";
+import { Stainless } from "@stainless-api/sdk";
 import type { Outcomes } from "./outcomes";
 
 type Build = Stainless.Builds.BuildObject;
