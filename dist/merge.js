@@ -39471,42 +39471,174 @@ var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
 var Rule = () => `<hr />`;
 
 // src/outcomes.ts
-var CheckType = ["build", "lint", "test"];
-var DiagnosticLevel = ["fatal", "error", "warning", "note"];
-function shouldFailRun(failRunOn, outcome) {
-  const conclusion = outcome.commit?.completed?.conclusion;
-  if (!conclusion) {
-    return true;
+var FailRunOn = [
+  "never",
+  "fatal",
+  "error",
+  "warning",
+  "note"
+];
+var OutcomeConclusion = [...FailRunOn, "success"];
+function shouldFailRun({
+  failRunOn,
+  outcomes,
+  baseOutcomes
+}) {
+  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
+    const { conclusion, reason } = categorizeOutcome({
+      outcome,
+      baseOutcome: baseOutcomes?.[language]
+    });
+    const didFail = OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
+    return didFail ? [{ language, reason }] : [];
+  });
+  if (failures.length > 0) {
+    console.log("The following languages did not build successfully:");
+    for (const { language, reason } of failures) {
+      console.log(`${language}: ${reason}`);
+    }
+    return false;
   }
-  const diagnosticCounts = countDiagnosticLevels(outcome.diagnostics ?? []);
-  const checkFailures = CheckType.filter(
-    (checkType) => outcome[checkType] && outcome[checkType].status === "completed" && outcome[checkType].completed.conclusion !== "success"
-  );
-  switch (failRunOn) {
-    case "note":
-      if (conclusion === "note" || diagnosticCounts.note > 0) {
-        return true;
-      }
-    // fallthrough
-    case "warning":
-      if (conclusion === "warning" || diagnosticCounts.warning > 0 || checkFailures.includes("test")) {
-        return true;
-      }
-    // fallthrough
-    case "error":
-      if (conclusion === "error" || diagnosticCounts.error > 0 || checkFailures.includes("build") || checkFailures.includes("lint")) {
-        return true;
-      }
-    // fallthrough
-    case "fatal":
-      if (conclusion === "timed_out" || conclusion === "fatal" || diagnosticCounts.fatal > 0) {
-        return true;
-      }
-    // fallthrough
-    case "never":
-      return false;
-  }
+  return true;
 }
+function categorizeOutcome({
+  outcome,
+  baseOutcome
+}) {
+  const commitConclusion = outcome.commit?.completed?.conclusion;
+  const diagnostics = getNewDiagnostics(
+    outcome.diagnostics,
+    baseOutcome?.diagnostics
+  );
+  const diagnosticCounts = countDiagnosticLevels(diagnostics);
+  const checks = getNewChecks(outcome, baseOutcome);
+  const checkFailures = CheckType.filter(
+    (checkType) => checks[checkType] && checks[checkType].status === "completed" && checks[checkType].completed.conclusion !== "success"
+  );
+  if (commitConclusion === "noop") {
+    return {
+      conclusion: "success",
+      reason: "Code was not generated because the target is skipped."
+    };
+  }
+  if (commitConclusion === "cancelled") {
+    return {
+      conclusion: "success",
+      reason: "Code was not generated because the build was cancelled."
+    };
+  }
+  if (!commitConclusion || commitConclusion === "fatal") {
+    return {
+      conclusion: "fatal",
+      reason: "Code was not generated because there was a fatal error.",
+      isPending: outcome.commit?.status !== "completed"
+    };
+  }
+  if (commitConclusion === "timed_out") {
+    return {
+      conclusion: "fatal",
+      reason: "Timed out."
+    };
+  }
+  if (![
+    // Merge conflicts are warnings, not fatal:
+    "merge_conflict",
+    "upstream_merge_conflict",
+    // Success conclusion are handled below:
+    "error",
+    "warning",
+    "note",
+    "success"
+    // All other commit conclusions are unknown, and thus fatal.
+  ].includes(commitConclusion)) {
+    return {
+      conclusion: "fatal",
+      reason: `Unknown conclusion: ${commitConclusion}`
+    };
+  }
+  if (diagnosticCounts.fatal > 0) {
+    return {
+      conclusion: "fatal",
+      reason: `Found ${diagnosticCounts.fatal} fatal diagnostics.`
+    };
+  }
+  if (diagnosticCounts.error > 0) {
+    return {
+      conclusion: "error",
+      reason: `Found ${diagnosticCounts.error} error diagnostics.`
+    };
+  }
+  if (checkFailures.includes("build")) {
+    return {
+      conclusion: "error",
+      reason: "The build CI job failed."
+    };
+  }
+  if (commitConclusion === "error") {
+    return {
+      conclusion: "error",
+      reason: "Build had error conclusion."
+    };
+  }
+  if (diagnosticCounts.warning > 0) {
+    return {
+      conclusion: "warning",
+      reason: `Found ${diagnosticCounts.warning} warning diagnostics.`
+    };
+  }
+  if (checkFailures.includes("lint")) {
+    return {
+      conclusion: "warning",
+      reason: "The lint CI job failed."
+    };
+  }
+  if (checkFailures.includes("test")) {
+    return {
+      conclusion: "warning",
+      reason: "The test CI job failed."
+    };
+  }
+  if (commitConclusion === "warning") {
+    return {
+      conclusion: "warning",
+      reason: "Build had warning conclusion."
+    };
+  }
+  if (commitConclusion === "merge_conflict") {
+    return {
+      conclusion: "warning",
+      reason: "There was a conflict between your custom code and your generated changes.",
+      isMergeConflict: true
+    };
+  }
+  if (commitConclusion === "upstream_merge_conflict") {
+    return {
+      conclusion: "warning",
+      reason: "There was an upstream conflict which is preventing the preview of your change.",
+      isMergeConflict: true
+    };
+  }
+  if (diagnosticCounts.note > 0) {
+    return {
+      conclusion: "note",
+      reason: `Found ${diagnosticCounts.note} note diagnostics.`
+    };
+  }
+  if (commitConclusion === "note") {
+    return {
+      conclusion: "note",
+      reason: "Build had note conclusion."
+    };
+  }
+  return {
+    conclusion: "success",
+    reason: "Build was successful.",
+    isPending: Object.values(checks).some(
+      (check) => check.status !== "completed"
+    )
+  };
+}
+var DiagnosticLevel = ["fatal", "error", "warning", "note"];
 function countDiagnosticLevels(diagnostics) {
   return diagnostics.reduce(
     (counts, diag) => {
@@ -39536,6 +39668,7 @@ function sortDiagnostics(diagnostics) {
     (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
   );
 }
+var CheckType = ["build", "lint", "test"];
 function getNewChecks(outcome, baseOutcome) {
   const result = {};
   for (const checkType of CheckType) {
@@ -39614,9 +39747,10 @@ function Results({
   let hasPending = false;
   Object.entries(outcomes).forEach(([lang, head]) => {
     const base = baseOutcomes?.[lang];
-    if (categorize(head, base) === "pending") {
-      hasPending = true;
-    }
+    hasPending ||= categorizeOutcome({
+      outcome: head,
+      baseOutcome: base
+    }).isPending ?? false;
     const result = Result({
       orgName,
       projectName,
@@ -39646,52 +39780,51 @@ function Result({
   head,
   base
 }) {
-  const category = categorize(head, base);
-  const Description = (() => {
-    switch (category) {
-      case "failure": {
-        switch (head.commit?.completed?.conclusion) {
-          case "fatal":
-            return Italic(
-              "Code was not generated because there was a fatal error."
-            );
-          case "timed_out":
-            return Italic("Timed out.");
-          default:
-            return Italic(
-              `Unknown conclusion (${CodeInline(
-                head.commit?.completed?.conclusion || "unknown"
-              )}).`
-            );
-        }
-      }
-      case "merge_conflict":
-        return [
-          head.commit?.completed?.conclusion === "upstream_merge_conflict" ? Italic(
-            `There was an upstream conflict which is preventing the preview of your change.`
-          ) : Italic(
-            `There was a conflict between your custom code and your generated changes.`
-          ),
+  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+    outcome: head,
+    baseOutcome: base
+  });
+  const { ResultIcon, Description } = (() => {
+    if (conclusion === "fatal") {
+      return {
+        ResultIcon: Symbol2.Exclamation,
+        Description: Italic(reason)
+      };
+    }
+    if (isMergeConflict) {
+      return {
+        ResultIcon: Symbol2.Zap,
+        Description: [
+          Italic(reason),
           Italic(
             `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({
               text: "here",
               href: "https://www.stainless.com/docs/guides/add-custom-code"
             })}.`
           )
-        ].join("\n");
-      case "regression": {
-        return Italic("There was a regression in your SDK.");
-      }
-      case "success": {
-        return Italic("Your SDK built successfully.");
-      }
-      default:
-        return "";
+        ].join("\n")
+      };
     }
+    if (conclusion !== "note" && conclusion !== "success") {
+      return {
+        ResultIcon: Symbol2.Warning,
+        Description: Italic("There was a regression in your SDK.")
+      };
+    }
+    if (!isPending) {
+      return {
+        ResultIcon: Symbol2.WhiteCheckMark,
+        Description: Italic("Your SDK built successfully.")
+      };
+    }
+    return {
+      ResultIcon: Symbol2.HourglassFlowingSand,
+      Description: ""
+    };
   })();
   return Details({
     summary: [
-      ResultIcon(category),
+      ResultIcon,
       Bold(`${projectName}-${lang}`),
       [
         Link({
@@ -39709,22 +39842,8 @@ function Result({
       InstallationDetails(head, lang),
       base ? DiagnosticsDetails(head, base) : null
     ].filter((value) => Boolean(value)).join("\n"),
-    open: category !== "success" && category !== "pending"
+    open: conclusion !== "note" && conclusion !== "success" && !isPending
   });
-}
-function ResultIcon(category) {
-  switch (category) {
-    case "failure":
-      return Symbol2.Exclamation;
-    case "merge_conflict":
-      return Symbol2.Zap;
-    case "regression":
-      return Symbol2.Warning;
-    case "success":
-      return Symbol2.WhiteCheckMark;
-    default:
-      return Symbol2.HourglassFlowingSand;
-  }
 }
 function StatusLine(base, head) {
   return [
@@ -39872,52 +39991,6 @@ function InstallationDetails(head, lang) {
   }
   if (!installation) return null;
   return CodeBlock({ content: installation, language: "bash" });
-}
-function categorize(head, base) {
-  if (head.commit?.status !== "completed") {
-    return "pending";
-  }
-  switch (head.commit.completed.conclusion) {
-    case "fatal":
-    case "timed_out":
-      return "failure";
-    case "merge_conflict":
-    case "upstream_merge_conflict":
-      return "merge_conflict";
-    case "noop":
-      return "success";
-    // Completed success outcomes are handled below
-    case "error":
-    case "warning":
-    case "note":
-    case "success": {
-      break;
-    }
-    // Unknown conclusions are fatal
-    default:
-      return "failure";
-  }
-  if (base?.diagnostics && head.diagnostics) {
-    const newDiagnostics = getNewDiagnostics(
-      head.diagnostics,
-      base.diagnostics
-    );
-    if (newDiagnostics.some((d) => d.level !== "note")) {
-      return "regression";
-    }
-  }
-  const newChecks = getNewChecks(head, base);
-  for (const check of Object.values(newChecks)) {
-    if (check.status === "completed" && check.completed.conclusion !== "success") {
-      return "regression";
-    }
-  }
-  for (const check of Object.values(newChecks)) {
-    if (check.status !== "completed") {
-      return "pending";
-    }
-  }
-  return "success";
 }
 function parseCommitMessage(body) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
@@ -40653,33 +40726,6 @@ async function* pollBuild({
   }
   return { outcomes, documentedSpec };
 }
-function checkResults({
-  outcomes,
-  baseOutcomes,
-  failRunOn
-}) {
-  const failedLanguages = Object.entries(outcomes).filter(
-    ([language, outcome]) => {
-      return shouldFailRun(failRunOn, {
-        commit: outcome.commit,
-        // If we have old diagnostics, only fail run against new diagnostics.
-        diagnostics: getNewDiagnostics(
-          outcome.diagnostics,
-          baseOutcomes?.[language].diagnostics
-        ),
-        // If we have old checks, only fail run against new checks.
-        ...getNewChecks(outcome, baseOutcomes?.[language])
-      });
-    }
-  );
-  if (failedLanguages.length > 0) {
-    console.log(
-      `The following languages did not build successfully: ${failedLanguages.map(([lang]) => lang).join(", ")}`
-    );
-    return false;
-  }
-  return true;
-}
 
 // src/merge.ts
 async function main() {
@@ -40777,7 +40823,7 @@ async function main() {
           fs4.writeFileSync(documentedSpecPath, documentedSpec);
           setOutput("documented_spec_path", documentedSpecPath);
         }
-        if (!checkResults({ outcomes, failRunOn })) {
+        if (!shouldFailRun({ failRunOn, outcomes })) {
           process.exit(1);
         }
         break;
