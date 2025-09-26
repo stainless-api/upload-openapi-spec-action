@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.5](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.4...v1.5.5) (2025-09-26)
+
+
+### Bug Fixes
+
+* rollback filtering diagnostics by target ([54328a3](https://github.com/stainless-api/upload-openapi-spec-action/commit/54328a386f86c333576c65f3ea232bbac9cd967c))
+
 ## [1.5.4](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.3...v1.5.4) (2025-09-25)
 
 
