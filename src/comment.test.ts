@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import type { Outcomes } from "./runBuilds";
 import { parseCommitMessage, printComment } from "./comment";
 import * as MD from "./markdown";
+import type { Outcomes } from "./outcomes";
 
 vi.stubEnv("GITHUB_REPOSITORY", "test-org/test-sdk");
 

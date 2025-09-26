@@ -1,12 +1,17 @@
-import type { Stainless } from "@stainless-api/sdk";
-import type { Outcomes } from "./runBuilds";
-import * as MD from "./markdown";
 import {
   createCommentClient,
   getCITerm,
   getPRTerm,
   getRepoPath,
 } from "./compat";
+import * as MD from "./markdown";
+import type { DiagnosticLevel, Outcomes } from "./outcomes";
+import {
+  categorizeOutcome,
+  countDiagnosticLevels,
+  getNewDiagnostics,
+  sortDiagnostics,
+} from "./outcomes";
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,
@@ -85,9 +90,6 @@ export function printComment({
   return fullComment;
 }
 
-type DiagnosticLevel =
-  Stainless.Builds.Diagnostics.DiagnosticListResponse["level"];
-
 const DiagnosticIcon: Record<DiagnosticLevel, string> = {
   fatal: MD.Symbol.Exclamation,
   error: MD.Symbol.Exclamation,
@@ -116,9 +118,11 @@ function Results({
     const base = baseOutcomes?.[lang];
 
     // Check if this outcome is pending
-    if (categorize(head, base) === "pending") {
-      hasPending = true;
-    }
+    hasPending ||=
+      categorizeOutcome({
+        outcome: head,
+        baseOutcome: base,
+      }).isPending ?? false;
 
     // Get the formatted result for this outcome
     const result = Result({
@@ -162,36 +166,23 @@ function Result({
   head: Outcomes[string];
   base?: Outcomes[string];
 }): string | null {
-  const category = categorize(head, base);
+  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+    outcome: head,
+    baseOutcome: base,
+  });
 
-  const Description = (() => {
-    switch (category) {
-      case "failure": {
-        switch (head.commit?.completed?.conclusion) {
-          case "fatal":
-            return MD.Italic(
-              "Code was not generated because there was a fatal error.",
-            );
-          case "timed_out":
-            return MD.Italic("Timed out.");
-          default:
-            return MD.Italic(
-              `Unknown conclusion (${MD.CodeInline(
-                head.commit?.completed?.conclusion || "unknown",
-              )}).`,
-            );
-        }
-      }
-      case "merge_conflict":
-        return [
-          head.commit?.completed?.conclusion === "upstream_merge_conflict"
-            ? MD.Italic(
-                `There was an upstream conflict which is preventing the preview of your change.`,
-              )
-            : MD.Italic(
-                `There was a conflict between your custom code and your generated changes.`,
-              ),
-
+  const { ResultIcon, Description } = (() => {
+    if (conclusion === "fatal") {
+      return {
+        ResultIcon: MD.Symbol.Exclamation,
+        Description: MD.Italic(reason),
+      };
+    }
+    if (isMergeConflict) {
+      return {
+        ResultIcon: MD.Symbol.Zap,
+        Description: [
+          MD.Italic(reason),
           MD.Italic(
             `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. ` +
               `Read more about why this happened ${MD.Link({
@@ -199,21 +190,30 @@ function Result({
                 href: "https://www.stainless.com/docs/guides/add-custom-code",
               })}.`,
           ),
-        ].join("\n");
-      case "regression": {
-        return MD.Italic("There was a regression in your SDK.");
-      }
-      case "success": {
-        return MD.Italic("Your SDK built successfully.");
-      }
-      default:
-        return "";
+        ].join("\n"),
+      };
     }
+    if (conclusion !== "note" && conclusion !== "success") {
+      return {
+        ResultIcon: MD.Symbol.Warning,
+        Description: MD.Italic("There was a regression in your SDK."),
+      };
+    }
+    if (!isPending) {
+      return {
+        ResultIcon: MD.Symbol.WhiteCheckMark,
+        Description: MD.Italic("Your SDK built successfully."),
+      };
+    }
+    return {
+      ResultIcon: MD.Symbol.HourglassFlowingSand,
+      Description: "",
+    };
   })();
 
   return MD.Details({
     summary: [
-      ResultIcon(category),
+      ResultIcon,
       MD.Bold(`${projectName}-${lang}`),
 
       [
@@ -236,23 +236,8 @@ function Result({
     ]
       .filter((value): value is NonNullable<typeof value> => Boolean(value))
       .join("\n"),
-    open: category !== "success" && category !== "pending",
+    open: conclusion !== "note" && conclusion !== "success" && !isPending,
   });
-}
-
-function ResultIcon(category: OutcomeCategory): string {
-  switch (category) {
-    case "failure":
-      return MD.Symbol.Exclamation;
-    case "merge_conflict":
-      return MD.Symbol.Zap;
-    case "regression":
-      return MD.Symbol.Warning;
-    case "success":
-      return MD.Symbol.WhiteCheckMark;
-    default:
-      return MD.Symbol.HourglassFlowingSand;
-  }
 }
 
 function StatusLine(
@@ -362,13 +347,6 @@ function StatusURL(
   return outcome[step]?.completed?.url;
 }
 
-type OutcomeCategory =
-  | "failure"
-  | "merge_conflict"
-  | "regression"
-  | "success"
-  | "pending";
-
 function GitHubLink(outcome: Outcomes[string]): string | null {
   if (!outcome.commit?.completed?.commit) return null;
 
@@ -410,47 +388,23 @@ function MergeConflictLink(outcome: Outcomes[string]): string | null {
   });
 }
 
-const diagnosticLevels = ["fatal", "error", "warning", "note"] as const;
-
 function DiagnosticsDetails(
   head: Outcomes[string],
   base: Outcomes[string],
 ): string | null {
   if (!base.diagnostics || !head.diagnostics) return null;
 
-  const newDiagnostics = head.diagnostics.filter(
-    (d) =>
-      !base.diagnostics.some(
-        (bd) =>
-          bd.code === d.code &&
-          bd.message === d.message &&
-          bd.config_ref === d.config_ref &&
-          bd.oas_ref === d.oas_ref,
-      ),
-  );
+  const newDiagnostics = getNewDiagnostics(head.diagnostics, base.diagnostics);
 
   if (newDiagnostics.length === 0) return null;
 
-  const levelCounts: Record<DiagnosticLevel, number> = {
-    fatal: 0,
-    error: 0,
-    warning: 0,
-    note: 0,
-  };
-
-  for (const d of newDiagnostics) {
-    levelCounts[d.level]++;
-  }
+  const levelCounts = countDiagnosticLevels(newDiagnostics);
 
   const diagnosticCounts = Object.entries(levelCounts)
     .filter(([, count]) => count > 0)
     .map(([level, count]) => `${count} ${level}`);
 
-  const diagnosticList = newDiagnostics
-    .sort(
-      (a, b) =>
-        diagnosticLevels.indexOf(a.level) - diagnosticLevels.indexOf(b.level),
-    )
+  const diagnosticList = sortDiagnostics(newDiagnostics)
     .slice(0, 10)
     .map((d) => `${DiagnosticIcon[d.level]} ${MD.Bold(d.code)}: ${d.message}`)
     .filter(Boolean) as string[];
@@ -506,83 +460,6 @@ function InstallationDetails(
 
   if (!installation) return null;
   return MD.CodeBlock({ content: installation, language: "bash" });
-}
-
-function categorize(
-  head: Outcomes[string],
-  base?: Outcomes[string],
-): OutcomeCategory {
-  if (head.commit?.status !== "completed") {
-    return "pending";
-  }
-
-  // Check for fatal failures first
-  switch (head.commit.completed.conclusion) {
-    case "fatal":
-    case "timed_out":
-      return "failure";
-    case "merge_conflict":
-    case "upstream_merge_conflict":
-      return "merge_conflict";
-    case "noop":
-      return "success";
-    // Completed success outcomes are handled below
-    case "error":
-    case "warning":
-    case "note":
-    case "success": {
-      break;
-    }
-    // Unknown conclusions are fatal
-    default:
-      return "failure";
-  }
-
-  // Check if any step failed that previously succeeded or didn't exist
-  for (const check of ["build", "lint", "test"] as const) {
-    if (
-      (!base?.[check] ||
-        (base[check]?.status === "completed" &&
-          base[check]?.completed.conclusion === "success")) &&
-      head[check] &&
-      head[check].status === "completed" &&
-      head[check].completed.conclusion !== "success"
-    ) {
-      return "regression";
-    }
-  }
-
-  // Check for new diagnostics that indicate regression
-  if (base?.diagnostics && head.diagnostics) {
-    const newDiagnostics = head.diagnostics.filter(
-      (d) =>
-        !base.diagnostics.some(
-          (bd) =>
-            bd.code === d.code &&
-            bd.message === d.message &&
-            bd.config_ref === d.config_ref &&
-            bd.oas_ref === d.oas_ref,
-        ),
-    );
-
-    if (
-      newDiagnostics.some((d) =>
-        ["fatal", "error", "warning"].includes(d.level),
-      )
-    ) {
-      return "regression";
-    }
-  }
-
-  // Check for pending steps
-  for (const step of ["build", "lint", "test"] as const) {
-    const stepData = head[step];
-    if (stepData && stepData.status !== "completed") {
-      return "pending";
-    }
-  }
-
-  return "success";
 }
 
 export function parseCommitMessage(body?: string | null) {

@@ -1,13 +1,7 @@
 import { Stainless } from "@stainless-api/sdk";
+import type { Outcomes } from "./outcomes";
 
 type Build = Stainless.Builds.BuildObject;
-export type Outcomes = Record<
-  string,
-  Omit<Stainless.Builds.BuildTarget, "commit"> & {
-    commit: Stainless.Builds.BuildTarget.Completed | null;
-    diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[];
-  }
->;
 
 const POLLING_INTERVAL_SECONDS = 5;
 const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
@@ -398,60 +392,11 @@ async function* pollBuild({
           merge_conflict_pr: null,
         },
       },
-      diagnostics: [],
       install_url: null,
+      diagnostics: [],
       ...(outcomes[language] as Outcomes[string] | undefined),
     };
   }
 
   return { outcomes, documentedSpec };
-}
-
-export function checkResults({
-  outcomes,
-  failRunOn,
-}: {
-  outcomes: Outcomes;
-  failRunOn: string;
-}) {
-  if (failRunOn === "never") {
-    return true;
-  }
-
-  const failedLanguages = Object.entries(outcomes).filter(([, outcome]) => {
-    if (!outcome.commit) {
-      return true;
-    }
-    if (
-      failRunOn === "error" ||
-      failRunOn === "warning" ||
-      failRunOn === "note"
-    ) {
-      if (
-        outcome.commit.completed.conclusion === "error" ||
-        outcome.commit.completed.conclusion === "fatal" ||
-        outcome.commit.completed.conclusion === "timed_out"
-      ) {
-        return true;
-      }
-    }
-    if (failRunOn === "warning" || failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "warning") return true;
-    }
-    if (failRunOn === "note") {
-      if (outcome.commit.completed.conclusion === "note") return true;
-    }
-    return false;
-  });
-
-  if (failedLanguages.length > 0) {
-    console.log(
-      `The following languages did not build successfully: ${failedLanguages
-        .map(([lang]) => lang)
-        .join(", ")}`,
-    );
-    return false;
-  }
-
-  return true;
 }

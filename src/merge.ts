@@ -10,7 +10,8 @@ import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { isConfigChanged, readConfig } from "./config";
-import { checkResults, runBuilds } from "./runBuilds";
+import { shouldFailRun, FailRunOn } from "./outcomes";
+import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 
 async function main() {
@@ -22,7 +23,10 @@ async function main() {
     const configPath =
       getInput("config_path", { required: false }) || undefined;
     const defaultCommitMessage = getInput("commit_message", { required: true });
-    const failRunOn = getInput("fail_on", { required: true }) || "error";
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true,
+    });
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
@@ -130,7 +134,7 @@ async function main() {
           setOutput("documented_spec_path", documentedSpecPath);
         }
 
-        if (!checkResults({ outcomes, failRunOn })) {
+        if (!shouldFailRun({ failRunOn, outcomes })) {
           process.exit(1);
         }
 

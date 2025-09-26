@@ -24,7 +24,8 @@ import {
   saveConfig,
 } from "./config";
 import type { Config } from "./config";
-import { checkResults, runBuilds } from "./runBuilds";
+import { shouldFailRun, FailRunOn } from "./outcomes";
+import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 
 async function main() {
@@ -36,7 +37,10 @@ async function main() {
     const configPath = getInput("config_path", { required: false });
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const guessConfig = getBooleanInput("guess_config", { required: false });
-    const failRunOn = getInput("fail_on", { required: false }) || "error";
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true,
+    });
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
@@ -195,7 +199,7 @@ async function main() {
         setOutput("outcomes", outcomes);
         setOutput("base_outcomes", baseOutcomes);
 
-        if (!checkResults({ outcomes, failRunOn })) {
+        if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
           process.exit(1);
         }
 
