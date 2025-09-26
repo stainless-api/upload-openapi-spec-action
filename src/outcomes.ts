@@ -138,7 +138,7 @@ export function categorizeOutcome({
   if (diagnosticCounts.error > 0) {
     return {
       conclusion: "error",
-      reason: `Found ${diagnosticCounts.error} error diagnostics.`,
+      reason: `Found ${diagnosticCounts.error} new error diagnostics.`,
     };
   }
   if (checkFailures.includes("build")) {
@@ -150,7 +150,7 @@ export function categorizeOutcome({
   if (commitConclusion === "error") {
     return {
       conclusion: "error",
-      reason: "Build had error conclusion.",
+      reason: "Build had an error conclusion.",
     };
   }
 
@@ -176,7 +176,7 @@ export function categorizeOutcome({
   if (commitConclusion === "warning") {
     return {
       conclusion: "warning",
-      reason: "Build had warning conclusion.",
+      reason: "Build had a warning conclusion.",
     };
   }
   if (commitConclusion === "merge_conflict") {
@@ -206,7 +206,7 @@ export function categorizeOutcome({
   if (commitConclusion === "note") {
     return {
       conclusion: "note",
-      reason: "Build had note conclusion.",
+      reason: "Build had a note conclusion.",
     };
   }
 

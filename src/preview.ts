@@ -37,8 +37,10 @@ async function main() {
     const configPath = getInput("config_path", { required: false });
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const guessConfig = getBooleanInput("guess_config", { required: false });
-    const failRunOn = (getInput("fail_on", { required: false }) ||
-      "error") as FailRunOn;
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true,
+    });
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });

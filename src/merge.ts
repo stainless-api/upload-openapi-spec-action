@@ -23,8 +23,10 @@ async function main() {
     const configPath =
       getInput("config_path", { required: false }) || undefined;
     const defaultCommitMessage = getInput("commit_message", { required: true });
-    const failRunOn = (getInput("fail_on", { required: true }) ||
-      "error") as FailRunOn;
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true,
+    });
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
