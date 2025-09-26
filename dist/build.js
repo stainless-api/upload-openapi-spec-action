@@ -18185,6 +18185,11 @@ function getInput(name, options) {
   if (options?.required && !value) {
     throw new Error(`Input required and not supplied: ${name}`);
   }
+  if (options?.choices && value && !options.choices.includes(value)) {
+    throw new Error(
+      `Input not one of the allowed choices for ${name}: ${value}`
+    );
+  }
   return value || void 0;
 }
 function getBooleanInput(name, options) {

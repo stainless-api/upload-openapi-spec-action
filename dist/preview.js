@@ -37443,6 +37443,11 @@ function getInput(name, options) {
   if (options?.required && !value) {
     throw new Error(`Input required and not supplied: ${name}`);
   }
+  if (options?.choices && value && !options.choices.includes(value)) {
+    throw new Error(
+      `Input not one of the allowed choices for ${name}: ${value}`
+    );
+  }
   return value || void 0;
 }
 function getBooleanInput(name, options) {
@@ -39587,7 +39592,7 @@ function categorizeOutcome({
   if (diagnosticCounts.error > 0) {
     return {
       conclusion: "error",
-      reason: `Found ${diagnosticCounts.error} error diagnostics.`
+      reason: `Found ${diagnosticCounts.error} new error diagnostics.`
     };
   }
   if (checkFailures.includes("build")) {
@@ -39599,7 +39604,7 @@ function categorizeOutcome({
   if (commitConclusion === "error") {
     return {
       conclusion: "error",
-      reason: "Build had error conclusion."
+      reason: "Build had an error conclusion."
     };
   }
   if (diagnosticCounts.warning > 0) {
@@ -39623,7 +39628,7 @@ function categorizeOutcome({
   if (commitConclusion === "warning") {
     return {
       conclusion: "warning",
-      reason: "Build had warning conclusion."
+      reason: "Build had a warning conclusion."
     };
   }
   if (commitConclusion === "merge_conflict") {
@@ -39649,7 +39654,7 @@ function categorizeOutcome({
   if (commitConclusion === "note") {
     return {
       conclusion: "note",
-      reason: "Build had note conclusion."
+      reason: "Build had a note conclusion."
     };
   }
   return {
@@ -40839,7 +40844,10 @@ async function main() {
     const configPath = getInput("config_path", { required: false });
     const defaultCommitMessage = getInput("commit_message", { required: true });
     const guessConfig = getBooleanInput("guess_config", { required: false });
-    const failRunOn = getInput("fail_on", { required: false }) || "error";
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true
+    });
     const makeComment = getBooleanInput("make_comment", { required: true });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
