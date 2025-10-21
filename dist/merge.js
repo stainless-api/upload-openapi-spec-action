@@ -40050,7 +40050,7 @@ function commentThrottler(token, prNumber) {
 
 // src/commitMessage.ts
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
 );
 function makeCommitMessageConventional(message) {
   if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
