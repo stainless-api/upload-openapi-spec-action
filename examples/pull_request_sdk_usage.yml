@@ -1,0 +1,136 @@
+name: Build SDKs for pull request
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # Stainless organization name.
+  STAINLESS_ORG: YOUR_ORG
+
+  # Stainless project name.
+  STAINLESS_PROJECT: YOUR_PROJECT
+
+  # Path to your OpenAPI spec.
+  OAS_PATH: YOUR_OAS_PATH
+
+  # Path to your Stainless config. Optional; only provide this if you prefer
+  # to maintain the ground truth Stainless config in your own repo.
+  CONFIG_PATH: YOUR_CONFIG_PATH
+
+  # When to fail the job based on build conclusion.
+  # Options: "never" | "note" | "warning" | "error" | "fatal".
+  FAIL_ON: error
+
+  # In your repo secrets, configure:
+  # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
+  #   Stainless organization dashboard
+
+jobs:
+  preview:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Run preview builds
+        id: build
+        uses: stainless-api/upload-openapi-spec-action/preview@v1
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+
+      # Example: Extract install_url and test the preview build
+      # This demonstrates how to use the install_url output to run integration tests
+      # against the preview build before merging.
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Install and test preview SDK
+        run: |
+          # Extract the install_url for the TypeScript SDK from the outcomes
+          INSTALL_URL=$(echo '${{ steps.build.outputs.outcomes }}' | jq -r '.typescript.install_url // empty')
+
+          if [ -n "$INSTALL_URL" ]; then
+            echo "Installing preview SDK from: $INSTALL_URL"
+            npm install "$INSTALL_URL"
+
+            # Run your integration tests here
+            # npm test
+            # or other validation commands
+            echo "Preview SDK installed successfully!"
+          else
+            echo "No install_url found for TypeScript SDK"
+          fi
+
+  merge:
+    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # Note that this only merges in changes that happened on the last build on
+      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
+      # changes that haven't been built, if the preview-sdk job didn't finish
+      # before this step starts. In theory we want to wait for all builds
+      # against preview/${{ github.head_ref }} to complete, but assuming that
+      # the preview-sdk job happens before the PR merge, it should be fine.
+      - name: Run merge build
+        id: build
+        uses: stainless-api/upload-openapi-spec-action/merge@v1
+        with:
+          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
+          org: ${{ env.STAINLESS_ORG }}
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ env.OAS_PATH }}
+          config_path: ${{ env.CONFIG_PATH }}
+          fail_on: ${{ env.FAIL_ON }}
+
+      # Example: Use install_url for post-merge operations
+      # This demonstrates using install_url to verify the merged SDK build
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Verify merged Python SDK
+        run: |
+          # Extract the install_url for the Python SDK from the outcomes
+          INSTALL_URL=$(echo '${{ steps.build.outputs.outcomes }}' | jq -r '.python.install_url // empty')
+
+          if [ -n "$INSTALL_URL" ]; then
+            echo "Installing merged SDK from: $INSTALL_URL"
+            pip install "$INSTALL_URL"
+
+            # Verify the installation or run smoke tests
+            # python -c "import your_sdk; print(your_sdk.__version__)"
+            echo "Merged SDK installed successfully!"
+          else
+            echo "No install_url found for Python SDK"
+          fi
