@@ -65,7 +65,8 @@ export function categorizeOutcome({
 } {
   const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
   const commitConclusion = outcome.commit?.completed?.conclusion;
-  const newNewCommitConclusion = baseCommitConclusion !== commitConclusion ? commitConclusion : undefined;
+  const newNewCommitConclusion =
+    baseCommitConclusion !== commitConclusion ? commitConclusion : undefined;
 
   // If we have old diagnostics, only fail run against new diagnostics.
   const diagnostics = getNewDiagnostics(
