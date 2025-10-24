@@ -63,7 +63,10 @@ export function categorizeOutcome({
   isMergeConflict?: boolean;
   isPending?: boolean;
 } {
+  const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
   const commitConclusion = outcome.commit?.completed?.conclusion;
+  const netNewCommitConclusion =
+    baseCommitConclusion !== commitConclusion ? commitConclusion : undefined;
 
   // If we have old diagnostics, only fail run against new diagnostics.
   const diagnostics = getNewDiagnostics(
@@ -96,7 +99,7 @@ export function categorizeOutcome({
   }
 
   // Fatal reasons
-  if (!commitConclusion || commitConclusion === "fatal") {
+  if (!commitConclusion || netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
@@ -113,7 +116,6 @@ export function categorizeOutcome({
     ![
       // Merge conflicts are warnings, not fatal:
       "merge_conflict",
-      "upstream_merge_conflict",
       // Success conclusion are handled below:
       "error",
       "warning",
@@ -147,7 +149,7 @@ export function categorizeOutcome({
       reason: "The build CI job failed.",
     };
   }
-  if (commitConclusion === "error") {
+  if (netNewCommitConclusion === "error") {
     return {
       conclusion: "error",
       reason: "Build had an error conclusion.",
@@ -173,25 +175,17 @@ export function categorizeOutcome({
       reason: "The test CI job failed.",
     };
   }
-  if (commitConclusion === "warning") {
+  if (netNewCommitConclusion === "warning") {
     return {
       conclusion: "warning",
       reason: "Build had a warning conclusion.",
     };
   }
-  if (commitConclusion === "merge_conflict") {
+  if (netNewCommitConclusion === "merge_conflict") {
     return {
       conclusion: "warning",
       reason:
         "There was a conflict between your custom code and your generated changes.",
-      isMergeConflict: true,
-    };
-  }
-  if (commitConclusion === "upstream_merge_conflict") {
-    return {
-      conclusion: "warning",
-      reason:
-        "There was an upstream conflict which is preventing the preview of your change.",
       isMergeConflict: true,
     };
   }
@@ -203,7 +197,7 @@ export function categorizeOutcome({
       reason: `Found ${diagnosticCounts.note} note diagnostics.`,
     };
   }
-  if (commitConclusion === "note") {
+  if (netNewCommitConclusion === "note") {
     return {
       conclusion: "note",
       reason: "Build had a note conclusion.",
