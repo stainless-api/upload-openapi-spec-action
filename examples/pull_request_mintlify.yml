@@ -40,9 +40,6 @@ env:
   GITHUB_TOKEN_NAME: YOUR_NAME
 
   # In your repo secrets, configure:
-  # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
-  #   Stainless organization dashboard
-  #
   # - API_TOKEN_GITHUB: a GitHub personal access token with permissions to
   #   write to the Mintlify repo
 
@@ -53,6 +50,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write  # Required for GitHub OIDC authentication
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -62,7 +60,6 @@ jobs:
       - name: Run preview builds
         uses: stainless-api/upload-openapi-spec-action/preview@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
@@ -75,6 +72,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write  # Required for GitHub OIDC authentication
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,7 +89,6 @@ jobs:
         id: build
         uses: stainless-api/upload-openapi-spec-action/merge@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}

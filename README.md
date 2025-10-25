@@ -6,18 +6,17 @@ docs on automating builds](https://www.stainless.com/docs/guides/automate-update
 
 Support for GitLab CI is available. See the [GitLab example](./examples/merge_request_gitlab.yml).
 
+## Authentication
+
+[Install the Stainless GitHub App](https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app) and link it to your Stainless organization. The action will authenticate using GitHub OIDC—no API keys needed.
+
+**GitLab CI:** OIDC isn't yet supported. Set the `STAINLESS_API_KEY` environment variable instead. See the template files in `build/gitlab-ci.yml`, `merge/gitlab-ci.yml`, and `preview/gitlab-ci.yml`.
+
+**API keys:** If you'd rather use an API key, see [pull_request_api_key.yml](./examples/pull_request_api_key.yml) and add a `STAINLESS_API_KEY` secret to your repo.
+
 ## Usage
 
-Get an API key from your Stainless organization dashboard. In the GitHub
-repository that stores your ground truth OpenAPI spec, add the key to the
-[repository secrets](https://docs.github.com/en/actions/security-for-github-actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository)
-with the name `STAINLESS_API_KEY`. You can do this with the GitHub CLI via:
-
-```bash
-gh secret set STAINLESS_API_KEY
-```
-
-In the same repository, add a new workflow file:
+Add a workflow file to the repository that contains your OpenAPI spec:
 
 <details>
 <summary><code>.github/workflows/stainless.yml</code></summary>
@@ -49,6 +48,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write # Required for GitHub OIDC authentication
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -58,7 +58,6 @@ jobs:
       - name: Run preview builds
         uses: stainless-api/upload-openapi-spec-action/preview@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
@@ -69,6 +68,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write # Required for GitHub OIDC authentication
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -78,7 +78,6 @@ jobs:
       - name: Run merge build
         uses: stainless-api/upload-openapi-spec-action/merge@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
@@ -99,53 +98,31 @@ For more examples of usage, including push-based workflows, using code samples,
 integration with docs platforms, and testing preview builds, see the [examples
 directory](./examples).
 
-## Actions
+## Security
 
-This repository provides four GitHub actions.
+If your GitHub repository is public, require approval for workflows from fork PRs to prevent untrusted contributors from accessing OIDC tokens or secrets.
 
-- `stainless-api/upload-openapi-spec-action/build`: Build SDKs for a Stainless
-  project. For information about the input parameters, see the [action definition](./build/action.yml).
+Go to **Settings** → **Actions** → **General**, then under "Fork pull request workflows from outside collaborators", select **"Require approval for all outside collaborators"**.
 
-- `stainless-api/upload-openapi-spec-action/preview`: Preview changes to SDKs
-  introduced by a pull request. For information about the input parameters, see
-  the [action definition](./preview/action.yml).
+See [GitHub's docs](https://docs.github.com/en/actions/managing-workflow-runs/approving-workflow-runs-from-public-forks) for more details.
 
-- `stainless-api/upload-openapi-spec-action/merge`: Merge changes to SDKs from
-  a pull request. For information about the input parameters, see the [action
-  definition](./merge/action.yml).
+## Actions reference
 
-- `stainless-api/upload-openapi-spec-action/checkout-pr-ref`: Checkout the base
-  or head commit for previewing a pull request's changes, saving changes to the
-  config when needed. For information about the input parameters, see the [action
-  definition](./checkout-pr-ref/action.yml).
+This repository provides four GitHub actions:
 
-All except for the last action are also usable in GitLab CI.
+- `stainless-api/upload-openapi-spec-action/build` - Build SDKs for a Stainless project. See the [action definition](./build/action.yml) for input parameters.
 
-### Testing preview builds
+- `stainless-api/upload-openapi-spec-action/preview` - Preview SDK changes from a pull request. See the [action definition](./preview/action.yml) for input parameters.
 
-The `preview` and `merge` actions output an `install_url` for each SDK language,
-which you can use to install and test SDK builds directly from the Stainless
-package server. This is useful for running integration tests against preview
-builds before merging, or for verifying merged builds. See the
-[SDK usage example](./examples/pull_request_sdk_usage.yml) for a complete
-workflow.
+- `stainless-api/upload-openapi-spec-action/merge` - Merge SDK changes from a pull request. See the [action definition](./merge/action.yml) for input parameters.
 
-### Workflow permissions
+- `stainless-api/upload-openapi-spec-action/checkout-pr-ref` - Checkout the base or head commit for previewing changes. See the [action definition](./checkout-pr-ref/action.yml) for input parameters.
 
-The GitHub actions use the following
-[workflow permissions](https://docs.github.com/en/actions/writing-workflows/workflow-syntax-for-github-actions#jobsjob_idpermissions):
+All except `checkout-pr-ref` work in GitLab CI.
 
-- The `preview` and `merge` actions have a `make_comment` input, which, if set,
-  will comment on the pull request with the build results. This is set to true by
-  default. The actions use the `github_token` input to make a comment, and the
-  comment must have the `pull-requests: write` permission.
+The `preview` and `merge` actions output an `install_url` for each SDK language. You can use this to test builds directly from the Stainless package server before merging. See the [SDK usage example](./examples/pull_request_sdk_usage.yml).
 
-- The `preview` and `checkout-pr-ref` actions rely on being in a Git repository
-  that can fetch from the remote to determine base revisions. This will be the
-  case if you use the [`actions/checkout`](https://github.com/actions/checkout)
-  GitHub action beforehand. That action needs the `contents: read` permission.
-
-### Versioning policy
+## Versioning
 
 These actions use [semantic versioning](https://semver.org/), and you can pin
 your action to a major (`v1`), minor (`v1.0`), or patch (`v1.0.0`) version.

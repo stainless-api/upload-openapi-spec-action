@@ -4,6 +4,7 @@ import {
   getInput,
   getPRNumber,
   setOutput,
+  getStainlessAuthToken,
 } from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
@@ -16,7 +17,7 @@ import type { RunResult } from "./runBuilds";
 
 async function main() {
   try {
-    const apiKey = getInput("stainless_api_key", { required: true });
+    const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: false });
     const projectName = getInput("project", { required: true });
     const oasPath = getInput("oas_path", { required: false });

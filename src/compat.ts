@@ -87,6 +87,35 @@ export function getGitHostToken() {
   return token;
 }
 
+export async function getStainlessAuthToken(): Promise<string> {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+
+  if (apiKey) {
+    console.log("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+
+  // Fall back to GitHub OIDC authentication
+  console.log("Authenticating with GitHub OIDC");
+
+  try {
+    // Dynamically import @actions/core to get OIDC token
+    const core = await import("@actions/core");
+    const token = await core.getIDToken("api.stainless.com");
+
+    if (!token) {
+      throw new Error("Failed to get OIDC token from GitHub");
+    }
+
+    return token;
+  } catch (error) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission. ` +
+        `Alternatively, you can provide a stainless_api_key input. Error: ${error}`,
+    );
+  }
+}
+
 let cachedContext:
   | {
       payload: Record<string, any>;
