@@ -18193,6 +18193,42 @@ function getBooleanInput(name, options) {
   if (value === "false") return false;
   return void 0;
 }
+async function getStainlessAuthToken() {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+  if (apiKey) {
+    console.log("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+  console.log("Authenticating with GitHub OIDC");
+  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+  if (!requestUrl || !requestToken) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
+    );
+  }
+  try {
+    const audience = "api.stainless.com";
+    const response = await fetch(`${requestUrl}&audience=${audience}`, {
+      headers: {
+        Authorization: `Bearer ${requestToken}`
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+    const data = await response.json();
+    const token = data.value;
+    if (!token) {
+      throw new Error("No token in OIDC response");
+    }
+    return token;
+  } catch (error2) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error2}`
+    );
+  }
+}
 
 // src/index.ts
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
@@ -18202,9 +18238,7 @@ var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
 async function main() {
-  const stainless_api_key = getInput("stainless_api_key", {
-    required: true
-  });
+  const stainless_api_key = await getStainlessAuthToken();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });

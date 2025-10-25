@@ -30,10 +30,6 @@ env:
   # Options: "never" | "note" | "warning" | "error" | "fatal".
   FAIL_ON: error
 
-  # In your repo secrets, configure:
-  # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
-  #   Stainless organization dashboard
-
 jobs:
   preview:
     if: github.event.action != 'closed'
@@ -41,6 +37,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -72,7 +69,6 @@ jobs:
       - name: Run preview builds
         uses: stainless-api/upload-openapi-spec-action/preview@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
@@ -85,6 +81,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -104,7 +101,6 @@ jobs:
       - name: Run merge build
         uses: stainless-api/upload-openapi-spec-action/merge@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}

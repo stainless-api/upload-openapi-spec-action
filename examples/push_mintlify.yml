@@ -41,9 +41,6 @@ env:
   GITHUB_TOKEN_NAME: YOUR_NAME
 
   # In your repo secrets, configure:
-  # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
-  #   Stainless organization dashboard
-  #
   # - API_TOKEN_GITHUB: a GitHub personal access token with permissions to
   #   write to the Mintlify repo
 
@@ -52,6 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,7 +58,6 @@ jobs:
         id: build
         uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
-          stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
