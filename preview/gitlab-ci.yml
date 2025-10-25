@@ -1,6 +1,16 @@
 image: node:20-alpine
 
 .preview:
+  # Required environment variables:
+  # - STAINLESS_API_KEY: Stainless API key (required for GitLab CI)
+  # - ORG: Stainless organization name
+  # - PROJECT: Stainless project name
+  # - OAS_PATH: Path to your OpenAPI spec
+  #
+  # Optional environment variables:
+  # - CONFIG_PATH: Path to your Stainless config
+  # - GITLAB_TOKEN: GitLab token for commenting on merge requests
+  # - FAIL_ON: When to fail the job (defaults to "error")
   script:
     - apk add --no-cache git
     - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/preview.js

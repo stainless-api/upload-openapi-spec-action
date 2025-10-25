@@ -3,14 +3,19 @@ import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { makeCommitMessageConventional } from "./commitMessage";
-import { getBooleanInput, getInput, setOutput } from "./compat";
+import {
+  getBooleanInput,
+  getInput,
+  setOutput,
+  getStainlessAuthToken,
+} from "./compat";
 import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 
 async function main() {
   try {
-    const apiKey = getInput("stainless_api_key", { required: true });
+    const apiKey = await getStainlessAuthToken();
     const oasPath = getInput("oas_path", { required: false }) || undefined;
     const configPath =
       getInput("config_path", { required: false }) || undefined;

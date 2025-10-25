@@ -5,8 +5,10 @@ runs:
   main: ../dist/merge.js
 inputs:
   stainless_api_key:
-    description: Stainless API key.
-    required: true
+    description: >-
+      Stainless API key. Optional for GitHub Actions (will use OIDC authentication
+      if not provided, requires 'id-token: write' permission). Required for GitLab CI.
+    required: false
   org:
     description: Stainless organization name.
     required: true

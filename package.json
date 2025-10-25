@@ -26,6 +26,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@actions/core": "^1.11.1",
     "@stainless-api/github-internal": "^0.15.0",
     "@stainless-api/sdk": "^0.1.0-alpha.12",
     "nano-spawn": "^1.0.3",
