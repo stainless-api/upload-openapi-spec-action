@@ -44,7 +44,10 @@ export async function main() {
   }
 
   if (!projectName) {
-    const stainless = new Stainless({ apiKey: stainless_api_key });
+    const stainless = new Stainless({
+      apiKey: stainless_api_key,
+      environment: "staging",
+    });
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
@@ -117,7 +120,11 @@ async function uploadSpecAndConfig(
   }>;
   decoratedSpec: string | null;
 }> {
-  const stainless = new Stainless({ apiKey: token, project: projectName });
+  const stainless = new Stainless({
+    apiKey: token,
+    project: projectName,
+    environment: "staging",
+  });
   const specContent = readFileSync(specPath, "utf8");
 
   let configContent;

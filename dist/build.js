@@ -38698,6 +38698,7 @@ async function main() {
     const documentedSpecOutputPath = getInput("documented_spec_path", { required: false }) || void 0;
     const config = await readConfig({ oasPath, configPath, required: true });
     const stainless = new Stainless({
+      environment: "staging",
       project: projectName,
       apiKey,
       logLevel: "warn"

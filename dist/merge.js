@@ -60568,7 +60568,8 @@ async function main() {
     const stainless = new Stainless({
       project: projectName,
       apiKey,
-      logLevel: "warn"
+      logLevel: "warn",
+      environment: "staging"
     });
     const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
     const headConfig = await readConfig({ oasPath, configPath, sha: headSha });

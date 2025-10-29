@@ -59,6 +59,7 @@ async function main() {
       project: projectName,
       apiKey,
       logLevel: "warn",
+      environment: "staging",
     });
 
     const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });

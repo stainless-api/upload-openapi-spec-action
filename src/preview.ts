@@ -68,6 +68,7 @@ async function main() {
       project: projectName,
       apiKey,
       logLevel: "warn",
+      environment: "staging",
     });
 
     startGroup("parent-revision", "Getting parent revision");
