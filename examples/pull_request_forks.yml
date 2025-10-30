@@ -1,7 +1,17 @@
-name: Build SDKs for pull request
+name: Build SDKs for pull request (including forks)
+
+# This workflow uses pull_request_target, which allows it to run on pull requests
+# from forks with access to secrets and OIDC tokens. This is safe because the
+# workflow definition comes from the base branch (trusted), and the action only
+# reads OpenAPI spec files without executing any code from the PR.
+#
+# Important: If your repository is public, configure GitHub to require approval
+# for workflows from fork PRs. Go to Settings → Actions → General, and under
+# "Fork pull request workflows from outside collaborators", select
+# "Require approval for all outside collaborators".
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - synchronize
@@ -39,9 +49,12 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      # Checkout the PR's code (including from forks)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
       - name: Run preview builds
@@ -52,6 +65,9 @@ jobs:
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
           fail_on: ${{ env.FAIL_ON }}
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          base_ref: ${{ github.event.pull_request.base.ref }}
+          head_sha: ${{ github.event.pull_request.head.sha }}
 
   merge:
     if: github.event.action == 'closed' && github.event.pull_request.merged == true
@@ -61,9 +77,12 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
+      # Checkout the PR's code (including from forks)
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
       # Note that this only merges in changes that happened on the last build on
@@ -80,3 +99,6 @@ jobs:
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
           fail_on: ${{ env.FAIL_ON }}
+          base_sha: ${{ github.event.pull_request.base.sha }}
+          base_ref: ${{ github.event.pull_request.base.ref }}
+          head_sha: ${{ github.event.pull_request.head.sha }}

@@ -11,8 +11,10 @@ runs:
   main: dist/index.js
 inputs:
   stainless_api_key:
-    description: "Stainless API key."
-    required: true
+    description: >-
+      Stainless API key. Optional for GitHub Actions (will use OIDC authentication
+      if not provided, requires 'id-token: write' permission). Required for GitLab CI.
+    required: false
   input_path:
     description: "Path to the OpenAPI file."
     required: true

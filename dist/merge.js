@@ -37465,6 +37465,42 @@ function getGitHostToken() {
   }
   return token;
 }
+async function getStainlessAuthToken() {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+  if (apiKey) {
+    console.log("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+  console.log("Authenticating with GitHub OIDC");
+  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+  if (!requestUrl || !requestToken) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
+    );
+  }
+  try {
+    const audience = "api.stainless.com";
+    const response = await fetch(`${requestUrl}&audience=${audience}`, {
+      headers: {
+        Authorization: `Bearer ${requestToken}`
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+    const data = await response.json();
+    const token = data.value;
+    if (!token) {
+      throw new Error("No token in OIDC response");
+    }
+    return token;
+  } catch (error) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
+    );
+  }
+}
 var cachedContext = void 0;
 function getGitHubContext() {
   if (!cachedContext) {
@@ -40729,7 +40765,7 @@ async function* pollBuild({
 // src/merge.ts
 async function main() {
   try {
-    const apiKey = getInput("stainless_api_key", { required: true });
+    const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: false });
     const projectName = getInput("project", { required: true });
     const oasPath = getInput("oas_path", { required: false });

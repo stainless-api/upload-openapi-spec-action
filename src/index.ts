@@ -2,7 +2,12 @@ import Stainless from "@stainless-api/sdk";
 import { error, info, warn } from "node:console";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
-import { getBooleanInput, getInput, isGitLabCI } from "./compat";
+import {
+  getBooleanInput,
+  getInput,
+  isGitLabCI,
+  getStainlessAuthToken,
+} from "./compat";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
@@ -15,9 +20,7 @@ export const isValidConventionalCommitMessage = (message: string) => {
 
 export async function main() {
   // inputs
-  const stainless_api_key = getInput("stainless_api_key", {
-    required: true,
-  });
+  const stainless_api_key = await getStainlessAuthToken();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });
