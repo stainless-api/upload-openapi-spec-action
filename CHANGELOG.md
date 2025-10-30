@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.5...v1.6.0) (2025-10-30)
+
+
+### Features
+
+* add support for github OIDC auth ([#133](https://github.com/stainless-api/upload-openapi-spec-action/issues/133)) ([259674c](https://github.com/stainless-api/upload-openapi-spec-action/commit/259674c1b3969916062cf7ffe7e05ac4305ba9dd))
+* change fail on semantics ([#124](https://github.com/stainless-api/upload-openapi-spec-action/issues/124)) ([e104624](https://github.com/stainless-api/upload-openapi-spec-action/commit/e1046240c0ed9d9cb4084d70f889bfe40840a6d4))
+
+
+### Bug Fixes
+
+* accept multiline conventional commits ([#129](https://github.com/stainless-api/upload-openapi-spec-action/issues/129)) ([d2dcc0b](https://github.com/stainless-api/upload-openapi-spec-action/commit/d2dcc0b3bfb698840cdc0b3bf52a28ac4e65bc55))
+* tweak categorizeOutcomes ([#132](https://github.com/stainless-api/upload-openapi-spec-action/issues/132)) ([c45d6a9](https://github.com/stainless-api/upload-openapi-spec-action/commit/c45d6a9c7996dea81cf770649e24846756d463cc))
+
 ## [1.5.5](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.4...v1.5.5) (2025-09-26)
 
 
