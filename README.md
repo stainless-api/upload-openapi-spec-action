@@ -24,7 +24,8 @@ workflow run that can be validated by Stainless.
 
 **API keys:** Generate an API key from your Stainless organization dashboard and add it as a `STAINLESS_API_KEY` secret. This works well for getting started or when you don't have admin permissions to install the GitHub App. See [pull_request_api_key.yml](./examples/pull_request_api_key.yml) for the workflow setup.
 
-**GitLab CI:** OIDC isn't yet supported. Use the API key method and set the `STAINLESS_API_KEY` environment variable. See the template files in `build/gitlab-ci.yml`, `merge/gitlab-ci.yml`, and `preview/gitlab-ci.yml`.
+> [!NOTE]
+> **GitLab CI:** OIDC isn't yet supported. Use the API key method and set the `STAINLESS_API_KEY` environment variable. See the template files in `build/gitlab-ci.yml`, `merge/gitlab-ci.yml`, and `preview/gitlab-ci.yml`.
 
 ## Usage
 
