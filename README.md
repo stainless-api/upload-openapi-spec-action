@@ -19,6 +19,8 @@ method shown in our examples.
 With OIDC (short for OpenID Connect), there's no secret to set up or rotate — GitHub mints a short-lived, cryptographically signed token for each
 workflow run that can be validated by Stainless.
 
+**Important:** OIDC authentication only works when the GitHub organization hosting the repository with your OpenAPI spec and Stainless config is the same GitHub organization that is linked to your Stainless organization. If your spec is in a different GitHub organization, you must use API key authentication instead.
+
 **API keys:** Generate an API key from your Stainless organization dashboard and add it as a `STAINLESS_API_KEY` secret. This works well for getting started or when you don't have admin permissions to install the GitHub App. See [pull_request_api_key.yml](./examples/pull_request_api_key.yml) for the workflow setup.
 
 **GitLab CI:** OIDC isn't yet supported. Use the API key method and set the `STAINLESS_API_KEY` environment variable. See the template files in `build/gitlab-ci.yml`, `merge/gitlab-ci.yml`, and `preview/gitlab-ci.yml`.
