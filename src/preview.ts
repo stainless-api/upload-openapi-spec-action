@@ -10,6 +10,7 @@ import {
   getStainlessAuthToken,
 } from "./compat";
 import { Stainless } from "@stainless-api/sdk";
+import * as fs from "node:fs";
 import {
   commentThrottler,
   printComment,
@@ -50,6 +51,7 @@ async function main() {
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const branch = getInput("branch", { required: true });
+    const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
 
     // If we came from the checkout-pr-ref action, we might need to save the
@@ -195,10 +197,17 @@ async function main() {
           throw new Error("No latest run found after build finish");
         }
 
-        const { outcomes, baseOutcomes } = latestRun!;
+        const { outcomes, baseOutcomes, documentedSpec } = latestRun!;
 
         setOutput("outcomes", outcomes);
         setOutput("base_outcomes", baseOutcomes);
+
+        if (documentedSpec && outputDir) {
+          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+          fs.mkdirSync(outputDir, { recursive: true });
+          fs.writeFileSync(documentedSpecPath, documentedSpec);
+          setOutput("documented_spec_path", documentedSpecPath);
+        }
 
         if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
           process.exit(1);

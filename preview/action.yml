@@ -95,6 +95,12 @@ inputs:
       as the merge action's `merge_branch` input.
     required: false
     default: ${{ format('preview/{0}', github.event.pull_request.head.ref) }}
+  output_dir:
+    description: >-
+      Directory to write output files to. Defaults to the runner's temporary
+      directory.
+    required: false
+    default: ${{ runner.temp }}
 
 outputs:
   outcomes:
