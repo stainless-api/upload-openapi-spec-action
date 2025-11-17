@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.6.0...v1.7.0) (2025-11-17)
+
+
+### Features
+
+* **preview:** add output documented_spec_path to preview action ([#135](https://github.com/stainless-api/upload-openapi-spec-action/issues/135)) ([5e80cc4](https://github.com/stainless-api/upload-openapi-spec-action/commit/5e80cc40da2419877875629e10f67dfc92a95fb8))
+* **preview:** add output_dir input and write documented spec to file ([#137](https://github.com/stainless-api/upload-openapi-spec-action/issues/137)) ([d30490c](https://github.com/stainless-api/upload-openapi-spec-action/commit/d30490c89b9a7fd667f9ab30678a332c00cd0d98))
+
 ## [1.6.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.5.5...v1.6.0) (2025-10-30)
 
 
