@@ -38,7 +38,7 @@ In the examples, the push workflow is configured to use a generic commit message
 
 ## Integration with docs platforms
 
-If your Stainless config has code samples configured, the `merge` and `build` actions also output a `documented_spec_path` containing a path to your OpenAPI spec with SDK code samples.
+If your Stainless config has code samples configured, the `preview`, `merge`, and `build` actions also output a `documented_spec_path` containing a path to your OpenAPI spec with SDK code samples.
 
 If you sync your OpenAPI spec with a [ReadMe API Reference](https://readme.com/), you can use the [Sync to ReadMe](https://github.com/marketplace/actions/rdme-sync-to-readme) GitHub action to upload the documented spec to ReadMe. You can see examples of this in the [pull_request_readme.yml](./pull_request_readme.yml) and [push_readme.yml](./push_readme.yml) files.
 
