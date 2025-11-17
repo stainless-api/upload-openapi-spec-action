@@ -159,3 +159,9 @@ outputs:
         ...
       }
       ```
+  documented_spec_path:
+    description: >-
+      Path to an OpenAPI spec with SDK code samples. Present when `output_dir`
+      is specified and `code_samples` is in your Stainless config. See
+      https://app.stainless.com/docs/reference/config#open-api-config for
+      more details.
