@@ -39473,6 +39473,9 @@ Stainless.Projects = Projects;
 Stainless.Builds = Builds2;
 Stainless.Orgs = Orgs3;
 
+// src/preview.ts
+var fs4 = __toESM(require("node:fs"));
+
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
@@ -40886,6 +40889,7 @@ async function main() {
     const defaultBranch = getInput("default_branch", { required: true });
     const headSha = getInput("head_sha", { required: true });
     const branch = getInput("branch", { required: true });
+    const outputDir = getInput("output_dir", { required: false }) || void 0;
     const prNumber = getPRNumber();
     const { savedSha } = await saveConfig({
       oasPath,
@@ -40998,9 +41002,15 @@ async function main() {
         if (!latestRun) {
           throw new Error("No latest run found after build finish");
         }
-        const { outcomes, baseOutcomes } = latestRun;
+        const { outcomes, baseOutcomes, documentedSpec } = latestRun;
         setOutput("outcomes", outcomes);
         setOutput("base_outcomes", baseOutcomes);
+        if (documentedSpec && outputDir) {
+          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+          fs4.mkdirSync(outputDir, { recursive: true });
+          fs4.writeFileSync(documentedSpecPath, documentedSpec);
+          setOutput("documented_spec_path", documentedSpecPath);
+        }
         if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
           process.exit(1);
         }
