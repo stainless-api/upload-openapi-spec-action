@@ -173,7 +173,8 @@ export function getPRNumber() {
 
     return parseInt(process.env["MR_NUMBER"]);
   } else {
-    return parseInt(getGitHubContext().payload.pull_request!.number);
+    // TEMP CHANGE - FOR TESTING
+    return parseInt(getGitHubContext().payload.pull_request?.number ?? "1");
   }
 }
 

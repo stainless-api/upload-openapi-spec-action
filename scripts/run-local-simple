@@ -1,0 +1,132 @@
+#!/bin/bash
+set -e
+
+# !!!! DO NOT COMMIT ME !!!!
+STAINLESS_API_KEY=""
+
+# Configuration for stainless-sdks/etkramer-sdk-config PR #1
+REPO_NAME="etkramer-sdk-config"
+PR_NUMBER=1
+GITHUB_REPOSITORY="stainless-sdks/$REPO_NAME"
+
+# Stainless configuration
+STAINLESS_ORG="None"
+STAINLESS_PROJECT="etkramer-sdk"
+
+echo "🔍 Fetching PR details from GitHub..."
+PR_JSON=$(gh pr view $PR_NUMBER --repo "stainless-sdks/$REPO_NAME" --json number,headRefName,headRefOid,baseRefName,baseRefOid,title)
+
+HEAD_REF=$(echo "$PR_JSON" | jq -r '.headRefName')
+HEAD_SHA=$(echo "$PR_JSON" | jq -r '.headRefOid')
+BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefName')
+BASE_SHA=$(echo "$PR_JSON" | jq -r '.baseRefOid')
+PR_TITLE=$(echo "$PR_JSON" | jq -r '.title')
+
+echo "📋 PR Details:"
+echo "  Repository: stainless-sdks/$REPO_NAME"
+echo "  PR Number: #$PR_NUMBER"
+echo "  Head Ref: $HEAD_REF"
+echo "  Head SHA: $HEAD_SHA"
+echo "  Base Ref: $BASE_REF"
+echo "  Base SHA: $BASE_SHA"
+echo "  Title: $PR_TITLE"
+echo ""
+
+# Create a temporary directory for the spec repo
+SPEC_DIR=$(mktemp -d)
+echo "📥 Cloning spec repository to temporary directory..."
+echo "  Directory: $SPEC_DIR"
+gh repo clone "stainless-sdks/$REPO_NAME" "$SPEC_DIR"
+
+cd "$SPEC_DIR"
+echo "🔄 Checking out PR head commit..."
+git checkout "$HEAD_SHA"
+
+# Detect OpenAPI spec file
+if [ -f "openapi.yaml" ]; then
+    OAS_PATH="openapi.yaml"
+elif [ -f "openapi.yml" ]; then
+    OAS_PATH="openapi.yml"
+elif [ -f "openapi.json" ]; then
+    OAS_PATH="openapi.json"
+elif [ -f "spec.yaml" ]; then
+    OAS_PATH="spec.yaml"
+else
+    echo "❌ Could not find OpenAPI spec file. Please specify OAS_PATH manually."
+    exit 1
+fi
+
+echo "📄 Found OpenAPI spec: $OAS_PATH"
+echo ""
+
+# Create a temporary directory for outputs
+OUTPUT_DIR=$(mktemp -d)
+echo "📁 Output directory: $OUTPUT_DIR"
+echo ""
+
+cd - > /dev/null
+
+echo "📦 Setting up environment variables for the action..."
+
+# Set environment variables that the action expects (using INPUT_ prefix as per Actions convention)
+export INPUT_ORG="$STAINLESS_ORG"
+export INPUT_PROJECT="$STAINLESS_PROJECT"
+export INPUT_OAS_PATH="$OAS_PATH"
+export INPUT_COMMIT_MESSAGE="$PR_TITLE"
+export INPUT_FAIL_ON="error"
+export INPUT_MAKE_COMMENT="true"
+export INPUT_BASE_SHA="$BASE_SHA"
+export INPUT_BASE_REF="$BASE_REF"
+export INPUT_BASE_BRANCH="preview/base/$HEAD_REF"
+export INPUT_DEFAULT_BRANCH="$BASE_REF"
+export INPUT_HEAD_SHA="$HEAD_SHA"
+export INPUT_BRANCH="preview/$HEAD_REF"
+export INPUT_OUTPUT_DIR="$OUTPUT_DIR"
+
+# GitHub context environment variables
+export GITHUB_REPOSITORY="stainless-sdks/$REPO_NAME"
+export GITHUB_EVENT_NAME="pull_request"
+export GITHUB_REF="refs/pull/$PR_NUMBER/merge"
+export GITHUB_SHA="$HEAD_SHA"
+export GITHUB_WORKSPACE="$SPEC_DIR"
+
+if [ -z "$GITHUB_TOKEN" ]; then
+    echo "🔑 Getting GitHub token from gh CLI..."
+    export GITHUB_TOKEN=$(gh auth token)
+fi
+
+export INPUT_STAINLESS_API_KEY="$STAINLESS_API_KEY"
+
+echo ""
+echo "🚀 Running preview action..."
+echo ""
+
+# Change to the spec directory so the action can read the files
+cd "$SPEC_DIR"
+
+# Run the action's main script
+tsx "$OLDPWD/src/preview.ts"
+
+EXIT_CODE=$?
+
+cd "$OLDPWD"
+
+echo ""
+if [ $EXIT_CODE -eq 0 ]; then
+    echo "✅ Preview action completed successfully!"
+else
+    echo "❌ Preview action failed with exit code $EXIT_CODE"
+fi
+
+echo ""
+echo "📁 Temporary directories created:"
+echo "  Spec repo: $SPEC_DIR"
+echo "  Outputs: $OUTPUT_DIR"
+echo ""
+echo "To inspect outputs:"
+echo "  ls -la $OUTPUT_DIR"
+echo ""
+echo "To clean up:"
+echo "  rm -rf $SPEC_DIR $OUTPUT_DIR"
+
+exit $EXIT_CODE
