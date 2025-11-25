@@ -133,10 +133,18 @@ async function main() {
     endGroup("parent-revision");
 
     let commitMessage = defaultCommitMessage;
+    // Per-SDK commit messages (only used when AI commit messages feature is enabled)
+    const commitMessages: Record<string, string> = {};
 
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken!, prNumber });
-      if (comment.commitMessage) {
+      // Check for per-SDK messages first (AI commit messages feature)
+      if (Object.keys(comment.commitMessages).length > 0) {
+        for (const [lang, msg] of Object.entries(comment.commitMessages)) {
+          commitMessages[lang] = makeCommitMessageConventional(msg);
+        }
+      } else if (comment.commitMessage) {
+        // Default: single shared commit message
         commitMessage = comment.commitMessage;
       }
     }
@@ -176,7 +184,14 @@ async function main() {
           token: gitHostToken!,
           prNumber,
         });
-        if (comment.commitMessage) {
+
+        // Check for per-SDK messages (AI commit messages feature)
+        if (Object.keys(comment.commitMessages).length > 0) {
+          for (const [lang, msg] of Object.entries(comment.commitMessages)) {
+            commitMessages[lang] = makeCommitMessageConventional(msg);
+          }
+        } else if (comment.commitMessage) {
+          // Default: single shared commit message
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
 
@@ -185,6 +200,8 @@ async function main() {
           projectName,
           branch,
           commitMessage,
+          // Only pass commitMessages if we have per-SDK messages
+          commitMessages: Object.keys(commitMessages).length > 0 ? commitMessages : undefined,
           outcomes,
           baseOutcomes,
         });

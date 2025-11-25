@@ -24,7 +24,8 @@ type PrintCommentOptions = {
   orgName: string;
   projectName: string;
   branch: string;
-  commitMessage: string;
+  commitMessage?: string;
+  commitMessages?: Record<string, string>;
   baseOutcomes?: Outcomes | null;
   outcomes: Outcomes;
 };
@@ -35,6 +36,7 @@ export function printComment({
   projectName,
   branch,
   commitMessage,
+  commitMessages,
   baseOutcomes,
   outcomes,
 }:
@@ -50,13 +52,35 @@ export function printComment({
     // Otherwise, this is post-merge and editing it won't do anything.
     const canEdit = !!baseOutcomes;
 
+    // Use per-SDK commit messages if provided, otherwise use single shared message
+    const usePerSdkMessages = commitMessages && Object.keys(commitMessages).length > 0;
+
+    if (usePerSdkMessages) {
+      return [
+        MD.Dedent`
+          This ${getPRTerm()} will update the SDKs with the following changes.
+
+          ${
+            canEdit
+              ? "Edit this comment to update the commit messages. They will appear in the SDK's changelogs."
+              : ""
+          }
+        `,
+        CommitMessagesSection({ commitMessages, outcomes }),
+        Results({ orgName, projectName, branch, outcomes, baseOutcomes }),
+      ]
+        .filter((f): f is string => f !== null)
+        .join(`\n\n`);
+    }
+
+    // Default: single shared commit message
     return [
       MD.Dedent`
         This ${getPRTerm()} will update the ${MD.CodeInline(
           projectName,
         )} SDKs with the following commit message.
 
-        ${MD.CodeBlock(commitMessage)}
+        ${MD.CodeBlock(commitMessage || "")}
 
         ${
           canEdit
@@ -88,6 +112,32 @@ export function printComment({
   `;
 
   return fullComment;
+}
+
+const COMMIT_MESSAGES_HEADER = "### Commit Messages";
+
+function CommitMessagesSection({
+  commitMessages,
+  outcomes,
+}: {
+  commitMessages: Record<string, string>;
+  outcomes: Outcomes;
+}): string {
+  const languages = Object.keys(outcomes).sort();
+
+  const messageBlocks = languages.map((lang) => {
+    const message = commitMessages[lang] || "No changes detected";
+    return MD.Dedent`
+      **${lang}**
+      ${MD.CodeBlock(message)}
+    `;
+  });
+
+  return MD.Dedent`
+    ${COMMIT_MESSAGES_HEADER}
+
+    ${messageBlocks.join("\n")}
+  `;
 }
 
 const DiagnosticIcon: Record<DiagnosticLevel, string> = {
@@ -466,6 +516,41 @@ export function parseCommitMessage(body?: string | null) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
 
+export function parseCommitMessages(body?: string | null): Record<string, string> {
+  if (!body) {
+    return {};
+  }
+
+  // Find the ### Commit Messages section
+  const commitMessagesMatch = body.match(
+    /### Commit Messages\s+([\s\S]*?)(?=\n##|$)/
+  );
+
+  if (!commitMessagesMatch) {
+    return {};
+  }
+
+  const section = commitMessagesMatch[1];
+  const commitMessages: Record<string, string> = {};
+
+  // Match pattern: **language**\n```\ncommit message\n```
+  const languageBlocks = section.matchAll(
+    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
+  );
+
+  for (const match of languageBlocks) {
+    const language = match[1];
+    const message = match[2].trim();
+
+    // Skip "No changes detected" messages
+    if (message && message !== "No changes detected") {
+      commitMessages[language] = message;
+    }
+  }
+
+  return commitMessages;
+}
+
 export async function retrieveComment({
   token,
   prNumber,
@@ -481,6 +566,7 @@ export async function retrieveComment({
 
   return {
     id: existingComment?.id,
+    commitMessages: parseCommitMessages(existingComment?.body),
     commitMessage: parseCommitMessage(existingComment?.body),
   };
 }
