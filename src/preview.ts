@@ -30,6 +30,9 @@ import { shouldFailRun, FailRunOn } from "./outcomes";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 
+// TODO: Replace with statsig feature flag
+export const ENABLE_AI_COMMIT_MESSAGES = true;
+
 async function main() {
   try {
     const apiKey = await getStainlessAuthToken();
@@ -53,6 +56,8 @@ async function main() {
     const branch = getInput("branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
+
+    const enableAiCommitMessages = ENABLE_AI_COMMIT_MESSAGES;
 
     // If we came from the checkout-pr-ref action, we might need to save the
     // generated config files.
@@ -133,18 +138,17 @@ async function main() {
     endGroup("parent-revision");
 
     let commitMessage = defaultCommitMessage;
-    // Per-SDK commit messages (only used when AI commit messages feature is enabled)
     const commitMessages: Record<string, string> = {};
 
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken!, prNumber });
-      // Check for per-SDK messages first (AI commit messages feature)
-      if (Object.keys(comment.commitMessages).length > 0) {
-        for (const [lang, msg] of Object.entries(comment.commitMessages)) {
-          commitMessages[lang] = makeCommitMessageConventional(msg);
+
+      // Load existing commit message(s) from comment
+      if (enableAiCommitMessages && comment.commitMessages) {
+        for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
+          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
         }
       } else if (comment.commitMessage) {
-        // Default: single shared commit message
         commitMessage = comment.commitMessage;
       }
     }
@@ -185,13 +189,21 @@ async function main() {
           prNumber,
         });
 
-        // Check for per-SDK messages (AI commit messages feature)
-        if (Object.keys(comment.commitMessages).length > 0) {
-          for (const [lang, msg] of Object.entries(comment.commitMessages)) {
-            commitMessages[lang] = makeCommitMessageConventional(msg);
+        if (enableAiCommitMessages) {
+          // Update per-SDK commit messages from comment edits
+          if (comment.commitMessages) {
+            for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
+              commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+            }
+          }
+
+          // For any SDKs that don't have commit messages, use the default
+          for (const lang of Object.keys(outcomes)) {
+            if (!commitMessages[lang]) {
+              commitMessages[lang] = commitMessage;
+            }
           }
         } else if (comment.commitMessage) {
-          // Default: single shared commit message
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
 
@@ -200,8 +212,7 @@ async function main() {
           projectName,
           branch,
           commitMessage,
-          // Only pass commitMessages if we have per-SDK messages
-          commitMessages: Object.keys(commitMessages).length > 0 ? commitMessages : undefined,
+          commitMessages: enableAiCommitMessages ? commitMessages : undefined,
           outcomes,
           baseOutcomes,
         });

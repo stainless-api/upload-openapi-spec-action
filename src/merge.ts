@@ -14,6 +14,7 @@ import { isConfigChanged, readConfig } from "./config";
 import { shouldFailRun, FailRunOn } from "./outcomes";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
+import { ENABLE_AI_COMMIT_MESSAGES } from "./preview";
 
 async function main() {
   try {
@@ -37,6 +38,8 @@ async function main() {
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
+
+    const enableAiCommitMessages = ENABLE_AI_COMMIT_MESSAGES;
 
     if (baseRef !== defaultBranch) {
       console.log("Not merging to default branch, skipping merge");
@@ -79,13 +82,13 @@ async function main() {
 
     if (makeComment && gitHostToken) {
       const comment = await retrieveComment({ token: gitHostToken, prNumber });
-      // Check for per-SDK messages first (AI commit messages feature)
-      if (Object.keys(comment.commitMessages).length > 0) {
-        for (const [lang, msg] of Object.entries(comment.commitMessages)) {
-          commitMessages[lang] = makeCommitMessageConventional(msg);
+
+      // Load existing commit message(s) from comment
+      if (enableAiCommitMessages && comment.commitMessages) {
+        for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
+          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
         }
       } else if (comment.commitMessage) {
-        // Default: single shared commit message
         commitMessage = comment.commitMessage;
       }
     }
@@ -116,13 +119,21 @@ async function main() {
       if (makeComment && latestRun) {
         const { outcomes } = latestRun;
 
+        if (enableAiCommitMessages) {
+          // For any SDKs that don't have commit messages, use the default
+          for (const lang of Object.keys(outcomes)) {
+            if (!commitMessages[lang]) {
+              commitMessages[lang] = commitMessage;
+            }
+          }
+        }
+
         const commentBody = printComment({
           orgName: orgName!,
           projectName,
           branch: "main",
           commitMessage,
-          // Only pass commitMessages if we have per-SDK messages
-          commitMessages: Object.keys(commitMessages).length > 0 ? commitMessages : undefined,
+          commitMessages: enableAiCommitMessages ? commitMessages : undefined,
           outcomes,
         });
 

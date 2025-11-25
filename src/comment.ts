@@ -516,9 +516,9 @@ export function parseCommitMessage(body?: string | null) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
 
-export function parseCommitMessages(body?: string | null): Record<string, string> {
+export function parseCommitMessages(body?: string | null): Record<string, string> | null {
   if (!body) {
-    return {};
+    return null;
   }
 
   // Find the ### Commit Messages section
@@ -527,7 +527,7 @@ export function parseCommitMessages(body?: string | null): Record<string, string
   );
 
   if (!commitMessagesMatch) {
-    return {};
+    return null;
   }
 
   const section = commitMessagesMatch[1];
