@@ -190,21 +190,24 @@ async function main() {
         });
 
         if (enableAiCommitMessages) {
-          // Update per-SDK commit messages from comment edits
+          // Update commit messages from comment
           if (comment.commitMessages) {
             for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
               commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
             }
           }
 
-          // For any SDKs that don't have commit messages, use the default
+          // Use default message for any SDKs missing from comment
           for (const lang of Object.keys(outcomes)) {
             if (!commitMessages[lang]) {
               commitMessages[lang] = commitMessage;
             }
           }
-        } else if (comment.commitMessage) {
-          commitMessage = makeCommitMessageConventional(comment.commitMessage);
+        } else {
+          // Update commit message from comment
+          if (comment.commitMessage) {
+            commitMessage = makeCommitMessageConventional(comment.commitMessage);
+          }
         }
 
         const commentBody = printComment({
