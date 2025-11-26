@@ -21,8 +21,20 @@ export function makeCommitMessageConventional(message?: string) {
 
 export async function generateAiCommitMessage(
   stainless: Stainless,
-  params: { target: string; baseRef: string; headRef: string },
+  params: { project: string, target: string; baseRef: string; headRef: string },
 ): Promise<string | null> {
-  console.log(`Generating AI commit message between ${params.baseRef} and ${params.headRef}`);
-  return "feat: Some AI commit message";
+  const result = await stainless.post(
+    `/v0/projects/${params.project}/generate_commit_message`,
+    {
+      query: {
+        target: params.target,
+      },
+      body: {
+        base_ref: params.baseRef,
+        head_ref: params.headRef,
+      },
+    },
+  );
+
+  return (result as any).ai_commit_message;
 }

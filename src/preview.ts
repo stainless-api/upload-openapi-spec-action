@@ -222,35 +222,26 @@ async function main() {
 
           // Did any languages just complete a build?
           for (const lang of Object.keys(outcomes)) {
-            // const commit = outcomes[lang].commit?.completed?.commit;
-
-            console.log(`COMMIT: ${lang}: ${JSON.stringify(outcomes[lang].commit, null, 2)}`);
-            // console.log(`COMMIT: ${lang}: ${JSON.stringify(baseOutcomes?.[lang].commit, null, 2)}`);
-
             const commit = outcomes[lang].commit?.completed?.commit;
-            if (commit && shouldGenerateAiCommitMessage) {
-              // const commit = outcomes[lang].commit.completed.commit;
+            const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
 
-              // const outcome = outcomes[lang];
-              // console.log(
-              //   `\nBUILD COMPLETED FOR ${lang}:\n ${JSON.stringify(outcome, null, 2)}\n`,
-              // );
+            if (commit && baseCommit && shouldGenerateAiCommitMessage) {
+              const baseRef = baseCommit.sha;
+              const headRef = commit.sha;
+
               console.log(
                 `\nBUILD COMPLETED FOR ${lang}! SHA is ${commit.sha}\n`,
               );
 
-              const baseRef = "base";
-              const headRef = commit.sha;
-              // commitMessages[lang] =
-              //   (await generateAiCommitMessage(stainless, {
-              //     target: lang,
-              //     baseRef,
-              //     headRef,
-              //   })) || commitMessage;
+              commitMessages[lang] =
+                (await generateAiCommitMessage(stainless, {
+                  project: projectName,
+                  target: lang,
+                  baseRef,
+                  headRef,
+                })) || commitMessage;
             }
           }
-
-          // console.log(latestRun.outcomes);
 
           // Use default message for any SDKs missing from comment (initial state for new comments)
           for (const lang of Object.keys(outcomes)) {
