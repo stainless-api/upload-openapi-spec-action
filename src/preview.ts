@@ -17,7 +17,10 @@ import {
   retrieveComment,
   upsertComment,
 } from "./comment";
-import { makeCommitMessageConventional } from "./commitMessage";
+import {
+  generateAiCommitMessage,
+  makeCommitMessageConventional,
+} from "./commitMessage";
 import {
   getMergeBase,
   getNonMainBaseRef,
@@ -140,13 +143,30 @@ async function main() {
     let commitMessage = defaultCommitMessage;
     const commitMessages: Record<string, string> = {};
 
+    // If we're making the comment for the first time (not updating an existing one for a new commit),
+    // we should generate an AI commit message for it.
+    let shouldGenerateAiCommitMessage = false;
+
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken!, prNumber });
 
+      // For now, let's set this true only if this is our first-ever run (so there wouldn't be a pre-existing comment).
+      // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
+      if (
+        enableAiCommitMessages &&
+        comment.commitMessage == null &&
+        comment.commitMessages == null
+      ) {
+        shouldGenerateAiCommitMessage = true;
+      }
+
       // Load existing commit message(s) from comment
       if (enableAiCommitMessages && comment.commitMessages) {
-        for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
-          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+        for (const [lang, commentCommitMessage] of Object.entries(
+          comment.commitMessages,
+        )) {
+          commitMessages[lang] =
+            makeCommitMessageConventional(commentCommitMessage);
         }
       } else if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
@@ -192,12 +212,47 @@ async function main() {
         if (enableAiCommitMessages) {
           // Update commit messages from comment
           if (comment.commitMessages) {
-            for (const [lang, commentCommitMessage] of Object.entries(comment.commitMessages)) {
-              commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+            for (const [lang, commentCommitMessage] of Object.entries(
+              comment.commitMessages,
+            )) {
+              commitMessages[lang] =
+                makeCommitMessageConventional(commentCommitMessage);
             }
           }
 
-          // Use default message for any SDKs missing from comment
+          // Did any languages just complete a build?
+          for (const lang of Object.keys(outcomes)) {
+            // const commit = outcomes[lang].commit?.completed?.commit;
+
+            console.log(`COMMIT: ${lang}: ${JSON.stringify(outcomes[lang].commit, null, 2)}`);
+            // console.log(`COMMIT: ${lang}: ${JSON.stringify(baseOutcomes?.[lang].commit, null, 2)}`);
+
+            const commit = outcomes[lang].commit?.completed?.commit;
+            if (commit && shouldGenerateAiCommitMessage) {
+              // const commit = outcomes[lang].commit.completed.commit;
+
+              // const outcome = outcomes[lang];
+              // console.log(
+              //   `\nBUILD COMPLETED FOR ${lang}:\n ${JSON.stringify(outcome, null, 2)}\n`,
+              // );
+              console.log(
+                `\nBUILD COMPLETED FOR ${lang}! SHA is ${commit.sha}\n`,
+              );
+
+              const baseRef = "base";
+              const headRef = commit.sha;
+              // commitMessages[lang] =
+              //   (await generateAiCommitMessage(stainless, {
+              //     target: lang,
+              //     baseRef,
+              //     headRef,
+              //   })) || commitMessage;
+            }
+          }
+
+          // console.log(latestRun.outcomes);
+
+          // Use default message for any SDKs missing from comment (initial state for new comments)
           for (const lang of Object.keys(outcomes)) {
             if (!commitMessages[lang]) {
               commitMessages[lang] = commitMessage;
@@ -206,7 +261,9 @@ async function main() {
         } else {
           // Update commit message from comment
           if (comment.commitMessage) {
-            commitMessage = makeCommitMessageConventional(comment.commitMessage);
+            commitMessage = makeCommitMessageConventional(
+              comment.commitMessage,
+            );
           }
         }
 
