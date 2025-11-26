@@ -1,13 +1,13 @@
 import {
+  endGroup,
   getBooleanInput,
+  getGitHostToken,
   getInput,
+  getPRNumber,
+  getStainlessAuthToken,
   isPullRequestOpenedEvent,
   setOutput,
   startGroup,
-  endGroup,
-  getGitHostToken,
-  getPRNumber,
-  getStainlessAuthToken,
 } from "./compat";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
@@ -235,7 +235,7 @@ async function main() {
 
               commitMessages[lang] =
                 (await generateAiCommitMessage(stainless, {
-                  project: projectName,
+                  projectName: projectName,
                   target: lang,
                   baseRef,
                   headRef,
