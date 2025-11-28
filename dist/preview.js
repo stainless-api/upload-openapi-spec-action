@@ -40504,31 +40504,53 @@ async function getMergeBase({
   headSha
 }) {
   try {
-    await spawn2("git", ["fetch", "--depth=1", "origin", baseSha]);
+    await spawn2("git", ["fetch", "--depth=1", "origin", baseSha, headSha]);
   } catch {
     throw new Error(
-      `Cannot fetch ${baseSha} from origin, is there a git repo?`
+      `Cannot fetch ${baseSha} or ${headSha} from origin. Is there a git repo?`
     );
   }
   let mergeBaseSha;
-  for (let attempt = 0; attempt < 10; attempt++) {
+  try {
+    const output = await spawn2("git", ["merge-base", headSha, baseSha]);
+    mergeBaseSha = output.stdout.trim();
+  } catch {
+  }
+  const deepenAmounts = [50, 100, 200, 400];
+  for (const deepenAmount of deepenAmounts) {
+    if (mergeBaseSha) break;
+    try {
+      await spawn2("git", [
+        "fetch",
+        "--quiet",
+        `--deepen=${deepenAmount}`,
+        "origin"
+      ]);
+    } catch {
+    }
     try {
       const output = await spawn2("git", ["merge-base", headSha, baseSha]);
       mergeBaseSha = output.stdout.trim();
       if (mergeBaseSha) break;
     } catch {
     }
-    await spawn2("git", [
-      "fetch",
-      "--quiet",
-      "--deepen=10",
-      "origin",
-      baseSha,
-      headSha
-    ]);
   }
   if (!mergeBaseSha) {
-    throw new Error("Could not determine merge base SHA");
+    console.log("Deepening did not find merge base, trying unshallow fetch...");
+    try {
+      await spawn2("git", ["fetch", "--quiet", "--unshallow", "origin"]);
+    } catch {
+    }
+    try {
+      const output = await spawn2("git", ["merge-base", headSha, baseSha]);
+      mergeBaseSha = output.stdout.trim();
+    } catch {
+    }
+  }
+  if (!mergeBaseSha) {
+    throw new Error(
+      `Could not determine merge base SHA between ${headSha} and ${baseSha}. This may happen if the branches have completely diverged or if there is insufficient git history. Try using 'fetch-depth: 0' in your checkout step.`
+    );
   }
   console.log(`Merge base: ${mergeBaseSha}`);
   return { mergeBaseSha };

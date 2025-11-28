@@ -152,38 +152,75 @@ export async function getMergeBase({
   baseSha: string;
   headSha: string;
 }) {
+  // Fetch both base and head refs to ensure they're available locally
   try {
-    await spawn("git", ["fetch", "--depth=1", "origin", baseSha]);
+    await spawn("git", ["fetch", "--depth=1", "origin", baseSha, headSha]);
   } catch {
     throw new Error(
-      `Cannot fetch ${baseSha} from origin, is there a git repo?`,
+      `Cannot fetch ${baseSha} or ${headSha} from origin. Is there a git repo?`,
     );
   }
 
   let mergeBaseSha: string | undefined;
 
-  for (let attempt = 0; attempt < 10; attempt++) {
+  // First, try to find merge-base with current shallow clone
+  try {
+    const output = await spawn("git", ["merge-base", headSha, baseSha]);
+    mergeBaseSha = output.stdout.trim();
+  } catch {
+    // Expected to fail with shallow clones
+  }
+
+  // Progressively deepen the clone until we find the merge base
+  // Use larger increments for efficiency (recommended by git documentation)
+  // Total: 50 + 100 + 200 + 400 = 750 commits before unshallow
+  const deepenAmounts = [50, 100, 200, 400];
+
+  for (const deepenAmount of deepenAmounts) {
+    if (mergeBaseSha) break;
+    try {
+      await spawn("git", [
+        "fetch",
+        "--quiet",
+        `--deepen=${deepenAmount}`,
+        "origin",
+      ]);
+    } catch {
+      // ignore deepen failures (e.g., already have full history)
+    }
+
     try {
       const output = await spawn("git", ["merge-base", headSha, baseSha]);
       mergeBaseSha = output.stdout.trim();
       if (mergeBaseSha) break;
     } catch {
-      // ignore
+      // continue deepening
+    }
+  }
+
+  // Last resort: fetch the full history (unshallow)
+  if (!mergeBaseSha) {
+    console.log("Deepening did not find merge base, trying unshallow fetch...");
+    try {
+      await spawn("git", ["fetch", "--quiet", "--unshallow", "origin"]);
+    } catch {
+      // May fail if already unshallow, which is fine
     }
 
-    // deepen fetch until we find merge base
-    await spawn("git", [
-      "fetch",
-      "--quiet",
-      "--deepen=10",
-      "origin",
-      baseSha,
-      headSha,
-    ]);
+    try {
+      const output = await spawn("git", ["merge-base", headSha, baseSha]);
+      mergeBaseSha = output.stdout.trim();
+    } catch {
+      // Will fall through to error below
+    }
   }
 
   if (!mergeBaseSha) {
-    throw new Error("Could not determine merge base SHA");
+    throw new Error(
+      `Could not determine merge base SHA between ${headSha} and ${baseSha}. ` +
+        `This may happen if the branches have completely diverged or if there is insufficient git history. ` +
+        `Try using 'fetch-depth: 0' in your checkout step.`,
+    );
   }
 
   console.log(`Merge base: ${mergeBaseSha}`);
