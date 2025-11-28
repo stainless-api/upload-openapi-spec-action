@@ -17119,11 +17119,11 @@ var parseLogLevel = (maybeLevel, sourceName, client) => {
 };
 function noop() {
 }
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+function makeLogFn(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
     return noop;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger = {
@@ -17134,22 +17134,22 @@ var noopLogger = {
 };
 var cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger;
   }
-  const cachedLogger = cachedLoggers.get(logger);
+  const cachedLogger = cachedLoggers.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
+    error: makeLogFn("error", logger2, logLevel),
+    warn: makeLogFn("warn", logger2, logLevel),
+    info: makeLogFn("info", logger2, logLevel),
+    debug: makeLogFn("debug", logger2, logLevel)
   };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
+  cachedLoggers.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails = (details) => {
@@ -18152,14 +18152,180 @@ var fs4 = __toESM(require("node:fs"));
 var import_node_os2 = require("node:os");
 var import_yaml = __toESM(require_dist());
 
+// src/logger.ts
+var LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  off: 4
+};
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m",
+  dim: "\x1B[90m",
+  cyan: "\x1B[36m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  red: "\x1B[31m",
+  magenta: "\x1B[35m"
+};
+var LEVEL_COLORS = {
+  debug: COLORS.cyan,
+  info: COLORS.green,
+  warn: COLORS.yellow,
+  error: COLORS.red
+};
+var LEVEL_LABELS = {
+  debug: "DEBUG",
+  info: "INFO ",
+  warn: "WARN ",
+  error: "ERROR"
+};
+function getLogLevelFromEnv() {
+  const value = (process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"])?.toLowerCase();
+  return value && value in LOG_LEVELS ? value : "info";
+}
+function formatTimestamp() {
+  const now = /* @__PURE__ */ new Date();
+  const pad = (n, len = 2) => n.toString().padStart(len, "0");
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+}
+function formatArgs(args) {
+  if (args.length === 0) return "";
+  return args.map((arg) => {
+    if (arg === null) return "null";
+    if (arg === void 0) return "undefined";
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return arg.stack || arg.message;
+    try {
+      return JSON.stringify(arg, null, 2);
+    } catch {
+      return String(arg);
+    }
+  }).join(" ");
+}
+function createLogFn(level, minLevel, platform, context) {
+  if (LOG_LEVELS[level] < minLevel) {
+    return () => {
+    };
+  }
+  return (message, ...args) => {
+    const extra = formatArgs(args);
+    const line = [
+      `${COLORS.dim}${formatTimestamp()}${COLORS.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level]}${COLORS.reset}`,
+      context ? `${COLORS.magenta}[${context}]${COLORS.reset}` : null,
+      message,
+      extra || null
+    ].filter(Boolean).join(" ");
+    if (level === "error" || level === "warn") {
+      process.stderr.write(line + "\n");
+      if (level === "error") {
+        platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
+      }
+    } else {
+      process.stdout.write(line + "\n");
+    }
+  };
+}
+var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
+function createLoggerImpl(platform, minLevel, context) {
+  const errorFn = createLogFn("error", minLevel, platform, context);
+  let activeGroupId = null;
+  return {
+    debug: createLogFn("debug", minLevel, platform, context),
+    info: createLogFn("info", minLevel, platform, context),
+    warn: createLogFn("warn", minLevel, platform, context),
+    error: errorFn,
+    fatal(message, ...args) {
+      errorFn(message, ...args);
+      process.stderr.write(
+        `
+This is a bug. Please report it at ${BUG_REPORT_URL}
+`
+      );
+    },
+    child(childContext) {
+      const newContext = context ? `${context}:${childContext}` : childContext;
+      return createLoggerImpl(platform, minLevel, newContext);
+    },
+    group(name) {
+      activeGroupId = platform.startGroup(name);
+    },
+    groupEnd() {
+      if (activeGroupId !== null) {
+        platform.endGroup(activeGroupId);
+        activeGroupId = null;
+      }
+    },
+    withGroup(name, fn) {
+      const id = platform.startGroup(name);
+      try {
+        const result = fn();
+        if (result instanceof Promise) {
+          return result.finally(() => platform.endGroup(id));
+        }
+        platform.endGroup(id);
+        return result;
+      } catch (e) {
+        platform.endGroup(id);
+        throw e;
+      }
+    }
+  };
+}
+function createLogger(options) {
+  const level = options.level ?? getLogLevelFromEnv();
+  return createLoggerImpl(options.platform, LOG_LEVELS[level]);
+}
+var gitlabSectionCounter = 0;
+var githubPlatform = {
+  emitErrorAnnotation(message) {
+    process.stdout.write(`::error::${message}
+`);
+  },
+  startGroup(name) {
+    process.stdout.write(`::group::${name}
+`);
+    return "";
+  },
+  endGroup() {
+    process.stdout.write(`::endgroup::
+`);
+  }
+};
+var gitlabPlatform = {
+  startGroup(name) {
+    const id = `section_${++gitlabSectionCounter}`;
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(
+      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+    );
+    return id;
+  },
+  endGroup(id) {
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  }
+};
+function detectPlatform() {
+  return process.env["GITLAB_CI"] === "true" ? gitlabPlatform : githubPlatform;
+}
+var logger = createLogger({ platform: detectPlatform() });
+function createContextLogger(context) {
+  return logger.child(context);
+}
+
 // src/commitMessage.ts
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
   /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
 );
 function makeCommitMessageConventional(message) {
   if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    console.warn(
-      `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
     );
     return `feat: ${message}`;
   }
@@ -18198,46 +18364,8 @@ function getBooleanInput(name, options) {
   if (value === "false") return false;
   return void 0;
 }
-async function getStainlessAuthToken() {
-  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
-  if (apiKey) {
-    console.log("Authenticating with provided Stainless API key");
-    return apiKey;
-  }
-  console.log("Authenticating with GitHub OIDC");
-  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
-  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
-  if (!requestUrl || !requestToken) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
-    );
-  }
-  try {
-    const audience = "api.stainless.com";
-    const response = await fetch(`${requestUrl}&audience=${audience}`, {
-      headers: {
-        Authorization: `Bearer ${requestToken}`
-      }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-    }
-    const data = await response.json();
-    const token = data.value;
-    if (!token) {
-      throw new Error("No token in OIDC response");
-    }
-    return token;
-  } catch (error) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
-    );
-  }
-}
 function setOutput(name, value) {
-  if (isGitLabCI()) {
-    return;
-  }
+  if (isGitLabCI()) return;
   const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
   const filePath = process.env["GITHUB_OUTPUT"];
   if (filePath && fs.existsSync(filePath)) {
@@ -18254,6 +18382,38 @@ ${delimiter}
     process.stdout.write(`
 ::set-output name=${name}::${stringified}
 `);
+  }
+}
+async function getStainlessAuthToken() {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+  if (apiKey) {
+    logger.debug("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+  logger.debug("Authenticating with GitHub OIDC");
+  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+  if (!requestUrl || !requestToken) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
+    );
+  }
+  try {
+    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
+      headers: { Authorization: `Bearer ${requestToken}` }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+    const data = await response.json();
+    if (!data.value) {
+      throw new Error("No token in OIDC response");
+    }
+    return data.value;
+  } catch (error) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
+    );
   }
 }
 
@@ -18556,27 +18716,27 @@ async function readConfig({
   if (!sha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  console.log("Reading config at", sha);
+  logger.debug("Reading config at SHA", sha);
   const results = {};
   const addToResults = async (file, filePath, via) => {
     if (results[file]) {
       return;
     }
     if (!filePath || !fs3.existsSync(filePath)) {
-      console.log("Skipping missing", file, "at", filePath);
+      logger.debug(`Skipping missing ${file} at ${filePath}`);
       return;
     }
     results[file] = fs3.readFileSync(filePath, "utf-8");
     results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
       " "
     )[0];
-    console.log(`Using ${file} via`, via, "hash", results[`${file}Hash`]);
+    logger.debug(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
   };
   try {
     await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
     await spawn2("git", ["checkout", sha, "--", "."]);
   } catch {
-    console.log("Could not checkout", sha);
+    logger.debug("Could not checkout", sha);
   }
   await addToResults("oas", oasPath, `git ${sha}`);
   await addToResults("config", configPath, `git ${sha}`);
@@ -18592,7 +18752,7 @@ async function readConfig({
       `saved ${sha}`
     );
   } catch {
-    console.log("Could not get config from saved file path");
+    logger.debug("Could not get config from saved file path");
   }
   if (required) {
     if (oasPath && !results.oas) {
@@ -18677,7 +18837,7 @@ async function* runBuilds({
   if (!configContent) {
     const hasBranch = !!branch && !!await stainless.projects.branches.retrieve(branch).catch(() => null);
     if (guessConfig) {
-      console.log("Guessing config before branch reset");
+      logger.debug("Guessing config before branch reset");
       if (hasBranch) {
         configContent = Object.values(
           await stainless.projects.configs.guess({
@@ -18694,29 +18854,29 @@ async function* runBuilds({
         )[0]?.content;
       }
     } else if (hasBranch) {
-      console.log("Saving config before branch reset");
+      logger.debug("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch
         })
       )[0]?.content;
     } else {
-      console.log("No existing branch found");
+      logger.debug("No existing branch found");
     }
   }
-  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch,
     force: true
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.debug(`Hard reset ${branch}, now at ${config_commit.sha}`);
   const { config_commit: base_config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: baseBranch,
     force: true
   });
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
+  logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
   const { base, head } = await stainless.builds.compare(
     {
       base: {
@@ -18805,6 +18965,7 @@ async function* pollBuild({
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
+  const log = createContextLogger(label);
   let documentedSpec = null;
   const buildId = build.id;
   const languages = Object.keys(build.targets);
@@ -18815,11 +18976,11 @@ async function* pollBuild({
     ])
   );
   if (buildId) {
-    console.log(
-      `[${label}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
+    log.info(
+      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
   } else {
-    console.log(`No new build was created; exiting.`);
+    logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
     return;
   }
@@ -18837,9 +18998,7 @@ async function* pollBuild({
       };
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        console.log(
-          `[${label}] Build for ${language} has status ${buildOutput.status}`
-        );
+        log.info(`Build for ${language} has status ${buildOutput.status}`);
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
@@ -18847,10 +19006,7 @@ async function* pollBuild({
         }
       }
       if (existing?.commit?.status !== "completed" && buildOutput.commit.status === "completed") {
-        console.log(
-          `[${label}] Build for ${language} has output:`,
-          JSON.stringify(buildOutput)
-        );
+        log.debug(`Build for ${language} completed`, buildOutput);
         outcomes[language].commit = buildOutput.commit;
         outcomes[language].diagnostics = [];
         try {
@@ -18862,10 +19018,7 @@ async function* pollBuild({
             outcomes[language].diagnostics.push(diagnostic);
           }
         } catch (e) {
-          console.error(
-            `[${label}] Error getting diagnostics, continuing anyway`,
-            e
-          );
+          log.warn("Error getting diagnostics, continuing anyway", e);
         }
       }
     }
@@ -18884,9 +19037,7 @@ async function* pollBuild({
     (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
   );
   for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
-    );
+    log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
     outcomes[language] = {
       object: "build_target",
       status: "completed",
@@ -18964,14 +19115,14 @@ async function main() {
       const documentedSpecOutput = !(documentedSpecOutputPath.endsWith(".yml") || documentedSpecOutputPath.endsWith(".yaml")) ? JSON.stringify(import_yaml.default.parse(documentedSpec), null, 2) : documentedSpec;
       fs4.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
+      logger.warn("No documented spec found.");
     }
   } catch (error) {
     if (error instanceof Stainless.BadRequestError && error.message.includes("No changes to commit")) {
-      console.log("No changes to commit, skipping build.");
+      logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      console.error("Error interacting with API:", error);
+      logger.fatal("Error interacting with API:", error);
       process.exit(1);
     }
   }

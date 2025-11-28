@@ -1,3 +1,7 @@
+/**
+ * Compatibility layer for GitHub Actions and GitLab CI.
+ */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
@@ -6,17 +10,7 @@ import {
   createClient as createGitHubClient,
   type PartialGitHub,
 } from "@stainless-api/github-internal/tree-shakable";
-
-interface Comment {
-  id: string | number;
-  body: string;
-}
-
-interface CommentClient {
-  listComments(): Promise<Comment[]>;
-  createComment(body: string): Promise<void>;
-  updateComment(id: string | number, body: string): Promise<void>;
-}
+import { logger } from "./logger";
 
 export function isGitLabCI(): boolean {
   return process.env["GITLAB_CI"] === "true";
@@ -49,13 +43,11 @@ export function getInput(
   if (options?.required && !value) {
     throw new Error(`Input required and not supplied: ${name}`);
   }
-
   if (options?.choices && value && !options.choices.includes(value)) {
     throw new Error(
       `Input not one of the allowed choices for ${name}: ${value}`,
     );
   }
-
   return value || undefined;
 }
 
@@ -69,91 +61,34 @@ export function getBooleanInput(
 ): boolean | undefined;
 export function getBooleanInput(name: string, options?: { required: boolean }) {
   const value = getInput(name, options)?.toLowerCase();
-
   if (value === "true") return true;
   if (value === "false") return false;
   return undefined;
 }
 
-export function getGitHostToken() {
-  const input_name = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
-  const token = getInput(input_name);
-
-  const isRequired = getBooleanInput("make_comment", { required: true });
-  if (isRequired && !token) {
-    throw new Error(`Input ${input_name} is required to make a comment`);
-  }
-
-  return token;
+interface Comment {
+  id: string | number;
+  body: string;
 }
 
-export async function getStainlessAuthToken(): Promise<string> {
-  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
-
-  if (apiKey) {
-    console.log("Authenticating with provided Stainless API key");
-    return apiKey;
-  }
-
-  // Fall back to GitHub OIDC authentication
-  console.log("Authenticating with GitHub OIDC");
-
-  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
-  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
-
-  if (!requestUrl || !requestToken) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +
-        `and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`,
-    );
-  }
-
-  try {
-    const audience = "api.stainless.com";
-    const response = await fetch(`${requestUrl}&audience=${audience}`, {
-      headers: {
-        Authorization: `Bearer ${requestToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-    }
-
-    const data = await response.json();
-    const token = data.value;
-
-    if (!token) {
-      throw new Error("No token in OIDC response");
-    }
-
-    return token;
-  } catch (error) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +
-        `and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. ` +
-        `Error: ${error}`,
-    );
-  }
+export interface CommentClient {
+  listComments(): Promise<Comment[]>;
+  createComment(body: string): Promise<void>;
+  updateComment(id: string | number, body: string): Promise<void>;
 }
 
 let cachedContext:
-  | {
-      payload: Record<string, any>;
-      repo: { owner: string; repo: string };
-    }
-  | undefined = undefined;
+  | { payload: Record<string, any>; repo: { owner: string; repo: string } }
+  | undefined;
+
 function getGitHubContext() {
   if (!cachedContext) {
     const eventPath = process.env.GITHUB_EVENT_PATH;
-
     let payload: Record<string, any> = {};
     if (eventPath && fs.existsSync(eventPath)) {
       payload = JSON.parse(fs.readFileSync(eventPath, "utf-8"));
     }
-
     const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
-
     cachedContext = {
       payload,
       repo: {
@@ -170,18 +105,19 @@ export function getPRNumber() {
     if (!process.env["MR_NUMBER"]) {
       throw new Error("MR_NUMBER is required to make a comment");
     }
-
     return parseInt(process.env["MR_NUMBER"]);
-  } else {
-    return parseInt(getGitHubContext().payload.pull_request!.number);
   }
+  return parseInt(getGitHubContext().payload.pull_request!.number);
+}
+
+export function isPullRequestOpenedEvent(): boolean {
+  return isGitLabCI()
+    ? process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened"
+    : getGitHubContext().payload.action === "opened";
 }
 
 export function setOutput(name: string, value: any) {
-  if (isGitLabCI()) {
-    // We don't set outputs in GitLab CI.
-    return;
-  }
+  if (isGitLabCI()) return;
 
   const stringified =
     value === null || value === undefined
@@ -203,14 +139,6 @@ export function setOutput(name: string, value: any) {
   }
 }
 
-export function isPullRequestOpenedEvent(): boolean {
-  if (isGitLabCI()) {
-    return process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened";
-  } else {
-    return getGitHubContext().payload.action === "opened";
-  }
-}
-
 export function startGroup(id: string, name: string) {
   if (isGitLabCI()) {
     console.log(`\x1b[0Ksection_start:${Date.now()}:${id}\r\x1b[0K${name}`);
@@ -227,32 +155,15 @@ export function endGroup(id: string) {
   }
 }
 
-export function createCommentClient(
-  token: string,
-  prNumber: number,
-): CommentClient {
-  if (isGitLabCI()) {
-    return new GitLabCommentClient(token, prNumber);
-  }
-
-  return new GitHubCommentClient(token, prNumber);
-}
-
 export function getPRTerm(): string {
-  if (isGitLabCI()) {
-    return "MR";
-  } else {
-    return "PR";
-  }
+  return isGitLabCI() ? "MR" : "PR";
 }
 
 export function getCITerm(): string {
-  if (isGitLabCI()) {
-    return "GitLab CI";
-  } else {
-    return "GitHub Actions";
-  }
+  return isGitLabCI() ? "GitLab CI" : "GitHub Actions";
 }
+
+const gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
 
 export function getRepoPath(owner: string, repo: string): string {
   return process.env.GITLAB_STAGING_REPO_PATH
@@ -260,9 +171,64 @@ export function getRepoPath(owner: string, repo: string): string {
     : `https://github.com/${owner}/${repo}`;
 }
 
-const gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
+export function getGitHostToken() {
+  const inputName = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
+  const token = getInput(inputName);
+  const isRequired = getBooleanInput("make_comment", { required: true });
+  if (isRequired && !token) {
+    throw new Error(`Input ${inputName} is required to make a comment`);
+  }
+  return token;
+}
 
-// GitHub comment client implementation
+export async function getStainlessAuthToken(): Promise<string> {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+  if (apiKey) {
+    logger.debug("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+
+  logger.debug("Authenticating with GitHub OIDC");
+  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+
+  if (!requestUrl || !requestToken) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +
+        `and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`,
+    );
+  }
+
+  try {
+    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
+      headers: { Authorization: `Bearer ${requestToken}` },
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+    const data = await response.json();
+    if (!data.value) {
+      throw new Error("No token in OIDC response");
+    }
+    return data.value;
+  } catch (error) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +
+        `and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. ` +
+        `Error: ${error}`,
+    );
+  }
+}
+
+export function createCommentClient(
+  token: string,
+  prNumber: number,
+): CommentClient {
+  return isGitLabCI()
+    ? new GitLabCommentClient(token, prNumber)
+    : new GitHubCommentClient(token, prNumber);
+}
+
 class GitHubCommentClient implements CommentClient {
   private client: PartialGitHub<{
     repos: { issues: { comments: GitHubComments } };
@@ -280,13 +246,10 @@ class GitHubCommentClient implements CommentClient {
   }
 
   async listComments(): Promise<Comment[]> {
-    const { data: comments } = await this.client.repos.issues.comments.list(
+    const { data } = await this.client.repos.issues.comments.list(
       this.prNumber,
     );
-    return comments.map((c) => ({
-      id: c.id,
-      body: c.body ?? "",
-    }));
+    return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
 
   async createComment(body: string): Promise<void> {
@@ -298,7 +261,6 @@ class GitHubCommentClient implements CommentClient {
   }
 }
 
-// GitLab comment client implementation
 class GitLabCommentClient implements CommentClient {
   private token: string;
   private baseUrl: string;
@@ -310,14 +272,8 @@ class GitLabCommentClient implements CommentClient {
     this.prNumber = prNumber;
   }
 
-  private async gitlabRequest(
-    method: string,
-    endpoint: string,
-    body?: unknown,
-  ) {
-    const projectId = process.env.CI_PROJECT_ID!;
-    const url = `${this.baseUrl}/projects/${projectId}${endpoint}`;
-
+  private async request(method: string, endpoint: string, body?: unknown) {
+    const url = `${this.baseUrl}/projects/${process.env.CI_PROJECT_ID}${endpoint}`;
     const response = await fetch(url, {
       method,
       headers: {
@@ -326,40 +282,34 @@ class GitLabCommentClient implements CommentClient {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-
     if (!response.ok) {
       throw new Error(
         `GitLab API error: ${response.status} ${response.statusText}`,
       );
     }
-
     return response.json();
   }
 
   async listComments(): Promise<Comment[]> {
-    const notes = await this.gitlabRequest(
+    const notes = await this.request(
       "GET",
       `/merge_requests/${this.prNumber}/notes`,
     );
-    return (notes as { id: string; body: string }[]).map((note) => ({
-      id: note.id,
-      body: note.body,
+    return (notes as { id: string; body: string }[]).map((n) => ({
+      id: n.id,
+      body: n.body,
     }));
   }
 
   async createComment(body: string): Promise<void> {
-    await this.gitlabRequest("POST", `/merge_requests/${this.prNumber}/notes`, {
+    await this.request("POST", `/merge_requests/${this.prNumber}/notes`, {
       body,
     });
   }
 
   async updateComment(id: number, body: string): Promise<void> {
-    await this.gitlabRequest(
-      "PUT",
-      `/merge_requests/${this.prNumber}/notes/${id}`,
-      {
-        body,
-      },
-    );
+    await this.request("PUT", `/merge_requests/${this.prNumber}/notes/${id}`, {
+      body,
+    });
   }
 }

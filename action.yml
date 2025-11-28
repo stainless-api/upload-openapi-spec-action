@@ -37,3 +37,9 @@ inputs:
     description: "If true, renegerate the endpoints in the Stainless config file."
     required: false
     default: "main"
+  log_level:
+    description: >-
+      Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
+      Use 'debug' for detailed diagnostic information.
+    required: false
+    default: "info"

@@ -3,12 +3,11 @@ import {
   getInput,
   isPullRequestOpenedEvent,
   setOutput,
-  startGroup,
-  endGroup,
   getGitHostToken,
   getPRNumber,
   getStainlessAuthToken,
 } from "./compat";
+import { logger } from "./logger";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import {
@@ -61,7 +60,7 @@ async function main() {
       configPath,
     });
     if (savedSha !== null && savedSha !== headSha) {
-      console.warn(
+      logger.warn(
         `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
       );
     }
@@ -72,7 +71,7 @@ async function main() {
       logLevel: "warn",
     });
 
-    startGroup("parent-revision", "Getting parent revision");
+    logger.group("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
@@ -98,13 +97,13 @@ async function main() {
     });
 
     if (!configChanged) {
-      console.log("No config files changed, skipping preview");
+      logger.info("No config files changed, skipping preview");
 
       // In this case, we only want to make a comment if there's an existing
       // comment---which can happen if the changes introduced by the PR
       // disappear for some reason.
       if (isPullRequestOpenedEvent() && makeComment) {
-        startGroup("update-comment", "Updating comment");
+        logger.group("Updating comment");
 
         const commentBody = printComment({ noChanges: true });
 
@@ -115,7 +114,7 @@ async function main() {
           prNumber,
         });
 
-        endGroup("update-comment");
+        logger.groupEnd();
       }
 
       return;
@@ -130,7 +129,7 @@ async function main() {
       configPath,
     });
 
-    endGroup("parent-revision");
+    logger.groupEnd();
 
     let commitMessage = defaultCommitMessage;
 
@@ -142,7 +141,7 @@ async function main() {
     }
 
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
+    logger.info("Using commit message:", commitMessage);
 
     const generator = runBuilds({
       stainless,
@@ -217,7 +216,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in preview action:", error);
+    logger.fatal("Error in preview action:", error);
     process.exit(1);
   }
 }
@@ -263,7 +262,7 @@ async function computeBranchFrom({
     ).data[0]?.config_commit;
 
     if (configCommit) {
-      console.log(`Found base via merge base SHA: ${configCommit}`);
+      logger.debug(`Found base via merge base SHA: ${configCommit}`);
       return configCommit;
     }
   }
@@ -278,7 +277,7 @@ async function computeBranchFrom({
     ).data[0]?.config_commit;
 
     if (configCommit) {
-      console.log(`Found base via non-main base ref: ${configCommit}`);
+      logger.debug(`Found base via non-main base ref: ${configCommit}`);
       return configCommit;
     }
   }
@@ -295,7 +294,7 @@ async function computeBranchFrom({
     throw new Error("Could not determine base revision");
   }
 
-  console.log(`Found base via main branch: ${configCommit}`);
+  logger.debug(`Found base via main branch: ${configCommit}`);
   return configCommit;
 }
 
