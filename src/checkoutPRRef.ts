@@ -1,6 +1,7 @@
 import spawn from "nano-spawn";
 import { getInput } from "./compat";
 import { getMergeBase, saveConfig } from "./config";
+import { logger } from "./logger";
 
 function assertRef(ref: string): asserts ref is "base" | "head" {
   if (ref !== "base" && ref !== "head") {
@@ -34,7 +35,7 @@ async function main() {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
     if (savedSha !== null && savedSha !== mergeBaseSha) {
-      console.warn(
+      logger.warn(
         `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}. This might cause issues with getting the base revision.`,
       );
     }
@@ -42,7 +43,7 @@ async function main() {
     // Checkout the head SHA.
     await spawn("git", ["checkout", headSha]);
   } catch (error) {
-    console.error("Error in checkout-pr-ref action:", error);
+    logger.fatal("Error in checkout-pr-ref action:", error);
     process.exit(1);
   }
 }

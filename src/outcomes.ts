@@ -1,4 +1,5 @@
 import { Stainless } from "@stainless-api/sdk";
+import { logger } from "./logger";
 
 export type Outcomes = Record<
   string,
@@ -41,9 +42,9 @@ export function shouldFailRun({
   });
 
   if (failures.length > 0) {
-    console.log("The following languages did not build successfully:");
+    logger.warn("The following languages did not build successfully:");
     for (const { language, reason } of failures) {
-      console.log(`${language}: ${reason}`);
+      logger.warn(`  ${language}: ${reason}`);
     }
     return false;
   }

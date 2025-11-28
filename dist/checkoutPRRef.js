@@ -9351,6 +9351,169 @@ var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 // node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 
+// src/logger.ts
+var LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  off: 4
+};
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m",
+  dim: "\x1B[90m",
+  cyan: "\x1B[36m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  red: "\x1B[31m",
+  magenta: "\x1B[35m"
+};
+var LEVEL_COLORS = {
+  debug: COLORS.cyan,
+  info: COLORS.green,
+  warn: COLORS.yellow,
+  error: COLORS.red
+};
+var LEVEL_LABELS = {
+  debug: "DEBUG",
+  info: "INFO ",
+  warn: "WARN ",
+  error: "ERROR"
+};
+function getLogLevelFromEnv() {
+  const value = (process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"])?.toLowerCase();
+  return value && value in LOG_LEVELS ? value : "info";
+}
+function formatTimestamp() {
+  const now = /* @__PURE__ */ new Date();
+  const pad = (n, len = 2) => n.toString().padStart(len, "0");
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+}
+function formatArgs(args) {
+  if (args.length === 0) return "";
+  return args.map((arg) => {
+    if (arg === null) return "null";
+    if (arg === void 0) return "undefined";
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return arg.stack || arg.message;
+    try {
+      return JSON.stringify(arg, null, 2);
+    } catch {
+      return String(arg);
+    }
+  }).join(" ");
+}
+function createLogFn(level, minLevel, platform, context) {
+  if (LOG_LEVELS[level] < minLevel) {
+    return () => {
+    };
+  }
+  return (message, ...args) => {
+    const extra = formatArgs(args);
+    const line = [
+      `${COLORS.dim}${formatTimestamp()}${COLORS.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level]}${COLORS.reset}`,
+      context ? `${COLORS.magenta}[${context}]${COLORS.reset}` : null,
+      message,
+      extra || null
+    ].filter(Boolean).join(" ");
+    if (level === "error" || level === "warn") {
+      process.stderr.write(line + "\n");
+      if (level === "error") {
+        platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
+      }
+    } else {
+      process.stdout.write(line + "\n");
+    }
+  };
+}
+var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
+function createLoggerImpl(platform, minLevel, context) {
+  const errorFn = createLogFn("error", minLevel, platform, context);
+  let activeGroupId = null;
+  return {
+    debug: createLogFn("debug", minLevel, platform, context),
+    info: createLogFn("info", minLevel, platform, context),
+    warn: createLogFn("warn", minLevel, platform, context),
+    error: errorFn,
+    fatal(message, ...args) {
+      errorFn(message, ...args);
+      process.stderr.write(
+        `
+This is a bug. Please report it at ${BUG_REPORT_URL}
+`
+      );
+    },
+    child(childContext) {
+      const newContext = context ? `${context}:${childContext}` : childContext;
+      return createLoggerImpl(platform, minLevel, newContext);
+    },
+    group(name) {
+      activeGroupId = platform.startGroup(name);
+    },
+    groupEnd() {
+      if (activeGroupId !== null) {
+        platform.endGroup(activeGroupId);
+        activeGroupId = null;
+      }
+    },
+    withGroup(name, fn) {
+      const id = platform.startGroup(name);
+      try {
+        const result = fn();
+        if (result instanceof Promise) {
+          return result.finally(() => platform.endGroup(id));
+        }
+        platform.endGroup(id);
+        return result;
+      } catch (e) {
+        platform.endGroup(id);
+        throw e;
+      }
+    }
+  };
+}
+function createLogger(options) {
+  const level = options.level ?? getLogLevelFromEnv();
+  return createLoggerImpl(options.platform, LOG_LEVELS[level]);
+}
+var gitlabSectionCounter = 0;
+var githubPlatform = {
+  emitErrorAnnotation(message) {
+    process.stdout.write(`::error::${message}
+`);
+  },
+  startGroup(name) {
+    process.stdout.write(`::group::${name}
+`);
+    return "";
+  },
+  endGroup() {
+    process.stdout.write(`::endgroup::
+`);
+  }
+};
+var gitlabPlatform = {
+  startGroup(name) {
+    const id = `section_${++gitlabSectionCounter}`;
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(
+      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+    );
+    return id;
+  },
+  endGroup(id) {
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  }
+};
+function detectPlatform() {
+  return process.env["GITLAB_CI"] === "true" ? gitlabPlatform : githubPlatform;
+}
+var logger = createLogger({ platform: detectPlatform() });
+
 // src/compat.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
@@ -9386,7 +9549,7 @@ async function saveConfig({
   if (!savedSha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  console.log("Saving generated config for", savedSha);
+  logger.debug("Saving generated config for", savedSha);
   if (oasPath && fs2.existsSync(oasPath)) {
     hasOAS = true;
     const savedFilePath = getSavedFilePath(
@@ -9464,7 +9627,7 @@ async function getMergeBase({
       `Could not determine merge base SHA between ${headSha} and ${baseSha}. This may happen if the branches have completely diverged or if there is insufficient git history. Try using 'fetch-depth: 0' in your checkout step.`
     );
   }
-  console.log(`Merge base: ${mergeBaseSha}`);
+  logger.debug(`Merge base: ${mergeBaseSha}`);
   return { mergeBaseSha };
 }
 
@@ -9492,13 +9655,13 @@ async function main() {
       throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
     }
     if (savedSha !== null && savedSha !== mergeBaseSha) {
-      console.warn(
+      logger.warn(
         `Expected HEAD to be ${mergeBaseSha}, but was ${savedSha}. This might cause issues with getting the base revision.`
       );
     }
     await spawn2("git", ["checkout", headSha]);
   } catch (error) {
-    console.error("Error in checkout-pr-ref action:", error);
+    logger.fatal("Error in checkout-pr-ref action:", error);
     process.exit(1);
   }
 }

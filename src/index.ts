@@ -1,5 +1,4 @@
 import Stainless from "@stainless-api/sdk";
-import { error, info, warn } from "node:console";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
 import {
@@ -8,6 +7,7 @@ import {
   isGitLabCI,
   getStainlessAuthToken,
 } from "./compat";
+import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
@@ -32,14 +32,14 @@ export async function main() {
 
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
-    error(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
 
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     const errorMsg =
       "Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/";
-    error(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
 
@@ -48,18 +48,18 @@ export async function main() {
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
-      error(errorMsg);
+      logger.error(errorMsg);
       throw Error(errorMsg);
     }
     projectName = projects.data[0]!.slug;
     if (projects.data.length > 1) {
-      warn(
+      logger.warn(
         `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`,
       );
     }
   }
 
-  info(
+  logger.info(
     configPath
       ? "Uploading spec and config files..."
       : "Uploading spec file...",
@@ -77,15 +77,15 @@ export async function main() {
     const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(
       response.errors,
     )} See more details in the Stainless Studio.`;
-    error(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
-  info("Uploaded!");
+  logger.info("Uploaded!");
 
   if (outputPath) {
     if (!response.decoratedSpec) {
       const errorMsg = "Failed to get decorated spec";
-      error(errorMsg);
+      logger.error(errorMsg);
       throw Error(errorMsg);
     }
     // Decorated spec is currently always YAML, so convert it to JSON if needed.
@@ -97,7 +97,7 @@ export async function main() {
       );
     }
     writeFileSync(outputPath, response.decoratedSpec);
-    info("Wrote decorated spec to", outputPath);
+    logger.info(`Wrote decorated spec to ${outputPath}`);
   }
 }
 
@@ -213,7 +213,7 @@ async function uploadSpecAndConfig(
 
 if (require.main === module) {
   main().catch((err) => {
-    console.error(err);
+    logger.fatal("Fatal error:", err);
     process.exit(1);
   });
 }

@@ -9,6 +9,7 @@ import {
   setOutput,
   getStainlessAuthToken,
 } from "./compat";
+import { logger } from "./logger";
 import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
@@ -85,17 +86,17 @@ async function main() {
 
       fs.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
     } else if (documentedSpecOutputPath) {
-      console.error("No documented spec found.");
+      logger.warn("No documented spec found.");
     }
   } catch (error) {
     if (
       error instanceof Stainless.BadRequestError &&
       error.message.includes("No changes to commit")
     ) {
-      console.log("No changes to commit, skipping build.");
+      logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      console.error("Error interacting with API:", error);
+      logger.fatal("Error interacting with API:", error);
       process.exit(1);
     }
   }
