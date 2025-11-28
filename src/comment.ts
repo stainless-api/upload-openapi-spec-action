@@ -4,6 +4,7 @@ import {
   getPRTerm,
   getRepoPath,
 } from "./compat";
+import { logger } from "./logger";
 import * as MD from "./markdown";
 import type { DiagnosticLevel, Outcomes } from "./outcomes";
 import {
@@ -498,7 +499,7 @@ export async function upsertComment({
 }) {
   const client = createCommentClient(token, prNumber);
 
-  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
+  logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
 
   const comments = await client.listComments();
 
@@ -508,10 +509,10 @@ export async function upsertComment({
   );
 
   if (existingComment) {
-    console.log("Updating existing comment:", existingComment.id);
+    logger.debug("Updating existing comment:", existingComment.id);
     await client.updateComment(existingComment.id, body);
   } else if (!skipCreate) {
-    console.log("Creating new comment");
+    logger.debug("Creating new comment");
     await client.createComment(body);
   }
 }

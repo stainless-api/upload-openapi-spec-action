@@ -367,8 +367,8 @@ var require_directives = __commonJS({
         if (prefix) {
           try {
             return prefix + decodeURIComponent(suffix);
-          } catch (error2) {
-            onError(String(error2));
+          } catch (error) {
+            onError(String(error));
             return null;
           }
         }
@@ -470,9 +470,9 @@ var require_anchors = __commonJS({
             if (typeof ref === "object" && ref.anchor && (identity.isScalar(ref.node) || identity.isCollection(ref.node))) {
               ref.node.anchor = ref.anchor;
             } else {
-              const error2 = new Error("Failed to resolve repeated object (this should not happen)");
-              error2.source = source;
-              throw error2;
+              const error = new Error("Failed to resolve repeated object (this should not happen)");
+              error.source = source;
+              throw error;
             }
           }
         },
@@ -1670,7 +1670,7 @@ var require_log = __commonJS({
       if (logLevel === "debug")
         console.log(...messages);
     }
-    function warn2(logLevel, warning) {
+    function warn(logLevel, warning) {
       if (logLevel === "debug" || logLevel === "warn") {
         if (typeof node_process.emitWarning === "function")
           node_process.emitWarning(warning);
@@ -1679,7 +1679,7 @@ var require_log = __commonJS({
       }
     }
     exports2.debug = debug;
-    exports2.warn = warn2;
+    exports2.warn = warn;
   }
 });
 
@@ -3707,12 +3707,12 @@ var require_errors = __commonJS({
         super("YAMLWarning", pos, code, message);
       }
     };
-    var prettifyError = (src, lc) => (error2) => {
-      if (error2.pos[0] === -1)
+    var prettifyError = (src, lc) => (error) => {
+      if (error.pos[0] === -1)
         return;
-      error2.linePos = error2.pos.map((pos) => lc.linePos(pos));
-      const { line, col } = error2.linePos[0];
-      error2.message += ` at line ${line}, column ${col}`;
+      error.linePos = error.pos.map((pos) => lc.linePos(pos));
+      const { line, col } = error.linePos[0];
+      error.message += ` at line ${line}, column ${col}`;
       let ci = col - 1;
       let lineStr = src.substring(lc.lineStarts[line - 1], lc.lineStarts[line]).replace(/[\n\r]+$/, "");
       if (ci >= 60 && lineStr.length > 80) {
@@ -3730,12 +3730,12 @@ var require_errors = __commonJS({
       }
       if (/[^ ]/.test(lineStr)) {
         let count = 1;
-        const end = error2.linePos[1];
+        const end = error.linePos[1];
         if (end && end.line === line && end.col > col) {
           count = Math.max(1, Math.min(end.col - col, 80 - ci));
         }
         const pointer = " ".repeat(ci) + "^".repeat(count);
-        error2.message += `:
+        error.message += `:
 
 ${lineStr}
 ${pointer}
@@ -4538,7 +4538,7 @@ var require_resolve_block_scalar = __commonJS({
       const mode = source[0];
       let indent = 0;
       let chomp = "";
-      let error2 = -1;
+      let error = -1;
       for (let i = 1; i < source.length; ++i) {
         const ch = source[i];
         if (!chomp && (ch === "-" || ch === "+"))
@@ -4547,12 +4547,12 @@ var require_resolve_block_scalar = __commonJS({
           const n = Number(ch);
           if (!indent && n)
             indent = n;
-          else if (error2 === -1)
-            error2 = offset + i;
+          else if (error === -1)
+            error = offset + i;
         }
       }
-      if (error2 !== -1)
-        onError(error2, "UNEXPECTED_TOKEN", `Block scalar header includes extra characters: ${source}`);
+      if (error !== -1)
+        onError(error, "UNEXPECTED_TOKEN", `Block scalar header includes extra characters: ${source}`);
       let hasSpace = false;
       let comment = "";
       let length = source.length;
@@ -4846,8 +4846,8 @@ var require_compose_scalar = __commonJS({
       try {
         const res = tag.resolve(value, (msg) => onError(tagToken ?? token, "TAG_RESOLVE_FAILED", msg), ctx.options);
         scalar = identity.isScalar(res) ? res : new Scalar.Scalar(res);
-      } catch (error2) {
-        const msg = error2 instanceof Error ? error2.message : String(error2);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
         onError(tagToken ?? token, "TAG_RESOLVE_FAILED", msg);
         scalar = new Scalar.Scalar(value);
       }
@@ -5229,11 +5229,11 @@ ${cb}` : comment;
             break;
           case "error": {
             const msg = token.source ? `${token.message}: ${JSON.stringify(token.source)}` : token.message;
-            const error2 = new errors.YAMLParseError(getErrorPos(token), "UNEXPECTED_TOKEN", msg);
+            const error = new errors.YAMLParseError(getErrorPos(token), "UNEXPECTED_TOKEN", msg);
             if (this.atDirectives || !this.doc)
-              this.errors.push(error2);
+              this.errors.push(error);
             else
-              this.doc.errors.push(error2);
+              this.doc.errors.push(error);
             break;
           }
           case "doc-end": {
@@ -6529,8 +6529,8 @@ var require_parser = __commonJS({
       peek(n) {
         return this.stack[this.stack.length - n];
       }
-      *pop(error2) {
-        const token = error2 ?? this.stack.pop();
+      *pop(error) {
+        const token = error ?? this.stack.pop();
         if (!token) {
           const message = "Tried to pop an empty stack";
           yield { type: "error", offset: this.offset, source: "", message };
@@ -13318,14 +13318,14 @@ var require_decode = __commonJS({
 // node_modules/jsonwebtoken/lib/JsonWebTokenError.js
 var require_JsonWebTokenError = __commonJS({
   "node_modules/jsonwebtoken/lib/JsonWebTokenError.js"(exports2, module2) {
-    var JsonWebTokenError = function(message, error2) {
+    var JsonWebTokenError = function(message, error) {
       Error.call(this, message);
       if (Error.captureStackTrace) {
         Error.captureStackTrace(this, this.constructor);
       }
       this.name = "JsonWebTokenError";
       this.message = message;
-      if (error2) this.inner = error2;
+      if (error) this.inner = error;
     };
     JsonWebTokenError.prototype = Object.create(Error.prototype);
     JsonWebTokenError.prototype.constructor = JsonWebTokenError;
@@ -16255,8 +16255,8 @@ var require_sign = __commonJS({
       } else if (isObjectPayload) {
         try {
           validatePayload(payload);
-        } catch (error2) {
-          return failure(error2);
+        } catch (error) {
+          return failure(error);
         }
         if (!options.mutatePayload) {
           payload = Object.assign({}, payload);
@@ -16277,14 +16277,14 @@ var require_sign = __commonJS({
       }
       try {
         validateOptions(options);
-      } catch (error2) {
-        return failure(error2);
+      } catch (error) {
+        return failure(error);
       }
       if (!options.allowInvalidAsymmetricKeyTypes) {
         try {
           validateAsymmetricKey(header.alg, secretOrPrivateKey);
-        } catch (error2) {
-          return failure(error2);
+        } catch (error) {
+          return failure(error);
         }
       }
       const timestamp = payload.iat || Math.floor(Date.now() / 1e3);
@@ -16411,14 +16411,14 @@ var castToError = (err) => {
   if (typeof err === "object" && err !== null) {
     try {
       if (Object.prototype.toString.call(err) === "[object Error]") {
-        const error2 = new Error(err.message, err.cause ? { cause: err.cause } : {});
+        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
         if (err.stack)
-          error2.stack = err.stack;
-        if (err.cause && !error2.cause)
-          error2.cause = err.cause;
+          error.stack = err.stack;
+        if (err.cause && !error.cause)
+          error.cause = err.cause;
         if (err.name)
-          error2.name = err.name;
-        return error2;
+          error.name = err.name;
+        return error;
       }
     } catch {
     }
@@ -16434,14 +16434,14 @@ var castToError = (err) => {
 var StainlessError = class extends Error {
 };
 var APIError = class _APIError extends StainlessError {
-  constructor(status, error2, message, headers) {
-    super(`${_APIError.makeMessage(status, error2, message)}`);
+  constructor(status, error, message, headers) {
+    super(`${_APIError.makeMessage(status, error, message)}`);
     this.status = status;
     this.headers = headers;
-    this.error = error2;
+    this.error = error;
   }
-  static makeMessage(status, error2, message) {
-    const msg = error2?.message ? typeof error2.message === "string" ? error2.message : JSON.stringify(error2.message) : error2 ? JSON.stringify(error2) : message;
+  static makeMessage(status, error, message) {
+    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
     if (status && msg) {
       return `${status} ${msg}`;
     }
@@ -16457,32 +16457,32 @@ var APIError = class _APIError extends StainlessError {
     if (!status || !headers) {
       return new APIConnectionError({ message, cause: castToError(errorResponse) });
     }
-    const error2 = errorResponse;
+    const error = errorResponse;
     if (status === 400) {
-      return new BadRequestError(status, error2, message, headers);
+      return new BadRequestError(status, error, message, headers);
     }
     if (status === 401) {
-      return new AuthenticationError(status, error2, message, headers);
+      return new AuthenticationError(status, error, message, headers);
     }
     if (status === 403) {
-      return new PermissionDeniedError(status, error2, message, headers);
+      return new PermissionDeniedError(status, error, message, headers);
     }
     if (status === 404) {
-      return new NotFoundError(status, error2, message, headers);
+      return new NotFoundError(status, error, message, headers);
     }
     if (status === 409) {
-      return new ConflictError(status, error2, message, headers);
+      return new ConflictError(status, error, message, headers);
     }
     if (status === 422) {
-      return new UnprocessableEntityError(status, error2, message, headers);
+      return new UnprocessableEntityError(status, error, message, headers);
     }
     if (status === 429) {
-      return new RateLimitError(status, error2, message, headers);
+      return new RateLimitError(status, error, message, headers);
     }
     if (status >= 500) {
-      return new InternalServerError(status, error2, message, headers);
+      return new InternalServerError(status, error, message, headers);
     }
-    return new _APIError(status, error2, message, headers);
+    return new _APIError(status, error, message, headers);
   }
 };
 var APIUserAbortError = class extends APIError {
@@ -17132,11 +17132,11 @@ var parseLogLevel = (maybeLevel, sourceName, client) => {
 };
 function noop() {
 }
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+function makeLogFn(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
     return noop;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger = {
@@ -17147,22 +17147,22 @@ var noopLogger = {
 };
 var cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger;
   }
-  const cachedLogger = cachedLoggers.get(logger);
+  const cachedLogger = cachedLoggers.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
+    error: makeLogFn("error", logger2, logLevel),
+    warn: makeLogFn("warn", logger2, logLevel),
+    info: makeLogFn("info", logger2, logLevel),
+    debug: makeLogFn("debug", logger2, logLevel)
   };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
+  cachedLoggers.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails = (details) => {
@@ -17845,8 +17845,8 @@ var Stainless = class {
   defaultIdempotencyKey() {
     return `stainless-node-retry-${uuid4()}`;
   }
-  makeStatusError(status, error2, message, headers) {
-    return APIError.generate(status, error2, message, headers);
+  makeStatusError(status, error, message, headers) {
+    return APIError.generate(status, error, message, headers);
   }
   buildURL(path3, query, defaultBaseURL) {
     const baseURL = !__classPrivateFieldGet(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
@@ -18161,7 +18161,6 @@ Stainless.Builds = Builds;
 Stainless.Orgs = Orgs;
 
 // src/index.ts
-var import_node_console = require("node:console");
 var import_node_fs = require("node:fs");
 var import_yaml = __toESM(require_dist());
 
@@ -18170,6 +18169,169 @@ var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
 // node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+
+// src/logger.ts
+var LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  off: 4
+};
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m",
+  dim: "\x1B[90m",
+  cyan: "\x1B[36m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  red: "\x1B[31m",
+  magenta: "\x1B[35m"
+};
+var LEVEL_COLORS = {
+  debug: COLORS.cyan,
+  info: COLORS.green,
+  warn: COLORS.yellow,
+  error: COLORS.red
+};
+var LEVEL_LABELS = {
+  debug: "DEBUG",
+  info: "INFO ",
+  warn: "WARN ",
+  error: "ERROR"
+};
+function getLogLevelFromEnv() {
+  const value = (process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"])?.toLowerCase();
+  return value && value in LOG_LEVELS ? value : "info";
+}
+function formatTimestamp() {
+  const now = /* @__PURE__ */ new Date();
+  const pad = (n, len = 2) => n.toString().padStart(len, "0");
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+}
+function formatArgs(args) {
+  if (args.length === 0) return "";
+  return args.map((arg) => {
+    if (arg === null) return "null";
+    if (arg === void 0) return "undefined";
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return arg.stack || arg.message;
+    try {
+      return JSON.stringify(arg, null, 2);
+    } catch {
+      return String(arg);
+    }
+  }).join(" ");
+}
+function createLogFn(level, minLevel, platform, context) {
+  if (LOG_LEVELS[level] < minLevel) {
+    return () => {
+    };
+  }
+  return (message, ...args) => {
+    const extra = formatArgs(args);
+    const line = [
+      `${COLORS.dim}${formatTimestamp()}${COLORS.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level]}${COLORS.reset}`,
+      context ? `${COLORS.magenta}[${context}]${COLORS.reset}` : null,
+      message,
+      extra || null
+    ].filter(Boolean).join(" ");
+    if (level === "error" || level === "warn") {
+      process.stderr.write(line + "\n");
+      if (level === "error") {
+        platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
+      }
+    } else {
+      process.stdout.write(line + "\n");
+    }
+  };
+}
+var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
+function createLoggerImpl(platform, minLevel, context) {
+  const errorFn = createLogFn("error", minLevel, platform, context);
+  let activeGroupId = null;
+  return {
+    debug: createLogFn("debug", minLevel, platform, context),
+    info: createLogFn("info", minLevel, platform, context),
+    warn: createLogFn("warn", minLevel, platform, context),
+    error: errorFn,
+    fatal(message, ...args) {
+      errorFn(message, ...args);
+      process.stderr.write(
+        `
+This is a bug. Please report it at ${BUG_REPORT_URL}
+`
+      );
+    },
+    child(childContext) {
+      const newContext = context ? `${context}:${childContext}` : childContext;
+      return createLoggerImpl(platform, minLevel, newContext);
+    },
+    group(name) {
+      activeGroupId = platform.startGroup(name);
+    },
+    groupEnd() {
+      if (activeGroupId !== null) {
+        platform.endGroup(activeGroupId);
+        activeGroupId = null;
+      }
+    },
+    withGroup(name, fn) {
+      const id = platform.startGroup(name);
+      try {
+        const result = fn();
+        if (result instanceof Promise) {
+          return result.finally(() => platform.endGroup(id));
+        }
+        platform.endGroup(id);
+        return result;
+      } catch (e) {
+        platform.endGroup(id);
+        throw e;
+      }
+    }
+  };
+}
+function createLogger(options) {
+  const level = options.level ?? getLogLevelFromEnv();
+  return createLoggerImpl(options.platform, LOG_LEVELS[level]);
+}
+var gitlabSectionCounter = 0;
+var githubPlatform = {
+  emitErrorAnnotation(message) {
+    process.stdout.write(`::error::${message}
+`);
+  },
+  startGroup(name) {
+    process.stdout.write(`::group::${name}
+`);
+    return "";
+  },
+  endGroup() {
+    process.stdout.write(`::endgroup::
+`);
+  }
+};
+var gitlabPlatform = {
+  startGroup(name) {
+    const id = `section_${++gitlabSectionCounter}`;
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(
+      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+    );
+    return id;
+  },
+  endGroup(id) {
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  }
+};
+function detectPlatform() {
+  return process.env["GITLAB_CI"] === "true" ? gitlabPlatform : githubPlatform;
+}
+var logger = createLogger({ platform: detectPlatform() });
 
 // src/compat.ts
 function isGitLabCI() {
@@ -18196,10 +18358,10 @@ function getBooleanInput(name, options) {
 async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
-    console.log("Authenticating with provided Stainless API key");
+    logger.debug("Authenticating with provided Stainless API key");
     return apiKey;
   }
-  console.log("Authenticating with GitHub OIDC");
+  logger.debug("Authenticating with GitHub OIDC");
   const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
   const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
   if (!requestUrl || !requestToken) {
@@ -18208,24 +18370,20 @@ async function getStainlessAuthToken() {
     );
   }
   try {
-    const audience = "api.stainless.com";
-    const response = await fetch(`${requestUrl}&audience=${audience}`, {
-      headers: {
-        Authorization: `Bearer ${requestToken}`
-      }
+    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
+      headers: { Authorization: `Bearer ${requestToken}` }
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
     const data = await response.json();
-    const token = data.value;
-    if (!token) {
+    if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return token;
-  } catch (error2) {
+    return data.value;
+  } catch (error) {
     throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error2}`
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
     );
   }
 }
@@ -18248,12 +18406,12 @@ async function main() {
   const outputPath = getInput("output_path");
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
-    (0, import_node_console.error)(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     const errorMsg = "Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/";
-    (0, import_node_console.error)(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
   if (!projectName) {
@@ -18261,17 +18419,17 @@ async function main() {
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
-      (0, import_node_console.error)(errorMsg);
+      logger.error(errorMsg);
       throw Error(errorMsg);
     }
     projectName = projects.data[0].slug;
     if (projects.data.length > 1) {
-      (0, import_node_console.warn)(
+      logger.warn(
         `Multiple projects found. Using ${projectName} as default, but we recommend specifying the project name in the inputs.`
       );
     }
   }
-  (0, import_node_console.info)(
+  logger.info(
     configPath ? "Uploading spec and config files..." : "Uploading spec file..."
   );
   const response = await uploadSpecAndConfig(
@@ -18287,14 +18445,14 @@ async function main() {
     const errorMsg = `Build failed with the following outcomes: ${JSON.stringify(
       response.errors
     )} See more details in the Stainless Studio.`;
-    (0, import_node_console.error)(errorMsg);
+    logger.error(errorMsg);
     throw Error(errorMsg);
   }
-  (0, import_node_console.info)("Uploaded!");
+  logger.info("Uploaded!");
   if (outputPath) {
     if (!response.decoratedSpec) {
       const errorMsg = "Failed to get decorated spec";
-      (0, import_node_console.error)(errorMsg);
+      logger.error(errorMsg);
       throw Error(errorMsg);
     }
     if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
@@ -18305,7 +18463,7 @@ async function main() {
       );
     }
     (0, import_node_fs.writeFileSync)(outputPath, response.decoratedSpec);
-    (0, import_node_console.info)("Wrote decorated spec to", outputPath);
+    logger.info(`Wrote decorated spec to ${outputPath}`);
   }
 }
 async function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig, branch) {
@@ -18385,7 +18543,7 @@ async function uploadSpecAndConfig(specPath, configPath, token, projectName, com
 }
 if (require.main === module) {
   main().catch((err) => {
-    console.error(err);
+    logger.fatal("Fatal error:", err);
     process.exit(1);
   });
 }
