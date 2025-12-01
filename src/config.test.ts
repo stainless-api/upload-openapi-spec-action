@@ -8,6 +8,7 @@ import spawn from "nano-spawn";
 describe("getMergeBase", () => {
   let tempDir: string;
   let originalCwd: string;
+  let defaultBranch: string;
 
   beforeEach(async () => {
     originalCwd = process.cwd();
@@ -28,6 +29,10 @@ describe("getMergeBase", () => {
     await spawn("git", ["config", "user.email", "test@test.com"]);
     await spawn("git", ["config", "user.name", "Test User"]);
     await spawn("git", ["config", "commit.gpgsign", "false"]);
+
+    // Get the default branch name (may be 'main' or 'master' depending on git config)
+    const { stdout } = await spawn("git", ["branch", "--show-current"]);
+    defaultBranch = stdout.trim() || "main";
   });
 
   afterEach(async () => {
@@ -45,7 +50,7 @@ describe("getMergeBase", () => {
     const { stdout: secondSha } = await spawn("git", ["rev-parse", "HEAD"]);
 
     // Push to remote
-    await spawn("git", ["push", "-u", "origin", "master"]);
+    await spawn("git", ["push", "-u", "origin", defaultBranch]);
 
     const result = await getMergeBase({
       baseSha: initialSha.trim(),
@@ -60,8 +65,8 @@ describe("getMergeBase", () => {
     await spawn("git", ["commit", "--allow-empty", "-m", "initial"]);
     const { stdout: mergeBaseSha } = await spawn("git", ["rev-parse", "HEAD"]);
 
-    // Push master
-    await spawn("git", ["push", "-u", "origin", "master"]);
+    // Push default branch
+    await spawn("git", ["push", "-u", "origin", defaultBranch]);
 
     // Create feature branch and add commits
     await spawn("git", ["checkout", "-b", "feature"]);
@@ -70,14 +75,17 @@ describe("getMergeBase", () => {
     const { stdout: featureSha } = await spawn("git", ["rev-parse", "HEAD"]);
     await spawn("git", ["push", "-u", "origin", "feature"]);
 
-    // Go back to master and add different commits
-    await spawn("git", ["checkout", "master"]);
-    await spawn("git", ["commit", "--allow-empty", "-m", "master-1"]);
-    const { stdout: masterSha } = await spawn("git", ["rev-parse", "HEAD"]);
-    await spawn("git", ["push", "origin", "master"]);
+    // Go back to default branch and add different commits
+    await spawn("git", ["checkout", defaultBranch]);
+    await spawn("git", ["commit", "--allow-empty", "-m", "default-branch-1"]);
+    const { stdout: defaultBranchSha } = await spawn("git", [
+      "rev-parse",
+      "HEAD",
+    ]);
+    await spawn("git", ["push", "origin", defaultBranch]);
 
     const result = await getMergeBase({
-      baseSha: masterSha.trim(),
+      baseSha: defaultBranchSha.trim(),
       headSha: featureSha.trim(),
     });
 
@@ -95,7 +103,7 @@ describe("getMergeBase", () => {
     await spawn("git", ["commit", "--allow-empty", "-m", "commit-5"]);
     const { stdout: commit5 } = await spawn("git", ["rev-parse", "HEAD"]);
 
-    await spawn("git", ["push", "-u", "origin", "master"]);
+    await spawn("git", ["push", "-u", "origin", defaultBranch]);
 
     // Create a shallow clone
     const shallowDir = join(tempDir, "shallow");
@@ -119,7 +127,7 @@ describe("getMergeBase", () => {
   it("should throw error when commits are unrelated", async () => {
     // Create a commit
     await spawn("git", ["commit", "--allow-empty", "-m", "commit-1"]);
-    await spawn("git", ["push", "-u", "origin", "master"]);
+    await spawn("git", ["push", "-u", "origin", defaultBranch]);
 
     // Create orphan branch with unrelated history
     await spawn("git", ["checkout", "--orphan", "unrelated"]);
@@ -127,12 +135,15 @@ describe("getMergeBase", () => {
     const { stdout: orphanSha } = await spawn("git", ["rev-parse", "HEAD"]);
     await spawn("git", ["push", "-u", "origin", "unrelated"]);
 
-    await spawn("git", ["checkout", "master"]);
-    const { stdout: masterSha } = await spawn("git", ["rev-parse", "HEAD"]);
+    await spawn("git", ["checkout", defaultBranch]);
+    const { stdout: defaultBranchSha } = await spawn("git", [
+      "rev-parse",
+      "HEAD",
+    ]);
 
     await expect(
       getMergeBase({
-        baseSha: masterSha.trim(),
+        baseSha: defaultBranchSha.trim(),
         headSha: orphanSha.trim(),
       }),
     ).rejects.toThrow("Could not determine merge base SHA");
@@ -140,7 +151,7 @@ describe("getMergeBase", () => {
 
   it("should throw error for non-existent ref", async () => {
     await spawn("git", ["commit", "--allow-empty", "-m", "commit-1"]);
-    await spawn("git", ["push", "-u", "origin", "master"]);
+    await spawn("git", ["push", "-u", "origin", defaultBranch]);
 
     await expect(
       getMergeBase({
