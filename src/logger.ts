@@ -3,10 +3,7 @@
  * collapsible groups, and color output.
  */
 
-import {
-  detectPlatform,
-  type Platform,
-} from "./compat/platform";
+import { detectPlatform, type Platform } from "./compat/platform";
 
 export type { Platform };
 
@@ -117,7 +114,8 @@ function createLogFn(
       .filter(Boolean)
       .join(" ");
 
-    const stream = level === "error" || level === "warn" ? process.stderr : process.stdout;
+    const stream =
+      level === "error" || level === "warn" ? process.stderr : process.stdout;
     stream.write(line + "\n");
 
     if (level === "error") {
