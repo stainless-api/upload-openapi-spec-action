@@ -96,7 +96,7 @@ async function main() {
       logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      logger.fatal("Error interacting with API:", error);
+      logger.error("Error interacting with API:", error);
       process.exit(1);
     }
   }

@@ -3,6 +3,13 @@
  * collapsible groups, and color output.
  */
 
+import {
+  detectPlatform,
+  type Platform,
+} from "./compat/platform";
+
+export type { Platform };
+
 export type LogLevel = "debug" | "info" | "warn" | "error" | "off";
 
 type LogFn = (message: string, ...args: unknown[]) => void;
@@ -18,12 +25,6 @@ export interface Logger {
   groupEnd(): void;
   withGroup<T>(name: string, fn: () => T): T;
   withGroup<T>(name: string, fn: () => Promise<T>): Promise<T>;
-}
-
-export interface Platform {
-  emitErrorAnnotation?(message: string): void;
-  startGroup(name: string): string;
-  endGroup(id: string): void;
 }
 
 export interface LoggerOptions {
@@ -116,13 +117,11 @@ function createLogFn(
       .filter(Boolean)
       .join(" ");
 
-    if (level === "error" || level === "warn") {
-      process.stderr.write(line + "\n");
-      if (level === "error") {
-        platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
-      }
-    } else {
-      process.stdout.write(line + "\n");
+    const stream = level === "error" || level === "warn" ? process.stderr : process.stdout;
+    stream.write(line + "\n");
+
+    if (level === "error") {
+      platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
     }
   };
 }
@@ -187,41 +186,6 @@ function createLoggerImpl(
 export function createLogger(options: LoggerOptions): Logger {
   const level = options.level ?? getLogLevelFromEnv();
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
-}
-
-// Platform implementations
-let gitlabSectionCounter = 0;
-
-export const githubPlatform: Platform = {
-  emitErrorAnnotation(message: string) {
-    process.stdout.write(`::error::${message}\n`);
-  },
-  startGroup(name: string) {
-    process.stdout.write(`::group::${name}\n`);
-    return "";
-  },
-  endGroup() {
-    process.stdout.write(`::endgroup::\n`);
-  },
-};
-
-export const gitlabPlatform: Platform = {
-  startGroup(name: string) {
-    const id = `section_${++gitlabSectionCounter}`;
-    const ts = Math.floor(Date.now() / 1000);
-    process.stdout.write(
-      `\x1b[0Ksection_start:${ts}:${id}\r\x1b[0K${COLORS.bold}${name}${COLORS.reset}\n`,
-    );
-    return id;
-  },
-  endGroup(id: string) {
-    const ts = Math.floor(Date.now() / 1000);
-    process.stdout.write(`\x1b[0Ksection_end:${ts}:${id}\r\x1b[0K`);
-  },
-};
-
-function detectPlatform(): Platform {
-  return process.env["GITLAB_CI"] === "true" ? gitlabPlatform : githubPlatform;
 }
 
 export const logger: Logger = createLogger({ platform: detectPlatform() });

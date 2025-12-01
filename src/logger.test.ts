@@ -8,11 +8,11 @@ import {
   type Mock,
 } from "vitest";
 import {
-  createLogger,
   githubPlatform,
   gitlabPlatform,
   type Platform,
-} from "./logger";
+} from "./compat/platform";
+import { createLogger } from "./logger";
 
 describe("logger", () => {
   let stdoutSpy: Mock;

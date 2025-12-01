@@ -18170,6 +18170,49 @@ var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 // node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 
+// src/compat/platform.ts
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m"
+};
+var githubPlatform = {
+  emitErrorAnnotation(message) {
+    process.stdout.write(`::error::${message}
+`);
+  },
+  startGroup(name) {
+    process.stdout.write(`::group::${name}
+`);
+    return "";
+  },
+  endGroup() {
+    process.stdout.write(`::endgroup::
+`);
+  }
+};
+var gitlabSectionCounter = 0;
+var gitlabPlatform = {
+  startGroup(name) {
+    const id = `section_${++gitlabSectionCounter}`;
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(
+      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+    );
+    return id;
+  },
+  endGroup(id) {
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  }
+};
+function isGitLabCI() {
+  return process.env["GITLAB_CI"] === "true";
+}
+function detectPlatform() {
+  return isGitLabCI() ? gitlabPlatform : githubPlatform;
+}
+
 // src/logger.ts
 var LOG_LEVELS = {
   debug: 0,
@@ -18178,7 +18221,7 @@ var LOG_LEVELS = {
   error: 3,
   off: 4
 };
-var COLORS = {
+var COLORS2 = {
   reset: "\x1B[0m",
   bold: "\x1B[1m",
   dim: "\x1B[90m",
@@ -18189,10 +18232,10 @@ var COLORS = {
   magenta: "\x1B[35m"
 };
 var LEVEL_COLORS = {
-  debug: COLORS.cyan,
-  info: COLORS.green,
-  warn: COLORS.yellow,
-  error: COLORS.red
+  debug: COLORS2.cyan,
+  info: COLORS2.green,
+  warn: COLORS2.yellow,
+  error: COLORS2.red
 };
 var LEVEL_LABELS = {
   debug: "DEBUG",
@@ -18231,19 +18274,16 @@ function createLogFn(level, minLevel, platform, context) {
   return (message, ...args) => {
     const extra = formatArgs(args);
     const line = [
-      `${COLORS.dim}${formatTimestamp()}${COLORS.reset}`,
-      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level]}${COLORS.reset}`,
-      context ? `${COLORS.magenta}[${context}]${COLORS.reset}` : null,
+      `${COLORS2.dim}${formatTimestamp()}${COLORS2.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS2.bold}${LEVEL_LABELS[level]}${COLORS2.reset}`,
+      context ? `${COLORS2.magenta}[${context}]${COLORS2.reset}` : null,
       message,
       extra || null
     ].filter(Boolean).join(" ");
-    if (level === "error" || level === "warn") {
-      process.stderr.write(line + "\n");
-      if (level === "error") {
-        platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
-      }
-    } else {
-      process.stdout.write(line + "\n");
+    const stream = level === "error" || level === "warn" ? process.stderr : process.stdout;
+    stream.write(line + "\n");
+    if (level === "error") {
+      platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
     }
   };
 }
@@ -18297,46 +18337,9 @@ function createLogger(options) {
   const level = options.level ?? getLogLevelFromEnv();
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
 }
-var gitlabSectionCounter = 0;
-var githubPlatform = {
-  emitErrorAnnotation(message) {
-    process.stdout.write(`::error::${message}
-`);
-  },
-  startGroup(name) {
-    process.stdout.write(`::group::${name}
-`);
-    return "";
-  },
-  endGroup() {
-    process.stdout.write(`::endgroup::
-`);
-  }
-};
-var gitlabPlatform = {
-  startGroup(name) {
-    const id = `section_${++gitlabSectionCounter}`;
-    const ts = Math.floor(Date.now() / 1e3);
-    process.stdout.write(
-      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
-`
-    );
-    return id;
-  },
-  endGroup(id) {
-    const ts = Math.floor(Date.now() / 1e3);
-    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
-  }
-};
-function detectPlatform() {
-  return process.env["GITLAB_CI"] === "true" ? gitlabPlatform : githubPlatform;
-}
 var logger = createLogger({ platform: detectPlatform() });
 
-// src/compat.ts
-function isGitLabCI() {
-  return process.env["GITLAB_CI"] === "true";
-}
+// src/compat/index.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
   if (options?.required && !value) {

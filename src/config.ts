@@ -38,7 +38,7 @@ export async function saveConfig({
   if (!savedSha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  logger.debug("Saving generated config for", savedSha);
+  logger.info("Saving generated config for", savedSha);
 
   if (oasPath && fs.existsSync(oasPath)) {
     hasOAS = true;
@@ -86,7 +86,7 @@ export async function readConfig({
   if (!sha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  logger.debug("Reading config at SHA", sha);
+  logger.info("Reading config at SHA", sha);
 
   const results: Config = {};
 
@@ -106,7 +106,7 @@ export async function readConfig({
     results[`${file}Hash`] = (await spawn("md5sum", [filePath])).stdout.split(
       " ",
     )[0];
-    logger.debug(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
+    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
   };
 
   try {

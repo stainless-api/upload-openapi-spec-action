@@ -10,11 +10,10 @@ import {
   createClient as createGitHubClient,
   type PartialGitHub,
 } from "@stainless-api/github-internal/tree-shakable";
-import { logger } from "./logger";
+import { isGitLabCI } from "./platform";
+import { logger } from "../logger";
 
-export function isGitLabCI(): boolean {
-  return process.env["GITLAB_CI"] === "true";
-}
+export { isGitLabCI };
 
 export function getInput<const T extends readonly string[]>(
   name: string,
@@ -136,22 +135,6 @@ export function setOutput(name: string, value: any) {
     );
   } else {
     process.stdout.write(`\n::set-output name=${name}::${stringified}\n`);
-  }
-}
-
-export function startGroup(id: string, name: string) {
-  if (isGitLabCI()) {
-    console.log(`\x1b[0Ksection_start:${Date.now()}:${id}\r\x1b[0K${name}`);
-  } else {
-    process.stdout.write(`\n::group::${name}\n`);
-  }
-}
-
-export function endGroup(id: string) {
-  if (isGitLabCI()) {
-    console.log(`\x1b[0Ksection_end:${Date.now()}:${id}\r\x1b[0K`);
-  } else {
-    process.stdout.write(`\n::endgroup::\n`);
   }
 }
 
