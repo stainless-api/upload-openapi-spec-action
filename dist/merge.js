@@ -9116,7 +9116,7 @@ var require_dist = __commonJS({
   }
 });
 
-// src/compat.ts
+// src/compat/index.ts
 var crypto = __toESM(require("node:crypto"));
 var fs = __toESM(require("node:fs"));
 
@@ -9332,11 +9332,11 @@ var parseLogLevel = (maybeLevel, sourceName, client) => {
 };
 function noop() {
 }
-function makeLogFn(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+function makeLogFn(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
     return noop;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger = {
@@ -9347,22 +9347,22 @@ var noopLogger = {
 };
 var cachedLoggers = /* @__PURE__ */ new WeakMap();
 function loggerFor(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger;
   }
-  const cachedLogger = cachedLoggers.get(logger);
+  const cachedLogger = cachedLoggers.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn("error", logger, logLevel),
-    warn: makeLogFn("warn", logger, logLevel),
-    info: makeLogFn("info", logger, logLevel),
-    debug: makeLogFn("debug", logger, logLevel)
+    error: makeLogFn("error", logger2, logLevel),
+    warn: makeLogFn("warn", logger2, logLevel),
+    info: makeLogFn("info", logger2, logLevel),
+    debug: makeLogFn("debug", logger2, logLevel)
   };
-  cachedLoggers.set(logger, [logLevel, levelLogger]);
+  cachedLoggers.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails = (details) => {
@@ -36847,7 +36847,7 @@ var readEnv = (env) => {
 
 // node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
-async function getAuthToken({ authMethods, owner, repo, logger }) {
+async function getAuthToken({ authMethods, owner, repo, logger: logger2 }) {
   const method = authMethods.find((method2) => method2.owner === owner) ?? authMethods.at(-1);
   if (!method || method.owner !== owner && method.owner !== "*") {
     throw new Error("No matching auth method found. Did you set a fallback auth method, with owner *?");
@@ -36869,7 +36869,7 @@ async function getAuthToken({ authMethods, owner, repo, logger }) {
       }
     }
   } catch (e) {
-    logger?.warn(`No installation ID found for ${owner}/${repo}, using app token instead`, e);
+    logger2?.warn(`No installation ID found for ${owner}/${repo}, using app token instead`, e);
   }
   if (!installationId) {
     return appAuth;
@@ -36878,7 +36878,7 @@ async function getAuthToken({ authMethods, owner, repo, logger }) {
     const { token, expires_at } = await client.apps.installations.createAccessToken(installationId);
     return { authToken: token, expires: new Date(expires_at) };
   } catch (e) {
-    logger?.warn(`Failed to get installation token for ${installationId}, using app token instead`, e);
+    logger2?.warn(`Failed to get installation token for ${installationId}, using app token instead`, e);
   }
   return appAuth;
 }
@@ -37434,10 +37434,50 @@ function createClient(options) {
   return client;
 }
 
-// src/compat.ts
+// src/compat/platform.ts
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m"
+};
+var githubPlatform = {
+  emitErrorAnnotation(message) {
+    process.stdout.write(`::error::${message}
+`);
+  },
+  startGroup(name) {
+    process.stdout.write(`::group::${name}
+`);
+    return "";
+  },
+  endGroup() {
+    process.stdout.write(`::endgroup::
+`);
+  }
+};
+var gitlabSectionCounter = 0;
+var gitlabPlatform = {
+  startGroup(name) {
+    const id = `section_${++gitlabSectionCounter}`;
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(
+      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+    );
+    return id;
+  },
+  endGroup(id) {
+    const ts = Math.floor(Date.now() / 1e3);
+    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  }
+};
 function isGitLabCI() {
   return process.env["GITLAB_CI"] === "true";
 }
+function detectPlatform() {
+  return isGitLabCI() ? gitlabPlatform : githubPlatform;
+}
+
+// src/compat/input.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
   if (options?.required && !value) {
@@ -37456,52 +37496,137 @@ function getBooleanInput(name, options) {
   if (value === "false") return false;
   return void 0;
 }
-function getGitHostToken() {
-  const input_name = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
-  const token = getInput(input_name);
-  const isRequired = getBooleanInput("make_comment", { required: true });
-  if (isRequired && !token) {
-    throw new Error(`Input ${input_name} is required to make a comment`);
-  }
-  return token;
+
+// src/logger.ts
+var LOG_LEVELS = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+  off: 4
+};
+var COLORS2 = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m",
+  dim: "\x1B[90m",
+  cyan: "\x1B[36m",
+  green: "\x1B[32m",
+  yellow: "\x1B[33m",
+  red: "\x1B[31m",
+  magenta: "\x1B[35m"
+};
+var LEVEL_COLORS = {
+  debug: COLORS2.cyan,
+  info: COLORS2.green,
+  warn: COLORS2.yellow,
+  error: COLORS2.red
+};
+var LEVEL_LABELS = {
+  debug: "DEBUG",
+  info: "INFO",
+  warn: "WARN",
+  error: "ERROR"
+};
+var LABEL_WIDTH = 5;
+var LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"];
+function getLogLevelFromInput() {
+  return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
 }
-async function getStainlessAuthToken() {
-  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
-  if (apiKey) {
-    console.log("Authenticating with provided Stainless API key");
-    return apiKey;
+function formatTimestamp() {
+  const now = /* @__PURE__ */ new Date();
+  const pad = (n, len = 2) => n.toString().padStart(len, "0");
+  return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+}
+function formatArgs(args) {
+  if (args.length === 0) return "";
+  return args.map((arg) => {
+    if (arg === null) return "null";
+    if (arg === void 0) return "undefined";
+    if (typeof arg === "string") return arg;
+    if (arg instanceof Error) return arg.stack || arg.message;
+    try {
+      return JSON.stringify(arg, null, 2);
+    } catch {
+      return String(arg);
+    }
+  }).join(" ");
+}
+function createLogFn(level, minLevel, platform, context) {
+  if (LOG_LEVELS[level] < minLevel) {
+    return () => {
+    };
   }
-  console.log("Authenticating with GitHub OIDC");
-  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
-  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
-  if (!requestUrl || !requestToken) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
-    );
-  }
-  try {
-    const audience = "api.stainless.com";
-    const response = await fetch(`${requestUrl}&audience=${audience}`, {
-      headers: {
-        Authorization: `Bearer ${requestToken}`
+  return (message, ...args) => {
+    const extra = formatArgs(args);
+    const line = [
+      `${COLORS2.dim}${formatTimestamp()}${COLORS2.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS2.bold}${LEVEL_LABELS[level].padEnd(LABEL_WIDTH)}${COLORS2.reset}`,
+      context ? `${COLORS2.magenta}[${context}]${COLORS2.reset}` : null,
+      message,
+      extra || null
+    ].filter(Boolean).join(" ");
+    const stream = level === "error" || level === "warn" ? process.stderr : process.stdout;
+    stream.write(line + "\n");
+    if (level === "error") {
+      platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
+    }
+  };
+}
+var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
+function createLoggerImpl(platform, minLevel, context) {
+  const errorFn = createLogFn("error", minLevel, platform, context);
+  const groupStack = [];
+  return {
+    debug: createLogFn("debug", minLevel, platform, context),
+    info: createLogFn("info", minLevel, platform, context),
+    warn: createLogFn("warn", minLevel, platform, context),
+    error: errorFn,
+    fatal(message, ...args) {
+      errorFn(message, ...args);
+      process.stderr.write(
+        `
+This is a bug. Please report it at ${BUG_REPORT_URL}
+`
+      );
+    },
+    child(childContext) {
+      const newContext = context ? `${context}:${childContext}` : childContext;
+      return createLoggerImpl(platform, minLevel, newContext);
+    },
+    group(name) {
+      const id = platform.startGroup(name);
+      groupStack.push(id);
+    },
+    groupEnd() {
+      const id = groupStack.pop();
+      if (id !== void 0) {
+        platform.endGroup(id);
       }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    },
+    withGroup(name, fn) {
+      const id = platform.startGroup(name);
+      try {
+        const result = fn();
+        if (result instanceof Promise) {
+          return result.finally(() => platform.endGroup(id));
+        }
+        platform.endGroup(id);
+        return result;
+      } catch (e) {
+        platform.endGroup(id);
+        throw e;
+      }
     }
-    const data = await response.json();
-    const token = data.value;
-    if (!token) {
-      throw new Error("No token in OIDC response");
-    }
-    return token;
-  } catch (error) {
-    throw new Error(
-      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
-    );
-  }
+  };
 }
-var cachedContext = void 0;
+function createLogger(options) {
+  const level = options.level ?? getLogLevelFromInput();
+  return createLoggerImpl(options.platform, LOG_LEVELS[level]);
+}
+var logger = createLogger({ platform: detectPlatform() });
+
+// src/compat/index.ts
+var cachedContext;
 function getGitHubContext() {
   if (!cachedContext) {
     const eventPath = process.env.GITHUB_EVENT_PATH;
@@ -37526,14 +37651,11 @@ function getPRNumber() {
       throw new Error("MR_NUMBER is required to make a comment");
     }
     return parseInt(process.env["MR_NUMBER"]);
-  } else {
-    return parseInt(getGitHubContext().payload.pull_request.number);
   }
+  return parseInt(getGitHubContext().payload.pull_request.number);
 }
 function setOutput(name, value) {
-  if (isGitLabCI()) {
-    return;
-  }
+  if (isGitLabCI()) return;
   const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
   const filePath = process.env["GITHUB_OUTPUT"];
   if (filePath && fs.existsSync(filePath)) {
@@ -37552,30 +37674,60 @@ ${delimiter}
 `);
   }
 }
-function createCommentClient(token, prNumber) {
-  if (isGitLabCI()) {
-    return new GitLabCommentClient(token, prNumber);
-  }
-  return new GitHubCommentClient(token, prNumber);
-}
 function getPRTerm() {
-  if (isGitLabCI()) {
-    return "MR";
-  } else {
-    return "PR";
-  }
+  return isGitLabCI() ? "MR" : "PR";
 }
 function getCITerm() {
-  if (isGitLabCI()) {
-    return "GitLab CI";
-  } else {
-    return "GitHub Actions";
-  }
+  return isGitLabCI() ? "GitLab CI" : "GitHub Actions";
 }
+var gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
 function getRepoPath(owner, repo) {
   return process.env.GITLAB_STAGING_REPO_PATH ? `${gitlabBaseUrl()}/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
 }
-var gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
+function getGitHostToken() {
+  const inputName = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
+  const token = getInput(inputName);
+  const isRequired = getBooleanInput("make_comment", { required: true });
+  if (isRequired && !token) {
+    throw new Error(`Input ${inputName} is required to make a comment`);
+  }
+  return token;
+}
+async function getStainlessAuthToken() {
+  const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
+  if (apiKey) {
+    logger.debug("Authenticating with provided Stainless API key");
+    return apiKey;
+  }
+  logger.debug("Authenticating with GitHub OIDC");
+  const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+  const requestToken = process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+  if (!requestUrl || !requestToken) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app`
+    );
+  }
+  try {
+    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
+      headers: { Authorization: `Bearer ${requestToken}` }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+    }
+    const data = await response.json();
+    if (!data.value) {
+      throw new Error("No token in OIDC response");
+    }
+    return data.value;
+  } catch (error) {
+    throw new Error(
+      `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
+    );
+  }
+}
+function createCommentClient(token, prNumber) {
+  return isGitLabCI() ? new GitLabCommentClient(token, prNumber) : new GitHubCommentClient(token, prNumber);
+}
 var GitHubCommentClient = class {
   client;
   prNumber;
@@ -37589,13 +37741,10 @@ var GitHubCommentClient = class {
     this.prNumber = prNumber;
   }
   async listComments() {
-    const { data: comments } = await this.client.repos.issues.comments.list(
+    const { data } = await this.client.repos.issues.comments.list(
       this.prNumber
     );
-    return comments.map((c) => ({
-      id: c.id,
-      body: c.body ?? ""
-    }));
+    return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
   async createComment(body) {
     await this.client.repos.issues.comments.create(this.prNumber, { body });
@@ -37613,9 +37762,8 @@ var GitLabCommentClient = class {
     this.baseUrl = `${gitlabBaseUrl()}/api/v4`;
     this.prNumber = prNumber;
   }
-  async gitlabRequest(method, endpoint, body) {
-    const projectId = process.env.CI_PROJECT_ID;
-    const url = `${this.baseUrl}/projects/${projectId}${endpoint}`;
+  async request(method, endpoint, body) {
+    const url = `${this.baseUrl}/projects/${process.env.CI_PROJECT_ID}${endpoint}`;
     const response = await fetch(url, {
       method,
       headers: {
@@ -37632,28 +37780,24 @@ var GitLabCommentClient = class {
     return response.json();
   }
   async listComments() {
-    const notes = await this.gitlabRequest(
+    const notes = await this.request(
       "GET",
       `/merge_requests/${this.prNumber}/notes`
     );
-    return notes.map((note) => ({
-      id: note.id,
-      body: note.body
+    return notes.map((n) => ({
+      id: n.id,
+      body: n.body
     }));
   }
   async createComment(body) {
-    await this.gitlabRequest("POST", `/merge_requests/${this.prNumber}/notes`, {
+    await this.request("POST", `/merge_requests/${this.prNumber}/notes`, {
       body
     });
   }
   async updateComment(id, body) {
-    await this.gitlabRequest(
-      "PUT",
-      `/merge_requests/${this.prNumber}/notes/${id}`,
-      {
-        body
-      }
-    );
+    await this.request("PUT", `/merge_requests/${this.prNumber}/notes/${id}`, {
+      body
+    });
   }
 };
 
@@ -38420,11 +38564,11 @@ var parseLogLevel2 = (maybeLevel, sourceName, client) => {
 };
 function noop2() {
 }
-function makeLogFn2(fnLevel, logger, logLevel) {
-  if (!logger || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
+function makeLogFn2(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
     return noop2;
   } else {
-    return logger[fnLevel].bind(logger);
+    return logger2[fnLevel].bind(logger2);
   }
 }
 var noopLogger2 = {
@@ -38435,22 +38579,22 @@ var noopLogger2 = {
 };
 var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
 function loggerFor2(client) {
-  const logger = client.logger;
+  const logger2 = client.logger;
   const logLevel = client.logLevel ?? "off";
-  if (!logger) {
+  if (!logger2) {
     return noopLogger2;
   }
-  const cachedLogger = cachedLoggers2.get(logger);
+  const cachedLogger = cachedLoggers2.get(logger2);
   if (cachedLogger && cachedLogger[0] === logLevel) {
     return cachedLogger[1];
   }
   const levelLogger = {
-    error: makeLogFn2("error", logger, logLevel),
-    warn: makeLogFn2("warn", logger, logLevel),
-    info: makeLogFn2("info", logger, logLevel),
-    debug: makeLogFn2("debug", logger, logLevel)
+    error: makeLogFn2("error", logger2, logLevel),
+    warn: makeLogFn2("warn", logger2, logLevel),
+    info: makeLogFn2("info", logger2, logLevel),
+    debug: makeLogFn2("debug", logger2, logLevel)
   };
-  cachedLoggers2.set(logger, [logLevel, levelLogger]);
+  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
   return levelLogger;
 }
 var formatRequestDetails2 = (details) => {
@@ -39534,9 +39678,9 @@ function shouldFailRun({
     return didFail ? [{ language, reason }] : [];
   });
   if (failures.length > 0) {
-    console.log("The following languages did not build successfully:");
+    logger.warn("The following languages did not build successfully:");
     for (const { language, reason } of failures) {
-      console.log(`${language}: ${reason}`);
+      logger.warn(`  ${language}: ${reason}`);
     }
     return false;
   }
@@ -40049,17 +40193,17 @@ async function upsertComment({
   skipCreate = false
 }) {
   const client = createCommentClient(token, prNumber);
-  console.log(`Upserting comment on ${getPRTerm()}:`, prNumber);
+  logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
   const comments = await client.listComments();
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
-    console.log("Updating existing comment:", existingComment.id);
+    logger.debug("Updating existing comment:", existingComment.id);
     await client.updateComment(existingComment.id, body);
   } else if (!skipCreate) {
-    console.log("Creating new comment");
+    logger.debug("Creating new comment");
     await client.createComment(body);
   }
 }
@@ -40084,8 +40228,8 @@ var CONVENTIONAL_COMMIT_REGEX = new RegExp(
 );
 function makeCommitMessageConventional(message) {
   if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    console.warn(
-      `Commit message: "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat" and using anyway.`
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
     );
     return `feat: ${message}`;
   }
@@ -40391,27 +40535,27 @@ async function readConfig({
   if (!sha) {
     throw new Error("Unable to determine current SHA; is there a git repo?");
   }
-  console.log("Reading config at", sha);
+  logger.info("Reading config at SHA", sha);
   const results = {};
   const addToResults = async (file, filePath, via) => {
     if (results[file]) {
       return;
     }
     if (!filePath || !fs3.existsSync(filePath)) {
-      console.log("Skipping missing", file, "at", filePath);
+      logger.debug(`Skipping missing ${file} at ${filePath}`);
       return;
     }
     results[file] = fs3.readFileSync(filePath, "utf-8");
     results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
       " "
     )[0];
-    console.log(`Using ${file} via`, via, "hash", results[`${file}Hash`]);
+    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
   };
   try {
     await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
     await spawn2("git", ["checkout", sha, "--", "."]);
   } catch {
-    console.log("Could not checkout", sha);
+    logger.debug("Could not checkout", sha);
   }
   await addToResults("oas", oasPath, `git ${sha}`);
   await addToResults("config", configPath, `git ${sha}`);
@@ -40427,7 +40571,7 @@ async function readConfig({
       `saved ${sha}`
     );
   } catch {
-    console.log("Could not get config from saved file path");
+    logger.debug("Could not get config from saved file path");
   }
   if (required) {
     if (oasPath && !results.oas) {
@@ -40445,11 +40589,11 @@ async function isConfigChanged({
 }) {
   let changed = false;
   if (before.oasHash !== after.oasHash) {
-    console.log("OAS file changed");
+    logger.debug("OAS file changed");
     changed = true;
   }
   if (before.configHash !== after.configHash) {
-    console.log("Config file changed");
+    logger.debug("Config file changed");
     changed = true;
   }
   return changed;
@@ -40527,7 +40671,7 @@ async function* runBuilds({
   if (!configContent) {
     const hasBranch = !!branch && !!await stainless.projects.branches.retrieve(branch).catch(() => null);
     if (guessConfig) {
-      console.log("Guessing config before branch reset");
+      logger.debug("Guessing config before branch reset");
       if (hasBranch) {
         configContent = Object.values(
           await stainless.projects.configs.guess({
@@ -40544,29 +40688,29 @@ async function* runBuilds({
         )[0]?.content;
       }
     } else if (hasBranch) {
-      console.log("Saving config before branch reset");
+      logger.debug("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch
         })
       )[0]?.content;
     } else {
-      console.log("No existing branch found");
+      logger.debug("No existing branch found");
     }
   }
-  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch,
     force: true
   });
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.debug(`Hard reset ${branch}, now at ${config_commit.sha}`);
   const { config_commit: base_config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: baseBranch,
     force: true
   });
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
+  logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
   const { base, head } = await stainless.builds.compare(
     {
       base: {
@@ -40655,6 +40799,7 @@ async function* pollBuild({
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
+  const log = logger.child(label);
   let documentedSpec = null;
   const buildId = build.id;
   const languages = Object.keys(build.targets);
@@ -40665,11 +40810,11 @@ async function* pollBuild({
     ])
   );
   if (buildId) {
-    console.log(
-      `[${label}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
+    log.info(
+      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
   } else {
-    console.log(`No new build was created; exiting.`);
+    logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
     return;
   }
@@ -40687,9 +40832,7 @@ async function* pollBuild({
       };
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        console.log(
-          `[${label}] Build for ${language} has status ${buildOutput.status}`
-        );
+        log.info(`Build for ${language} has status ${buildOutput.status}`);
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
@@ -40697,10 +40840,7 @@ async function* pollBuild({
         }
       }
       if (existing?.commit?.status !== "completed" && buildOutput.commit.status === "completed") {
-        console.log(
-          `[${label}] Build for ${language} has output:`,
-          JSON.stringify(buildOutput)
-        );
+        log.debug(`Build for ${language} completed`, buildOutput);
         outcomes[language].commit = buildOutput.commit;
         outcomes[language].diagnostics = [];
         try {
@@ -40712,10 +40852,7 @@ async function* pollBuild({
             outcomes[language].diagnostics.push(diagnostic);
           }
         } catch (e) {
-          console.error(
-            `[${label}] Error getting diagnostics, continuing anyway`,
-            e
-          );
+          log.warn("Error getting diagnostics, continuing anyway", e);
         }
       }
     }
@@ -40734,9 +40871,7 @@ async function* pollBuild({
     (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
   );
   for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`
-    );
+    log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
     outcomes[language] = {
       object: "build_target",
       status: "completed",
@@ -40785,7 +40920,7 @@ async function main() {
     const outputDir = getInput("output_dir", { required: false }) || void 0;
     const prNumber = getPRNumber();
     if (baseRef !== defaultBranch) {
-      console.log("Not merging to default branch, skipping merge");
+      logger.info("Not merging to default branch, skipping merge");
       return;
     }
     if (makeComment && !getPRNumber()) {
@@ -40810,7 +40945,7 @@ async function main() {
       after: headConfig
     });
     if (!configChanged) {
-      console.log("No config files changed, skipping merge");
+      logger.info("No config files changed, skipping merge");
       return;
     }
     let commitMessage = defaultCommitMessage;
@@ -40821,7 +40956,7 @@ async function main() {
       }
     }
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
+    logger.info("Using commit message:", commitMessage);
     const generator = runBuilds({
       stainless,
       projectName,
@@ -40868,7 +41003,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in merge action:", error);
+    logger.fatal("Error in merge action:", error);
     process.exit(1);
   }
 }

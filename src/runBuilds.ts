@@ -1,4 +1,5 @@
 import { Stainless } from "@stainless-api/sdk";
+import { logger } from "./logger";
 import type { Outcomes } from "./outcomes";
 
 type Build = Stainless.Builds.BuildObject;
@@ -104,7 +105,7 @@ export async function* runBuilds({
       !!(await stainless.projects.branches.retrieve(branch).catch(() => null));
 
     if (guessConfig) {
-      console.log("Guessing config before branch reset");
+      logger.debug("Guessing config before branch reset");
       // If the `branch` already exists, we should guess against it, in case
       // there were changes made via the studio.
       if (hasBranch) {
@@ -123,25 +124,25 @@ export async function* runBuilds({
         )[0]?.content;
       }
     } else if (hasBranch) {
-      console.log("Saving config before branch reset");
+      logger.debug("Saving config before branch reset");
       configContent = Object.values(
         await stainless.projects.configs.retrieve({
           branch,
         }),
       )[0]?.content;
     } else {
-      console.log("No existing branch found");
+      logger.debug("No existing branch found");
     }
   }
 
-  console.log(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
+  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
   const { config_commit } = await stainless.projects.branches.create({
     branch_from: branchFrom,
     branch: branch!,
     force: true,
   });
 
-  console.log(`Hard reset ${branch}, now at ${config_commit.sha}`);
+  logger.debug(`Hard reset ${branch}, now at ${config_commit.sha}`);
 
   const { config_commit: base_config_commit } =
     await stainless.projects.branches.create({
@@ -150,7 +151,7 @@ export async function* runBuilds({
       force: true,
     });
 
-  console.log(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
+  logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
 
   const { base, head } = await stainless.builds.compare(
     {
@@ -261,6 +262,7 @@ async function* pollBuild({
   outcomes: Outcomes;
   documentedSpec: string | null;
 }> {
+  const log = logger.child(label);
   let documentedSpec: string | null = null;
 
   const buildId = build.id;
@@ -275,13 +277,11 @@ async function* pollBuild({
   );
 
   if (buildId) {
-    console.log(
-      `[${label}] Created build ${buildId} against ${
-        build.config_commit
-      } for languages: ${languages.join(", ")}`,
+    log.info(
+      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
   } else {
-    console.log(`No new build was created; exiting.`);
+    logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
     return;
   }
@@ -307,9 +307,7 @@ async function* pollBuild({
 
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        console.log(
-          `[${label}] Build for ${language} has status ${buildOutput.status}`,
-        );
+        log.info(`Build for ${language} has status ${buildOutput.status}`);
       }
 
       // Also has a change if any of the checks have changed:
@@ -326,10 +324,7 @@ async function* pollBuild({
         existing?.commit?.status !== "completed" &&
         buildOutput.commit.status === "completed"
       ) {
-        console.log(
-          `[${label}] Build for ${language} has output:`,
-          JSON.stringify(buildOutput),
-        );
+        log.debug(`Build for ${language} completed`, buildOutput);
 
         // This is the only time we modify `commit` and `diagnostics`.
         outcomes[language].commit = buildOutput.commit;
@@ -344,10 +339,7 @@ async function* pollBuild({
             outcomes[language].diagnostics.push(diagnostic);
           }
         } catch (e) {
-          console.error(
-            `[${label}] Error getting diagnostics, continuing anyway`,
-            e,
-          );
+          log.warn("Error getting diagnostics, continuing anyway", e);
         }
       }
     }
@@ -372,9 +364,7 @@ async function* pollBuild({
       !outcomes[language] || outcomes[language].commit?.status !== "completed",
   );
   for (const language of languagesWithoutOutcome) {
-    console.log(
-      `[${label}] Build for ${language} timed out after ${maxPollingSeconds} seconds`,
-    );
+    log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
     outcomes[language] = {
       object: "build_target",
       status: "completed",

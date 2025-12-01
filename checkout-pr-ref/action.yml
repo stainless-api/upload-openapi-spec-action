@@ -30,3 +30,9 @@ inputs:
       Stainless config for the preview build.
     required: false
     default: ${{ github.event.pull_request.head.sha }}
+  log_level:
+    description: >-
+      Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
+      Use 'debug' for detailed diagnostic information.
+    required: false
+    default: "info"

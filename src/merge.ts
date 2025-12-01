@@ -6,6 +6,7 @@ import {
   setOutput,
   getStainlessAuthToken,
 } from "./compat";
+import { logger } from "./logger";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
@@ -39,7 +40,7 @@ async function main() {
     const prNumber = getPRNumber();
 
     if (baseRef !== defaultBranch) {
-      console.log("Not merging to default branch, skipping merge");
+      logger.info("Not merging to default branch, skipping merge");
       return;
     }
 
@@ -69,7 +70,7 @@ async function main() {
     });
 
     if (!configChanged) {
-      console.log("No config files changed, skipping merge");
+      logger.info("No config files changed, skipping merge");
       return;
     }
 
@@ -83,7 +84,7 @@ async function main() {
     }
 
     commitMessage = makeCommitMessageConventional(commitMessage);
-    console.log("Using commit message:", commitMessage);
+    logger.info("Using commit message:", commitMessage);
 
     const generator = runBuilds({
       stainless,
@@ -143,7 +144,7 @@ async function main() {
       }
     }
   } catch (error) {
-    console.error("Error in merge action:", error);
+    logger.fatal("Error in merge action:", error);
     process.exit(1);
   }
 }
