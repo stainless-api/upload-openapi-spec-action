@@ -1,5 +1,5 @@
 import { Stainless } from "@stainless-api/sdk";
-import { createContextLogger, logger } from "./logger";
+import { logger } from "./logger";
 import type { Outcomes } from "./outcomes";
 
 type Build = Stainless.Builds.BuildObject;
@@ -262,7 +262,7 @@ async function* pollBuild({
   outcomes: Outcomes;
   documentedSpec: string | null;
 }> {
-  const log = createContextLogger(label);
+  const log = logger.child(label);
   let documentedSpec: string | null = null;
 
   const buildId = build.id;

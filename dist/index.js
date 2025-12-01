@@ -18259,10 +18259,11 @@ var LEVEL_COLORS = {
 };
 var LEVEL_LABELS = {
   debug: "DEBUG",
-  info: "INFO ",
-  warn: "WARN ",
+  info: "INFO",
+  warn: "WARN",
   error: "ERROR"
 };
+var LABEL_WIDTH = 5;
 var LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"];
 function getLogLevelFromInput() {
   return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
@@ -18295,7 +18296,7 @@ function createLogFn(level, minLevel, platform, context) {
     const extra = formatArgs(args);
     const line = [
       `${COLORS2.dim}${formatTimestamp()}${COLORS2.reset}`,
-      `${LEVEL_COLORS[level]}${COLORS2.bold}${LEVEL_LABELS[level]}${COLORS2.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS2.bold}${LEVEL_LABELS[level].padEnd(LABEL_WIDTH)}${COLORS2.reset}`,
       context ? `${COLORS2.magenta}[${context}]${COLORS2.reset}` : null,
       message,
       extra || null
@@ -18310,7 +18311,7 @@ function createLogFn(level, minLevel, platform, context) {
 var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
 function createLoggerImpl(platform, minLevel, context) {
   const errorFn = createLogFn("error", minLevel, platform, context);
-  let activeGroupId = null;
+  const groupStack = [];
   return {
     debug: createLogFn("debug", minLevel, platform, context),
     info: createLogFn("info", minLevel, platform, context),
@@ -18329,12 +18330,13 @@ This is a bug. Please report it at ${BUG_REPORT_URL}
       return createLoggerImpl(platform, minLevel, newContext);
     },
     group(name) {
-      activeGroupId = platform.startGroup(name);
+      const id = platform.startGroup(name);
+      groupStack.push(id);
     },
     groupEnd() {
-      if (activeGroupId !== null) {
-        platform.endGroup(activeGroupId);
-        activeGroupId = null;
+      const id = groupStack.pop();
+      if (id !== void 0) {
+        platform.endGroup(id);
       }
     },
     withGroup(name, fn) {

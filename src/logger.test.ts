@@ -7,11 +7,7 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import {
-  githubPlatform,
-  gitlabPlatform,
-  type Platform,
-} from "./compat/platform";
+import { githubPlatform, gitlabPlatform, type Platform } from "./compat";
 import { createLogger } from "./logger";
 
 describe("logger", () => {
@@ -141,7 +137,9 @@ describe("logger", () => {
         expect.objectContaining({ method: "emitErrorAnnotation" }),
       );
     });
+  });
 
+  describe("group/groupEnd", () => {
     it("calls startGroup and endGroup", () => {
       const platform = mockPlatform();
       const logger = createLogger({ platform, level: "info" });
@@ -151,6 +149,23 @@ describe("logger", () => {
 
       expect(platform.calls).toEqual([
         { method: "startGroup", args: ["Test Group"] },
+        { method: "endGroup", args: ["group-1"] },
+      ]);
+    });
+
+    it("handles nested groups with stack", () => {
+      const platform = mockPlatform();
+      const logger = createLogger({ platform, level: "info" });
+
+      logger.group("Outer");
+      logger.group("Inner");
+      logger.groupEnd();
+      logger.groupEnd();
+
+      expect(platform.calls).toEqual([
+        { method: "startGroup", args: ["Outer"] },
+        { method: "startGroup", args: ["Inner"] },
+        { method: "endGroup", args: ["group-2"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
     });

@@ -58,10 +58,12 @@ const LEVEL_COLORS: Record<Exclude<LogLevel, "off">, string> = {
 
 const LEVEL_LABELS: Record<Exclude<LogLevel, "off">, string> = {
   debug: "DEBUG",
-  info: "INFO ",
-  warn: "WARN ",
+  info: "INFO",
+  warn: "WARN",
   error: "ERROR",
 };
+
+const LABEL_WIDTH = 5;
 
 const LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"] as const;
 
@@ -106,7 +108,7 @@ function createLogFn(
     const extra = formatArgs(args);
     const line = [
       `${COLORS.dim}${formatTimestamp()}${COLORS.reset}`,
-      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level]}${COLORS.reset}`,
+      `${LEVEL_COLORS[level]}${COLORS.bold}${LEVEL_LABELS[level].padEnd(LABEL_WIDTH)}${COLORS.reset}`,
       context ? `${COLORS.magenta}[${context}]${COLORS.reset}` : null,
       message,
       extra || null,
@@ -133,7 +135,7 @@ function createLoggerImpl(
   context?: string,
 ): Logger {
   const errorFn = createLogFn("error", minLevel, platform, context);
-  let activeGroupId: string | null = null;
+  const groupStack: string[] = [];
 
   return {
     debug: createLogFn("debug", minLevel, platform, context),
@@ -154,13 +156,14 @@ function createLoggerImpl(
     },
 
     group(name: string): void {
-      activeGroupId = platform.startGroup(name);
+      const id = platform.startGroup(name);
+      groupStack.push(id);
     },
 
     groupEnd(): void {
-      if (activeGroupId !== null) {
-        platform.endGroup(activeGroupId);
-        activeGroupId = null;
+      const id = groupStack.pop();
+      if (id !== undefined) {
+        platform.endGroup(id);
       }
     },
 
@@ -187,7 +190,3 @@ export function createLogger(options: LoggerOptions): Logger {
 }
 
 export const logger: Logger = createLogger({ platform: detectPlatform() });
-
-export function createContextLogger(context: string): Logger {
-  return logger.child(context);
-}

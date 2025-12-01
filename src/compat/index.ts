@@ -10,11 +10,25 @@ import {
   createClient as createGitHubClient,
   type PartialGitHub,
 } from "@stainless-api/github-internal/tree-shakable";
-import { isGitLabCI } from "./platform";
+import {
+  isGitLabCI,
+  githubPlatform,
+  gitlabPlatform,
+  detectPlatform,
+  type Platform,
+} from "./platform";
 import { getInput, getBooleanInput } from "./input";
 import { logger } from "../logger";
 
-export { isGitLabCI, getInput, getBooleanInput };
+export {
+  isGitLabCI,
+  getInput,
+  getBooleanInput,
+  githubPlatform,
+  gitlabPlatform,
+  detectPlatform,
+  type Platform,
+};
 
 interface Comment {
   id: string | number;
