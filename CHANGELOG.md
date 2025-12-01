@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.7.0...v1.7.1) (2025-12-01)
+
+
+### Bug Fixes
+
+* improve getMergeBase to handle shallow clones more robustly ([#138](https://github.com/stainless-api/upload-openapi-spec-action/issues/138)) ([3687845](https://github.com/stainless-api/upload-openapi-spec-action/commit/3687845465214a98c1f18a48600f6a8c7cf60561))
+
 ## [1.7.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.6.0...v1.7.0) (2025-11-17)
 
 
