@@ -9394,6 +9394,20 @@ function detectPlatform() {
   return isGitLabCI() ? gitlabPlatform : githubPlatform;
 }
 
+// src/compat/input.ts
+function getInput(name, options) {
+  const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+  if (options?.required && !value) {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  if (options?.choices && value && !options.choices.includes(value)) {
+    throw new Error(
+      `Input not one of the allowed choices for ${name}: ${value}`
+    );
+  }
+  return value || void 0;
+}
+
 // src/logger.ts
 var LOG_LEVELS = {
   debug: 0,
@@ -9424,9 +9438,9 @@ var LEVEL_LABELS = {
   warn: "WARN ",
   error: "ERROR"
 };
-function getLogLevelFromEnv() {
-  const value = (process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"])?.toLowerCase();
-  return value && value in LOG_LEVELS ? value : "info";
+var LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"];
+function getLogLevelFromInput() {
+  return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
 }
 function formatTimestamp() {
   const now = /* @__PURE__ */ new Date();
@@ -9515,24 +9529,10 @@ This is a bug. Please report it at ${BUG_REPORT_URL}
   };
 }
 function createLogger(options) {
-  const level = options.level ?? getLogLevelFromEnv();
+  const level = options.level ?? getLogLevelFromInput();
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
 }
 var logger = createLogger({ platform: detectPlatform() });
-
-// src/compat/index.ts
-function getInput(name, options) {
-  const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-  if (options?.required && !value) {
-    throw new Error(`Input required and not supplied: ${name}`);
-  }
-  if (options?.choices && value && !options.choices.includes(value)) {
-    throw new Error(
-      `Input not one of the allowed choices for ${name}: ${value}`
-    );
-  }
-  return value || void 0;
-}
 
 // src/config.ts
 var fs2 = __toESM(require("node:fs"));

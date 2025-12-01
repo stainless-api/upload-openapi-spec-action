@@ -18152,6 +18152,26 @@ var fs4 = __toESM(require("node:fs"));
 var import_node_os2 = require("node:os");
 var import_yaml = __toESM(require_dist());
 
+// src/compat/input.ts
+function getInput(name, options) {
+  const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
+  if (options?.required && !value) {
+    throw new Error(`Input required and not supplied: ${name}`);
+  }
+  if (options?.choices && value && !options.choices.includes(value)) {
+    throw new Error(
+      `Input not one of the allowed choices for ${name}: ${value}`
+    );
+  }
+  return value || void 0;
+}
+function getBooleanInput(name, options) {
+  const value = getInput(name, options)?.toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return void 0;
+}
+
 // src/compat/platform.ts
 var COLORS = {
   reset: "\x1B[0m",
@@ -18225,9 +18245,9 @@ var LEVEL_LABELS = {
   warn: "WARN ",
   error: "ERROR"
 };
-function getLogLevelFromEnv() {
-  const value = (process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"])?.toLowerCase();
-  return value && value in LOG_LEVELS ? value : "info";
+var LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"];
+function getLogLevelFromInput() {
+  return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
 }
 function formatTimestamp() {
   const now = /* @__PURE__ */ new Date();
@@ -18316,7 +18336,7 @@ This is a bug. Please report it at ${BUG_REPORT_URL}
   };
 }
 function createLogger(options) {
-  const level = options.level ?? getLogLevelFromEnv();
+  const level = options.level ?? getLogLevelFromInput();
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
 }
 var logger = createLogger({ platform: detectPlatform() });
@@ -18349,24 +18369,6 @@ var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 
 // src/compat/index.ts
-function getInput(name, options) {
-  const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
-  if (options?.required && !value) {
-    throw new Error(`Input required and not supplied: ${name}`);
-  }
-  if (options?.choices && value && !options.choices.includes(value)) {
-    throw new Error(
-      `Input not one of the allowed choices for ${name}: ${value}`
-    );
-  }
-  return value || void 0;
-}
-function getBooleanInput(name, options) {
-  const value = getInput(name, options)?.toLowerCase();
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return void 0;
-}
 function setOutput(name, value) {
   if (isGitLabCI()) return;
   const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);

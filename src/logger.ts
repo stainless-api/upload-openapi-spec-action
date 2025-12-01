@@ -3,6 +3,7 @@
  * collapsible groups, and color output.
  */
 
+import { getInput } from "./compat/input";
 import { detectPlatform, type Platform } from "./compat/platform";
 
 export type { Platform };
@@ -62,11 +63,10 @@ const LEVEL_LABELS: Record<Exclude<LogLevel, "off">, string> = {
   error: "ERROR",
 };
 
-function getLogLevelFromEnv(): LogLevel {
-  const value = (
-    process.env["LOG_LEVEL"] || process.env["INPUT_LOG_LEVEL"]
-  )?.toLowerCase();
-  return value && value in LOG_LEVELS ? (value as LogLevel) : "info";
+const LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"] as const;
+
+function getLogLevelFromInput(): LogLevel {
+  return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
 }
 
 function formatTimestamp(): string {
@@ -182,7 +182,7 @@ function createLoggerImpl(
 }
 
 export function createLogger(options: LoggerOptions): Logger {
-  const level = options.level ?? getLogLevelFromEnv();
+  const level = options.level ?? getLogLevelFromInput();
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
 }
 
