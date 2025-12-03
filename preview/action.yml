@@ -51,6 +51,12 @@ inputs:
       If true, will comment on the pull request with the build results.
     required: false
     default: "true"
+  multiple_commit_messages:
+    description: >-
+      If true, the comment will display separate commit messages for each SDK,
+      instead of using a single commit message for all SDKs.
+    required: false
+    default: "false"
   github_token:
     description: >-
       A GitHub token used for making comments on pull requests. Required if
