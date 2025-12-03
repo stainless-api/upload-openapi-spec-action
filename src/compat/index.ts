@@ -71,7 +71,9 @@ export function getPRNumber() {
     }
     return parseInt(process.env["MR_NUMBER"]);
   }
-  return parseInt(getGitHubContext().payload.pull_request!.number);
+  return parseInt(
+    getGitHubContext().payload.pull_request?.number ?? process.env["PR_NUMBER"],
+  );
 }
 
 export function isPullRequestOpenedEvent(): boolean {
