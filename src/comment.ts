@@ -53,7 +53,6 @@ export function printComment({
     // Otherwise, this is post-merge and editing it won't do anything.
     const canEdit = !!baseOutcomes;
 
-    // When using AI commit messages, we provide a separate commit message for each SDK.
     const hasMultipleCommitMessages =
       commitMessages && Object.keys(commitMessages).length > 0;
 
