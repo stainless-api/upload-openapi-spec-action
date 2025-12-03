@@ -20,7 +20,7 @@ export function makeCommitMessageConventional(message?: string) {
   return message;
 }
 
-export async function generateAiCommitMessage(
+export async function generateAICommitMessage(
   stainless: Stainless,
   params: {
     projectName: string;

@@ -17,7 +17,7 @@ import {
   upsertComment,
 } from "./comment";
 import {
-  generateAiCommitMessage,
+  generateAICommitMessage,
   makeCommitMessageConventional,
 } from "./commitMessage";
 import {
@@ -253,7 +253,7 @@ async function main() {
               const headRef = commit.sha;
 
               try {
-                const message = await generateAiCommitMessage(stainless, {
+                const message = await generateAICommitMessage(stainless, {
                   projectName: projectName,
                   target: lang,
                   baseRef,
