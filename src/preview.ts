@@ -16,7 +16,10 @@ import {
   retrieveComment,
   upsertComment,
 } from "./comment";
-import { makeCommitMessageConventional } from "./commitMessage";
+import {
+  generateAiCommitMessage,
+  makeCommitMessageConventional,
+} from "./commitMessage";
 import {
   getMergeBase,
   getNonMainBaseRef,
@@ -43,7 +46,7 @@ async function main() {
       required: true,
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+    let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
       required: false,
     });
     const gitHostToken = getGitHostToken();
@@ -55,6 +58,18 @@ async function main() {
     const branch = getInput("branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
+
+    // Undocumented, and only supported with the org-level 'enable_ai_commit_messages' feature gate.
+    const enableAiCommitMessages = getBooleanInput(
+      "enable_ai_commit_messages",
+      { required: false },
+    );
+    if (enableAiCommitMessages) {
+      multipleCommitMessages = true;
+    }
+
+    // Tracks which languages have had commit messages generated this run
+    const hasAiCommitMessageMap: Record<string, boolean> = {};
 
     // If we came from the checkout-pr-ref action, we might need to save the
     // generated config files.
@@ -137,8 +152,23 @@ async function main() {
     let commitMessage = defaultCommitMessage;
     const commitMessages: Record<string, string> = {};
 
+    // If we're making the comment for the first time (not updating an existing one for a new commit),
+    // we should generate AI commit messages for it.
+    let shouldGenerateAiCommitMessages = false;
+
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken!, prNumber });
+
+      // For now, let's set this true only if this is our first-ever run (so there wouldn't be a pre-existing comment).
+      // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
+      if (
+        multipleCommitMessages &&
+        enableAiCommitMessages &&
+        comment.commitMessage == null &&
+        comment.commitMessages == null
+      ) {
+        shouldGenerateAiCommitMessages = true;
+      }
 
       // Load existing commit message(s) from comment
       if (multipleCommitMessages && comment.commitMessages) {
@@ -208,6 +238,39 @@ async function main() {
         }
 
         if (multipleCommitMessages) {
+          // Did any languages just complete a build?
+          for (const lang of Object.keys(outcomes)) {
+            const commit = outcomes[lang].commit?.completed?.commit;
+            const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
+
+            if (
+              commit &&
+              baseCommit &&
+              shouldGenerateAiCommitMessages &&
+              !hasAiCommitMessageMap[lang]
+            ) {
+              const baseRef = baseCommit.sha;
+              const headRef = commit.sha;
+
+              try {
+                const message = await generateAiCommitMessage(stainless, {
+                  projectName: projectName,
+                  target: lang,
+                  baseRef,
+                  headRef,
+                });
+
+                commitMessages[lang] = message;
+              } catch (e) {
+                logger.error("Error in AI commit message generation:", e);
+                commitMessages[lang] = commitMessage;
+              }
+
+              // Mark true in both cases so we don't keep retrying (in the event of e.g. an oversized diff)
+              hasAiCommitMessageMap[lang] = true;
+            }
+          }
+
           // Use default message for any SDKs missing from comment (initial state for new comments)
           for (const lang of Object.keys(outcomes)) {
             if (!commitMessages[lang]) {
