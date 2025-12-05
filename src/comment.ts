@@ -27,6 +27,7 @@ type PrintCommentOptions = {
   branch: string;
   commitMessage: string;
   commitMessages?: Record<string, string>;
+  hasAiCommitMessageMap?: Record<string, boolean>;
   baseOutcomes?: Outcomes | null;
   outcomes: Outcomes;
 };
@@ -38,6 +39,7 @@ export function printComment({
   branch,
   commitMessage,
   commitMessages,
+  hasAiCommitMessageMap,
   baseOutcomes,
   outcomes,
 }:
@@ -63,7 +65,11 @@ export function printComment({
             projectName,
           )} SDKs with the following commit messages.
         `,
-        CommitMessagesSection({ commitMessages, outcomes }),
+        CommitMessagesSection({
+          commitMessages,
+          hasAiCommitMessageMap,
+          outcomes,
+        }),
         canEdit
           ? "Edit this comment to update them. They will appear in their respective SDK's changelogs."
           : null,
@@ -116,18 +122,29 @@ export function printComment({
 
 function CommitMessagesSection({
   commitMessages,
+  hasAiCommitMessageMap,
   outcomes,
 }: {
   commitMessages: Record<string, string>;
+  hasAiCommitMessageMap?: Record<string, boolean>;
   outcomes: Outcomes;
 }): string {
   const languages = Object.keys(outcomes).sort();
 
   const messageBlocks = languages.map((lang) => {
     const message = commitMessages[lang] || "No changes detected";
+
+    // If we're still generating an AI commit message for this SDK, show a loading indicator
+    const isGeneratingAiCommitMessage =
+      hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
+
+    const statusText = isGeneratingAiCommitMessage
+      ? `${MD.Symbol.HourglassFlowingSand} (generating...)\n`
+      : "";
+
     return MD.Dedent`
       **${lang}**
-      ${MD.CodeBlock(message)}
+      ${statusText}${MD.CodeBlock(message)}
     `;
   });
 
