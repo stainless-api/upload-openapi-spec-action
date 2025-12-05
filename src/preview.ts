@@ -1,13 +1,3 @@
-import {
-  getBooleanInput,
-  getGitHostToken,
-  getInput,
-  getPRNumber,
-  getStainlessAuthToken,
-  isPullRequestOpenedEvent,
-  setOutput,
-} from "./compat";
-import { logger } from "./logger";
 import { Stainless } from "@stainless-api/sdk";
 import * as fs from "node:fs";
 import {
@@ -21,16 +11,26 @@ import {
   makeCommitMessageConventional,
 } from "./commitMessage";
 import {
+  getBooleanInput,
+  getGitHostToken,
+  getInput,
+  getPRNumber,
+  getStainlessAuthToken,
+  isPullRequestOpenedEvent,
+  setOutput,
+} from "./compat";
+import type { Config } from "./config";
+import {
   getMergeBase,
   getNonMainBaseRef,
   isConfigChanged,
   readConfig,
   saveConfig,
 } from "./config";
-import type { Config } from "./config";
-import { shouldFailRun, FailRunOn } from "./outcomes";
-import { runBuilds } from "./runBuilds";
+import { logger } from "./logger";
+import { FailRunOn, shouldFailRun } from "./outcomes";
 import type { RunResult } from "./runBuilds";
+import { runBuilds } from "./runBuilds";
 
 async function main() {
   try {
@@ -285,6 +285,9 @@ async function main() {
           branch,
           commitMessage,
           commitMessages: multipleCommitMessages ? commitMessages : undefined,
+          hasAiCommitMessageMap: shouldGenerateAiCommitMessages
+            ? hasAiCommitMessageMap
+            : undefined,
           outcomes,
           baseOutcomes,
         });
