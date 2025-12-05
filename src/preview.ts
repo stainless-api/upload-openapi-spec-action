@@ -68,7 +68,9 @@ async function main() {
     if (enableAiCommitMessages && !multipleCommitMessages) {
       if (multipleCommitMessages === false) {
         // Error if set explicitly false
-        throw new Error("Can't enable enable_ai_commit_messages when multiple_commit_messages is false");
+        throw new Error(
+          "Can't enable enable_ai_commit_messages when multiple_commit_messages is false",
+        );
       } else {
         // Else default to true
         multipleCommitMessages = true;
