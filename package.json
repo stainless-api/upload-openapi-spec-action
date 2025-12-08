@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@stainless-api/github-internal": "^0.15.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.13",
+    "@stainless-api/sdk": "^0.1.0-alpha.18",
     "nano-spawn": "^1.0.3",
     "ts-dedent": "^2.2.0",
     "yaml": "^2.8.1"
