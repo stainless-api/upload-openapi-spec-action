@@ -2,7 +2,7 @@ import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
 import type { Outcomes } from "./outcomes";
 
-type Build = Stainless.Builds.BuildObject;
+type Build = Stainless.Builds.Build;
 
 const POLLING_INTERVAL_SECONDS = 5;
 const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
@@ -168,7 +168,7 @@ export async function* runBuilds({
             },
           }),
         },
-        branch: baseBranch,
+        branch: baseBranch!,
         commit_message: commitMessage,
       },
       head: {
