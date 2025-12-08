@@ -37652,7 +37652,9 @@ function getPRNumber() {
     }
     return parseInt(process.env["MR_NUMBER"]);
   }
-  return parseInt(getGitHubContext().payload.pull_request.number);
+  return parseInt(
+    getGitHubContext().payload.pull_request?.number ?? process.env["PR_NUMBER"]
+  );
 }
 function isPullRequestOpenedEvent() {
   return isGitLabCI() ? process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened" : getGitHubContext().payload.action === "opened";
@@ -39927,6 +39929,7 @@ function printComment({
   projectName,
   branch,
   commitMessage,
+  commitMessages,
   baseOutcomes,
   outcomes
 }) {
@@ -39935,6 +39938,21 @@ function printComment({
       return "No changes were made to the SDKs.";
     }
     const canEdit = !!baseOutcomes;
+    const hasMultipleCommitMessages = commitMessages && Object.keys(commitMessages).length > 0;
+    if (hasMultipleCommitMessages) {
+      return [
+        Dedent`
+          This ${getPRTerm()} will update the ${CodeInline(
+          projectName
+        )} SDKs with the following commit messages.
+        `,
+        CommitMessagesSection({ commitMessages, outcomes }),
+        canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
+        Results({ orgName, projectName, branch, outcomes, baseOutcomes })
+      ].filter((f) => f !== null).join(`
+
+`);
+    }
     return [
       Dedent`
         This ${getPRTerm()} will update the ${CodeInline(
@@ -39964,6 +39982,20 @@ function printComment({
   )}
   `;
   return fullComment;
+}
+function CommitMessagesSection({
+  commitMessages,
+  outcomes
+}) {
+  const languages = Object.keys(outcomes).sort();
+  const messageBlocks = languages.map((lang) => {
+    const message = commitMessages[lang] || "No changes detected";
+    return Dedent`
+      **${lang}**
+      ${CodeBlock(message)}
+    `;
+  });
+  return messageBlocks.join("\n");
 }
 var DiagnosticIcon = {
   fatal: Symbol2.Exclamation,
@@ -40230,6 +40262,26 @@ function InstallationDetails(head, lang) {
 function parseCommitMessage(body) {
   return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
 }
+function parseCommitMessages(body) {
+  if (!body) {
+    return null;
+  }
+  const commitMessages = {};
+  const languageBlocks = body.matchAll(
+    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
+  );
+  for (const match of languageBlocks) {
+    const language = match[1];
+    const message = match[2].trim();
+    if (message && message !== "No changes detected") {
+      commitMessages[language] = message;
+    }
+  }
+  if (Object.keys(commitMessages).length === 0) {
+    return null;
+  }
+  return commitMessages;
+}
 async function retrieveComment({
   token,
   prNumber
@@ -40239,6 +40291,7 @@ async function retrieveComment({
   const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
   return {
     id: existingComment?.id,
+    commitMessages: parseCommitMessages(existingComment?.body),
     commitMessage: parseCommitMessage(existingComment?.body)
   };
 }
@@ -40773,6 +40826,7 @@ async function* runBuilds({
   baseConfigContent,
   guessConfig = false,
   commitMessage,
+  commitMessages,
   allowEmpty = true
 }) {
   if (mergeBranch && (oasContent || configContent)) {
@@ -40806,6 +40860,7 @@ async function* runBuilds({
         },
         branch,
         commit_message: commitMessage,
+        target_commit_messages: commitMessages,
         allow_empty: allowEmpty
       },
       {
@@ -41070,6 +41125,9 @@ async function main() {
       required: true
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
+    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+      required: false
+    });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
@@ -41139,9 +41197,16 @@ async function main() {
     });
     logger.groupEnd();
     let commitMessage = defaultCommitMessage;
+    const commitMessages = {};
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken, prNumber });
-      if (comment.commitMessage) {
+      if (multipleCommitMessages && comment.commitMessages) {
+        for (const [lang, commentCommitMessage] of Object.entries(
+          comment.commitMessages
+        )) {
+          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+        }
+      } else if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
     }
@@ -41158,7 +41223,8 @@ async function main() {
       baseBranch,
       branch,
       guessConfig: guessConfig ?? (!configPath && !!oasPath),
-      commitMessage
+      commitMessage,
+      commitMessages
     });
     let latestRun = null;
     const upsert = commentThrottler(gitHostToken, prNumber);
@@ -41176,11 +41242,28 @@ async function main() {
         if (comment.commitMessage) {
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
         }
+        if (multipleCommitMessages) {
+          if (comment.commitMessages) {
+            for (const [lang, commentCommitMessage] of Object.entries(
+              comment.commitMessages
+            )) {
+              commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+            }
+          }
+        }
+        if (multipleCommitMessages) {
+          for (const lang of Object.keys(outcomes)) {
+            if (!commitMessages[lang]) {
+              commitMessages[lang] = commitMessage;
+            }
+          }
+        }
         const commentBody = printComment({
           orgName,
           projectName,
           branch,
           commitMessage,
+          commitMessages: multipleCommitMessages ? commitMessages : void 0,
           outcomes,
           baseOutcomes
         });

@@ -1,11 +1,11 @@
 import {
   getBooleanInput,
-  getInput,
-  isPullRequestOpenedEvent,
-  setOutput,
   getGitHostToken,
+  getInput,
   getPRNumber,
   getStainlessAuthToken,
+  isPullRequestOpenedEvent,
+  setOutput,
 } from "./compat";
 import { logger } from "./logger";
 import { Stainless } from "@stainless-api/sdk";
@@ -43,6 +43,9 @@ async function main() {
       required: true,
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
+    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+      required: false,
+    });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
@@ -132,10 +135,20 @@ async function main() {
     logger.groupEnd();
 
     let commitMessage = defaultCommitMessage;
+    const commitMessages: Record<string, string> = {};
 
     if (makeComment) {
       const comment = await retrieveComment({ token: gitHostToken!, prNumber });
-      if (comment.commitMessage) {
+
+      // Load existing commit message(s) from comment
+      if (multipleCommitMessages && comment.commitMessages) {
+        for (const [lang, commentCommitMessage] of Object.entries(
+          comment.commitMessages,
+        )) {
+          commitMessages[lang] =
+            makeCommitMessageConventional(commentCommitMessage);
+        }
+      } else if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
     }
@@ -155,6 +168,7 @@ async function main() {
       branch,
       guessConfig: guessConfig ?? (!configPath && !!oasPath),
       commitMessage,
+      commitMessages,
     });
 
     let latestRun: RunResult | null = null;
@@ -175,8 +189,31 @@ async function main() {
           token: gitHostToken!,
           prNumber,
         });
+
+        // Update commit message from comment
         if (comment.commitMessage) {
           commitMessage = makeCommitMessageConventional(comment.commitMessage);
+        }
+
+        if (multipleCommitMessages) {
+          // Update commit messages from comment
+          if (comment.commitMessages) {
+            for (const [lang, commentCommitMessage] of Object.entries(
+              comment.commitMessages,
+            )) {
+              commitMessages[lang] =
+                makeCommitMessageConventional(commentCommitMessage);
+            }
+          }
+        }
+
+        if (multipleCommitMessages) {
+          // Use default message for any SDKs missing from comment (initial state for new comments)
+          for (const lang of Object.keys(outcomes)) {
+            if (!commitMessages[lang]) {
+              commitMessages[lang] = commitMessage;
+            }
+          }
         }
 
         const commentBody = printComment({
@@ -184,6 +221,7 @@ async function main() {
           projectName,
           branch,
           commitMessage,
+          commitMessages: multipleCommitMessages ? commitMessages : undefined,
           outcomes,
           baseOutcomes,
         });

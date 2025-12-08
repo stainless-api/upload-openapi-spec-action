@@ -30,6 +30,9 @@ async function main() {
       required: true,
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
+    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+      required: false,
+    });
     const gitHostToken = getGitHostToken();
     const baseSha = getInput("base_sha", { required: true });
     const baseRef = getInput("base_ref", { required: true });
@@ -75,10 +78,21 @@ async function main() {
     }
 
     let commitMessage = defaultCommitMessage;
+    // Per-SDK commit messages (only used when multiple_commit_messages is enabled)
+    const commitMessages: Record<string, string> = {};
 
     if (makeComment && gitHostToken) {
       const comment = await retrieveComment({ token: gitHostToken, prNumber });
-      if (comment.commitMessage) {
+
+      // Load existing commit message(s) from comment
+      if (multipleCommitMessages && comment.commitMessages) {
+        for (const [lang, commentCommitMessage] of Object.entries(
+          comment.commitMessages,
+        )) {
+          commitMessages[lang] =
+            makeCommitMessageConventional(commentCommitMessage);
+        }
+      } else if (comment.commitMessage) {
         commitMessage = comment.commitMessage;
       }
     }
@@ -90,6 +104,7 @@ async function main() {
       stainless,
       projectName,
       commitMessage,
+      commitMessages,
       // This action always merges to the Stainless `main` branch:
       branch: "main",
       mergeBranch,
@@ -109,11 +124,21 @@ async function main() {
       if (makeComment && latestRun) {
         const { outcomes } = latestRun;
 
+        if (multipleCommitMessages) {
+          // For any SDKs that don't have commit messages, use the default
+          for (const lang of Object.keys(outcomes)) {
+            if (!commitMessages[lang]) {
+              commitMessages[lang] = commitMessage;
+            }
+          }
+        }
+
         const commentBody = printComment({
           orgName: orgName!,
           projectName,
           branch: "main",
           commitMessage,
+          commitMessages: multipleCommitMessages ? commitMessages : undefined,
           outcomes,
         });
 
