@@ -168,7 +168,7 @@ async function main() {
       branch,
       guessConfig: guessConfig ?? (!configPath && !!oasPath),
       commitMessage,
-      commitMessages
+      commitMessages,
     });
 
     let latestRun: RunResult | null = null;
