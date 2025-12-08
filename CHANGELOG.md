@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.7.1...v1.8.0) (2025-12-08)
+
+
+### Features
+
+* support AI commit message generation for preview builds ([#143](https://github.com/stainless-api/upload-openapi-spec-action/issues/143)) ([7010edb](https://github.com/stainless-api/upload-openapi-spec-action/commit/7010edb3895df8fdb2f6e1f5b78613ffb8cd58ad))
+* support per-SDK commit messages in preview comments ([#142](https://github.com/stainless-api/upload-openapi-spec-action/issues/142)) ([a36c33f](https://github.com/stainless-api/upload-openapi-spec-action/commit/a36c33fc218bd12e52b4ad01bf00d02748894f2e))
+* Update to latest @stainless-api/sdk ([#144](https://github.com/stainless-api/upload-openapi-spec-action/issues/144)) ([a9b388b](https://github.com/stainless-api/upload-openapi-spec-action/commit/a9b388bdeda07821deadf90e4ad4818d5776498f))
+
 ## [1.7.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.7.0...v1.7.1) (2025-12-01)
 
 
