@@ -18838,6 +18838,7 @@ async function* runBuilds({
   baseConfigContent,
   guessConfig = false,
   commitMessage,
+  commitMessages,
   allowEmpty = true
 }) {
   if (mergeBranch && (oasContent || configContent)) {
@@ -18871,6 +18872,7 @@ async function* runBuilds({
         },
         branch,
         commit_message: commitMessage,
+        target_commit_messages: commitMessages,
         allow_empty: allowEmpty
       },
       {
