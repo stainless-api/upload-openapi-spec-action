@@ -37995,7 +37995,7 @@ var safeJSON2 = (text) => {
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // node_modules/@stainless-api/sdk/version.mjs
-var VERSION2 = "0.1.0-alpha.12";
+var VERSION2 = "0.1.0-alpha.18";
 
 // node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform2() {
@@ -38923,7 +38923,10 @@ var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 // node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource2 {
   /**
-   * Get diagnostics for a build
+   * Get the list of diagnostics for a given build.
+   *
+   * If no language targets are specified, diagnostics for all languages are
+   * returned.
    */
   list(buildID, query = {}, options) {
     return this._client.getAPIList(path2`/v0/builds/${buildID}/diagnostics`, Page, {
@@ -38936,7 +38939,16 @@ var Diagnostics = class extends APIResource2 {
 // node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource2 {
   /**
-   * Download the output of a build target
+   * Retrieve a method to download an output for a given build target.
+   *
+   * If the requested type of output is `source`, and the requested output method is
+   * `url`, a download link to a tarball of the source files is returned. If the
+   * requested output method is `git`, a Git remote, ref, and access token (if
+   * necessary) is returned.
+   *
+   * Otherwise, the possible types of outputs are specific to the requested target,
+   * and the output method _must_ be `url`. See the documentation for `type` for more
+   * information.
    */
   retrieve(query, options) {
     return this._client.get("/v0/build_target_outputs", { query, ...options });
@@ -38951,30 +38963,41 @@ var Builds2 = class extends APIResource2 {
     this.targetOutputs = new TargetOutputs(this._client);
   }
   /**
-   * Create a new build
+   * Create a build, on top of a project branch, against a given input revision.
+   *
+   * The project branch will be modified so that its latest set of config files
+   * points to the one specified by the input revision.
    */
   create(params, options) {
     const { project = this._client.project, ...body } = params;
     return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
   }
   /**
-   * Retrieve a build by ID
+   * Retrieve a build by its ID.
    */
   retrieve(buildID, options) {
     return this._client.get(path2`/v0/builds/${buildID}`, options);
   }
   /**
-   * List builds for a project
+   * List user-triggered builds for a given project.
+   *
+   * An optional revision can be specified to filter by config commit SHA, or hashes
+   * of file contents.
    */
   list(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList("/v0/builds", Page, {
-      query: { project, ...query },
-      ...options
-    });
+    return this._client.getAPIList("/v0/builds", Page, { query: { project, ...query }, ...options });
   }
   /**
-   * Creates two builds whose outputs can be compared directly
+   * Create two builds whose outputs can be directly compared with each other.
+   *
+   * Created builds _modify_ their project branches so that their latest sets of
+   * config files point to the ones specified by the input revision.
+   *
+   * This endpoint is useful because a build has more inputs than the set of config
+   * files it uses, so comparing two builds directly may return spurious differences.
+   * Builds made via this endpoint are guaranteed to have differences arising from
+   * the set of config files, and any custom code.
    */
   compare(params, options) {
     const { project = this._client.project, ...body } = params;
@@ -38987,13 +39010,13 @@ Builds2.TargetOutputs = TargetOutputs;
 // node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs3 = class extends APIResource2 {
   /**
-   * Retrieve an organization by name
+   * Retrieve an organization by name.
    */
   retrieve(org, options) {
     return this._client.get(path2`/v0/orgs/${org}`, options);
   }
   /**
-   * List organizations the user has access to
+   * List organizations accessible to the current authentication method.
    */
   list(options) {
     return this._client.get("/v0/orgs", options);
@@ -39003,21 +39026,25 @@ var Orgs3 = class extends APIResource2 {
 // node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches2 = class extends APIResource2 {
   /**
-   * Create a new branch for a project
+   * Create a new branch for a project.
+   *
+   * The branch inherits the config files from the revision pointed to by the
+   * `branch_from` parameter. In addition, if the revision is a branch name, the
+   * branch will also inherit custom code changes from that branch.
    */
   create(params, options) {
     const { project = this._client.project, ...body } = params;
     return this._client.post(path2`/v0/projects/${project}/branches`, { body, ...options });
   }
   /**
-   * Retrieve a project branch
+   * Retrieve a project branch by name.
    */
   retrieve(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
     return this._client.get(path2`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
-   * List project branches
+   * Retrieve a project branch by name.
    */
   list(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
@@ -39027,25 +39054,51 @@ var Branches2 = class extends APIResource2 {
     });
   }
   /**
-   * Delete a project branch
+   * Delete a project branch by name.
    */
   delete(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
     return this._client.delete(path2`/v0/projects/${project}/branches/${branch}`, options);
+  }
+  /**
+   * Rebase a project branch.
+   *
+   * The branch is rebased onto the `base` branch or commit SHA, inheriting any
+   * config and custom code changes.
+   */
+  rebase(branch, params = {}, options) {
+    const { project = this._client.project, base } = params ?? {};
+    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/rebase`, {
+      query: { base },
+      ...options
+    });
+  }
+  /**
+   * Reset a project branch.
+   *
+   * If `branch` === `main`, the branch is reset to `target_config_sha`. Otherwise,
+   * the branch is reset to `main`.
+   */
+  reset(branch, params = {}, options) {
+    const { project = this._client.project, target_config_sha } = params ?? {};
+    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/reset`, {
+      query: { target_config_sha },
+      ...options
+    });
   }
 };
 
 // node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource2 {
   /**
-   * Retrieve configuration files for a project
+   * Retrieve the configuration files for a given project.
    */
   retrieve(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
     return this._client.get(path2`/v0/projects/${project}/configs`, { query, ...options });
   }
   /**
-   * Generate configuration suggestions based on an OpenAPI spec
+   * Generate suggestions for changes to config files based on an OpenAPI spec.
    */
   guess(params, options) {
     const { project = this._client.project, ...body } = params;
@@ -39061,27 +39114,27 @@ var Projects = class extends APIResource2 {
     this.configs = new Configs(this._client);
   }
   /**
-   * Create a new project
+   * Create a new project.
    */
   create(body, options) {
     return this._client.post("/v0/projects", { body, ...options });
   }
   /**
-   * Retrieve a project by name
+   * Retrieve a project by name.
    */
   retrieve(params = {}, options) {
     const { project = this._client.project } = params ?? {};
     return this._client.get(path2`/v0/projects/${project}`, options);
   }
   /**
-   * Update a project's properties
+   * Update a project's properties.
    */
   update(params = {}, options) {
     const { project = this._client.project, ...body } = params ?? {};
     return this._client.patch(path2`/v0/projects/${project}`, { body, ...options });
   }
   /**
-   * List projects in an organization, from oldest to newest
+   * List projects in an organization, from oldest to newest.
    */
   list(query = {}, options) {
     return this._client.getAPIList("/v0/projects", Page, { query, ...options });
@@ -39355,7 +39408,7 @@ var Stainless = class {
     const controller = new AbortController();
     const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
     const headersTime = Date.now();
-    if (response instanceof Error) {
+    if (response instanceof globalThis.Error) {
       const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
       if (options.signal?.aborted) {
         throw new APIUserAbortError2();
@@ -39555,7 +39608,7 @@ var Stainless = class {
       // Pass raw type verbatim
       ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
       headers.values.has("content-type") || // `Blob` is superset of `File`
-      body instanceof Blob || // `FormData` -> `multipart/form-data`
+      globalThis.Blob && body instanceof globalThis.Blob || // `FormData` -> `multipart/form-data`
       body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
       body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
       globalThis.ReadableStream && body instanceof globalThis.ReadableStream
