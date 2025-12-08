@@ -104,6 +104,7 @@ async function main() {
       stainless,
       projectName,
       commitMessage,
+      commitMessages,
       // This action always merges to the Stainless `main` branch:
       branch: "main",
       mergeBranch,
