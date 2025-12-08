@@ -30,7 +30,7 @@ async function main() {
       required: true,
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+    let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
       required: false,
     });
     const gitHostToken = getGitHostToken();
@@ -41,6 +41,15 @@ async function main() {
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
+
+    // Undocumented, and only supported with the org-level 'enable_ai_commit_messages' feature gate.
+    const enableAiCommitMessages = getBooleanInput(
+      "enable_ai_commit_messages",
+      { required: false },
+    );
+    if (enableAiCommitMessages) {
+      multipleCommitMessages = true;
+    }
 
     if (baseRef !== defaultBranch) {
       logger.info("Not merging to default branch, skipping merge");

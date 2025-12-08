@@ -39927,6 +39927,7 @@ function printComment({
   branch,
   commitMessage,
   commitMessages,
+  hasAiCommitMessageMap,
   baseOutcomes,
   outcomes
 }) {
@@ -39943,7 +39944,11 @@ function printComment({
           projectName
         )} SDKs with the following commit messages.
         `,
-        CommitMessagesSection({ commitMessages, outcomes }),
+        CommitMessagesSection({
+          commitMessages,
+          hasAiCommitMessageMap,
+          outcomes
+        }),
         canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
         Results({ orgName, projectName, branch, outcomes, baseOutcomes })
       ].filter((f) => f !== null).join(`
@@ -39982,14 +39987,18 @@ function printComment({
 }
 function CommitMessagesSection({
   commitMessages,
+  hasAiCommitMessageMap,
   outcomes
 }) {
   const languages = Object.keys(outcomes).sort();
   const messageBlocks = languages.map((lang) => {
     const message = commitMessages[lang] || "No changes detected";
+    const isGeneratingAiCommitMessage = hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
+    const statusText = isGeneratingAiCommitMessage ? `${Symbol2.HourglassFlowingSand} (generating...)
+` : "";
     return Dedent`
       **${lang}**
-      ${CodeBlock(message)}
+      ${statusText}${CodeBlock(message)}
     `;
   });
   return messageBlocks.join("\n");
@@ -41019,7 +41028,7 @@ async function main() {
       required: true
     });
     const makeComment = getBooleanInput("make_comment", { required: true });
-    const multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+    let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
       required: false
     });
     const gitHostToken = getGitHostToken();
@@ -41030,6 +41039,13 @@ async function main() {
     const mergeBranch = getInput("merge_branch", { required: true });
     const outputDir = getInput("output_dir", { required: false }) || void 0;
     const prNumber = getPRNumber();
+    const enableAiCommitMessages = getBooleanInput(
+      "enable_ai_commit_messages",
+      { required: false }
+    );
+    if (enableAiCommitMessages) {
+      multipleCommitMessages = true;
+    }
     if (baseRef !== defaultBranch) {
       logger.info("Not merging to default branch, skipping merge");
       return;
