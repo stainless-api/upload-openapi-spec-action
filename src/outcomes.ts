@@ -5,7 +5,7 @@ export type Outcomes = Record<
   string,
   Omit<Stainless.Builds.BuildTarget, "commit"> & {
     commit: Stainless.Builds.BuildTarget.Completed | null;
-    diagnostics: Stainless.Builds.Diagnostics.DiagnosticListResponse[];
+    diagnostics: Stainless.Builds.Diagnostics.BuildDiagnostic[];
   }
 >;
 

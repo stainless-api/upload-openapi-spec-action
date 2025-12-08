@@ -112,7 +112,7 @@ async function uploadSpecAndConfig(
 ): Promise<{
   ok: boolean;
   errors: Array<{
-    target: keyof Stainless.BuildObject.Targets;
+    target: keyof Stainless.Build.Targets;
     outcome: string;
   }>;
   decoratedSpec: string | null;
@@ -170,7 +170,7 @@ async function uploadSpecAndConfig(
 
   const errors = (
     Object.entries(build.targets) as [
-      keyof Stainless.BuildObject.Targets,
+      keyof Stainless.Build.Targets,
       Stainless.BuildTarget,
     ][]
   )
@@ -202,7 +202,7 @@ async function uploadSpecAndConfig(
       }
     })
     .filter((e) => e !== undefined) as Array<{
-    target: keyof Stainless.BuildObject.Targets;
+    target: keyof Stainless.Build.Targets;
     outcome: string;
   }>;
   const ok = errors.length === 0;
