@@ -9310,7 +9310,7 @@ var safeJSON = (text) => {
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.18";
+var VERSION = "0.1.0-alpha.19";
 
 // node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform() {
@@ -41083,7 +41083,7 @@ async function* pollBuild({
         try {
           for await (const diagnostic of stainless.builds.diagnostics.list(
             buildId,
-            { targets: [language] }
+            { targets: language }
           )) {
             outcomes[language].diagnostics.push(diagnostic);
           }
