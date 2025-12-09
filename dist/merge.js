@@ -40962,9 +40962,8 @@ async function* pollBuild({
         outcomes[language].diagnostics = [];
         try {
           for await (const diagnostic of stainless.builds.diagnostics.list(
-            buildId
-            // TODO(cj): fix this
-            // { targets: [language] },
+            buildId,
+            { targets: [language] }
           )) {
             outcomes[language].diagnostics.push(diagnostic);
           }
