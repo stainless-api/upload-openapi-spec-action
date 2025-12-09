@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.8.0...v1.8.1) (2025-12-09)
+
+
+### Bug Fixes
+
+* re-enable 'targets' param in diagnostics call ([#148](https://github.com/stainless-api/upload-openapi-spec-action/issues/148)) ([3130e17](https://github.com/stainless-api/upload-openapi-spec-action/commit/3130e17c92819fd08f6aded35d243975c4e8404c))
+
 ## [1.8.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.7.1...v1.8.0) (2025-12-08)
 
 
