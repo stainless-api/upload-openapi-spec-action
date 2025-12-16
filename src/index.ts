@@ -145,9 +145,11 @@ async function uploadSpecAndConfig(
       ...(branch && { branch }),
       ...(commitMessage && { commit_message: commitMessage }),
       revision: {
-        "openapi.yml": { content: specContent },
+        [`openapi.${specPath.endsWith(".json") ? "json" : "yml"}`]: {
+          content: specContent,
+        },
         ...(configContent && {
-          "openapi.stainless.yml": { content: configContent },
+          "stainless.yml": { content: configContent },
         }),
       },
       allow_empty: true,
