@@ -1,4 +1,5 @@
 import { Stainless } from "@stainless-api/sdk";
+import { getStainlessClient } from "./stainless";
 import * as fs from "node:fs";
 import {
   commentThrottler,
@@ -92,7 +93,7 @@ async function main() {
       );
     }
 
-    const stainless = new Stainless({
+    const stainless = getStainlessClient("preview", {
       project: projectName,
       apiKey,
       logLevel: "warn",

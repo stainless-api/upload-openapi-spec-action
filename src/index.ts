@@ -1,12 +1,8 @@
 import Stainless from "@stainless-api/sdk";
+import { getStainlessClient } from "./stainless";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
-import {
-  getBooleanInput,
-  getInput,
-  isGitLabCI,
-  getStainlessAuthToken,
-} from "./compat";
+import { getBooleanInput, getInput, getStainlessAuthToken } from "./compat";
 import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
@@ -44,7 +40,9 @@ export async function main() {
   }
 
   if (!projectName) {
-    const stainless = new Stainless({ apiKey: stainless_api_key });
+    const stainless = getStainlessClient("index", {
+      apiKey: stainless_api_key,
+    });
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
@@ -117,7 +115,10 @@ async function uploadSpecAndConfig(
   }>;
   decoratedSpec: string | null;
 }> {
-  const stainless = new Stainless({ apiKey: token, project: projectName });
+  const stainless = getStainlessClient("index", {
+    apiKey: token,
+    project: projectName,
+  });
   const specContent = readFileSync(specPath, "utf8");
 
   let configContent;
@@ -133,29 +134,19 @@ async function uploadSpecAndConfig(
     configContent = readFileSync(configPath, "utf8");
   }
 
-  const headers: Record<string, string> = {};
-  if (isGitLabCI()) {
-    headers["X-GitLab-CI"] = "stainless-api/upload-openapi-spec-action";
-  } else {
-    headers["X-GitHub-Action"] = "stainless-api/upload-openapi-spec-action";
-  }
-
-  let build = await stainless.builds.create(
-    {
-      ...(branch && { branch }),
-      ...(commitMessage && { commit_message: commitMessage }),
-      revision: {
-        [`openapi.${specPath.endsWith(".json") ? "json" : "yml"}`]: {
-          content: specContent,
-        },
-        ...(configContent && {
-          "stainless.yml": { content: configContent },
-        }),
+  let build = await stainless.builds.create({
+    ...(branch && { branch }),
+    ...(commitMessage && { commit_message: commitMessage }),
+    revision: {
+      [`openapi.${specPath.endsWith(".json") ? "json" : "yml"}`]: {
+        content: specContent,
       },
-      allow_empty: true,
+      ...(configContent && {
+        "stainless.yml": { content: configContent },
+      }),
     },
-    { headers },
-  );
+    allow_empty: true,
+  });
 
   const pollingStart = Date.now();
   let donePolling = false;

@@ -7,7 +7,7 @@ import {
   getStainlessAuthToken,
 } from "./compat";
 import { logger } from "./logger";
-import { Stainless } from "@stainless-api/sdk";
+import { getStainlessClient } from "./stainless";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
@@ -68,7 +68,7 @@ async function main() {
       );
     }
 
-    const stainless = new Stainless({
+    const stainless = getStainlessClient("merge", {
       project: projectName,
       apiKey,
       logLevel: "warn",
