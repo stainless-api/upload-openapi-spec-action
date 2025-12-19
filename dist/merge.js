@@ -39679,6 +39679,65 @@ Stainless.Projects = Projects;
 Stainless.Builds = Builds2;
 Stainless.Orgs = Orgs3;
 
+// package.json
+var package_default = {
+  name: "upload-openapi-spec-action",
+  version: "1.8.1",
+  main: "dist/index.js",
+  scripts: {
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
+    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    lint: "tsc && prettier --check src && eslint src",
+    "lint:fix": "prettier --write src && eslint src --fix",
+    test: "vitest"
+  },
+  license: "ISC",
+  devDependencies: {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.3",
+    esbuild: "^0.25.9",
+    eslint: "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    prettier: "3.6.2",
+    typescript: "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    vitest: "^3.2.4"
+  },
+  dependencies: {
+    "@stainless-api/github-internal": "^0.15.0",
+    "@stainless-api/sdk": "^0.1.0-alpha.19",
+    "nano-spawn": "^1.0.3",
+    "ts-dedent": "^2.2.0",
+    yaml: "^2.8.1"
+  }
+};
+
+// src/stainless.ts
+function getStainlessClient(action, opts) {
+  const headers = {
+    "User-Agent": `Stainless/Action ${package_default}`
+  };
+  if (action) {
+    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
+    if (isGitLabCI()) {
+      headers["X-GitLab-CI"] = actionPath;
+    } else {
+      headers["X-GitHub-Action"] = actionPath;
+    }
+  }
+  return new Stainless({
+    ...opts,
+    defaultHeaders: {
+      ...opts.defaultHeaders,
+      ...headers
+    }
+  });
+}
+
 // src/merge.ts
 var fs4 = __toESM(require("node:fs"));
 
@@ -41084,7 +41143,7 @@ async function main() {
         "This action requires an organization name to make a comment."
       );
     }
-    const stainless = new Stainless({
+    const stainless = getStainlessClient("merge", {
       project: projectName,
       apiKey,
       logLevel: "warn"

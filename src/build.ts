@@ -1,4 +1,5 @@
 import { Stainless } from "@stainless-api/sdk";
+import { getStainlessClient } from "./stainless";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
@@ -39,7 +40,7 @@ async function main() {
 
     const config = await readConfig({ oasPath, configPath, required: true });
 
-    const stainless = new Stainless({
+    const stainless = getStainlessClient("build", {
       project: projectName,
       apiKey,
       logLevel: "warn",
