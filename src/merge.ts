@@ -47,9 +47,6 @@ async function main() {
       "enable_ai_commit_messages",
       { required: false },
     );
-    if (enableAiCommitMessages) {
-      multipleCommitMessages = true;
-    }
 
     if (baseRef !== defaultBranch) {
       logger.info("Not merging to default branch, skipping merge");
@@ -73,6 +70,26 @@ async function main() {
       apiKey,
       logLevel: "warn",
     });
+
+    // Fetch org data to check enable_ai_commit_messages field
+    let org: { enable_ai_commit_messages: boolean } | null = null;
+    if (orgName) {
+      try {
+        org = (await stainless.get(`/v0/orgs/${orgName}`)) as {
+          enable_ai_commit_messages: boolean;
+        };
+      } catch (error) {
+        logger.warn(
+          `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
+          error,
+        );
+      }
+    }
+
+    // Check both the action input and org-level setting for AI commit messages
+    if (enableAiCommitMessages && org?.enable_ai_commit_messages) {
+      multipleCommitMessages = true;
+    }
 
     const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
     const headConfig = await readConfig({ oasPath, configPath, sha: headSha });

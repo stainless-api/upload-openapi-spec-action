@@ -98,6 +98,19 @@ async function main() {
       logLevel: "warn",
     });
 
+    // Fetch org data to check enable_ai_commit_messages field
+    let org: { enable_ai_commit_messages: boolean } | null = null;
+    try {
+      org = (await stainless.get(`/v0/orgs/${orgName}`)) as {
+        enable_ai_commit_messages: boolean;
+      };
+    } catch (error) {
+      logger.warn(
+        `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
+        error,
+      );
+    }
+
     logger.group("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
@@ -173,6 +186,7 @@ async function main() {
       if (
         multipleCommitMessages &&
         enableAiCommitMessages &&
+        org?.enable_ai_commit_messages &&
         comment.commitMessage == null &&
         comment.commitMessages == null
       ) {
