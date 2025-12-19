@@ -59,24 +59,6 @@ async function main() {
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
 
-    // Undocumented, and only supported with the org-level 'enable_ai_commit_messages' feature gate.
-    const enableAiCommitMessages = getBooleanInput(
-      "enable_ai_commit_messages",
-      { required: false },
-    );
-
-    if (enableAiCommitMessages && !multipleCommitMessages) {
-      if (multipleCommitMessages === false) {
-        // Error if set explicitly false
-        throw new Error(
-          "The action input 'enable_ai_commit_messages' is incompatible with 'multiple_commit_message: false'",
-        );
-      } else {
-        // Else default to true
-        multipleCommitMessages = true;
-      }
-    }
-
     // Tracks which languages have had commit messages generated this run
     const hasAiCommitMessageMap: Record<string, boolean> = {};
 
@@ -109,6 +91,11 @@ async function main() {
         `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
         error,
       );
+    }
+
+    // Enable AI commit messages if org setting is enabled
+    if (org?.enable_ai_commit_messages) {
+      multipleCommitMessages = true;
     }
 
     logger.group("Getting parent revision");
@@ -185,7 +172,6 @@ async function main() {
       // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
       if (
         multipleCommitMessages &&
-        enableAiCommitMessages &&
         org?.enable_ai_commit_messages &&
         comment.commitMessage == null &&
         comment.commitMessages == null

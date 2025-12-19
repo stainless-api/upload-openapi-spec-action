@@ -42,12 +42,6 @@ async function main() {
     const outputDir = getInput("output_dir", { required: false }) || undefined;
     const prNumber = getPRNumber();
 
-    // Undocumented, and only supported with the org-level 'enable_ai_commit_messages' feature gate.
-    const enableAiCommitMessages = getBooleanInput(
-      "enable_ai_commit_messages",
-      { required: false },
-    );
-
     if (baseRef !== defaultBranch) {
       logger.info("Not merging to default branch, skipping merge");
       return;
@@ -86,8 +80,8 @@ async function main() {
       }
     }
 
-    // Check both the action input and org-level setting for AI commit messages
-    if (enableAiCommitMessages && org?.enable_ai_commit_messages) {
+    // Enable AI commit messages if org setting is enabled
+    if (org?.enable_ai_commit_messages) {
       multipleCommitMessages = true;
     }
 
