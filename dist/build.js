@@ -18203,7 +18203,7 @@ Stainless.Orgs = Orgs;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.8.1",
+  version: "1.9.0",
   main: "dist/index.js",
   scripts: {
     build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview",
