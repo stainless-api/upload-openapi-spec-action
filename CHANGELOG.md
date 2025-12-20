@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.8.1...v1.9.0) (2025-12-20)
+
+
+### Features
+
+* check org-level enable_ai_commit_messages field ([#152](https://github.com/stainless-api/upload-openapi-spec-action/issues/152)) ([90deb1b](https://github.com/stainless-api/upload-openapi-spec-action/commit/90deb1bcc4b5bd0d72407720066c9d73bbe6823e))
+
 ## [1.8.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.8.0...v1.8.1) (2025-12-09)
 
 
