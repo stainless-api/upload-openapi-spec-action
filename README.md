@@ -132,30 +132,6 @@ Go to **Settings** → **Actions** → **General**, then under "Fork pull reques
 
 See [GitHub's docs](https://docs.github.com/en/actions/managing-workflow-runs/approving-workflow-runs-from-public-forks) for more details.
 
-## Preparing OpenAPI Specs
-
-The `prepare/swagger` action helps convert Swagger 2.0 specifications to OpenAPI 3.x format using [swagger2openapi](https://www.npmjs.com/package/swagger2openapi).
-
-### Basic Usage
-
-```yml
-- name: Convert Swagger to OpenAPI
-  uses: stainless-api/upload-openapi-spec-action/prepare/swagger@v1
-  with:
-    input_path: ./swagger.json
-    output_path: ./openapi.json
-    commit: true
-```
-
-### Key Features
-
-- **Automatic Conversion**: Converts Swagger 2.0 specs to OpenAPI 3.0 or 3.1
-- **Format Support**: Works with both JSON and YAML files
-- **Auto-commit**: Optionally commit the converted spec back to your repository
-- **Customizable**: Control indentation, reference resolution, and error patching
-
-See the [example workflow](./examples/prepare_swagger.yml) for a complete example with all available options.
-
 ## Actions reference
 
 This repository provides several GitHub actions:
