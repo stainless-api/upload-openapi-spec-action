@@ -132,9 +132,35 @@ Go to **Settings** → **Actions** → **General**, then under "Fork pull reques
 
 See [GitHub's docs](https://docs.github.com/en/actions/managing-workflow-runs/approving-workflow-runs-from-public-forks) for more details.
 
+## Preparing OpenAPI Specs
+
+The `prepare/swagger` action helps convert Swagger 2.0 specifications to OpenAPI 3.x format using [swagger2openapi](https://www.npmjs.com/package/swagger2openapi).
+
+### Basic Usage
+
+```yml
+- name: Convert Swagger to OpenAPI
+  uses: stainless-api/upload-openapi-spec-action/prepare/swagger@v1
+  with:
+    input_path: ./swagger.json
+    output_path: ./openapi.json
+    commit: true
+```
+
+### Key Features
+
+- **Automatic Conversion**: Converts Swagger 2.0 specs to OpenAPI 3.0 or 3.1
+- **Format Support**: Works with both JSON and YAML files
+- **Auto-commit**: Optionally commit the converted spec back to your repository
+- **Customizable**: Control indentation, reference resolution, and error patching
+
+See the [example workflow](./examples/prepare_swagger.yml) for a complete example with all available options.
+
 ## Actions reference
 
-This repository provides four GitHub actions:
+This repository provides several GitHub actions:
+
+### Core Actions
 
 - `stainless-api/upload-openapi-spec-action/build` - Build SDKs for a Stainless project. See the [action definition](./build/action.yml) for input parameters.
 
@@ -143,6 +169,10 @@ This repository provides four GitHub actions:
 - `stainless-api/upload-openapi-spec-action/merge` - Merge SDK changes from a pull request. See the [action definition](./merge/action.yml) for input parameters.
 
 - `stainless-api/upload-openapi-spec-action/checkout-pr-ref` - Checkout the base or head commit for previewing changes. See the [action definition](./checkout-pr-ref/action.yml) for input parameters.
+
+### Preparation Tools
+
+- `stainless-api/upload-openapi-spec-action/prepare/swagger` - Convert Swagger 2.0 specs to OpenAPI 3.x. See the [action definition](./prepare/swagger/action.yml) for input parameters and the [example workflow](./examples/prepare_swagger.yml).
 
 All except `checkout-pr-ref` work in GitLab CI.
 

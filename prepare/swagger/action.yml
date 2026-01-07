@@ -1,0 +1,64 @@
+name: Prepare OpenAPI Spec — Convert Swagger 2.0
+description: Convert Swagger 2.0 spec to OpenAPI 3.x using swagger2openapi
+branding:
+  icon: refresh-cw
+  color: blue
+runs:
+  using: node20
+  main: ../../dist/prepareSwagger.js
+
+inputs:
+  input_path:
+    description: >-
+      Path to the input Swagger 2.0 spec file (JSON or YAML).
+    required: true
+  output_path:
+    description: >-
+      Path where the converted OpenAPI 3.x spec will be written.
+      If not specified, will default to 'openapi.json' in the same directory as the input file.
+    required: false
+  patch:
+    description: >-
+      Fix up small errors in the source definition (default: false).
+      Equivalent to swagger2openapi --patch flag.
+    required: false
+    default: 'false'
+  output_format:
+    description: >-
+      Output format: 'json' or 'yaml' (default: 'json').
+      If not specified, will be inferred from output_path extension.
+    required: false
+  resolve:
+    description: >-
+      Resolve external references (default: true).
+      Equivalent to swagger2openapi --resolve flag.
+    required: false
+    default: 'true'
+  target_version:
+    description: >-
+      Target OpenAPI version: '3.0' or '3.1' (default: '3.0').
+    required: false
+    default: '3.0'
+  commit:
+    description: >-
+      Whether to commit the converted file to the repository (default: false).
+      Requires 'contents: write' permission.
+    required: false
+    default: 'false'
+  commit_message:
+    description: >-
+      Commit message to use when committing the converted file.
+      Only used if commit is true.
+    required: false
+    default: 'chore: convert Swagger 2.0 to OpenAPI 3.x'
+  github_token:
+    description: >-
+      GitHub token for committing changes.
+      Only required if commit is true. Defaults to the GITHUB_TOKEN secret.
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  output_path:
+    description: >-
+      Path to the converted OpenAPI spec file.
