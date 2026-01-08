@@ -9573,18 +9573,6 @@ ${delimiter}
 }
 
 // src/prepareSwagger.ts
-async function installSwagger2OpenAPI() {
-  logger.info("Installing swagger2openapi...");
-  try {
-    await spawn2("npm", ["install", "-g", "swagger2openapi"]);
-    logger.info("swagger2openapi installed successfully");
-  } catch (error) {
-    logger.error("Failed to install swagger2openapi:", error);
-    throw new Error(
-      `Failed to install swagger2openapi: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
-}
 async function convertSwagger(inputPath, outputPath, options) {
   logger.info(`Converting ${inputPath} to OpenAPI ${options.targetVersion}...`);
   const args = [inputPath];
@@ -9602,9 +9590,9 @@ async function convertSwagger(inputPath, outputPath, options) {
   if (format === "yaml") {
     args.push("--yaml");
   }
-  logger.debug(`Running: swagger2openapi ${args.join(" ")}`);
+  logger.info(`Running: npx swagger2openapi ${args.join(" ")}`);
   try {
-    const result = await spawn2("swagger2openapi", args);
+    const result = await spawn2("npx", ["swagger2openapi", ...args]);
     logger.info(`Conversion successful. Output written to ${outputPath}`);
     if (result.stdout) {
       logger.debug(result.stdout);
@@ -9713,7 +9701,6 @@ Make sure:
     if (!fs3.existsSync(outputDir)) {
       fs3.mkdirSync(outputDir, { recursive: true });
     }
-    await installSwagger2OpenAPI();
     await convertSwagger(inputPath, outputPath, {
       patch,
       resolve,

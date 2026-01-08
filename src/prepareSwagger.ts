@@ -4,19 +4,6 @@ import spawn from "nano-spawn";
 import { getInput, getBooleanInput, setOutput } from "./compat";
 import { logger } from "./logger";
 
-async function installSwagger2OpenAPI() {
-  logger.info("Installing swagger2openapi...");
-  try {
-    await spawn("npm", ["install", "-g", "swagger2openapi"]);
-    logger.info("swagger2openapi installed successfully");
-  } catch (error) {
-    logger.error("Failed to install swagger2openapi:", error);
-    throw new Error(
-      `Failed to install swagger2openapi: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
-
 async function convertSwagger(
   inputPath: string,
   outputPath: string,
@@ -56,10 +43,10 @@ async function convertSwagger(
     args.push("--yaml");
   }
 
-  logger.debug(`Running: swagger2openapi ${args.join(" ")}`);
+  logger.info(`Running: npx swagger2openapi ${args.join(" ")}`);
 
   try {
-    const result = await spawn("swagger2openapi", args);
+    const result = await spawn("npx", ["swagger2openapi", ...args]);
     logger.info(`Conversion successful. Output written to ${outputPath}`);
     if (result.stdout) {
       logger.debug(result.stdout);
@@ -198,9 +185,6 @@ async function main() {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
-
-    // Install swagger2openapi
-    await installSwagger2OpenAPI();
 
     // Convert the file
     await convertSwagger(inputPath, outputPath, {
