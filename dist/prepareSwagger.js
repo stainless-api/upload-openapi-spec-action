@@ -9675,7 +9675,7 @@ async function main() {
   try {
     const inputPath = getInput("input_path", { required: true });
     let outputPath = getInput("output_path", { required: false });
-    const patch = getBooleanInput("patch", { required: false });
+    const patch = getBooleanInput("patch", { required: false }) ?? false;
     const outputFormat = getInput("output_format", { required: false });
     const resolve = getBooleanInput("resolve", { required: false }) ?? true;
     const targetVersion = getInput("target_version", { required: false }) || "3.0";
