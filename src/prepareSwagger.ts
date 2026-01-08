@@ -84,11 +84,7 @@ async function commitChanges(
     try {
       await spawn("git", ["config", "user.name"]);
     } catch {
-      await spawn("git", [
-        "config",
-        "user.name",
-        "github-actions[bot]",
-      ]);
+      await spawn("git", ["config", "user.name", "github-actions[bot]"]);
     }
 
     try {
@@ -152,10 +148,11 @@ async function main() {
   try {
     const inputPath = getInput("input_path", { required: true });
     let outputPath = getInput("output_path", { required: false });
-    const patch = getBooleanInput("patch", { required: false });
+    const patch = getBooleanInput("patch", { required: false }) ?? false;
     const outputFormat = getInput("output_format", { required: false });
     const resolve = getBooleanInput("resolve", { required: false }) ?? true;
-    const targetVersion = getInput("target_version", { required: false }) || "3.0";
+    const targetVersion =
+      getInput("target_version", { required: false }) || "3.0";
     const shouldCommit = getBooleanInput("commit", { required: false });
     const commitMessage =
       getInput("commit_message", { required: false }) ||
@@ -166,10 +163,10 @@ async function main() {
     if (!fs.existsSync(inputPath)) {
       throw new Error(
         `Input file not found: ${inputPath}\n\n` +
-        `Make sure:\n` +
-        `1. You have checked out the repository using actions/checkout@v4\n` +
-        `2. The file path is correct relative to the repository root\n` +
-        `3. The file exists in your repository`,
+          `Make sure:\n` +
+          `1. You have checked out the repository using actions/checkout@v4\n` +
+          `2. The file path is correct relative to the repository root\n` +
+          `3. The file exists in your repository`,
       );
     }
 
