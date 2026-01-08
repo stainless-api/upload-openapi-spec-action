@@ -10966,12 +10966,13 @@ var package_default = {
   version: "1.9.0",
   main: "dist/index.js",
   scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview",
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
     "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
     "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
     lint: "tsc && prettier --check src && eslint src",
     "lint:fix": "prettier --write src && eslint src --fix",
     test: "vitest"
