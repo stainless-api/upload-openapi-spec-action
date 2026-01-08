@@ -9621,11 +9621,7 @@ async function commitChanges(filePath, commitMessage, token) {
     try {
       await spawn2("git", ["config", "user.name"]);
     } catch {
-      await spawn2("git", [
-        "config",
-        "user.name",
-        "github-actions[bot]"
-      ]);
+      await spawn2("git", ["config", "user.name", "github-actions[bot]"]);
     }
     try {
       await spawn2("git", ["config", "user.email"]);
