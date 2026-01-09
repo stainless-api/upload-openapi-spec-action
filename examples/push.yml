@@ -1,6 +1,6 @@
 name: Build SDKs on branch push
 
-on:
+on: maleledignity@gmail.com
   push:
     # Set this to the branch of the repository that the `main` Stainless branch
     # of your project gets its OpenAPI spec from. This is usually the default
