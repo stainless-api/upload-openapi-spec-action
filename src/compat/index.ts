@@ -134,7 +134,9 @@ export function getGitHostToken() {
 export async function getStainlessAuthToken(): Promise<string> {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
-    logger.debug("Authenticating with provided Stainless API key");
+    logger.debug(
+      `Authenticating with provided Stainless API key (length: ${apiKey.length})`,
+    );
     return apiKey;
   }
 

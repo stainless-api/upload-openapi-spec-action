@@ -34,10 +34,6 @@ import type { RunResult } from "./runBuilds";
 import { runBuilds } from "./runBuilds";
 
 async function main() {
-  logger.info(`HELLO FROM BILL`, {
-    repo: process.env.GITHUB_REPOSITORY,
-    workflowRef: process.env.GITHUB_WORKFLOW_REF,
-  });
   try {
     const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: true });
@@ -103,7 +99,6 @@ async function main() {
       logLevel: "warn",
     });
 
-    logger.info(`--> before getting parent revision??`);
     logger.group("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
