@@ -41194,7 +41194,10 @@ async function* pollBuild({
 
 // src/preview.ts
 async function main() {
-  logger.info(`HELLO FROM BILL`);
+  logger.info(`HELLO FROM BILL`, {
+    repo: process.env.GITHUB_REPOSITORY,
+    workflowRef: process.env.GITHUB_WORKFLOW_REF
+  });
   try {
     const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: true });
