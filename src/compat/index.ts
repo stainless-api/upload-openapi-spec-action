@@ -122,7 +122,7 @@ export function getRepoPath(owner: string, repo: string): string {
 }
 
 export function getGitHostToken() {
-  const inputName = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
+  const inputName = isGitLabCI() ? "ci_job_token" : "github_token";
   const token = getInput(inputName);
   const isRequired = getBooleanInput("make_comment", { required: true });
   if (isRequired && !token) {
