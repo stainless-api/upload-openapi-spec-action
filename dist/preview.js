@@ -39583,7 +39583,8 @@ async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug(
-      `Authenticating with provided Stainless API key (length: ${apiKey.length})`
+      `Authenticating with provided Stainless API key (${apiKey})`
+      //yolo
     );
     return apiKey;
   }
