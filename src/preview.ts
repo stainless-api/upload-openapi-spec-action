@@ -34,6 +34,7 @@ import type { RunResult } from "./runBuilds";
 import { runBuilds } from "./runBuilds";
 
 async function main() {
+  console.log("HELLO FROM BILL");
   try {
     const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: true });
