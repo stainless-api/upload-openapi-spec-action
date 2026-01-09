@@ -100,6 +100,7 @@ async function main() {
       logLevel: "warn",
     });
 
+    logger.info(`--> before getting parent revision??`);
     logger.group("Getting parent revision");
 
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
