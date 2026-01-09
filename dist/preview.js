@@ -39582,7 +39582,9 @@ function getGitHostToken() {
 async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
-    logger.debug("Authenticating with provided Stainless API key");
+    logger.debug(
+      `Authenticating with provided Stainless API key (length: ${apiKey.length})`
+    );
     return apiKey;
   }
   logger.debug("Authenticating with GitHub OIDC");
@@ -41194,10 +41196,6 @@ async function* pollBuild({
 
 // src/preview.ts
 async function main() {
-  logger.info(`HELLO FROM BILL`, {
-    repo: process.env.GITHUB_REPOSITORY,
-    workflowRef: process.env.GITHUB_WORKFLOW_REF
-  });
   try {
     const apiKey = await getStainlessAuthToken();
     const orgName = getInput("org", { required: true });
@@ -41251,7 +41249,6 @@ async function main() {
       apiKey,
       logLevel: "warn"
     });
-    logger.info(`--> before getting parent revision??`);
     logger.group("Getting parent revision");
     const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
     const { nonMainBaseRef } = await getNonMainBaseRef({
