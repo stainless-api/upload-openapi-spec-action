@@ -1,0 +1,41 @@
+name: Prepare OpenAPI Spec — Combine
+description: Combine multiple OpenAPI specification files into a single file
+branding:
+  icon: layers
+  color: blue
+runs:
+  using: node20
+  main: ../../dist/prepareCombine.js
+
+inputs:
+  input_files:
+    description: >-
+      Glob patterns or file paths of OpenAPI spec files to combine
+      (e.g., "services/**/*.yaml" or "api1.json,api2.yaml")
+    required: true
+  output_path:
+    description: Path where the combined file will be saved
+    required: false
+    default: ./combined-openapi.yaml
+  server_url_strategy:
+    description: |
+      Optional YAML configuration for handling server URLs during combine.
+      Format:
+        global: <url>  # URL to use as global server in combined spec
+        preserve:      # List of URLs to preserve at operation level
+          - <url1>
+          - <url2>
+      URLs not listed are ignored (removed, will use global server)
+    required: false
+  log_level:
+    description: >-
+      Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
+      Use 'debug' for detailed diagnostic information.
+    required: false
+    default: info
+
+outputs:
+  combined_file:
+    description: Path to the combined OpenAPI specification file
+  path_count:
+    description: Total number of paths in the combined specification

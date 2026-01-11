@@ -150,6 +150,8 @@ This repository provides several GitHub actions:
 
 ### Preparation Tools
 
+- `stainless-api/upload-openapi-spec-action/prepare/combine` - Combine multiple OpenAPI spec files into one. See the [action definition](./prepare/combine/action.yml) for input parameters.
+
 - `stainless-api/upload-openapi-spec-action/prepare/swagger` - Convert Swagger 2.0 specs to OpenAPI 3.x. See the [action definition](./prepare/swagger/action.yml) for input parameters and the [example workflow](./examples/prepare_swagger.yml).
 
 All except `checkout-pr-ref` work in GitLab CI.

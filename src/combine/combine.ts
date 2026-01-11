@@ -1,0 +1,337 @@
+/**
+ * Combines multiple OpenAPI specification files into a single file.
+ * Uses Redocly CLI's `join` command for proper OpenAPI handling.
+ */
+
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { glob } from "glob";
+import spawn from "nano-spawn";
+import YAML from "yaml";
+import { logger } from "../logger";
+
+export interface OpenAPISpec {
+  openapi: string;
+  paths?: Record<string, Record<string, unknown>>;
+  servers?: Server[];
+  [key: string]: unknown;
+}
+
+export interface Server {
+  url: string;
+  description?: string;
+  variables?: Record<string, unknown>;
+}
+
+export interface ServerUrlStrategy {
+  global?: string;
+  preserve?: string[];
+}
+
+export interface CombineResult {
+  spec: OpenAPISpec;
+  pathCountBefore: number;
+  pathCountAfter: number;
+}
+
+const HTTP_METHODS = [
+  "get",
+  "post",
+  "put",
+  "delete",
+  "patch",
+  "options",
+  "head",
+] as const;
+
+export interface FindFilesResult {
+  files: string[];
+  /** Patterns that matched zero files */
+  emptyPatterns: string[];
+}
+
+/**
+ * Find files matching comma-separated glob patterns or direct paths.
+ */
+export async function findFiles(patterns: string): Promise<FindFilesResult> {
+  const allFiles: string[] = [];
+  const emptyPatterns: string[] = [];
+  const patternList = patterns.split(",").map((p) => p.trim());
+
+  for (const pattern of patternList) {
+    const files = await glob(pattern, { absolute: true });
+    if (files.length === 0) {
+      emptyPatterns.push(pattern);
+    } else {
+      allFiles.push(...files);
+    }
+  }
+
+  return {
+    files: [...new Set(allFiles)],
+    emptyPatterns,
+  };
+}
+
+/**
+ * Load an OpenAPI spec from JSON or YAML file.
+ */
+export async function loadSpec(filePath: string): Promise<OpenAPISpec> {
+  const content = await fs.readFile(filePath, "utf-8");
+  if (filePath.endsWith(".json")) {
+    return JSON.parse(content);
+  }
+  return YAML.parse(content);
+}
+
+/**
+ * Save an OpenAPI spec as YAML or JSON based on file extension.
+ */
+export async function saveSpec(
+  spec: OpenAPISpec,
+  filePath: string,
+): Promise<void> {
+  const dir = path.dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
+
+  const isJson = filePath.endsWith(".json");
+  const content = isJson
+    ? JSON.stringify(spec, null, 2) + "\n"
+    : YAML.stringify(spec, { lineWidth: 0, aliasDuplicateObjects: false });
+
+  await fs.writeFile(filePath, content, "utf-8");
+}
+
+/**
+ * Count paths in an OpenAPI spec.
+ */
+export function countPaths(spec: OpenAPISpec): number {
+  return Object.keys(spec.paths || {}).length;
+}
+
+/**
+ * Add a base query parameter to a path to disambiguate collisions.
+ */
+function addBaseToPath(pathKey: string, baseUrl: string): string {
+  const url = new URL(baseUrl);
+  const domain = url.hostname;
+  const [pathname, queryString] = pathKey.split("?");
+  const params = new URLSearchParams(queryString || "");
+  params.set("base", domain);
+  return `${pathname}?${params.toString()}`;
+}
+
+/**
+ * Process a spec according to the server URL strategy.
+ */
+function processSpecForServers(
+  spec: OpenAPISpec,
+  strategy: ServerUrlStrategy,
+): OpenAPISpec {
+  const processed: OpenAPISpec = {
+    ...spec,
+    paths: {},
+  };
+
+  if (!spec.servers || spec.servers.length === 0) {
+    if (spec.paths) {
+      processed.paths = { ...spec.paths };
+    }
+    return processed;
+  }
+
+  // Find first matching preserved URL
+  const preservedServerUrl = spec.servers.find((server) =>
+    strategy.preserve?.includes(server.url),
+  )?.url;
+
+  if (preservedServerUrl) {
+    const servers = spec.servers;
+
+    if (spec.paths) {
+      for (const [pathKey, pathItem] of Object.entries(spec.paths)) {
+        const newPathKey = addBaseToPath(pathKey, preservedServerUrl);
+        const newPathItem = { ...pathItem };
+
+        for (const method of HTTP_METHODS) {
+          if (newPathItem[method]) {
+            newPathItem[method] = {
+              ...(newPathItem[method] as Record<string, unknown>),
+              ...((newPathItem[method] as Record<string, unknown>).servers
+                ? {}
+                : { servers }),
+            };
+          }
+        }
+
+        processed.paths![newPathKey] = newPathItem;
+      }
+    }
+
+    delete processed.servers;
+  } else {
+    const hasGlobal =
+      strategy.global &&
+      spec.servers.some((server) => server.url === strategy.global);
+
+    if (!hasGlobal) {
+      delete processed.servers;
+    }
+
+    if (spec.paths) {
+      processed.paths = { ...spec.paths };
+    }
+  }
+
+  return processed;
+}
+
+/**
+ * Combine multiple spec files into one using Redocly CLI.
+ */
+async function combineSpecs(
+  files: string[],
+  outputPath: string,
+  serverStrategy?: ServerUrlStrategy,
+): Promise<void> {
+  if (files.length === 0) {
+    throw new Error("No files to combine");
+  }
+
+  if (files.length === 1) {
+    // Single file: apply strategy and save
+    let spec = await loadSpec(files[0]);
+
+    if (serverStrategy) {
+      spec = processSpecForServers(spec, serverStrategy);
+      if (serverStrategy.global && !spec.servers) {
+        spec.servers = [{ url: serverStrategy.global }];
+      }
+    }
+
+    await saveSpec(spec, outputPath);
+    return;
+  }
+
+  // Prepare files for combining
+  let filesToCombine = files;
+  const tempDir = serverStrategy
+    ? path.join(path.dirname(outputPath), ".temp-combine")
+    : null;
+
+  try {
+    // Process specs if server strategy is provided
+    if (serverStrategy && tempDir) {
+      await fs.mkdir(tempDir, { recursive: true });
+      filesToCombine = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const spec = await loadSpec(files[i]);
+        const processed = processSpecForServers(spec, serverStrategy);
+        const tempFile = path.join(tempDir, `temp-${i}.yaml`);
+        await saveSpec(processed, tempFile);
+        filesToCombine.push(tempFile);
+      }
+    }
+
+    // Use Redocly join to combine specs
+    const jsonPath = outputPath.replace(/\.ya?ml$/, "") + ".json";
+    const jsonDir = path.dirname(jsonPath);
+    await fs.mkdir(jsonDir, { recursive: true });
+
+    logger.debug(`Running: npx @redocly/cli join ... -o "${jsonPath}"`);
+
+    // Redocly CLI outputs to stderr instead of files when NODE_ENV=test
+    const env = { ...process.env, NODE_ENV: "production" };
+
+    try {
+      await spawn(
+        "npx",
+        ["@redocly/cli", "join", ...filesToCombine, "-o", jsonPath],
+        { env },
+      );
+    } catch (error: unknown) {
+      const stderr =
+        error && typeof error === "object" && "stderr" in error
+          ? (error as { stderr: string }).stderr
+          : "";
+      throw new Error(`Redocly join failed: ${stderr || String(error)}`);
+    }
+
+    // Load combined spec
+    const combinedSpec = await loadSpec(jsonPath);
+
+    // Apply global server if needed
+    if (serverStrategy?.global && !combinedSpec.servers) {
+      combinedSpec.servers = [{ url: serverStrategy.global }];
+    }
+
+    await saveSpec(combinedSpec, outputPath);
+
+    // Clean up JSON file
+    await fs.unlink(jsonPath).catch(() => {});
+  } finally {
+    // Clean up temp directory
+    if (tempDir) {
+      await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
+}
+
+/**
+ * Main function to combine OpenAPI specs.
+ */
+export async function combineOpenAPISpecs(
+  inputPatterns: string,
+  outputPath: string,
+  serverStrategy?: ServerUrlStrategy,
+): Promise<CombineResult> {
+  const { files, emptyPatterns } = await findFiles(inputPatterns);
+
+  if (emptyPatterns.length > 0) {
+    for (const pattern of emptyPatterns) {
+      logger.warn(`No files matched: ${pattern}`);
+    }
+  }
+
+  if (files.length === 0) {
+    throw new Error(
+      `No files found matching input patterns.\n\n` +
+        `Patterns that matched nothing:\n` +
+        emptyPatterns.map((p) => `  - ${p}`).join("\n") +
+        `\n\nMake sure:\n` +
+        `  1. You have checked out the repository using actions/checkout@v4\n` +
+        `  2. The file paths are correct relative to the repository root\n` +
+        `  3. The files exist in your repository`,
+    );
+  }
+
+  logger.info(`Found ${files.length} file(s) to combine`);
+  for (const file of files) {
+    logger.debug(`  - ${file}`);
+  }
+
+  // Count paths before combine
+  let pathCountBefore = 0;
+  for (const file of files) {
+    const spec = await loadSpec(file);
+    pathCountBefore += countPaths(spec);
+  }
+
+  // Ensure output directory exists
+  const outputDir = path.dirname(outputPath);
+  await fs.mkdir(outputDir, { recursive: true });
+
+  // Combine specs
+  await combineSpecs(files, outputPath, serverStrategy);
+
+  // Load combined spec to count paths
+  const combinedSpec = await loadSpec(outputPath);
+  const pathCountAfter = countPaths(combinedSpec);
+
+  return {
+    spec: combinedSpec,
+    pathCountBefore,
+    pathCountAfter,
+  };
+}

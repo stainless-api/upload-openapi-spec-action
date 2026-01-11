@@ -18410,17 +18410,15 @@ function makeCommitMessageConventional(message) {
   return message;
 }
 
-// src/compat/index.ts
-var crypto = __toESM(require("node:crypto"));
-var fs = __toESM(require("node:fs"));
-
 // node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
 // node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 
-// src/compat/index.ts
+// src/compat/output.ts
+var crypto = __toESM(require("node:crypto"));
+var fs = __toESM(require("node:fs"));
 function setOutput(name, value) {
   if (isGitLabCI()) return;
   const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
@@ -18441,6 +18439,8 @@ ${delimiter}
 `);
   }
 }
+
+// src/compat/index.ts
 async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
@@ -18828,12 +18828,13 @@ var package_default = {
   version: "1.9.0",
   main: "dist/index.js",
   scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
     "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
     "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-combine": "esbuild --bundle src/combine/index.ts --outfile=dist/prepareCombine.js --platform=node --target=node20 --external:@redocly/cli",
     "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
     lint: "tsc && prettier --check src && eslint src",
     "lint:fix": "prettier --write src && eslint src --fix",
@@ -18852,8 +18853,10 @@ var package_default = {
     vitest: "^3.2.4"
   },
   dependencies: {
+    "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.15.0",
     "@stainless-api/sdk": "^0.1.0-alpha.19",
+    glob: "^11.0.0",
     "nano-spawn": "^1.0.3",
     "ts-dedent": "^2.2.0",
     yaml: "^2.8.1"

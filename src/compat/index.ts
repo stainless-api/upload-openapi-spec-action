@@ -3,7 +3,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
 import {
@@ -18,12 +17,14 @@ import {
   type Platform,
 } from "./platform";
 import { getInput, getBooleanInput } from "./input";
+import { setOutput } from "./output";
 import { logger } from "../logger";
 
 export {
   isGitLabCI,
   getInput,
   getBooleanInput,
+  setOutput,
   githubPlatform,
   gitlabPlatform,
   detectPlatform,
@@ -80,29 +81,6 @@ export function isPullRequestOpenedEvent(): boolean {
   return isGitLabCI()
     ? process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened"
     : getGitHubContext().payload.action === "opened";
-}
-
-export function setOutput(name: string, value: any) {
-  if (isGitLabCI()) return;
-
-  const stringified =
-    value === null || value === undefined
-      ? ""
-      : typeof value === "string"
-        ? value
-        : JSON.stringify(value);
-
-  const filePath = process.env["GITHUB_OUTPUT"];
-  if (filePath && fs.existsSync(filePath)) {
-    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
-    fs.appendFileSync(
-      filePath,
-      `${name}<<${delimiter}\n${stringified}\n${delimiter}\n`,
-      "utf-8",
-    );
-  } else {
-    process.stdout.write(`\n::set-output name=${name}::${stringified}\n`);
-  }
 }
 
 export function getPRTerm(): string {
