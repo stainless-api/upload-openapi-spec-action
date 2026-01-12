@@ -131,6 +131,12 @@ export function getGitHostToken() {
   return token;
 }
 
+export function getRunUrl() {
+  return isGitLabCI()
+    ? `${process.env.CI_PROJECT_URL}/-/pipelines/${process.env.CI_PIPELINE_ID}`
+    : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+}
+
 export async function getStainlessAuthToken(): Promise<string> {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
