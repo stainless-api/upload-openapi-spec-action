@@ -13,7 +13,7 @@ image: node:20-alpine
   # - FAIL_ON: When to fail the job (defaults to "error")
   script:
     - apk add --no-cache git
-    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/1369f900e4ea28c583a5eb171ad880e3aa462ccc/dist/preview.js
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/699c262d3523be4225ea0c85dd2ef5a83186c06a/dist/preview.js
     - node preview.js
   variables:
     HEAD_SHA: $CI_COMMIT_SHA
