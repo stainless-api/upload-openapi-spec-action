@@ -37687,7 +37687,7 @@ function getRepoPath(owner, repo) {
   return process.env.GITLAB_STAGING_REPO_PATH ? `${gitlabBaseUrl()}/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
 }
 function getGitHostToken() {
-  const inputName = isGitLabCI() ? "ci_job_token" : "github_token";
+  const inputName = isGitLabCI() ? "gitlab_token" : "github_token";
   const token = getInput(inputName);
   const isRequired = getBooleanInput("make_comment", { required: true });
   if (isRequired && !token) {
