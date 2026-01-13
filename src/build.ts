@@ -14,8 +14,9 @@ import { logger } from "./logger";
 import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
+import { withResultReporting } from "./telemetry";
 
-async function main() {
+const main = withResultReporting("build", async () => {
   try {
     const apiKey = await getStainlessAuthToken();
     const oasPath = getInput("oas_path", { required: false }) || undefined;
@@ -97,10 +98,9 @@ async function main() {
       logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      logger.error("Error interacting with API:", error);
-      process.exit(1);
+      throw error;
     }
   }
-}
+});
 
 main();

@@ -7,7 +7,7 @@ export function getStainlessClient(
   opts: ClientOptions,
 ) {
   const headers: Record<string, string> = {
-    "User-Agent": `Stainless/Action ${packageJSON}`,
+    "User-Agent": `Stainless/Action ${packageJSON.version}`,
   };
 
   if (action) {
