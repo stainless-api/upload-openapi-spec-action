@@ -40841,6 +40841,137 @@ Stainless.Projects = Projects;
 Stainless.Builds = Builds2;
 Stainless.Orgs = Orgs3;
 
+// package.json
+var package_default = {
+  name: "upload-openapi-spec-action",
+  version: "1.9.0",
+  main: "dist/index.js",
+  scripts: {
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
+    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
+    lint: "tsc && prettier --check src && eslint src",
+    "lint:fix": "prettier --write src && eslint src --fix",
+    test: "vitest"
+  },
+  license: "ISC",
+  devDependencies: {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.3",
+    esbuild: "^0.25.9",
+    eslint: "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    prettier: "3.6.2",
+    typescript: "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    vitest: "^3.2.4"
+  },
+  dependencies: {
+    "@stainless-api/github-internal": "^0.15.0",
+    "@stainless-api/sdk": "^0.1.0-alpha.19",
+    "nano-spawn": "^1.0.3",
+    "ts-dedent": "^2.2.0",
+    yaml: "^2.8.1"
+  }
+};
+
+// src/stainless.ts
+function getStainlessClient(action, opts) {
+  const headers = {
+    "User-Agent": `Stainless/Action ${package_default.version}`
+  };
+  if (action) {
+    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
+    if (isGitLabCI()) {
+      headers["X-GitLab-CI"] = actionPath;
+    } else {
+      headers["X-GitHub-Action"] = actionPath;
+    }
+  }
+  return new Stainless({
+    ...opts,
+    defaultHeaders: {
+      ...opts.defaultHeaders,
+      ...headers
+    }
+  });
+}
+
+// src/telemetry.ts
+var accumulatedBuildIds = [];
+function addBuildId(buildId) {
+  accumulatedBuildIds.push(buildId);
+}
+function withResultReporting(actionType, fn) {
+  return async () => {
+    let stainless;
+    let projectName;
+    try {
+      projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
+      stainless = getStainlessClient(actionType, {
+        project: projectName,
+        apiKey,
+        logLevel: "warn"
+      });
+      await fn(stainless);
+      await maybeReportResult({
+        stainless,
+        projectName,
+        actionType,
+        successOrError: { result: "success" }
+      });
+    } catch (error) {
+      logger.fatal("Error in action:", error);
+      if (stainless) {
+        await maybeReportResult({
+          stainless,
+          projectName,
+          actionType,
+          successOrError: serializeError(error)
+        });
+      }
+      process.exit(1);
+    }
+  };
+}
+function serializeError(error) {
+  const maybeTypedError = error instanceof Error ? error : void 0;
+  return {
+    result: "error",
+    error_message: maybeTypedError?.message ?? String(error),
+    error_name: maybeTypedError?.name,
+    error_stack: maybeTypedError?.stack
+  };
+}
+async function maybeReportResult({
+  stainless,
+  projectName,
+  actionType,
+  successOrError
+}) {
+  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
+    return;
+  }
+  try {
+    const body = {
+      project: projectName,
+      build_ids: accumulatedBuildIds,
+      action_type: actionType,
+      ...successOrError
+    };
+    await stainless.post("/api/reports/action-result", {
+      body
+    });
+  } catch (error) {
+    logger.error("Error reporting result to Stainless", error);
+  }
+}
+
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 10 * 60;
@@ -41057,6 +41188,7 @@ async function* pollBuild({
     log.info(
       `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
+    addBuildId(buildId);
   } else {
     logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
@@ -41138,134 +41270,6 @@ async function* pollBuild({
     };
   }
   return { outcomes, documentedSpec };
-}
-
-// package.json
-var package_default = {
-  name: "upload-openapi-spec-action",
-  version: "1.9.0",
-  main: "dist/index.js",
-  scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
-    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
-    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
-    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
-    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
-    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
-    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
-    lint: "tsc && prettier --check src && eslint src",
-    "lint:fix": "prettier --write src && eslint src --fix",
-    test: "vitest"
-  },
-  license: "ISC",
-  devDependencies: {
-    "@eslint/js": "^9.35.0",
-    "@types/node": "^22.18.3",
-    esbuild: "^0.25.9",
-    eslint: "^9.35.0",
-    "eslint-config-prettier": "^10.1.8",
-    prettier: "3.6.2",
-    typescript: "^5.9.2",
-    "typescript-eslint": "^8.44.0",
-    vitest: "^3.2.4"
-  },
-  dependencies: {
-    "@stainless-api/github-internal": "^0.15.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.19",
-    "nano-spawn": "^1.0.3",
-    "ts-dedent": "^2.2.0",
-    yaml: "^2.8.1"
-  }
-};
-
-// src/stainless.ts
-function getStainlessClient(action, opts) {
-  const headers = {
-    "User-Agent": `Stainless/Action ${package_default.version}`
-  };
-  if (action) {
-    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
-    if (isGitLabCI()) {
-      headers["X-GitLab-CI"] = actionPath;
-    } else {
-      headers["X-GitHub-Action"] = actionPath;
-    }
-  }
-  return new Stainless({
-    ...opts,
-    defaultHeaders: {
-      ...opts.defaultHeaders,
-      ...headers
-    }
-  });
-}
-
-// src/telemetry.ts
-var accumulatedBuildIds = [];
-function withResultReporting(actionType, fn) {
-  return async () => {
-    let stainless;
-    let projectName;
-    try {
-      projectName = getInput("project", { required: true });
-      const apiKey = await getStainlessAuthToken();
-      stainless = getStainlessClient(actionType, {
-        project: projectName,
-        apiKey,
-        logLevel: "warn"
-      });
-      await fn(stainless);
-      await maybeReportResult({
-        stainless,
-        projectName,
-        actionType,
-        successOrError: { result: "success" }
-      });
-    } catch (error) {
-      logger.fatal("Error in action:", error);
-      if (stainless) {
-        await maybeReportResult({
-          stainless,
-          projectName,
-          actionType,
-          successOrError: serializeError(error)
-        });
-      }
-      process.exit(1);
-    }
-  };
-}
-function serializeError(error) {
-  const maybeTypedError = error instanceof Error ? error : void 0;
-  return {
-    result: "error",
-    error_message: maybeTypedError?.message ?? String(error),
-    error_name: maybeTypedError?.name,
-    error_stack: maybeTypedError?.stack
-  };
-}
-async function maybeReportResult({
-  stainless,
-  projectName,
-  actionType,
-  successOrError
-}) {
-  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
-    return;
-  }
-  try {
-    const body = {
-      project: projectName,
-      build_ids: accumulatedBuildIds,
-      action_type: actionType,
-      ...successOrError
-    };
-    await stainless.post("/api/reports/action-result", {
-      body
-    });
-  } catch (error) {
-    logger.error("Error reporting result to Stainless", error);
-  }
 }
 
 // src/preview.ts

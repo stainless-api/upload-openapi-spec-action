@@ -37806,6 +37806,1077 @@ var GitLabCommentClient = class {
   }
 };
 
+// src/merge.ts
+var fs4 = __toESM(require("node:fs"));
+
+// src/markdown.ts
+var import_ts_dedent = __toESM(require_dist());
+var Symbol2 = {
+  Bulb: "\u{1F4A1}",
+  Exclamation: "\u2757",
+  GreenSquare: "\u{1F7E9}",
+  HeavyAsterisk: "\u2731",
+  HourglassFlowingSand: "\u23F3",
+  MiddleDot: "\xB7",
+  RedSquare: "\u{1F7E5}",
+  RightwardsArrow: "\u2192",
+  SpeechBalloon: "\u{1F4AC}",
+  Warning: "\u26A0\uFE0F",
+  WhiteCheckMark: "\u2705",
+  WhiteLargeSquare: "\u2B1C",
+  Zap: "\u26A1"
+};
+var Bold = (content) => `<b>${content}</b>`;
+var CodeInline = (content) => `<code>${content}</code>`;
+var Comment = (content) => `<!-- ${content} -->`;
+var Italic = (content) => `<i>${content}</i>`;
+function Dedent(templ, ...args) {
+  return (0, import_ts_dedent.dedent)(templ, ...args).trim().replaceAll(/\n\s*\n/gi, "\n\n");
+}
+var Blockquote = (content) => Dedent`
+    <blockquote>
+
+    ${content}
+
+    </blockquote>
+  `;
+var CodeBlock = (props) => {
+  const delimiter = "```";
+  const content = typeof props === "string" ? props : props.content;
+  const language = typeof props === "string" ? "" : props.language;
+  return Dedent`
+    ${delimiter}${language}
+    ${content}
+    ${delimiter}
+  `;
+};
+var Details = ({
+  summary,
+  body,
+  indent = true,
+  open = false
+}) => {
+  return Dedent`
+    <details${open ? " open" : ""}>
+    <summary>${summary}</summary>
+
+    ${indent ? Blockquote(body) : body}
+
+    </details>
+  `;
+};
+var Heading = (content) => `<h3>${content}</h3>`;
+var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
+var Rule = () => `<hr />`;
+
+// src/outcomes.ts
+var FailRunOn = [
+  "never",
+  "fatal",
+  "error",
+  "warning",
+  "note"
+];
+var OutcomeConclusion = [...FailRunOn, "success"];
+function shouldFailRun({
+  failRunOn,
+  outcomes,
+  baseOutcomes
+}) {
+  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
+    const { conclusion, reason } = categorizeOutcome({
+      outcome,
+      baseOutcome: baseOutcomes?.[language]
+    });
+    const didFail = OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
+    return didFail ? [{ language, reason }] : [];
+  });
+  if (failures.length > 0) {
+    logger.warn("The following languages did not build successfully:");
+    for (const { language, reason } of failures) {
+      logger.warn(`  ${language}: ${reason}`);
+    }
+    return false;
+  }
+  return true;
+}
+function categorizeOutcome({
+  outcome,
+  baseOutcome
+}) {
+  const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
+  const commitConclusion = outcome.commit?.completed?.conclusion;
+  const netNewCommitConclusion = baseCommitConclusion !== commitConclusion ? commitConclusion : void 0;
+  const diagnostics = getNewDiagnostics(
+    outcome.diagnostics,
+    baseOutcome?.diagnostics
+  );
+  const diagnosticCounts = countDiagnosticLevels(diagnostics);
+  const checks = getNewChecks(outcome, baseOutcome);
+  const checkFailures = CheckType.filter(
+    (checkType) => checks[checkType] && checks[checkType].status === "completed" && checks[checkType].completed.conclusion !== "success"
+  );
+  if (commitConclusion === "noop") {
+    return {
+      conclusion: "success",
+      reason: "Code was not generated because the target is skipped."
+    };
+  }
+  if (commitConclusion === "cancelled") {
+    return {
+      conclusion: "success",
+      reason: "Code was not generated because the build was cancelled."
+    };
+  }
+  if (!commitConclusion || netNewCommitConclusion === "fatal") {
+    return {
+      conclusion: "fatal",
+      reason: "Code was not generated because there was a fatal error.",
+      isPending: outcome.commit?.status !== "completed"
+    };
+  }
+  if (commitConclusion === "timed_out") {
+    return {
+      conclusion: "fatal",
+      reason: "Timed out."
+    };
+  }
+  if (![
+    // Merge conflicts are warnings, not fatal:
+    "merge_conflict",
+    // Success conclusion are handled below:
+    "error",
+    "warning",
+    "note",
+    "success"
+    // All other commit conclusions are unknown, and thus fatal.
+  ].includes(commitConclusion)) {
+    return {
+      conclusion: "fatal",
+      reason: `Unknown conclusion: ${commitConclusion}`
+    };
+  }
+  if (diagnosticCounts.fatal > 0) {
+    return {
+      conclusion: "fatal",
+      reason: `Found ${diagnosticCounts.fatal} fatal diagnostics.`
+    };
+  }
+  if (diagnosticCounts.error > 0) {
+    return {
+      conclusion: "error",
+      reason: `Found ${diagnosticCounts.error} new error diagnostics.`
+    };
+  }
+  if (checkFailures.includes("build")) {
+    return {
+      conclusion: "error",
+      reason: "The build CI job failed."
+    };
+  }
+  if (netNewCommitConclusion === "error") {
+    return {
+      conclusion: "error",
+      reason: "Build had an error conclusion."
+    };
+  }
+  if (diagnosticCounts.warning > 0) {
+    return {
+      conclusion: "warning",
+      reason: `Found ${diagnosticCounts.warning} warning diagnostics.`
+    };
+  }
+  if (checkFailures.includes("lint")) {
+    return {
+      conclusion: "warning",
+      reason: "The lint CI job failed."
+    };
+  }
+  if (checkFailures.includes("test")) {
+    return {
+      conclusion: "warning",
+      reason: "The test CI job failed."
+    };
+  }
+  if (netNewCommitConclusion === "warning") {
+    return {
+      conclusion: "warning",
+      reason: "Build had a warning conclusion."
+    };
+  }
+  if (netNewCommitConclusion === "merge_conflict") {
+    return {
+      conclusion: "warning",
+      reason: "There was a conflict between your custom code and your generated changes.",
+      isMergeConflict: true
+    };
+  }
+  if (diagnosticCounts.note > 0) {
+    return {
+      conclusion: "note",
+      reason: `Found ${diagnosticCounts.note} note diagnostics.`
+    };
+  }
+  if (netNewCommitConclusion === "note") {
+    return {
+      conclusion: "note",
+      reason: "Build had a note conclusion."
+    };
+  }
+  return {
+    conclusion: "success",
+    reason: "Build was successful.",
+    isPending: Object.values(checks).some(
+      (check) => check.status !== "completed"
+    )
+  };
+}
+var DiagnosticLevel = ["fatal", "error", "warning", "note"];
+function countDiagnosticLevels(diagnostics) {
+  return diagnostics.reduce(
+    (counts, diag) => {
+      counts[diag.level] = (counts[diag.level] || 0) + 1;
+      return counts;
+    },
+    {
+      fatal: 0,
+      error: 0,
+      warning: 0,
+      note: 0
+    }
+  );
+}
+function getNewDiagnostics(diagnostics, baseDiagnostics) {
+  if (!baseDiagnostics) {
+    return diagnostics;
+  }
+  return diagnostics.filter(
+    (d) => !baseDiagnostics.some(
+      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
+    )
+  );
+}
+function sortDiagnostics(diagnostics) {
+  return diagnostics.sort(
+    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
+  );
+}
+var CheckType = ["build", "lint", "test"];
+function getNewChecks(outcome, baseOutcome) {
+  const result = {};
+  for (const checkType of CheckType) {
+    const baseConclusion = baseOutcome?.[checkType]?.status === "completed" && baseOutcome?.[checkType].completed.conclusion;
+    const conclusion = outcome[checkType]?.status === "completed" && outcome[checkType].completed.conclusion;
+    if (outcome[checkType] && (!baseConclusion || baseConclusion !== conclusion)) {
+      result[checkType] = outcome[checkType];
+    }
+  }
+  return result;
+}
+
+// src/comment.ts
+var COMMENT_TITLE = Heading(
+  `${Symbol2.HeavyAsterisk} Stainless preview builds`
+);
+var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
+function printComment({
+  noChanges,
+  orgName,
+  projectName,
+  branch,
+  commitMessage,
+  commitMessages,
+  hasAiCommitMessageMap,
+  baseOutcomes,
+  outcomes
+}) {
+  const Blocks3 = (() => {
+    if (noChanges) {
+      return "No changes were made to the SDKs.";
+    }
+    const canEdit = !!baseOutcomes;
+    const hasMultipleCommitMessages = commitMessages && Object.keys(commitMessages).length > 0;
+    if (hasMultipleCommitMessages) {
+      return [
+        Dedent`
+          This ${getPRTerm()} will update the ${CodeInline(
+          projectName
+        )} SDKs with the following commit messages.
+        `,
+        CommitMessagesSection({
+          commitMessages,
+          hasAiCommitMessageMap,
+          outcomes
+        }),
+        canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
+        Results({ orgName, projectName, branch, outcomes, baseOutcomes })
+      ].filter((f) => f !== null).join(`
+
+`);
+    }
+    return [
+      Dedent`
+        This ${getPRTerm()} will update the ${CodeInline(
+        projectName
+      )} SDKs with the following commit message.
+
+        ${CodeBlock(commitMessage)}
+
+        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
+      `,
+      Results({ orgName, projectName, branch, outcomes, baseOutcomes })
+    ].filter((f) => f !== null).join(`
+
+`);
+  })();
+  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+  const fullComment = Dedent`
+    ${COMMENT_TITLE}
+
+    ${Blocks3}
+
+    ${Rule()}
+
+    ${COMMENT_FOOTER_DIVIDER}
+
+    ${Italic(
+    `This comment is auto-generated by ${getCITerm()} and is automatically kept up to date as you push.<br/>If you push custom code to the preview branch, ${Link({
+      text: `re-run this workflow`,
+      href: getRunUrl()
+    })} to update the comment.<br/>Last updated: ${dateString}`
+  )}
+  `;
+  return fullComment;
+}
+function CommitMessagesSection({
+  commitMessages,
+  hasAiCommitMessageMap,
+  outcomes
+}) {
+  const languages = Object.keys(outcomes).sort();
+  const messageBlocks = languages.map((lang) => {
+    const message = commitMessages[lang] || "No changes detected";
+    const isGeneratingAiCommitMessage = hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
+    const statusText = isGeneratingAiCommitMessage ? `${Symbol2.HourglassFlowingSand} (generating...)
+` : "";
+    return Dedent`
+      **${lang}**
+      ${statusText}${CodeBlock(message)}
+    `;
+  });
+  return messageBlocks.join("\n");
+}
+var DiagnosticIcon = {
+  fatal: Symbol2.Exclamation,
+  error: Symbol2.Exclamation,
+  warning: Symbol2.Warning,
+  note: Symbol2.Bulb
+};
+function Results({
+  orgName,
+  projectName,
+  branch,
+  outcomes,
+  baseOutcomes
+}) {
+  const results = [];
+  let hasPending = false;
+  Object.entries(outcomes).forEach(([lang, head]) => {
+    const base = baseOutcomes?.[lang];
+    hasPending ||= categorizeOutcome({
+      outcome: head,
+      baseOutcome: base
+    }).isPending ?? false;
+    const result = Result({
+      orgName,
+      projectName,
+      branch,
+      lang,
+      head,
+      base
+    });
+    if (result) {
+      results.push(result);
+    }
+  });
+  if (hasPending) {
+    results.push(
+      Dedent`
+        ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
+      `
+    );
+  }
+  return results.join("\n\n");
+}
+function Result({
+  orgName,
+  projectName,
+  branch,
+  lang,
+  head,
+  base
+}) {
+  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+    outcome: head,
+    baseOutcome: base
+  });
+  const { ResultIcon, Description } = (() => {
+    if (conclusion === "fatal") {
+      return {
+        ResultIcon: Symbol2.Exclamation,
+        Description: Italic(reason)
+      };
+    }
+    if (isMergeConflict) {
+      return {
+        ResultIcon: Symbol2.Zap,
+        Description: [
+          Italic(reason),
+          Italic(
+            `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({
+              text: "here",
+              href: "https://www.stainless.com/docs/guides/add-custom-code"
+            })}.`
+          )
+        ].join("\n")
+      };
+    }
+    if (conclusion !== "note" && conclusion !== "success") {
+      return {
+        ResultIcon: Symbol2.Warning,
+        Description: Italic("There was a regression in your SDK.")
+      };
+    }
+    if (!isPending) {
+      return {
+        ResultIcon: Symbol2.WhiteCheckMark,
+        Description: Italic("Your SDK built successfully.")
+      };
+    }
+    return {
+      ResultIcon: Symbol2.HourglassFlowingSand,
+      Description: ""
+    };
+  })();
+  return Details({
+    summary: [
+      ResultIcon,
+      Bold(`${projectName}-${lang}`),
+      [
+        Link({
+          text: "studio",
+          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
+        }),
+        GitHubLink(head),
+        base ? CompareLink(base, head) : null,
+        MergeConflictLink(head)
+      ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
+    ].join(" "),
+    body: [
+      Description,
+      StatusLine(base, head),
+      InstallationDetails(head, lang),
+      base ? DiagnosticsDetails(head, base) : null
+    ].filter((value) => Boolean(value)).join("\n"),
+    open: conclusion !== "note" && conclusion !== "success" && !isPending
+  });
+}
+function StatusLine(base, head) {
+  return [
+    StatusStep(base, head, "generate"),
+    StatusStep(base, head, "build"),
+    StatusStep(base, head, "lint"),
+    StatusStep(base, head, "test")
+  ].filter((value) => Boolean(value)).join(` ${Symbol2.RightwardsArrow} `);
+}
+function StatusStep(base, head, step) {
+  let baseStatus = base ? StatusSymbol(base, step) : null;
+  let headStatus = StatusSymbol(head, step);
+  if (!headStatus) {
+    return null;
+  }
+  if (baseStatus === Symbol2.HourglassFlowingSand || headStatus === Symbol2.HourglassFlowingSand) {
+    baseStatus = Symbol2.HourglassFlowingSand;
+    headStatus = Symbol2.HourglassFlowingSand;
+  }
+  const headText = CodeInline(`${step} ${headStatus}`);
+  const headURL = StatusURL(head, step);
+  const headLink = headURL ? Link({ text: headText, href: headURL }) : headText;
+  if (!baseStatus || baseStatus === headStatus) {
+    return headLink;
+  }
+  const baseText = CodeInline(`${step} ${baseStatus}`);
+  const baseURL = StatusURL(base, step);
+  const baseLink = baseURL ? Link({ text: baseText, href: baseURL }) : baseText;
+  return `${headLink} (prev: ${baseLink})`;
+}
+function StatusSymbol(outcome, step) {
+  if (!outcome.commit?.completed?.commit) {
+    return null;
+  }
+  if (step === "generate") {
+    switch (outcome.commit.completed.conclusion) {
+      case "fatal":
+      case "error":
+      case "cancelled":
+        return Symbol2.Exclamation;
+      case "merge_conflict":
+        return Symbol2.Zap;
+      case "upstream_merge_conflict":
+      case "warning":
+        return Symbol2.Warning;
+      default:
+        return Symbol2.WhiteCheckMark;
+    }
+  }
+  const stepData = outcome[step];
+  if (!stepData) {
+    return null;
+  }
+  if (stepData.status === "completed") {
+    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : Symbol2.Exclamation;
+  }
+  return Symbol2.HourglassFlowingSand;
+}
+function StatusURL(outcome, step) {
+  if (step === "generate" || !outcome[step] || outcome[step].status !== "completed") {
+    return null;
+  }
+  return outcome[step]?.completed?.url;
+}
+function GitHubLink(outcome) {
+  if (!outcome.commit?.completed?.commit) return null;
+  const {
+    repo: { owner, name, branch }
+  } = outcome.commit.completed.commit;
+  return Link({
+    text: "code",
+    href: `${getRepoPath(owner, name)}/tree/${encodeURIComponent(branch)}`
+  });
+}
+function CompareLink(base, head) {
+  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+    return null;
+  }
+  const { repo } = head.commit.completed.commit;
+  const baseBranch = base.commit.completed.commit.repo.branch;
+  const headBranch = head.commit.completed.commit.repo.branch;
+  const compareURL = `${getRepoPath(repo.owner, repo.name)}/compare/${baseBranch}..${headBranch}`;
+  return Link({ text: "diff", href: compareURL });
+}
+function MergeConflictLink(outcome) {
+  if (!outcome.commit?.completed?.merge_conflict_pr) return null;
+  const {
+    repo: { owner, name },
+    number
+  } = outcome.commit.completed.merge_conflict_pr;
+  return Link({
+    text: "conflict",
+    href: `https://github.com/${owner}/${name}/pull/${number}`
+  });
+}
+function DiagnosticsDetails(head, base) {
+  if (!base.diagnostics || !head.diagnostics) return null;
+  const newDiagnostics = getNewDiagnostics(head.diagnostics, base.diagnostics);
+  if (newDiagnostics.length === 0) return null;
+  const levelCounts = countDiagnosticLevels(newDiagnostics);
+  const diagnosticCounts = Object.entries(levelCounts).filter(([, count]) => count > 0).map(([level, count]) => `${count} ${level}`);
+  const diagnosticList = sortDiagnostics(newDiagnostics).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
+  const tableRows = diagnosticList.map((diagnostic) => `<tr>
+<td>${diagnostic}</td>
+</tr>`).join("\n");
+  const tableContent = `<table>
+${tableRows}
+</table>`;
+  return Details({
+    summary: `New diagnostics (${diagnosticCounts.join(", ")})`,
+    body: tableContent,
+    indent: false
+  });
+}
+function InstallationDetails(head, lang) {
+  let githubGoURL = null;
+  let installation = null;
+  if (head.commit?.completed.commit) {
+    const { repo, sha } = head.commit.completed.commit;
+    githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
+  }
+  switch (lang) {
+    case "typescript":
+    case "node": {
+      if (head.install_url) {
+        installation = `npm install ${head.install_url}`;
+      }
+      break;
+    }
+    case "python": {
+      if (head.install_url) {
+        installation = `pip install ${head.install_url}`;
+      }
+      break;
+    }
+    case "go": {
+      if (githubGoURL) {
+        installation = `go get ${githubGoURL}`;
+      }
+      break;
+    }
+    default: {
+      return null;
+    }
+  }
+  if (!installation) return null;
+  return CodeBlock({ content: installation, language: "bash" });
+}
+function parseCommitMessage(body) {
+  return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
+}
+function parseCommitMessages(body) {
+  if (!body) {
+    return null;
+  }
+  const commitMessages = {};
+  const languageBlocks = body.matchAll(
+    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
+  );
+  for (const match of languageBlocks) {
+    const language = match[1];
+    const message = match[2].trim();
+    if (message && message !== "No changes detected") {
+      commitMessages[language] = message;
+    }
+  }
+  if (Object.keys(commitMessages).length === 0) {
+    return null;
+  }
+  return commitMessages;
+}
+async function retrieveComment({
+  token,
+  prNumber
+}) {
+  const client = createCommentClient(token, prNumber);
+  const comments = await client.listComments();
+  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
+  return {
+    id: existingComment?.id,
+    commitMessages: parseCommitMessages(existingComment?.body),
+    commitMessage: parseCommitMessage(existingComment?.body)
+  };
+}
+async function upsertComment({
+  body,
+  token,
+  prNumber,
+  skipCreate = false
+}) {
+  const client = createCommentClient(token, prNumber);
+  logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
+  const comments = await client.listComments();
+  const firstLine = body.trim().split("\n")[0];
+  const existingComment = comments.find(
+    (comment) => comment.body?.includes(firstLine)
+  );
+  if (existingComment) {
+    logger.debug("Updating existing comment:", existingComment.id);
+    await client.updateComment(existingComment.id, body);
+  } else if (!skipCreate) {
+    logger.debug("Creating new comment");
+    await client.createComment(body);
+  }
+}
+function areCommentsEqual(a, b) {
+  return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
+}
+function commentThrottler(token, prNumber) {
+  let lastComment = null;
+  let lastCommentTime = null;
+  return async ({ body, force = false }) => {
+    if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
+      await upsertComment({ body, token, prNumber });
+      lastComment = body;
+      lastCommentTime = /* @__PURE__ */ new Date();
+    }
+  };
+}
+
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
+// node_modules/nano-spawn/source/context.js
+var import_node_process = __toESM(require("node:process"), 1);
+var import_node_util = require("node:util");
+var getContext = (raw) => ({
+  start: import_node_process.default.hrtime.bigint(),
+  command: raw.map((part) => getCommandPart((0, import_node_util.stripVTControlCharacters)(part))).join(" "),
+  state: { stdout: "", stderr: "", output: "" }
+});
+var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
+
+// node_modules/nano-spawn/source/options.js
+var import_node_path = __toESM(require("node:path"), 1);
+var import_node_url = require("node:url");
+var import_node_process2 = __toESM(require("node:process"), 1);
+var getOptions = ({
+  stdin,
+  stdout,
+  stderr,
+  stdio = [stdin, stdout, stderr],
+  env: envOption,
+  preferLocal,
+  cwd: cwdOption = ".",
+  ...options
+}) => {
+  const cwd = cwdOption instanceof URL ? (0, import_node_url.fileURLToPath)(cwdOption) : import_node_path.default.resolve(cwdOption);
+  const env = envOption ? { ...import_node_process2.default.env, ...envOption } : void 0;
+  const input = stdio[0]?.string;
+  return {
+    ...options,
+    input,
+    stdio: input === void 0 ? stdio : ["pipe", ...stdio.slice(1)],
+    env: preferLocal ? addLocalPath(env ?? import_node_process2.default.env, cwd) : env,
+    cwd
+  };
+};
+var addLocalPath = ({ Path = "", PATH = Path, ...env }, cwd) => {
+  const pathParts = PATH.split(import_node_path.default.delimiter);
+  const localPaths = getLocalPaths([], import_node_path.default.resolve(cwd)).map((localPath) => import_node_path.default.join(localPath, "node_modules/.bin")).filter((localPath) => !pathParts.includes(localPath));
+  return { ...env, PATH: [...localPaths, PATH].filter(Boolean).join(import_node_path.default.delimiter) };
+};
+var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
+
+// node_modules/nano-spawn/source/spawn.js
+var import_node_child_process = require("node:child_process");
+var import_node_events2 = require("node:events");
+var import_node_process5 = __toESM(require("node:process"), 1);
+
+// node_modules/nano-spawn/source/windows.js
+var import_promises = __toESM(require("node:fs/promises"), 1);
+var import_node_path2 = __toESM(require("node:path"), 1);
+var import_node_process3 = __toESM(require("node:process"), 1);
+var applyForceShell = async (file, commandArguments, options) => await shouldForceShell(file, options) ? [escapeFile(file), commandArguments.map((argument) => escapeArgument(argument)), { ...options, shell: true }] : [file, commandArguments, options];
+var shouldForceShell = async (file, { shell, cwd, env = import_node_process3.default.env }) => import_node_process3.default.platform === "win32" && !shell && !await isExe(file, cwd, env);
+var isExe = (file, cwd, { Path = "", PATH = Path }) => (
+  // If the *.exe or *.com file extension was not omitted.
+  // Windows common file systems are case-insensitive.
+  exeExtensions.some((extension) => file.toLowerCase().endsWith(extension)) || mIsExe(file, cwd, PATH)
+);
+var EXE_MEMO = {};
+var memoize = (function_) => (...arguments_) => (
+  // Use returned assignment to keep code small
+  EXE_MEMO[arguments_.join("\0")] ??= function_(...arguments_)
+);
+var access = memoize(import_promises.default.access);
+var mIsExe = memoize(async (file, cwd, PATH) => {
+  const parts = PATH.split(import_node_path2.default.delimiter).filter(Boolean).map((part) => part.replace(/^"(.*)"$/, "$1"));
+  try {
+    await Promise.any(
+      [cwd, ...parts].flatMap(
+        (part) => exeExtensions.map((extension) => access(`${import_node_path2.default.resolve(part, file)}${extension}`))
+      )
+    );
+  } catch {
+    return false;
+  }
+  return true;
+});
+var exeExtensions = [".exe", ".com"];
+var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
+var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
+
+// node_modules/nano-spawn/source/result.js
+var import_node_events = require("node:events");
+var import_node_process4 = __toESM(require("node:process"), 1);
+var getResult = async (nodeChildProcess, { input }, context) => {
+  const instance = await nodeChildProcess;
+  if (input !== void 0) {
+    instance.stdin.end(input);
+  }
+  const onClose = (0, import_node_events.once)(instance, "close");
+  try {
+    await Promise.race([
+      onClose,
+      ...instance.stdio.filter(Boolean).map((stream) => onStreamError(stream))
+    ]);
+    checkFailure(context, getErrorOutput(instance));
+    return getOutputs(context);
+  } catch (error) {
+    await Promise.allSettled([onClose]);
+    throw getResultError(error, instance, context);
+  }
+};
+var onStreamError = async (stream) => {
+  for await (const [error] of (0, import_node_events.on)(stream, "error")) {
+    if (!["ERR_STREAM_PREMATURE_CLOSE", "EPIPE"].includes(error?.code)) {
+      throw error;
+    }
+  }
+};
+var checkFailure = ({ command }, { exitCode, signalName }) => {
+  if (signalName !== void 0) {
+    throw new SubprocessError(`Command was terminated with ${signalName}: ${command}`);
+  }
+  if (exitCode !== void 0) {
+    throw new SubprocessError(`Command failed with exit code ${exitCode}: ${command}`);
+  }
+};
+var getResultError = (error, instance, context) => Object.assign(
+  getErrorInstance(error, context),
+  getErrorOutput(instance),
+  getOutputs(context)
+);
+var getErrorInstance = (error, { command }) => error instanceof SubprocessError ? error : new SubprocessError(`Command failed: ${command}`, { cause: error });
+var SubprocessError = class extends Error {
+  name = "SubprocessError";
+};
+var getErrorOutput = ({ exitCode, signalCode }) => ({
+  // `exitCode` can be a negative number (`errno`) when the `error` event is emitted on the `instance`
+  ...exitCode < 1 ? {} : { exitCode },
+  ...signalCode === null ? {} : { signalName: signalCode }
+});
+var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
+  stdout: getOutput(stdout),
+  stderr: getOutput(stderr),
+  output: getOutput(output),
+  command,
+  durationMs: Number(import_node_process4.default.hrtime.bigint() - start) / 1e6
+});
+var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
+
+// node_modules/nano-spawn/source/spawn.js
+var spawnSubprocess = async (file, commandArguments, options, context) => {
+  try {
+    if (["node", "node.exe"].includes(file.toLowerCase())) {
+      file = import_node_process5.default.execPath;
+      commandArguments = [...import_node_process5.default.execArgv.filter((flag) => !flag.startsWith("--inspect")), ...commandArguments];
+    }
+    [file, commandArguments, options] = await applyForceShell(file, commandArguments, options);
+    [file, commandArguments, options] = concatenateShell(file, commandArguments, options);
+    const instance = (0, import_node_child_process.spawn)(file, commandArguments, options);
+    bufferOutput(instance.stdout, context, "stdout");
+    bufferOutput(instance.stderr, context, "stderr");
+    instance.once("error", () => {
+    });
+    await (0, import_node_events2.once)(instance, "spawn");
+    return instance;
+  } catch (error) {
+    throw getResultError(error, {}, context);
+  }
+};
+var concatenateShell = (file, commandArguments, options) => options.shell && commandArguments.length > 0 ? [[file, ...commandArguments].join(" "), [], options] : [file, commandArguments, options];
+var bufferOutput = (stream, { state }, streamName) => {
+  if (stream) {
+    stream.setEncoding("utf8");
+    if (!state.isIterating) {
+      state.isIterating = false;
+      stream.on("data", (chunk) => {
+        state[streamName] += chunk;
+        state.output += chunk;
+      });
+    }
+  }
+};
+
+// node_modules/nano-spawn/source/pipe.js
+var import_promises2 = require("node:stream/promises");
+var handlePipe = async (subprocesses) => {
+  const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
+  if (to.reason) {
+    to.reason.pipedFrom = from.reason ?? from.value;
+    throw to.reason;
+  }
+  if (from.reason) {
+    throw from.reason;
+  }
+  return { ...to.value, pipedFrom: from.value };
+};
+var pipeStreams = async (subprocesses) => {
+  try {
+    const [{ stdout }, { stdin }] = await Promise.all(subprocesses.map(({ nodeChildProcess }) => nodeChildProcess));
+    if (stdin === null) {
+      throw new Error('The "stdin" option must be set on the first "spawn()" call in the pipeline.');
+    }
+    if (stdout === null) {
+      throw new Error('The "stdout" option must be set on the last "spawn()" call in the pipeline.');
+    }
+    (0, import_promises2.pipeline)(stdout, stdin).catch(() => {
+    });
+  } catch (error) {
+    await Promise.allSettled(subprocesses.map(({ nodeChildProcess }) => closeStdin(nodeChildProcess)));
+    throw error;
+  }
+};
+var closeStdin = async (nodeChildProcess) => {
+  const { stdin } = await nodeChildProcess;
+  stdin.end();
+};
+
+// node_modules/nano-spawn/source/iterable.js
+var readline = __toESM(require("node:readline/promises"), 1);
+var lineIterator = async function* (subprocess, { state }, streamName) {
+  if (state.isIterating === false) {
+    throw new Error(`The subprocess must be iterated right away, for example:
+	for await (const line of spawn(...)) { ... }`);
+  }
+  state.isIterating = true;
+  try {
+    const { [streamName]: stream } = await subprocess.nodeChildProcess;
+    if (!stream) {
+      return;
+    }
+    handleErrors(subprocess);
+    yield* readline.createInterface({ input: stream });
+  } finally {
+    await subprocess;
+  }
+};
+var handleErrors = async (subprocess) => {
+  try {
+    await subprocess;
+  } catch {
+  }
+};
+var combineAsyncIterators = async function* (...iterators) {
+  try {
+    let promises = [];
+    while (iterators.length > 0) {
+      promises = iterators.map((iterator2, index2) => promises[index2] ?? getNext(iterator2));
+      const [{ value, done }, index] = await Promise.race(promises.map((promise, index2) => Promise.all([promise, index2])));
+      const [iterator] = iterators.splice(index, 1);
+      promises.splice(index, 1);
+      if (!done) {
+        iterators.push(iterator);
+        yield value;
+      }
+    }
+  } finally {
+    await Promise.all(iterators.map((iterator) => iterator.return()));
+  }
+};
+var getNext = async (iterator) => {
+  try {
+    return await iterator.next();
+  } catch (error) {
+    await iterator.throw(error);
+  }
+};
+
+// node_modules/nano-spawn/source/index.js
+function spawn2(file, second, third, previous) {
+  const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
+  const context = getContext([file, ...commandArguments]);
+  const spawnOptions = getOptions(options);
+  const nodeChildProcess = spawnSubprocess(file, commandArguments, spawnOptions, context);
+  let subprocess = getResult(nodeChildProcess, spawnOptions, context);
+  Object.assign(subprocess, { nodeChildProcess });
+  subprocess = previous ? handlePipe([previous, subprocess]) : subprocess;
+  const stdout = lineIterator(subprocess, context, "stdout");
+  const stderr = lineIterator(subprocess, context, "stderr");
+  return Object.assign(subprocess, {
+    nodeChildProcess,
+    stdout,
+    stderr,
+    [Symbol.asyncIterator]: () => combineAsyncIterators(stdout, stderr),
+    pipe: (file2, second2, third2) => spawn2(file2, second2, third2, subprocess)
+  });
+}
+
+// src/config.ts
+var fs3 = __toESM(require("node:fs"));
+var import_node_os = require("node:os");
+var path4 = __toESM(require("node:path"));
+function getSavedFilePath(file, sha, extension) {
+  return path4.join(
+    (0, import_node_os.tmpdir)(),
+    "stainless-generated-config",
+    `${file}-${sha}${extension}`
+  );
+}
+async function readConfig({
+  oasPath,
+  configPath,
+  sha,
+  required = false
+}) {
+  sha ??= (await spawn2("git", ["rev-parse", "HEAD"])).stdout;
+  if (!sha) {
+    throw new Error("Unable to determine current SHA; is there a git repo?");
+  }
+  logger.info("Reading config at SHA", sha);
+  const results = {};
+  const addToResults = async (file, filePath, via) => {
+    if (results[file]) {
+      return;
+    }
+    if (!filePath || !fs3.existsSync(filePath)) {
+      logger.debug(`Skipping missing ${file} at ${filePath}`);
+      return;
+    }
+    results[file] = fs3.readFileSync(filePath, "utf-8");
+    results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
+      " "
+    )[0];
+    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
+  };
+  try {
+    await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
+    await spawn2("git", ["checkout", sha, "--", "."]);
+  } catch {
+    logger.debug("Could not checkout", sha);
+  }
+  await addToResults("oas", oasPath, `git ${sha}`);
+  await addToResults("config", configPath, `git ${sha}`);
+  try {
+    await addToResults(
+      "oas",
+      getSavedFilePath("oas", sha, path4.extname(oasPath ?? "")),
+      `saved ${sha}`
+    );
+    await addToResults(
+      "config",
+      getSavedFilePath("config", sha, path4.extname(configPath ?? "")),
+      `saved ${sha}`
+    );
+  } catch {
+    logger.debug("Could not get config from saved file path");
+  }
+  if (required) {
+    if (oasPath && !results.oas) {
+      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
+    }
+    if (configPath && !results.config) {
+      throw new Error(`Missing config at ${configPath} for ${sha}`);
+    }
+  }
+  return results;
+}
+async function isConfigChanged({
+  before,
+  after
+}) {
+  let changed = false;
+  if (before.oasHash !== after.oasHash) {
+    logger.debug("OAS file changed");
+    changed = true;
+  }
+  if (before.configHash !== after.configHash) {
+    logger.debug("Config file changed");
+    changed = true;
+  }
+  return changed;
+}
+
 // node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
@@ -38923,7 +39994,7 @@ ${underline}`);
   }
   return path7;
 };
-var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
+var path5 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
 // node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource2 {
@@ -38934,7 +40005,7 @@ var Diagnostics = class extends APIResource2 {
    * returned.
    */
   list(buildID, query = {}, options) {
-    return this._client.getAPIList(path2`/v0/builds/${buildID}/diagnostics`, Page, {
+    return this._client.getAPIList(path5`/v0/builds/${buildID}/diagnostics`, Page, {
       query,
       ...options
     });
@@ -38981,7 +40052,7 @@ var Builds2 = class extends APIResource2 {
    * Retrieve a build by its ID.
    */
   retrieve(buildID, options) {
-    return this._client.get(path2`/v0/builds/${buildID}`, options);
+    return this._client.get(path5`/v0/builds/${buildID}`, options);
   }
   /**
    * List user-triggered builds for a given project.
@@ -39018,7 +40089,7 @@ var Orgs3 = class extends APIResource2 {
    * Retrieve an organization by name.
    */
   retrieve(org, options) {
-    return this._client.get(path2`/v0/orgs/${org}`, options);
+    return this._client.get(path5`/v0/orgs/${org}`, options);
   }
   /**
    * List organizations accessible to the current authentication method.
@@ -39039,21 +40110,21 @@ var Branches2 = class extends APIResource2 {
    */
   create(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path2`/v0/projects/${project}/branches`, { body, ...options });
+    return this._client.post(path5`/v0/projects/${project}/branches`, { body, ...options });
   }
   /**
    * Retrieve a project branch by name.
    */
   retrieve(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path2`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.get(path5`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Retrieve a project branch by name.
    */
   list(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList(path2`/v0/projects/${project}/branches`, Page, {
+    return this._client.getAPIList(path5`/v0/projects/${project}/branches`, Page, {
       query,
       ...options
     });
@@ -39063,7 +40134,7 @@ var Branches2 = class extends APIResource2 {
    */
   delete(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.delete(path2`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.delete(path5`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Rebase a project branch.
@@ -39073,7 +40144,7 @@ var Branches2 = class extends APIResource2 {
    */
   rebase(branch, params = {}, options) {
     const { project = this._client.project, base } = params ?? {};
-    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/rebase`, {
+    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/rebase`, {
       query: { base },
       ...options
     });
@@ -39086,7 +40157,7 @@ var Branches2 = class extends APIResource2 {
    */
   reset(branch, params = {}, options) {
     const { project = this._client.project, target_config_sha } = params ?? {};
-    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/reset`, {
+    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/reset`, {
       query: { target_config_sha },
       ...options
     });
@@ -39100,14 +40171,14 @@ var Configs = class extends APIResource2 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path2`/v0/projects/${project}/configs`, { query, ...options });
+    return this._client.get(path5`/v0/projects/${project}/configs`, { query, ...options });
   }
   /**
    * Generate suggestions for changes to config files based on an OpenAPI spec.
    */
   guess(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path2`/v0/projects/${project}/configs/guess`, { body, ...options });
+    return this._client.post(path5`/v0/projects/${project}/configs/guess`, { body, ...options });
   }
 };
 
@@ -39129,14 +40200,14 @@ var Projects = class extends APIResource2 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path2`/v0/projects/${project}`, options);
+    return this._client.get(path5`/v0/projects/${project}`, options);
   }
   /**
    * Update a project's properties.
    */
   update(params = {}, options) {
     const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path2`/v0/projects/${project}`, { body, ...options });
+    return this._client.patch(path5`/v0/projects/${project}`, { body, ...options });
   }
   /**
    * List projects in an organization, from oldest to newest.
@@ -39710,1075 +40781,75 @@ function getStainlessClient(action, opts) {
   });
 }
 
-// src/merge.ts
-var fs4 = __toESM(require("node:fs"));
-
-// src/markdown.ts
-var import_ts_dedent = __toESM(require_dist());
-var Symbol2 = {
-  Bulb: "\u{1F4A1}",
-  Exclamation: "\u2757",
-  GreenSquare: "\u{1F7E9}",
-  HeavyAsterisk: "\u2731",
-  HourglassFlowingSand: "\u23F3",
-  MiddleDot: "\xB7",
-  RedSquare: "\u{1F7E5}",
-  RightwardsArrow: "\u2192",
-  SpeechBalloon: "\u{1F4AC}",
-  Warning: "\u26A0\uFE0F",
-  WhiteCheckMark: "\u2705",
-  WhiteLargeSquare: "\u2B1C",
-  Zap: "\u26A1"
-};
-var Bold = (content) => `<b>${content}</b>`;
-var CodeInline = (content) => `<code>${content}</code>`;
-var Comment = (content) => `<!-- ${content} -->`;
-var Italic = (content) => `<i>${content}</i>`;
-function Dedent(templ, ...args) {
-  return (0, import_ts_dedent.dedent)(templ, ...args).trim().replaceAll(/\n\s*\n/gi, "\n\n");
+// src/telemetry.ts
+var accumulatedBuildIds = [];
+function addBuildId(buildId) {
+  accumulatedBuildIds.push(buildId);
 }
-var Blockquote = (content) => Dedent`
-    <blockquote>
-
-    ${content}
-
-    </blockquote>
-  `;
-var CodeBlock = (props) => {
-  const delimiter = "```";
-  const content = typeof props === "string" ? props : props.content;
-  const language = typeof props === "string" ? "" : props.language;
-  return Dedent`
-    ${delimiter}${language}
-    ${content}
-    ${delimiter}
-  `;
-};
-var Details = ({
-  summary,
-  body,
-  indent = true,
-  open = false
-}) => {
-  return Dedent`
-    <details${open ? " open" : ""}>
-    <summary>${summary}</summary>
-
-    ${indent ? Blockquote(body) : body}
-
-    </details>
-  `;
-};
-var Heading = (content) => `<h3>${content}</h3>`;
-var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
-var Rule = () => `<hr />`;
-
-// src/outcomes.ts
-var FailRunOn = [
-  "never",
-  "fatal",
-  "error",
-  "warning",
-  "note"
-];
-var OutcomeConclusion = [...FailRunOn, "success"];
-function shouldFailRun({
-  failRunOn,
-  outcomes,
-  baseOutcomes
-}) {
-  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
-    const { conclusion, reason } = categorizeOutcome({
-      outcome,
-      baseOutcome: baseOutcomes?.[language]
-    });
-    const didFail = OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
-    return didFail ? [{ language, reason }] : [];
-  });
-  if (failures.length > 0) {
-    logger.warn("The following languages did not build successfully:");
-    for (const { language, reason } of failures) {
-      logger.warn(`  ${language}: ${reason}`);
-    }
-    return false;
-  }
-  return true;
-}
-function categorizeOutcome({
-  outcome,
-  baseOutcome
-}) {
-  const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
-  const commitConclusion = outcome.commit?.completed?.conclusion;
-  const netNewCommitConclusion = baseCommitConclusion !== commitConclusion ? commitConclusion : void 0;
-  const diagnostics = getNewDiagnostics(
-    outcome.diagnostics,
-    baseOutcome?.diagnostics
-  );
-  const diagnosticCounts = countDiagnosticLevels(diagnostics);
-  const checks = getNewChecks(outcome, baseOutcome);
-  const checkFailures = CheckType.filter(
-    (checkType) => checks[checkType] && checks[checkType].status === "completed" && checks[checkType].completed.conclusion !== "success"
-  );
-  if (commitConclusion === "noop") {
-    return {
-      conclusion: "success",
-      reason: "Code was not generated because the target is skipped."
-    };
-  }
-  if (commitConclusion === "cancelled") {
-    return {
-      conclusion: "success",
-      reason: "Code was not generated because the build was cancelled."
-    };
-  }
-  if (!commitConclusion || netNewCommitConclusion === "fatal") {
-    return {
-      conclusion: "fatal",
-      reason: "Code was not generated because there was a fatal error.",
-      isPending: outcome.commit?.status !== "completed"
-    };
-  }
-  if (commitConclusion === "timed_out") {
-    return {
-      conclusion: "fatal",
-      reason: "Timed out."
-    };
-  }
-  if (![
-    // Merge conflicts are warnings, not fatal:
-    "merge_conflict",
-    // Success conclusion are handled below:
-    "error",
-    "warning",
-    "note",
-    "success"
-    // All other commit conclusions are unknown, and thus fatal.
-  ].includes(commitConclusion)) {
-    return {
-      conclusion: "fatal",
-      reason: `Unknown conclusion: ${commitConclusion}`
-    };
-  }
-  if (diagnosticCounts.fatal > 0) {
-    return {
-      conclusion: "fatal",
-      reason: `Found ${diagnosticCounts.fatal} fatal diagnostics.`
-    };
-  }
-  if (diagnosticCounts.error > 0) {
-    return {
-      conclusion: "error",
-      reason: `Found ${diagnosticCounts.error} new error diagnostics.`
-    };
-  }
-  if (checkFailures.includes("build")) {
-    return {
-      conclusion: "error",
-      reason: "The build CI job failed."
-    };
-  }
-  if (netNewCommitConclusion === "error") {
-    return {
-      conclusion: "error",
-      reason: "Build had an error conclusion."
-    };
-  }
-  if (diagnosticCounts.warning > 0) {
-    return {
-      conclusion: "warning",
-      reason: `Found ${diagnosticCounts.warning} warning diagnostics.`
-    };
-  }
-  if (checkFailures.includes("lint")) {
-    return {
-      conclusion: "warning",
-      reason: "The lint CI job failed."
-    };
-  }
-  if (checkFailures.includes("test")) {
-    return {
-      conclusion: "warning",
-      reason: "The test CI job failed."
-    };
-  }
-  if (netNewCommitConclusion === "warning") {
-    return {
-      conclusion: "warning",
-      reason: "Build had a warning conclusion."
-    };
-  }
-  if (netNewCommitConclusion === "merge_conflict") {
-    return {
-      conclusion: "warning",
-      reason: "There was a conflict between your custom code and your generated changes.",
-      isMergeConflict: true
-    };
-  }
-  if (diagnosticCounts.note > 0) {
-    return {
-      conclusion: "note",
-      reason: `Found ${diagnosticCounts.note} note diagnostics.`
-    };
-  }
-  if (netNewCommitConclusion === "note") {
-    return {
-      conclusion: "note",
-      reason: "Build had a note conclusion."
-    };
-  }
-  return {
-    conclusion: "success",
-    reason: "Build was successful.",
-    isPending: Object.values(checks).some(
-      (check) => check.status !== "completed"
-    )
-  };
-}
-var DiagnosticLevel = ["fatal", "error", "warning", "note"];
-function countDiagnosticLevels(diagnostics) {
-  return diagnostics.reduce(
-    (counts, diag) => {
-      counts[diag.level] = (counts[diag.level] || 0) + 1;
-      return counts;
-    },
-    {
-      fatal: 0,
-      error: 0,
-      warning: 0,
-      note: 0
-    }
-  );
-}
-function getNewDiagnostics(diagnostics, baseDiagnostics) {
-  if (!baseDiagnostics) {
-    return diagnostics;
-  }
-  return diagnostics.filter(
-    (d) => !baseDiagnostics.some(
-      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
-    )
-  );
-}
-function sortDiagnostics(diagnostics) {
-  return diagnostics.sort(
-    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
-  );
-}
-var CheckType = ["build", "lint", "test"];
-function getNewChecks(outcome, baseOutcome) {
-  const result = {};
-  for (const checkType of CheckType) {
-    const baseConclusion = baseOutcome?.[checkType]?.status === "completed" && baseOutcome?.[checkType].completed.conclusion;
-    const conclusion = outcome[checkType]?.status === "completed" && outcome[checkType].completed.conclusion;
-    if (outcome[checkType] && (!baseConclusion || baseConclusion !== conclusion)) {
-      result[checkType] = outcome[checkType];
-    }
-  }
-  return result;
-}
-
-// src/comment.ts
-var COMMENT_TITLE = Heading(
-  `${Symbol2.HeavyAsterisk} Stainless preview builds`
-);
-var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
-function printComment({
-  noChanges,
-  orgName,
-  projectName,
-  branch,
-  commitMessage,
-  commitMessages,
-  hasAiCommitMessageMap,
-  baseOutcomes,
-  outcomes
-}) {
-  const Blocks3 = (() => {
-    if (noChanges) {
-      return "No changes were made to the SDKs.";
-    }
-    const canEdit = !!baseOutcomes;
-    const hasMultipleCommitMessages = commitMessages && Object.keys(commitMessages).length > 0;
-    if (hasMultipleCommitMessages) {
-      return [
-        Dedent`
-          This ${getPRTerm()} will update the ${CodeInline(
-          projectName
-        )} SDKs with the following commit messages.
-        `,
-        CommitMessagesSection({
-          commitMessages,
-          hasAiCommitMessageMap,
-          outcomes
-        }),
-        canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
-        Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-      ].filter((f) => f !== null).join(`
-
-`);
-    }
-    return [
-      Dedent`
-        This ${getPRTerm()} will update the ${CodeInline(
-        projectName
-      )} SDKs with the following commit message.
-
-        ${CodeBlock(commitMessage)}
-
-        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
-      `,
-      Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-    ].filter((f) => f !== null).join(`
-
-`);
-  })();
-  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
-  const fullComment = Dedent`
-    ${COMMENT_TITLE}
-
-    ${Blocks3}
-
-    ${Rule()}
-
-    ${COMMENT_FOOTER_DIVIDER}
-
-    ${Italic(
-    `This comment is auto-generated by ${getCITerm()} and is automatically kept up to date as you push.<br/>If you push custom code to the preview branch, ${Link({
-      text: `re-run this workflow`,
-      href: getRunUrl()
-    })} to update the comment.<br/>Last updated: ${dateString}`
-  )}
-  `;
-  return fullComment;
-}
-function CommitMessagesSection({
-  commitMessages,
-  hasAiCommitMessageMap,
-  outcomes
-}) {
-  const languages = Object.keys(outcomes).sort();
-  const messageBlocks = languages.map((lang) => {
-    const message = commitMessages[lang] || "No changes detected";
-    const isGeneratingAiCommitMessage = hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
-    const statusText = isGeneratingAiCommitMessage ? `${Symbol2.HourglassFlowingSand} (generating...)
-` : "";
-    return Dedent`
-      **${lang}**
-      ${statusText}${CodeBlock(message)}
-    `;
-  });
-  return messageBlocks.join("\n");
-}
-var DiagnosticIcon = {
-  fatal: Symbol2.Exclamation,
-  error: Symbol2.Exclamation,
-  warning: Symbol2.Warning,
-  note: Symbol2.Bulb
-};
-function Results({
-  orgName,
-  projectName,
-  branch,
-  outcomes,
-  baseOutcomes
-}) {
-  const results = [];
-  let hasPending = false;
-  Object.entries(outcomes).forEach(([lang, head]) => {
-    const base = baseOutcomes?.[lang];
-    hasPending ||= categorizeOutcome({
-      outcome: head,
-      baseOutcome: base
-    }).isPending ?? false;
-    const result = Result({
-      orgName,
-      projectName,
-      branch,
-      lang,
-      head,
-      base
-    });
-    if (result) {
-      results.push(result);
-    }
-  });
-  if (hasPending) {
-    results.push(
-      Dedent`
-        ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
-      `
-    );
-  }
-  return results.join("\n\n");
-}
-function Result({
-  orgName,
-  projectName,
-  branch,
-  lang,
-  head,
-  base
-}) {
-  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
-    outcome: head,
-    baseOutcome: base
-  });
-  const { ResultIcon, Description } = (() => {
-    if (conclusion === "fatal") {
-      return {
-        ResultIcon: Symbol2.Exclamation,
-        Description: Italic(reason)
-      };
-    }
-    if (isMergeConflict) {
-      return {
-        ResultIcon: Symbol2.Zap,
-        Description: [
-          Italic(reason),
-          Italic(
-            `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({
-              text: "here",
-              href: "https://www.stainless.com/docs/guides/add-custom-code"
-            })}.`
-          )
-        ].join("\n")
-      };
-    }
-    if (conclusion !== "note" && conclusion !== "success") {
-      return {
-        ResultIcon: Symbol2.Warning,
-        Description: Italic("There was a regression in your SDK.")
-      };
-    }
-    if (!isPending) {
-      return {
-        ResultIcon: Symbol2.WhiteCheckMark,
-        Description: Italic("Your SDK built successfully.")
-      };
-    }
-    return {
-      ResultIcon: Symbol2.HourglassFlowingSand,
-      Description: ""
-    };
-  })();
-  return Details({
-    summary: [
-      ResultIcon,
-      Bold(`${projectName}-${lang}`),
-      [
-        Link({
-          text: "studio",
-          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
-        }),
-        GitHubLink(head),
-        base ? CompareLink(base, head) : null,
-        MergeConflictLink(head)
-      ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
-    ].join(" "),
-    body: [
-      Description,
-      StatusLine(base, head),
-      InstallationDetails(head, lang),
-      base ? DiagnosticsDetails(head, base) : null
-    ].filter((value) => Boolean(value)).join("\n"),
-    open: conclusion !== "note" && conclusion !== "success" && !isPending
-  });
-}
-function StatusLine(base, head) {
-  return [
-    StatusStep(base, head, "generate"),
-    StatusStep(base, head, "build"),
-    StatusStep(base, head, "lint"),
-    StatusStep(base, head, "test")
-  ].filter((value) => Boolean(value)).join(` ${Symbol2.RightwardsArrow} `);
-}
-function StatusStep(base, head, step) {
-  let baseStatus = base ? StatusSymbol(base, step) : null;
-  let headStatus = StatusSymbol(head, step);
-  if (!headStatus) {
-    return null;
-  }
-  if (baseStatus === Symbol2.HourglassFlowingSand || headStatus === Symbol2.HourglassFlowingSand) {
-    baseStatus = Symbol2.HourglassFlowingSand;
-    headStatus = Symbol2.HourglassFlowingSand;
-  }
-  const headText = CodeInline(`${step} ${headStatus}`);
-  const headURL = StatusURL(head, step);
-  const headLink = headURL ? Link({ text: headText, href: headURL }) : headText;
-  if (!baseStatus || baseStatus === headStatus) {
-    return headLink;
-  }
-  const baseText = CodeInline(`${step} ${baseStatus}`);
-  const baseURL = StatusURL(base, step);
-  const baseLink = baseURL ? Link({ text: baseText, href: baseURL }) : baseText;
-  return `${headLink} (prev: ${baseLink})`;
-}
-function StatusSymbol(outcome, step) {
-  if (!outcome.commit?.completed?.commit) {
-    return null;
-  }
-  if (step === "generate") {
-    switch (outcome.commit.completed.conclusion) {
-      case "fatal":
-      case "error":
-      case "cancelled":
-        return Symbol2.Exclamation;
-      case "merge_conflict":
-        return Symbol2.Zap;
-      case "upstream_merge_conflict":
-      case "warning":
-        return Symbol2.Warning;
-      default:
-        return Symbol2.WhiteCheckMark;
-    }
-  }
-  const stepData = outcome[step];
-  if (!stepData) {
-    return null;
-  }
-  if (stepData.status === "completed") {
-    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : Symbol2.Exclamation;
-  }
-  return Symbol2.HourglassFlowingSand;
-}
-function StatusURL(outcome, step) {
-  if (step === "generate" || !outcome[step] || outcome[step].status !== "completed") {
-    return null;
-  }
-  return outcome[step]?.completed?.url;
-}
-function GitHubLink(outcome) {
-  if (!outcome.commit?.completed?.commit) return null;
-  const {
-    repo: { owner, name, branch }
-  } = outcome.commit.completed.commit;
-  return Link({
-    text: "code",
-    href: `${getRepoPath(owner, name)}/tree/${encodeURIComponent(branch)}`
-  });
-}
-function CompareLink(base, head) {
-  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
-    return null;
-  }
-  const { repo } = head.commit.completed.commit;
-  const baseBranch = base.commit.completed.commit.repo.branch;
-  const headBranch = head.commit.completed.commit.repo.branch;
-  const compareURL = `${getRepoPath(repo.owner, repo.name)}/compare/${baseBranch}..${headBranch}`;
-  return Link({ text: "diff", href: compareURL });
-}
-function MergeConflictLink(outcome) {
-  if (!outcome.commit?.completed?.merge_conflict_pr) return null;
-  const {
-    repo: { owner, name },
-    number
-  } = outcome.commit.completed.merge_conflict_pr;
-  return Link({
-    text: "conflict",
-    href: `https://github.com/${owner}/${name}/pull/${number}`
-  });
-}
-function DiagnosticsDetails(head, base) {
-  if (!base.diagnostics || !head.diagnostics) return null;
-  const newDiagnostics = getNewDiagnostics(head.diagnostics, base.diagnostics);
-  if (newDiagnostics.length === 0) return null;
-  const levelCounts = countDiagnosticLevels(newDiagnostics);
-  const diagnosticCounts = Object.entries(levelCounts).filter(([, count]) => count > 0).map(([level, count]) => `${count} ${level}`);
-  const diagnosticList = sortDiagnostics(newDiagnostics).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
-  const tableRows = diagnosticList.map((diagnostic) => `<tr>
-<td>${diagnostic}</td>
-</tr>`).join("\n");
-  const tableContent = `<table>
-${tableRows}
-</table>`;
-  return Details({
-    summary: `New diagnostics (${diagnosticCounts.join(", ")})`,
-    body: tableContent,
-    indent: false
-  });
-}
-function InstallationDetails(head, lang) {
-  let githubGoURL = null;
-  let installation = null;
-  if (head.commit?.completed.commit) {
-    const { repo, sha } = head.commit.completed.commit;
-    githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
-  }
-  switch (lang) {
-    case "typescript":
-    case "node": {
-      if (head.install_url) {
-        installation = `npm install ${head.install_url}`;
-      }
-      break;
-    }
-    case "python": {
-      if (head.install_url) {
-        installation = `pip install ${head.install_url}`;
-      }
-      break;
-    }
-    case "go": {
-      if (githubGoURL) {
-        installation = `go get ${githubGoURL}`;
-      }
-      break;
-    }
-    default: {
-      return null;
-    }
-  }
-  if (!installation) return null;
-  return CodeBlock({ content: installation, language: "bash" });
-}
-function parseCommitMessage(body) {
-  return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
-}
-function parseCommitMessages(body) {
-  if (!body) {
-    return null;
-  }
-  const commitMessages = {};
-  const languageBlocks = body.matchAll(
-    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
-  );
-  for (const match of languageBlocks) {
-    const language = match[1];
-    const message = match[2].trim();
-    if (message && message !== "No changes detected") {
-      commitMessages[language] = message;
-    }
-  }
-  if (Object.keys(commitMessages).length === 0) {
-    return null;
-  }
-  return commitMessages;
-}
-async function retrieveComment({
-  token,
-  prNumber
-}) {
-  const client = createCommentClient(token, prNumber);
-  const comments = await client.listComments();
-  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
-  return {
-    id: existingComment?.id,
-    commitMessages: parseCommitMessages(existingComment?.body),
-    commitMessage: parseCommitMessage(existingComment?.body)
-  };
-}
-async function upsertComment({
-  body,
-  token,
-  prNumber,
-  skipCreate = false
-}) {
-  const client = createCommentClient(token, prNumber);
-  logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
-  const comments = await client.listComments();
-  const firstLine = body.trim().split("\n")[0];
-  const existingComment = comments.find(
-    (comment) => comment.body?.includes(firstLine)
-  );
-  if (existingComment) {
-    logger.debug("Updating existing comment:", existingComment.id);
-    await client.updateComment(existingComment.id, body);
-  } else if (!skipCreate) {
-    logger.debug("Creating new comment");
-    await client.createComment(body);
-  }
-}
-function areCommentsEqual(a, b) {
-  return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
-}
-function commentThrottler(token, prNumber) {
-  let lastComment = null;
-  let lastCommentTime = null;
-  return async ({ body, force = false }) => {
-    if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
-      await upsertComment({ body, token, prNumber });
-      lastComment = body;
-      lastCommentTime = /* @__PURE__ */ new Date();
-    }
-  };
-}
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
-
-// node_modules/nano-spawn/source/context.js
-var import_node_process = __toESM(require("node:process"), 1);
-var import_node_util = require("node:util");
-var getContext = (raw) => ({
-  start: import_node_process.default.hrtime.bigint(),
-  command: raw.map((part) => getCommandPart((0, import_node_util.stripVTControlCharacters)(part))).join(" "),
-  state: { stdout: "", stderr: "", output: "" }
-});
-var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
-
-// node_modules/nano-spawn/source/options.js
-var import_node_path = __toESM(require("node:path"), 1);
-var import_node_url = require("node:url");
-var import_node_process2 = __toESM(require("node:process"), 1);
-var getOptions = ({
-  stdin,
-  stdout,
-  stderr,
-  stdio = [stdin, stdout, stderr],
-  env: envOption,
-  preferLocal,
-  cwd: cwdOption = ".",
-  ...options
-}) => {
-  const cwd = cwdOption instanceof URL ? (0, import_node_url.fileURLToPath)(cwdOption) : import_node_path.default.resolve(cwdOption);
-  const env = envOption ? { ...import_node_process2.default.env, ...envOption } : void 0;
-  const input = stdio[0]?.string;
-  return {
-    ...options,
-    input,
-    stdio: input === void 0 ? stdio : ["pipe", ...stdio.slice(1)],
-    env: preferLocal ? addLocalPath(env ?? import_node_process2.default.env, cwd) : env,
-    cwd
-  };
-};
-var addLocalPath = ({ Path = "", PATH = Path, ...env }, cwd) => {
-  const pathParts = PATH.split(import_node_path.default.delimiter);
-  const localPaths = getLocalPaths([], import_node_path.default.resolve(cwd)).map((localPath) => import_node_path.default.join(localPath, "node_modules/.bin")).filter((localPath) => !pathParts.includes(localPath));
-  return { ...env, PATH: [...localPaths, PATH].filter(Boolean).join(import_node_path.default.delimiter) };
-};
-var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
-
-// node_modules/nano-spawn/source/spawn.js
-var import_node_child_process = require("node:child_process");
-var import_node_events2 = require("node:events");
-var import_node_process5 = __toESM(require("node:process"), 1);
-
-// node_modules/nano-spawn/source/windows.js
-var import_promises = __toESM(require("node:fs/promises"), 1);
-var import_node_path2 = __toESM(require("node:path"), 1);
-var import_node_process3 = __toESM(require("node:process"), 1);
-var applyForceShell = async (file, commandArguments, options) => await shouldForceShell(file, options) ? [escapeFile(file), commandArguments.map((argument) => escapeArgument(argument)), { ...options, shell: true }] : [file, commandArguments, options];
-var shouldForceShell = async (file, { shell, cwd, env = import_node_process3.default.env }) => import_node_process3.default.platform === "win32" && !shell && !await isExe(file, cwd, env);
-var isExe = (file, cwd, { Path = "", PATH = Path }) => (
-  // If the *.exe or *.com file extension was not omitted.
-  // Windows common file systems are case-insensitive.
-  exeExtensions.some((extension) => file.toLowerCase().endsWith(extension)) || mIsExe(file, cwd, PATH)
-);
-var EXE_MEMO = {};
-var memoize = (function_) => (...arguments_) => (
-  // Use returned assignment to keep code small
-  EXE_MEMO[arguments_.join("\0")] ??= function_(...arguments_)
-);
-var access = memoize(import_promises.default.access);
-var mIsExe = memoize(async (file, cwd, PATH) => {
-  const parts = PATH.split(import_node_path2.default.delimiter).filter(Boolean).map((part) => part.replace(/^"(.*)"$/, "$1"));
-  try {
-    await Promise.any(
-      [cwd, ...parts].flatMap(
-        (part) => exeExtensions.map((extension) => access(`${import_node_path2.default.resolve(part, file)}${extension}`))
-      )
-    );
-  } catch {
-    return false;
-  }
-  return true;
-});
-var exeExtensions = [".exe", ".com"];
-var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
-var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
-
-// node_modules/nano-spawn/source/result.js
-var import_node_events = require("node:events");
-var import_node_process4 = __toESM(require("node:process"), 1);
-var getResult = async (nodeChildProcess, { input }, context) => {
-  const instance = await nodeChildProcess;
-  if (input !== void 0) {
-    instance.stdin.end(input);
-  }
-  const onClose = (0, import_node_events.once)(instance, "close");
-  try {
-    await Promise.race([
-      onClose,
-      ...instance.stdio.filter(Boolean).map((stream) => onStreamError(stream))
-    ]);
-    checkFailure(context, getErrorOutput(instance));
-    return getOutputs(context);
-  } catch (error) {
-    await Promise.allSettled([onClose]);
-    throw getResultError(error, instance, context);
-  }
-};
-var onStreamError = async (stream) => {
-  for await (const [error] of (0, import_node_events.on)(stream, "error")) {
-    if (!["ERR_STREAM_PREMATURE_CLOSE", "EPIPE"].includes(error?.code)) {
-      throw error;
-    }
-  }
-};
-var checkFailure = ({ command }, { exitCode, signalName }) => {
-  if (signalName !== void 0) {
-    throw new SubprocessError(`Command was terminated with ${signalName}: ${command}`);
-  }
-  if (exitCode !== void 0) {
-    throw new SubprocessError(`Command failed with exit code ${exitCode}: ${command}`);
-  }
-};
-var getResultError = (error, instance, context) => Object.assign(
-  getErrorInstance(error, context),
-  getErrorOutput(instance),
-  getOutputs(context)
-);
-var getErrorInstance = (error, { command }) => error instanceof SubprocessError ? error : new SubprocessError(`Command failed: ${command}`, { cause: error });
-var SubprocessError = class extends Error {
-  name = "SubprocessError";
-};
-var getErrorOutput = ({ exitCode, signalCode }) => ({
-  // `exitCode` can be a negative number (`errno`) when the `error` event is emitted on the `instance`
-  ...exitCode < 1 ? {} : { exitCode },
-  ...signalCode === null ? {} : { signalName: signalCode }
-});
-var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
-  stdout: getOutput(stdout),
-  stderr: getOutput(stderr),
-  output: getOutput(output),
-  command,
-  durationMs: Number(import_node_process4.default.hrtime.bigint() - start) / 1e6
-});
-var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
-
-// node_modules/nano-spawn/source/spawn.js
-var spawnSubprocess = async (file, commandArguments, options, context) => {
-  try {
-    if (["node", "node.exe"].includes(file.toLowerCase())) {
-      file = import_node_process5.default.execPath;
-      commandArguments = [...import_node_process5.default.execArgv.filter((flag) => !flag.startsWith("--inspect")), ...commandArguments];
-    }
-    [file, commandArguments, options] = await applyForceShell(file, commandArguments, options);
-    [file, commandArguments, options] = concatenateShell(file, commandArguments, options);
-    const instance = (0, import_node_child_process.spawn)(file, commandArguments, options);
-    bufferOutput(instance.stdout, context, "stdout");
-    bufferOutput(instance.stderr, context, "stderr");
-    instance.once("error", () => {
-    });
-    await (0, import_node_events2.once)(instance, "spawn");
-    return instance;
-  } catch (error) {
-    throw getResultError(error, {}, context);
-  }
-};
-var concatenateShell = (file, commandArguments, options) => options.shell && commandArguments.length > 0 ? [[file, ...commandArguments].join(" "), [], options] : [file, commandArguments, options];
-var bufferOutput = (stream, { state }, streamName) => {
-  if (stream) {
-    stream.setEncoding("utf8");
-    if (!state.isIterating) {
-      state.isIterating = false;
-      stream.on("data", (chunk) => {
-        state[streamName] += chunk;
-        state.output += chunk;
+function withResultReporting(actionType, fn) {
+  return async () => {
+    let stainless;
+    let projectName;
+    try {
+      projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
+      stainless = getStainlessClient(actionType, {
+        project: projectName,
+        apiKey,
+        logLevel: "warn"
       });
+      await fn(stainless);
+      await maybeReportResult({
+        stainless,
+        projectName,
+        actionType,
+        successOrError: { result: "success" }
+      });
+    } catch (error) {
+      logger.fatal("Error in action:", error);
+      if (stainless) {
+        await maybeReportResult({
+          stainless,
+          projectName,
+          actionType,
+          successOrError: serializeError(error)
+        });
+      }
+      process.exit(1);
     }
+  };
+}
+function serializeError(error) {
+  const maybeTypedError = error instanceof Error ? error : void 0;
+  return {
+    result: "error",
+    error_message: maybeTypedError?.message ?? String(error),
+    error_name: maybeTypedError?.name,
+    error_stack: maybeTypedError?.stack
+  };
+}
+async function maybeReportResult({
+  stainless,
+  projectName,
+  actionType,
+  successOrError
+}) {
+  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
+    return;
   }
-};
-
-// node_modules/nano-spawn/source/pipe.js
-var import_promises2 = require("node:stream/promises");
-var handlePipe = async (subprocesses) => {
-  const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
-  if (to.reason) {
-    to.reason.pipedFrom = from.reason ?? from.value;
-    throw to.reason;
-  }
-  if (from.reason) {
-    throw from.reason;
-  }
-  return { ...to.value, pipedFrom: from.value };
-};
-var pipeStreams = async (subprocesses) => {
   try {
-    const [{ stdout }, { stdin }] = await Promise.all(subprocesses.map(({ nodeChildProcess }) => nodeChildProcess));
-    if (stdin === null) {
-      throw new Error('The "stdin" option must be set on the first "spawn()" call in the pipeline.');
-    }
-    if (stdout === null) {
-      throw new Error('The "stdout" option must be set on the last "spawn()" call in the pipeline.');
-    }
-    (0, import_promises2.pipeline)(stdout, stdin).catch(() => {
+    const body = {
+      project: projectName,
+      build_ids: accumulatedBuildIds,
+      action_type: actionType,
+      ...successOrError
+    };
+    await stainless.post("/api/reports/action-result", {
+      body
     });
   } catch (error) {
-    await Promise.allSettled(subprocesses.map(({ nodeChildProcess }) => closeStdin(nodeChildProcess)));
-    throw error;
+    logger.error("Error reporting result to Stainless", error);
   }
-};
-var closeStdin = async (nodeChildProcess) => {
-  const { stdin } = await nodeChildProcess;
-  stdin.end();
-};
-
-// node_modules/nano-spawn/source/iterable.js
-var readline = __toESM(require("node:readline/promises"), 1);
-var lineIterator = async function* (subprocess, { state }, streamName) {
-  if (state.isIterating === false) {
-    throw new Error(`The subprocess must be iterated right away, for example:
-	for await (const line of spawn(...)) { ... }`);
-  }
-  state.isIterating = true;
-  try {
-    const { [streamName]: stream } = await subprocess.nodeChildProcess;
-    if (!stream) {
-      return;
-    }
-    handleErrors(subprocess);
-    yield* readline.createInterface({ input: stream });
-  } finally {
-    await subprocess;
-  }
-};
-var handleErrors = async (subprocess) => {
-  try {
-    await subprocess;
-  } catch {
-  }
-};
-var combineAsyncIterators = async function* (...iterators) {
-  try {
-    let promises = [];
-    while (iterators.length > 0) {
-      promises = iterators.map((iterator2, index2) => promises[index2] ?? getNext(iterator2));
-      const [{ value, done }, index] = await Promise.race(promises.map((promise, index2) => Promise.all([promise, index2])));
-      const [iterator] = iterators.splice(index, 1);
-      promises.splice(index, 1);
-      if (!done) {
-        iterators.push(iterator);
-        yield value;
-      }
-    }
-  } finally {
-    await Promise.all(iterators.map((iterator) => iterator.return()));
-  }
-};
-var getNext = async (iterator) => {
-  try {
-    return await iterator.next();
-  } catch (error) {
-    await iterator.throw(error);
-  }
-};
-
-// node_modules/nano-spawn/source/index.js
-function spawn2(file, second, third, previous) {
-  const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
-  const context = getContext([file, ...commandArguments]);
-  const spawnOptions = getOptions(options);
-  const nodeChildProcess = spawnSubprocess(file, commandArguments, spawnOptions, context);
-  let subprocess = getResult(nodeChildProcess, spawnOptions, context);
-  Object.assign(subprocess, { nodeChildProcess });
-  subprocess = previous ? handlePipe([previous, subprocess]) : subprocess;
-  const stdout = lineIterator(subprocess, context, "stdout");
-  const stderr = lineIterator(subprocess, context, "stderr");
-  return Object.assign(subprocess, {
-    nodeChildProcess,
-    stdout,
-    stderr,
-    [Symbol.asyncIterator]: () => combineAsyncIterators(stdout, stderr),
-    pipe: (file2, second2, third2) => spawn2(file2, second2, third2, subprocess)
-  });
-}
-
-// src/config.ts
-var fs3 = __toESM(require("node:fs"));
-var import_node_os = require("node:os");
-var path5 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha, extension) {
-  return path5.join(
-    (0, import_node_os.tmpdir)(),
-    "stainless-generated-config",
-    `${file}-${sha}${extension}`
-  );
-}
-async function readConfig({
-  oasPath,
-  configPath,
-  sha,
-  required = false
-}) {
-  sha ??= (await spawn2("git", ["rev-parse", "HEAD"])).stdout;
-  if (!sha) {
-    throw new Error("Unable to determine current SHA; is there a git repo?");
-  }
-  logger.info("Reading config at SHA", sha);
-  const results = {};
-  const addToResults = async (file, filePath, via) => {
-    if (results[file]) {
-      return;
-    }
-    if (!filePath || !fs3.existsSync(filePath)) {
-      logger.debug(`Skipping missing ${file} at ${filePath}`);
-      return;
-    }
-    results[file] = fs3.readFileSync(filePath, "utf-8");
-    results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
-      " "
-    )[0];
-    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
-  };
-  try {
-    await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
-    await spawn2("git", ["checkout", sha, "--", "."]);
-  } catch {
-    logger.debug("Could not checkout", sha);
-  }
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
-  try {
-    await addToResults(
-      "oas",
-      getSavedFilePath("oas", sha, path5.extname(oasPath ?? "")),
-      `saved ${sha}`
-    );
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha, path5.extname(configPath ?? "")),
-      `saved ${sha}`
-    );
-  } catch {
-    logger.debug("Could not get config from saved file path");
-  }
-  if (required) {
-    if (oasPath && !results.oas) {
-      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
-    }
-    if (configPath && !results.config) {
-      throw new Error(`Missing config at ${configPath} for ${sha}`);
-    }
-  }
-  return results;
-}
-async function isConfigChanged({
-  before,
-  after
-}) {
-  let changed = false;
-  if (before.oasHash !== after.oasHash) {
-    logger.debug("OAS file changed");
-    changed = true;
-  }
-  if (before.configHash !== after.configHash) {
-    logger.debug("Config file changed");
-    changed = true;
-  }
-  return changed;
 }
 
 // src/runBuilds.ts
@@ -40997,6 +41068,7 @@ async function* pollBuild({
     log.info(
       `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
+    addBuildId(buildId);
   } else {
     logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
@@ -41080,77 +41152,8 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/telemetry.ts
-var accumulatedBuildIds = [];
-function withResultReporting(actionType, fn) {
-  return async () => {
-    let stainless;
-    let projectName;
-    try {
-      projectName = getInput("project", { required: true });
-      const apiKey = await getStainlessAuthToken();
-      stainless = getStainlessClient(actionType, {
-        project: projectName,
-        apiKey,
-        logLevel: "warn"
-      });
-      await fn(stainless);
-      await maybeReportResult({
-        stainless,
-        projectName,
-        actionType,
-        successOrError: { result: "success" }
-      });
-    } catch (error) {
-      logger.fatal("Error in action:", error);
-      if (stainless) {
-        await maybeReportResult({
-          stainless,
-          projectName,
-          actionType,
-          successOrError: serializeError(error)
-        });
-      }
-      process.exit(1);
-    }
-  };
-}
-function serializeError(error) {
-  const maybeTypedError = error instanceof Error ? error : void 0;
-  return {
-    result: "error",
-    error_message: maybeTypedError?.message ?? String(error),
-    error_name: maybeTypedError?.name,
-    error_stack: maybeTypedError?.stack
-  };
-}
-async function maybeReportResult({
-  stainless,
-  projectName,
-  actionType,
-  successOrError
-}) {
-  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
-    return;
-  }
-  try {
-    const body = {
-      project: projectName,
-      build_ids: accumulatedBuildIds,
-      action_type: actionType,
-      ...successOrError
-    };
-    await stainless.post("/api/reports/action-result", {
-      body
-    });
-  } catch (error) {
-    logger.error("Error reporting result to Stainless", error);
-  }
-}
-
 // src/merge.ts
-var main = withResultReporting("merge", async () => {
-  const apiKey = await getStainlessAuthToken();
+var main = withResultReporting("merge", async (stainless) => {
   const orgName = getInput("org", { required: false });
   const projectName = getInput("project", { required: true });
   const oasPath = getInput("oas_path", { required: false });
@@ -41186,11 +41189,6 @@ var main = withResultReporting("merge", async () => {
       "This action requires an organization name to make a comment."
     );
   }
-  const stainless = getStainlessClient("merge", {
-    project: projectName,
-    apiKey,
-    logLevel: "warn"
-  });
   let org = null;
   if (orgName) {
     try {
