@@ -9349,10 +9349,6 @@ function spawn2(file, second, third, previous) {
   });
 }
 
-// src/compat/index.ts
-var crypto = __toESM(require("node:crypto"));
-var fs2 = __toESM(require("node:fs"));
-
 // node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
@@ -9420,6 +9416,30 @@ function getBooleanInput(name, options) {
   if (value === "true") return true;
   if (value === "false") return false;
   return void 0;
+}
+
+// src/compat/output.ts
+var crypto = __toESM(require("node:crypto"));
+var fs2 = __toESM(require("node:fs"));
+function setOutput(name, value) {
+  if (isGitLabCI()) return;
+  const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
+  const filePath = process.env["GITHUB_OUTPUT"];
+  if (filePath && fs2.existsSync(filePath)) {
+    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+    fs2.appendFileSync(
+      filePath,
+      `${name}<<${delimiter}
+${stringified}
+${delimiter}
+`,
+      "utf-8"
+    );
+  } else {
+    process.stdout.write(`
+::set-output name=${name}::${stringified}
+`);
+  }
 }
 
 // src/logger.ts
@@ -9549,28 +9569,6 @@ function createLogger(options) {
   return createLoggerImpl(options.platform, LOG_LEVELS[level]);
 }
 var logger = createLogger({ platform: detectPlatform() });
-
-// src/compat/index.ts
-function setOutput(name, value) {
-  if (isGitLabCI()) return;
-  const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
-  const filePath = process.env["GITHUB_OUTPUT"];
-  if (filePath && fs2.existsSync(filePath)) {
-    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
-    fs2.appendFileSync(
-      filePath,
-      `${name}<<${delimiter}
-${stringified}
-${delimiter}
-`,
-      "utf-8"
-    );
-  } else {
-    process.stdout.write(`
-::set-output name=${name}::${stringified}
-`);
-  }
-}
 
 // src/prepareSwagger.ts
 async function convertSwagger(inputPath, outputPath, options) {

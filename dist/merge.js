@@ -9117,8 +9117,7 @@ var require_dist = __commonJS({
 });
 
 // src/compat/index.ts
-var crypto = __toESM(require("node:crypto"));
-var fs = __toESM(require("node:fs"));
+var fs2 = __toESM(require("node:fs"));
 
 // node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
@@ -37497,6 +37496,30 @@ function getBooleanInput(name, options) {
   return void 0;
 }
 
+// src/compat/output.ts
+var crypto = __toESM(require("node:crypto"));
+var fs = __toESM(require("node:fs"));
+function setOutput(name, value) {
+  if (isGitLabCI()) return;
+  const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
+  const filePath = process.env["GITHUB_OUTPUT"];
+  if (filePath && fs.existsSync(filePath)) {
+    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
+    fs.appendFileSync(
+      filePath,
+      `${name}<<${delimiter}
+${stringified}
+${delimiter}
+`,
+      "utf-8"
+    );
+  } else {
+    process.stdout.write(`
+::set-output name=${name}::${stringified}
+`);
+  }
+}
+
 // src/logger.ts
 var LOG_LEVELS = {
   debug: 0,
@@ -37631,8 +37654,8 @@ function getGitHubContext() {
   if (!cachedContext) {
     const eventPath = process.env.GITHUB_EVENT_PATH;
     let payload = {};
-    if (eventPath && fs.existsSync(eventPath)) {
-      payload = JSON.parse(fs.readFileSync(eventPath, "utf-8"));
+    if (eventPath && fs2.existsSync(eventPath)) {
+      payload = JSON.parse(fs2.readFileSync(eventPath, "utf-8"));
     }
     const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
     cachedContext = {
@@ -37655,26 +37678,6 @@ function getPRNumber() {
   return parseInt(
     getGitHubContext().payload.pull_request?.number ?? process.env["PR_NUMBER"]
   );
-}
-function setOutput(name, value) {
-  if (isGitLabCI()) return;
-  const stringified = value === null || value === void 0 ? "" : typeof value === "string" ? value : JSON.stringify(value);
-  const filePath = process.env["GITHUB_OUTPUT"];
-  if (filePath && fs.existsSync(filePath)) {
-    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
-    fs.appendFileSync(
-      filePath,
-      `${name}<<${delimiter}
-${stringified}
-${delimiter}
-`,
-      "utf-8"
-    );
-  } else {
-    process.stdout.write(`
-::set-output name=${name}::${stringified}
-`);
-  }
 }
 function getPRTerm() {
   return isGitLabCI() ? "MR" : "PR";
@@ -37807,7 +37810,7 @@ var GitLabCommentClient = class {
 };
 
 // src/merge.ts
-var fs4 = __toESM(require("node:fs"));
+var fs5 = __toESM(require("node:fs"));
 
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
@@ -38793,7 +38796,7 @@ function spawn2(file, second, third, previous) {
 }
 
 // src/config.ts
-var fs3 = __toESM(require("node:fs"));
+var fs4 = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
 var path4 = __toESM(require("node:path"));
 function getSavedFilePath(file, sha, extension) {
@@ -38819,11 +38822,11 @@ async function readConfig({
     if (results[file]) {
       return;
     }
-    if (!filePath || !fs3.existsSync(filePath)) {
+    if (!filePath || !fs4.existsSync(filePath)) {
       logger.debug(`Skipping missing ${file} at ${filePath}`);
       return;
     }
-    results[file] = fs3.readFileSync(filePath, "utf-8");
+    results[file] = fs4.readFileSync(filePath, "utf-8");
     results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
       " "
     )[0];
@@ -40727,12 +40730,13 @@ var package_default = {
   version: "1.9.0",
   main: "dist/index.js",
   scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
     "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
     "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-combine": "esbuild --bundle src/combine/index.ts --outfile=dist/prepareCombine.js --platform=node --target=node20 --external:@redocly/cli",
     "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
     lint: "tsc && prettier --check src && eslint src",
     "lint:fix": "prettier --write src && eslint src --fix",
@@ -40751,8 +40755,10 @@ var package_default = {
     vitest: "^3.2.4"
   },
   dependencies: {
+    "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.15.0",
     "@stainless-api/sdk": "^0.1.0-alpha.19",
+    glob: "^11.0.0",
     "nano-spawn": "^1.0.3",
     "ts-dedent": "^2.2.0",
     yaml: "^2.8.1"
@@ -41273,8 +41279,8 @@ var main = wrapAction("merge", async (stainless) => {
       setOutput("outcomes", outcomes);
       if (documentedSpec && outputDir) {
         const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs4.mkdirSync(outputDir, { recursive: true });
-        fs4.writeFileSync(documentedSpecPath, documentedSpec);
+        fs5.mkdirSync(outputDir, { recursive: true });
+        fs5.writeFileSync(documentedSpecPath, documentedSpec);
         setOutput("documented_spec_path", documentedSpecPath);
       }
       if (!shouldFailRun({ failRunOn, outcomes })) {

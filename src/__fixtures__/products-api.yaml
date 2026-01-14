@@ -1,0 +1,17 @@
+openapi: 3.0.0
+info:
+  title: Products API
+  version: 1.0.0
+paths:
+  /products:
+    get:
+      summary: List products
+      responses:
+        "200":
+          description: Success
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      responses:
+        "200":
+          description: Success
