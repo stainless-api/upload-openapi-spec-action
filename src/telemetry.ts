@@ -6,8 +6,8 @@ import { logger } from "./logger";
 
 const accumulatedBuildIds: string[] = [];
 
-export function addBuildIds(...buildIds: string[]) {
-  accumulatedBuildIds.push(...buildIds);
+export function addBuildId(buildId: string) {
+  accumulatedBuildIds.push(buildId);
 }
 
 export function withResultReporting(

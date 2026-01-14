@@ -4,10 +4,8 @@ import {
   getInput,
   getPRNumber,
   setOutput,
-  getStainlessAuthToken,
 } from "./compat";
 import { logger } from "./logger";
-import { getStainlessClient } from "./stainless";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
@@ -17,8 +15,7 @@ import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 import { withResultReporting } from "./telemetry";
 
-const main = withResultReporting("merge", async () => {
-  const apiKey = await getStainlessAuthToken();
+const main = withResultReporting("merge", async (stainless) => {
   const orgName = getInput("org", { required: false });
   const projectName = getInput("project", { required: true });
   const oasPath = getInput("oas_path", { required: false });
@@ -57,12 +54,6 @@ const main = withResultReporting("merge", async () => {
       "This action requires an organization name to make a comment.",
     );
   }
-
-  const stainless = getStainlessClient("merge", {
-    project: projectName,
-    apiKey,
-    logLevel: "warn",
-  });
 
   // Fetch org data to check enable_ai_commit_messages field
   let org: { enable_ai_commit_messages: boolean } | null = null;

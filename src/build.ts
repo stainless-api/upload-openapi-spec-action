@@ -1,24 +1,17 @@
 import { Stainless } from "@stainless-api/sdk";
-import { getStainlessClient } from "./stainless";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
 import YAML from "yaml";
 import { makeCommitMessageConventional } from "./commitMessage";
-import {
-  getBooleanInput,
-  getInput,
-  setOutput,
-  getStainlessAuthToken,
-} from "./compat";
+import { getBooleanInput, getInput, setOutput } from "./compat";
 import { logger } from "./logger";
 import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 import { withResultReporting } from "./telemetry";
 
-const main = withResultReporting("build", async () => {
+const main = withResultReporting("build", async (stainless) => {
   try {
-    const apiKey = await getStainlessAuthToken();
     const oasPath = getInput("oas_path", { required: false }) || undefined;
     const configPath =
       getInput("config_path", { required: false }) || undefined;
@@ -40,12 +33,6 @@ const main = withResultReporting("build", async () => {
       getInput("documented_spec_path", { required: false }) || undefined;
 
     const config = await readConfig({ oasPath, configPath, required: true });
-
-    const stainless = getStainlessClient("build", {
-      project: projectName,
-      apiKey,
-      logLevel: "warn",
-    });
 
     let lastValue: RunResult;
 
