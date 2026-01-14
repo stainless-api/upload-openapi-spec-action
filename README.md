@@ -132,6 +132,8 @@ Go to **Settings** → **Actions** → **General**, then under "Fork pull reques
 
 See [GitHub's docs](https://docs.github.com/en/actions/managing-workflow-runs/approving-workflow-runs-from-public-forks) for more details.
 
+In order to improve our service, Stainless collects information about whether an action run succeeded or failed. To disable this telemetry collection, set the `STAINLESS_DISABLE_TELEMETRY=1` environment variable in your configuration.
+
 ## Actions reference
 
 This repository provides several GitHub actions:
