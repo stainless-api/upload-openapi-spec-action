@@ -9116,7 +9116,25 @@ var require_dist = __commonJS({
   }
 });
 
-// node_modules/@stainless-api/sdk/internal/tslib.mjs
+// src/preview.ts
+var fs4 = __toESM(require("node:fs"));
+
+// src/compat/index.ts
+var crypto = __toESM(require("node:crypto"));
+var fs = __toESM(require("node:fs"));
+
+// node_modules/@stainless-api/github-internal/core/resource.mjs
+var APIResource = /* @__PURE__ */ (() => {
+  class APIResource3 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource3._key = [];
+  return APIResource3;
+})();
+
+// node_modules/@stainless-api/github-internal/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -9134,19 +9152,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
-var uuid4 = function() {
-  const { crypto: crypto2 } = globalThis;
-  if (crypto2?.randomUUID) {
-    uuid4 = crypto2.randomUUID.bind(crypto2);
-    return crypto2.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -9177,10 +9183,13 @@ var castToError = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/sdk/core/error.mjs
-var StainlessError = class extends Error {
-};
-var APIError = class _APIError extends StainlessError {
+// node_modules/@stainless-api/github-internal/core/error.mjs
+var GitHubError = /* @__PURE__ */ (() => {
+  class GitHubError2 extends Error {
+  }
+  return GitHubError2;
+})();
+var APIError = class _APIError extends GitHubError {
   constructor(status, error, message, headers) {
     super(`${_APIError.makeMessage(status, error, message)}`);
     this.status = status;
@@ -9266,7 +9275,7 @@ var RateLimitError = class extends APIError {
 var InternalServerError = class extends APIError {
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
   return startsWithSchemeRegexp.test(url);
@@ -9291,10 +9300,10 @@ function hasOwn(obj, key) {
 }
 var validatePositiveInteger = (name, n) => {
   if (typeof n !== "number" || !Number.isInteger(n)) {
-    throw new StainlessError(`${name} must be an integer`);
+    throw new GitHubError(`${name} must be an integer`);
   }
   if (n < 0) {
-    throw new StainlessError(`${name} must be a positive integer`);
+    throw new GitHubError(`${name} must be a positive integer`);
   }
   return n;
 };
@@ -9306,13 +9315,703 @@ var safeJSON = (text) => {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
+var levelNumbers = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn(levelNumbers, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
+  return void 0;
+};
+function noop() {
+}
+function makeLogFn(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
+    return noop;
+  } else {
+    return logger2[fnLevel].bind(logger2);
+  }
+}
+var noopLogger = {
+  error: noop,
+  warn: noop,
+  info: noop,
+  debug: noop
+};
+var cachedLoggers = /* @__PURE__ */ new WeakMap();
+function loggerFor(client) {
+  const logger2 = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger2) {
+    return noopLogger;
+  }
+  const cachedLogger = cachedLoggers.get(logger2);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn("error", logger2, logLevel),
+    warn: makeLogFn("warn", logger2, logLevel),
+    info: makeLogFn("info", logger2, logLevel),
+    debug: makeLogFn("debug", logger2, logLevel)
+  };
+  cachedLoggers.set(logger2, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
+
+// node_modules/@stainless-api/github-internal/internal/parse.mjs
+async function defaultParseResponse(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/@stainless-api/github-internal/core/api-promise.mjs
+var _APIPromise_client;
+var APIPromise = /* @__PURE__ */ (() => {
+  class APIPromise3 extends Promise {
+    constructor(client, responsePromise, parseResponse = defaultParseResponse) {
+      super((resolve) => {
+        resolve(null);
+      });
+      this.responsePromise = responsePromise;
+      this.parseResponse = parseResponse;
+      _APIPromise_client.set(this, void 0);
+      __classPrivateFieldSet(this, _APIPromise_client, client, "f");
+    }
+    _thenUnwrap(transform) {
+      return new APIPromise3(__classPrivateFieldGet(this, _APIPromise_client, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+    }
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    asResponse() {
+      return this.responsePromise.then((p) => p.response);
+    }
+    /**
+     * Gets the parsed response data and the raw `Response` instance.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    async withResponse() {
+      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+      return { data, response };
+    }
+    parse() {
+      if (!this.parsedPromise) {
+        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet(this, _APIPromise_client, "f"), data));
+      }
+      return this.parsedPromise;
+    }
+    then(onfulfilled, onrejected) {
+      return this.parse().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+      return this.parse().catch(onrejected);
+    }
+    finally(onfinally) {
+      return this.parse().finally(onfinally);
+    }
+  }
+  _APIPromise_client = /* @__PURE__ */ new WeakMap();
+  return APIPromise3;
+})();
+
+// node_modules/@stainless-api/github-internal/core/pagination.mjs
+var _AbstractPage_client;
+var AbstractPage = /* @__PURE__ */ (() => {
+  class AbstractPage3 {
+    constructor(client, response, body, options) {
+      _AbstractPage_client.set(this, void 0);
+      __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
+      this.options = options;
+      this.response = response;
+      this.body = body;
+    }
+    hasNextPage() {
+      const items = this.getPaginatedItems();
+      if (!items.length)
+        return false;
+      return this.nextPageRequestOptions() != null;
+    }
+    async getNextPage() {
+      const nextOptions = this.nextPageRequestOptions();
+      if (!nextOptions) {
+        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
+      }
+      return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
+    }
+    async *iterPages() {
+      let page = this;
+      yield page;
+      while (page.hasNextPage()) {
+        page = await page.getNextPage();
+        yield page;
+      }
+    }
+    async *[(_AbstractPage_client = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
+      for await (const page of this.iterPages()) {
+        for (const item of page.getPaginatedItems()) {
+          yield item;
+        }
+      }
+    }
+  }
+  return AbstractPage3;
+})();
+var PagePromise = /* @__PURE__ */ (() => {
+  class PagePromise3 extends APIPromise {
+    constructor(client, request, Page2) {
+      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse(client2, props), props.options));
+    }
+    /**
+     * Allow auto-paginating iteration on an unawaited list call, eg:
+     *
+     *    for await (const item of client.items.list()) {
+     *      console.log(item)
+     *    }
+     */
+    async *[Symbol.asyncIterator]() {
+      const page = await this;
+      for await (const item of page) {
+        yield item;
+      }
+    }
+  }
+  return PagePromise3;
+})();
+var ErrorsPage = class extends AbstractPage {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.errors = body.errors || [];
+  }
+  getPaginatedItems() {
+    return this.errors ?? [];
+  }
+  nextPageRequestOptions() {
+    return null;
+  }
+};
+var NumberedPage = class extends AbstractPage {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body || [];
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const query = this.options.query;
+    const currentPage = query?.page ?? 1;
+    return {
+      ...this.options,
+      query: {
+        ...maybeObj(this.options.query),
+        page: currentPage + 1
+      }
+    };
+  }
+};
+var HypermediaPage = class extends AbstractPage {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body || [];
+    this.next = this.response.headers.get("link")?.match(/<([^>]+)>; rel="next"/)?.[1] ?? null;
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const urlString = this.next;
+    if (!urlString)
+      return null;
+    const url = new URL(urlString);
+    const params = [...Object.entries(this.options.query || {}), ...url.searchParams.entries()];
+    for (const [key, value] of params) {
+      url.searchParams.set(key, value);
+    }
+    return {
+      ...this.options,
+      path: url.toString(),
+      query: void 0
+    };
+  }
+};
+
+// node_modules/@stainless-api/github-internal/internal/headers.mjs
+var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
+function encodeURIPath(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction = (pathEncoder = encodeURIPath) => function path6(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path7 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path7.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new GitHubError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path7}
+${underline}`);
+  }
+  return path7;
+};
+var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
+
+// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
+var BaseReactions = /* @__PURE__ */ (() => {
+  class BaseReactions8 extends APIResource {
+    /**
+     * Create a reaction to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     * A response with an HTTP `200` status means that you already added the reaction
+     * type to this issue comment.
+     *
+     * @example
+     * ```ts
+     * const reaction =
+     *   await client.repos.issues.comments.reactions.create(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     content: 'heart',
+     *   });
+     * ```
+     */
+    create(commentID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * List the reactions to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const reactionListResponse of client.repos.issues.comments.reactions.list(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
+    }
+    /**
+     * > [!NOTE] You can also specify a repository by `repository_id` using the route
+     * > `DELETE delete /repositories/:repository_id/issues/comments/:comment_id/reactions/:reaction_id`.
+     *
+     * Delete a reaction to an
+     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
+     *
+     * @example
+     * ```ts
+     * await client.repos.issues.comments.reactions.delete(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   comment_id: 0,
+     * });
+     * ```
+     */
+    delete(reactionID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
+    }
+  }
+  BaseReactions8._key = Object.freeze([
+    "repos",
+    "issues",
+    "comments",
+    "reactions"
+  ]);
+  return BaseReactions8;
+})();
+var Reactions = class extends BaseReactions {
+};
+
+// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
+var BaseComments = /* @__PURE__ */ (() => {
+  class BaseComments7 extends APIResource {
+    /**
+     * You can use the REST API to create comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.create(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    create(issueNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * You can use the REST API to get comments on issues and pull requests. Every pull
+     * request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.retrieve(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *   });
+     * ```
+     */
+    retrieve(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
+    }
+    /**
+     * You can use the REST API to update comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.update(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    update(commentID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.patch(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        body,
+        ...options
+      });
+    }
+    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
+      const comments = await this.list(issueNumber);
+      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
+      if (match) {
+        return this.update(match.id, updateParams, options);
+      } else {
+        return this.create(issueNumber, createParams, options);
+      }
+    }
+    /**
+     * You can use the REST API to list comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * Issue comments are ordered by ascending ID.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const issueComment of client.repos.issues.comments.list(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(issueNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
+    }
+    /**
+     * You can use the REST API to delete comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * @example
+     * ```ts
+     * await client.repos.issues.comments.delete(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    delete(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        ...options,
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+  }
+  BaseComments7._key = Object.freeze([
+    "repos",
+    "issues",
+    "comments"
+  ]);
+  return BaseComments7;
+})();
+var Comments = /* @__PURE__ */ (() => {
+  class Comments7 extends BaseComments {
+    constructor() {
+      super(...arguments);
+      this.reactions = new Reactions(this._client);
+    }
+  }
+  Comments7.Reactions = Reactions;
+  Comments7.BaseReactions = BaseReactions;
+  return Comments7;
+})();
+
+// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
+var uuid4 = function() {
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid4 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.19";
+// node_modules/@stainless-api/github-internal/version.mjs
+var VERSION = "0.15.0";
 
-// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
 function getDetectedPlatform() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -9438,12 +10137,12 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/@stainless-api/github-internal/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
   }
-  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new Stainless({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitHub({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
 }
 function makeReadableStream(...args) {
   const ReadableStream = globalThis.ReadableStream;
@@ -9483,7 +10182,7 @@ async function CancelReadableStream(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/@stainless-api/github-internal/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -9493,7 +10192,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -9502,7 +10201,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -9581,7 +10280,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -9859,252 +10558,7 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
-var levelNumbers = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn(levelNumbers, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers))}`);
-  return void 0;
-};
-function noop() {
-}
-function makeLogFn(fnLevel, logger2, logLevel) {
-  if (!logger2 || levelNumbers[fnLevel] > levelNumbers[logLevel]) {
-    return noop;
-  } else {
-    return logger2[fnLevel].bind(logger2);
-  }
-}
-var noopLogger = {
-  error: noop,
-  warn: noop,
-  info: noop,
-  debug: noop
-};
-var cachedLoggers = /* @__PURE__ */ new WeakMap();
-function loggerFor(client) {
-  const logger2 = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger2) {
-    return noopLogger;
-  }
-  const cachedLogger = cachedLoggers.get(logger2);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn("error", logger2, logLevel),
-    warn: makeLogFn("warn", logger2, logLevel),
-    info: makeLogFn("info", logger2, logLevel),
-    debug: makeLogFn("debug", logger2, logLevel)
-  };
-  cachedLoggers.set(logger2, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-
-// node_modules/@stainless-api/sdk/internal/parse.mjs
-async function defaultParseResponse(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/sdk/core/api-promise.mjs
-var _APIPromise_client;
-var APIPromise = class _APIPromise extends Promise {
-  constructor(client, responsePromise, parseResponse = defaultParseResponse) {
-    super((resolve) => {
-      resolve(null);
-    });
-    this.responsePromise = responsePromise;
-    this.parseResponse = parseResponse;
-    _APIPromise_client.set(this, void 0);
-    __classPrivateFieldSet(this, _APIPromise_client, client, "f");
-  }
-  _thenUnwrap(transform) {
-    return new _APIPromise(__classPrivateFieldGet(this, _APIPromise_client, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-  }
-  /**
-   * Gets the raw `Response` instance instead of parsing the response
-   * data.
-   *
-   * If you want to parse the response body but still get the `Response`
-   * instance, you can use {@link withResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  asResponse() {
-    return this.responsePromise.then((p) => p.response);
-  }
-  /**
-   * Gets the parsed response data and the raw `Response` instance.
-   *
-   * If you just want to get the raw `Response` instance without parsing it,
-   * you can use {@link asResponse()}.
-   *
-   * 👋 Getting the wrong TypeScript type for `Response`?
-   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-   * to your `tsconfig.json`.
-   */
-  async withResponse() {
-    const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-    return { data, response };
-  }
-  parse() {
-    if (!this.parsedPromise) {
-      this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet(this, _APIPromise_client, "f"), data));
-    }
-    return this.parsedPromise;
-  }
-  then(onfulfilled, onrejected) {
-    return this.parse().then(onfulfilled, onrejected);
-  }
-  catch(onrejected) {
-    return this.parse().catch(onrejected);
-  }
-  finally(onfinally) {
-    return this.parse().finally(onfinally);
-  }
-};
-_APIPromise_client = /* @__PURE__ */ new WeakMap();
-
-// node_modules/@stainless-api/sdk/core/pagination.mjs
-var _AbstractPage_client;
-var AbstractPage = class {
-  constructor(client, response, body, options) {
-    _AbstractPage_client.set(this, void 0);
-    __classPrivateFieldSet(this, _AbstractPage_client, client, "f");
-    this.options = options;
-    this.response = response;
-    this.body = body;
-  }
-  hasNextPage() {
-    const items = this.getPaginatedItems();
-    if (!items.length)
-      return false;
-    return this.nextPageRequestOptions() != null;
-  }
-  async getNextPage() {
-    const nextOptions = this.nextPageRequestOptions();
-    if (!nextOptions) {
-      throw new StainlessError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-    }
-    return await __classPrivateFieldGet(this, _AbstractPage_client, "f").requestAPIList(this.constructor, nextOptions);
-  }
-  async *iterPages() {
-    let page = this;
-    yield page;
-    while (page.hasNextPage()) {
-      page = await page.getNextPage();
-      yield page;
-    }
-  }
-  async *[(_AbstractPage_client = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-    for await (const page of this.iterPages()) {
-      for (const item of page.getPaginatedItems()) {
-        yield item;
-      }
-    }
-  }
-};
-var PagePromise = class extends APIPromise {
-  constructor(client, request, Page2) {
-    super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse(client2, props), props.options));
-  }
-  /**
-   * Allow auto-paginating iteration on an unawaited list call, eg:
-   *
-   *    for await (const item of client.items.list()) {
-   *      console.log(item)
-   *    }
-   */
-  async *[Symbol.asyncIterator]() {
-    const page = await this;
-    for await (const item of page) {
-      yield item;
-    }
-  }
-};
-var Page = class extends AbstractPage {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body.data || [];
-    this.next_cursor = body.next_cursor || "";
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const cursor = this.next_cursor;
-    if (!cursor) {
-      return null;
-    }
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj(this.options.query),
-        cursor
-      }
-    };
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/@stainless-api/github-internal/internal/uploads.mjs
 var checkFileSupport = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -10121,7 +10575,7 @@ function getName(value) {
 }
 var isAsyncIterable = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/@stainless-api/github-internal/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -10173,2348 +10627,15 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/@stainless-api/sdk/core/resource.mjs
-var APIResource = class {
-  constructor(client) {
-    this._client = client;
-  }
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/path.mjs
-function encodeURIPath(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction = (pathEncoder = encodeURIPath) => function path6(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path7 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path7.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new StainlessError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path7}
-${underline}`);
-  }
-  return path7;
-};
-var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
-
-// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
-var Diagnostics = class extends APIResource {
-  /**
-   * Get the list of diagnostics for a given build.
-   *
-   * If no language targets are specified, diagnostics for all languages are
-   * returned.
-   */
-  list(buildID, query = {}, options) {
-    return this._client.getAPIList(path`/v0/builds/${buildID}/diagnostics`, Page, {
-      query,
-      ...options
-    });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
-var TargetOutputs = class extends APIResource {
-  /**
-   * Retrieve a method to download an output for a given build target.
-   *
-   * If the requested type of output is `source`, and the requested output method is
-   * `url`, a download link to a tarball of the source files is returned. If the
-   * requested output method is `git`, a Git remote, ref, and access token (if
-   * necessary) is returned.
-   *
-   * Otherwise, the possible types of outputs are specific to the requested target,
-   * and the output method _must_ be `url`. See the documentation for `type` for more
-   * information.
-   */
-  retrieve(query, options) {
-    return this._client.get("/v0/build_target_outputs", { query, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
-var Builds = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.diagnostics = new Diagnostics(this._client);
-    this.targetOutputs = new TargetOutputs(this._client);
-  }
-  /**
-   * Create a build, on top of a project branch, against a given input revision.
-   *
-   * The project branch will be modified so that its latest set of config files
-   * points to the one specified by the input revision.
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
-  }
-  /**
-   * Retrieve a build by its ID.
-   */
-  retrieve(buildID, options) {
-    return this._client.get(path`/v0/builds/${buildID}`, options);
-  }
-  /**
-   * List user-triggered builds for a given project.
-   *
-   * An optional revision can be specified to filter by config commit SHA, or hashes
-   * of file contents.
-   */
-  list(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList("/v0/builds", Page, { query: { project, ...query }, ...options });
-  }
-  /**
-   * Create two builds whose outputs can be directly compared with each other.
-   *
-   * Created builds _modify_ their project branches so that their latest sets of
-   * config files point to the ones specified by the input revision.
-   *
-   * This endpoint is useful because a build has more inputs than the set of config
-   * files it uses, so comparing two builds directly may return spurious differences.
-   * Builds made via this endpoint are guaranteed to have differences arising from
-   * the set of config files, and any custom code.
-   */
-  compare(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post("/v0/builds/compare", { body: { project, ...body }, ...options });
-  }
-};
-Builds.Diagnostics = Diagnostics;
-Builds.TargetOutputs = TargetOutputs;
-
-// node_modules/@stainless-api/sdk/resources/orgs.mjs
-var Orgs = class extends APIResource {
-  /**
-   * Retrieve an organization by name.
-   */
-  retrieve(org, options) {
-    return this._client.get(path`/v0/orgs/${org}`, options);
-  }
-  /**
-   * List organizations accessible to the current authentication method.
-   */
-  list(options) {
-    return this._client.get("/v0/orgs", options);
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
-var Branches = class extends APIResource {
-  /**
-   * Create a new branch for a project.
-   *
-   * The branch inherits the config files from the revision pointed to by the
-   * `branch_from` parameter. In addition, if the revision is a branch name, the
-   * branch will also inherit custom code changes from that branch.
-   */
-  create(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/branches`, { body, ...options });
-  }
-  /**
-   * Retrieve a project branch by name.
-   */
-  retrieve(branch, params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/branches/${branch}`, options);
-  }
-  /**
-   * Retrieve a project branch by name.
-   */
-  list(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList(path`/v0/projects/${project}/branches`, Page, {
-      query,
-      ...options
-    });
-  }
-  /**
-   * Delete a project branch by name.
-   */
-  delete(branch, params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.delete(path`/v0/projects/${project}/branches/${branch}`, options);
-  }
-  /**
-   * Rebase a project branch.
-   *
-   * The branch is rebased onto the `base` branch or commit SHA, inheriting any
-   * config and custom code changes.
-   */
-  rebase(branch, params = {}, options) {
-    const { project = this._client.project, base } = params ?? {};
-    return this._client.put(path`/v0/projects/${project}/branches/${branch}/rebase`, {
-      query: { base },
-      ...options
-    });
-  }
-  /**
-   * Reset a project branch.
-   *
-   * If `branch` === `main`, the branch is reset to `target_config_sha`. Otherwise,
-   * the branch is reset to `main`.
-   */
-  reset(branch, params = {}, options) {
-    const { project = this._client.project, target_config_sha } = params ?? {};
-    return this._client.put(path`/v0/projects/${project}/branches/${branch}/reset`, {
-      query: { target_config_sha },
-      ...options
-    });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
-var Configs = class extends APIResource {
-  /**
-   * Retrieve the configuration files for a given project.
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}/configs`, { query, ...options });
-  }
-  /**
-   * Generate suggestions for changes to config files based on an OpenAPI spec.
-   */
-  guess(params, options) {
-    const { project = this._client.project, ...body } = params;
-    return this._client.post(path`/v0/projects/${project}/configs/guess`, { body, ...options });
-  }
-};
-
-// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
-var Projects = class extends APIResource {
-  constructor() {
-    super(...arguments);
-    this.branches = new Branches(this._client);
-    this.configs = new Configs(this._client);
-  }
-  /**
-   * Create a new project.
-   */
-  create(body, options) {
-    return this._client.post("/v0/projects", { body, ...options });
-  }
-  /**
-   * Retrieve a project by name.
-   */
-  retrieve(params = {}, options) {
-    const { project = this._client.project } = params ?? {};
-    return this._client.get(path`/v0/projects/${project}`, options);
-  }
-  /**
-   * Update a project's properties.
-   */
-  update(params = {}, options) {
-    const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path`/v0/projects/${project}`, { body, ...options });
-  }
-  /**
-   * List projects in an organization, from oldest to newest.
-   */
-  list(query = {}, options) {
-    return this._client.getAPIList("/v0/projects", Page, { query, ...options });
-  }
-};
-Projects.Branches = Branches;
-Projects.Configs = Configs;
-
-// node_modules/@stainless-api/sdk/internal/headers.mjs
-var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/sdk/internal/utils/env.mjs
-var readEnv = (env) => {
-  if (typeof globalThis.process !== "undefined") {
-    return globalThis.process.env?.[env]?.trim() ?? void 0;
-  }
-  if (typeof globalThis.Deno !== "undefined") {
-    return globalThis.Deno.env?.get?.(env)?.trim();
-  }
-  return void 0;
-};
-
-// node_modules/@stainless-api/sdk/lib/unwrap.mjs
-async function unwrapFile(value) {
-  if (value === null) {
-    return null;
-  }
-  if (value.type === "content") {
-    return value.content;
-  }
-  const response = await fetch(value.url);
-  return response.text();
-}
-
-// node_modules/@stainless-api/sdk/client.mjs
-var _Stainless_instances;
-var _a;
-var _Stainless_encoder;
-var _Stainless_baseURLOverridden;
-var environments = {
-  production: "https://api.stainless.com",
-  staging: "https://staging.stainless.com"
-};
-var Stainless = class {
-  /**
-   * API Client for interfacing with the Stainless API.
-   *
-   * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
-   * @param {string | null | undefined} [opts.project]
-   * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
-   * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
-   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
-   * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
-   * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
-   * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
-   * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
-   * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
-   */
-  constructor({ baseURL = readEnv("STAINLESS_BASE_URL"), apiKey = readEnv("STAINLESS_API_KEY") ?? null, project = null, ...opts } = {}) {
-    _Stainless_instances.add(this);
-    _Stainless_encoder.set(this, void 0);
-    this.projects = new Projects(this);
-    this.builds = new Builds(this);
-    this.orgs = new Orgs(this);
-    const options = {
-      apiKey,
-      project,
-      ...opts,
-      baseURL,
-      environment: opts.environment ?? "production"
-    };
-    if (baseURL && opts.environment) {
-      throw new StainlessError("Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null");
-    }
-    this.baseURL = options.baseURL || environments[options.environment || "production"];
-    this.timeout = options.timeout ?? _a.DEFAULT_TIMEOUT;
-    this.logger = options.logger ?? console;
-    const defaultLogLevel = "warn";
-    this.logLevel = defaultLogLevel;
-    this.logLevel = parseLogLevel(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel(readEnv("STAINLESS_LOG"), "process.env['STAINLESS_LOG']", this) ?? defaultLogLevel;
-    this.fetchOptions = options.fetchOptions;
-    this.maxRetries = options.maxRetries ?? 2;
-    this.fetch = options.fetch ?? getDefaultFetch();
-    __classPrivateFieldSet(this, _Stainless_encoder, FallbackEncoder, "f");
-    this._options = options;
-    this.apiKey = apiKey;
-    this.project = project;
-  }
-  /**
-   * Create a new client instance re-using the same options given to the current client with optional overriding.
-   */
-  withOptions(options) {
-    const client = new this.constructor({
-      ...this._options,
-      environment: options.environment ? options.environment : void 0,
-      baseURL: options.environment ? void 0 : this.baseURL,
-      maxRetries: this.maxRetries,
-      timeout: this.timeout,
-      logger: this.logger,
-      logLevel: this.logLevel,
-      fetch: this.fetch,
-      fetchOptions: this.fetchOptions,
-      apiKey: this.apiKey,
-      project: this.project,
-      ...options
-    });
-    return client;
-  }
-  defaultQuery() {
-    return this._options.defaultQuery;
-  }
-  validateHeaders({ values, nulls }) {
-    if (this.apiKey && values.get("authorization")) {
-      return;
-    }
-    if (nulls.has("authorization")) {
-      return;
-    }
-    throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
-  }
-  async authHeaders(opts) {
-    if (this.apiKey == null) {
-      return void 0;
-    }
-    return buildHeaders([{ Authorization: `Bearer ${this.apiKey}` }]);
-  }
-  stringifyQuery(query) {
-    return stringify(query, { arrayFormat: "comma" });
-  }
-  getUserAgent() {
-    return `${this.constructor.name}/JS ${VERSION}`;
-  }
-  defaultIdempotencyKey() {
-    return `stainless-node-retry-${uuid4()}`;
-  }
-  makeStatusError(status, error, message, headers) {
-    return APIError.generate(status, error, message, headers);
-  }
-  buildURL(path6, query, defaultBaseURL) {
-    const baseURL = !__classPrivateFieldGet(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-    const url = isAbsoluteURL(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
-    const defaultQuery = this.defaultQuery();
-    if (!isEmptyObj(defaultQuery)) {
-      query = { ...defaultQuery, ...query };
-    }
-    if (typeof query === "object" && query && !Array.isArray(query)) {
-      url.search = this.stringifyQuery(query);
-    }
-    return url.toString();
-  }
-  /**
-   * Used as a callback for mutating the given `FinalRequestOptions` object.
-   */
-  async prepareOptions(options) {
-  }
-  /**
-   * Used as a callback for mutating the given `RequestInit` object.
-   *
-   * This is useful for cases where you want to add certain headers based off of
-   * the request properties, e.g. `method` or `url`.
-   */
-  async prepareRequest(request, { url, options }) {
-  }
-  get(path6, opts) {
-    return this.methodRequest("get", path6, opts);
-  }
-  post(path6, opts) {
-    return this.methodRequest("post", path6, opts);
-  }
-  patch(path6, opts) {
-    return this.methodRequest("patch", path6, opts);
-  }
-  put(path6, opts) {
-    return this.methodRequest("put", path6, opts);
-  }
-  delete(path6, opts) {
-    return this.methodRequest("delete", path6, opts);
-  }
-  methodRequest(method, path6, opts) {
-    return this.request(Promise.resolve(opts).then((opts2) => {
-      return { method, path: path6, ...opts2 };
-    }));
-  }
-  request(options, remainingRetries = null) {
-    return new APIPromise(this, this.makeRequest(options, remainingRetries, void 0));
-  }
-  async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
-    const options = await optionsInput;
-    const maxRetries = options.maxRetries ?? this.maxRetries;
-    if (retriesRemaining == null) {
-      retriesRemaining = maxRetries;
-    }
-    await this.prepareOptions(options);
-    const { req, url, timeout } = await this.buildRequest(options, {
-      retryCount: maxRetries - retriesRemaining
-    });
-    await this.prepareRequest(req, { url, options });
-    const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
-    const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
-    const startTime = Date.now();
-    loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({
-      retryOfRequestLogID,
-      method: options.method,
-      url,
-      options,
-      headers: req.headers
-    }));
-    if (options.signal?.aborted) {
-      throw new APIUserAbortError();
-    }
-    const controller = new AbortController();
-    const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
-    const headersTime = Date.now();
-    if (response instanceof globalThis.Error) {
-      const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
-      if (options.signal?.aborted) {
-        throw new APIUserAbortError();
-      }
-      const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
-      if (retriesRemaining) {
-        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
-        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
-          retryOfRequestLogID,
-          url,
-          durationMs: headersTime - startTime,
-          message: response.message
-        }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
-      }
-      loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
-      loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails({
-        retryOfRequestLogID,
-        url,
-        durationMs: headersTime - startTime,
-        message: response.message
-      }));
-      if (isTimeout) {
-        throw new APIConnectionTimeoutError();
-      }
-      throw new APIConnectionError({ cause: response });
-    }
-    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
-    if (!response.ok) {
-      const shouldRetry = await this.shouldRetry(response);
-      if (retriesRemaining && shouldRetry) {
-        const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
-        await CancelReadableStream(response.body);
-        loggerFor(this).info(`${responseInfo} - ${retryMessage2}`);
-        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails({
-          retryOfRequestLogID,
-          url: response.url,
-          status: response.status,
-          headers: response.headers,
-          durationMs: headersTime - startTime
-        }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
-      }
-      const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
-      loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
-      const errText = await response.text().catch((err2) => castToError(err2).message);
-      const errJSON = safeJSON(errText);
-      const errMessage = errJSON ? void 0 : errText;
-      loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({
-        retryOfRequestLogID,
-        url: response.url,
-        status: response.status,
-        headers: response.headers,
-        message: errMessage,
-        durationMs: Date.now() - startTime
-      }));
-      const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
-      throw err;
-    }
-    loggerFor(this).info(responseInfo);
-    loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({
-      retryOfRequestLogID,
-      url: response.url,
-      status: response.status,
-      headers: response.headers,
-      durationMs: headersTime - startTime
-    }));
-    return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
-  }
-  getAPIList(path6, Page2, opts) {
-    return this.requestAPIList(Page2, { method: "get", path: path6, ...opts });
-  }
-  requestAPIList(Page2, options) {
-    const request = this.makeRequest(options, null, void 0);
-    return new PagePromise(this, request, Page2);
-  }
-  async fetchWithTimeout(url, init, ms, controller) {
-    const { signal, method, ...options } = init || {};
-    if (signal)
-      signal.addEventListener("abort", () => controller.abort());
-    const timeout = setTimeout(() => controller.abort(), ms);
-    const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
-    const fetchOptions = {
-      signal: controller.signal,
-      ...isReadableBody ? { duplex: "half" } : {},
-      method: "GET",
-      ...options
-    };
-    if (method) {
-      fetchOptions.method = method.toUpperCase();
-    }
-    try {
-      return await this.fetch.call(void 0, url, fetchOptions);
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-  async shouldRetry(response) {
-    const shouldRetryHeader = response.headers.get("x-should-retry");
-    if (shouldRetryHeader === "true")
-      return true;
-    if (shouldRetryHeader === "false")
-      return false;
-    if (response.status === 408)
-      return true;
-    if (response.status === 409)
-      return true;
-    if (response.status === 429)
-      return true;
-    if (response.status >= 500)
-      return true;
-    return false;
-  }
-  async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
-    let timeoutMillis;
-    const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
-    if (retryAfterMillisHeader) {
-      const timeoutMs = parseFloat(retryAfterMillisHeader);
-      if (!Number.isNaN(timeoutMs)) {
-        timeoutMillis = timeoutMs;
-      }
-    }
-    const retryAfterHeader = responseHeaders?.get("retry-after");
-    if (retryAfterHeader && !timeoutMillis) {
-      const timeoutSeconds = parseFloat(retryAfterHeader);
-      if (!Number.isNaN(timeoutSeconds)) {
-        timeoutMillis = timeoutSeconds * 1e3;
-      } else {
-        timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
-      }
-    }
-    if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
-      const maxRetries = options.maxRetries ?? this.maxRetries;
-      timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
-    }
-    await sleep(timeoutMillis);
-    return this.makeRequest(options, retriesRemaining - 1, requestLogID);
-  }
-  calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
-    const initialRetryDelay = 0.5;
-    const maxRetryDelay = 8;
-    const numRetries = maxRetries - retriesRemaining;
-    const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
-    const jitter = 1 - Math.random() * 0.25;
-    return sleepSeconds * jitter * 1e3;
-  }
-  async buildRequest(inputOptions, { retryCount = 0 } = {}) {
-    const options = { ...inputOptions };
-    const { method, path: path6, query, defaultBaseURL } = options;
-    const url = this.buildURL(path6, query, defaultBaseURL);
-    if ("timeout" in options)
-      validatePositiveInteger("timeout", options.timeout);
-    options.timeout = options.timeout ?? this.timeout;
-    const { bodyHeaders, body } = this.buildBody({ options });
-    const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
-    const req = {
-      method,
-      headers: reqHeaders,
-      ...options.signal && { signal: options.signal },
-      ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
-      ...body && { body },
-      ...this.fetchOptions ?? {},
-      ...options.fetchOptions ?? {}
-    };
-    return { req, url, timeout: options.timeout };
-  }
-  async buildHeaders({ options, method, bodyHeaders, retryCount }) {
-    let idempotencyHeaders = {};
-    if (this.idempotencyHeader && method !== "get") {
-      if (!options.idempotencyKey)
-        options.idempotencyKey = this.defaultIdempotencyKey();
-      idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
-    }
-    const headers = buildHeaders([
-      idempotencyHeaders,
-      {
-        Accept: "application/json",
-        "User-Agent": this.getUserAgent(),
-        "X-Stainless-Retry-Count": String(retryCount),
-        ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
-        ...getPlatformHeaders()
-      },
-      await this.authHeaders(options),
-      this._options.defaultHeaders,
-      bodyHeaders,
-      options.headers
-    ]);
-    this.validateHeaders(headers);
-    return headers.values;
-  }
-  buildBody({ options: { body, headers: rawHeaders } }) {
-    if (!body) {
-      return { bodyHeaders: void 0, body: void 0 };
-    }
-    const headers = buildHeaders([rawHeaders]);
-    if (
-      // Pass raw type verbatim
-      ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
-      headers.values.has("content-type") || // `Blob` is superset of `File`
-      globalThis.Blob && body instanceof globalThis.Blob || // `FormData` -> `multipart/form-data`
-      body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
-      body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
-      globalThis.ReadableStream && body instanceof globalThis.ReadableStream
-    ) {
-      return { bodyHeaders: void 0, body };
-    } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
-      return { bodyHeaders: void 0, body: ReadableStreamFrom(body) };
-    } else {
-      return __classPrivateFieldGet(this, _Stainless_encoder, "f").call(this, { body, headers });
-    }
-  }
-};
-_a = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
-  return this.baseURL !== environments[this._options.environment || "production"];
-};
-Stainless.Stainless = _a;
-Stainless.DEFAULT_TIMEOUT = 6e4;
-Stainless.StainlessError = StainlessError;
-Stainless.APIError = APIError;
-Stainless.APIConnectionError = APIConnectionError;
-Stainless.APIConnectionTimeoutError = APIConnectionTimeoutError;
-Stainless.APIUserAbortError = APIUserAbortError;
-Stainless.NotFoundError = NotFoundError;
-Stainless.ConflictError = ConflictError;
-Stainless.RateLimitError = RateLimitError;
-Stainless.BadRequestError = BadRequestError;
-Stainless.AuthenticationError = AuthenticationError;
-Stainless.InternalServerError = InternalServerError;
-Stainless.PermissionDeniedError = PermissionDeniedError;
-Stainless.UnprocessableEntityError = UnprocessableEntityError;
-Stainless.toFile = toFile;
-Stainless.unwrapFile = unwrapFile;
-Stainless.Projects = Projects;
-Stainless.Builds = Builds;
-Stainless.Orgs = Orgs;
-
-// package.json
-var package_default = {
-  name: "upload-openapi-spec-action",
-  version: "1.9.0",
-  main: "dist/index.js",
-  scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
-    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
-    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
-    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
-    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
-    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
-    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
-    lint: "tsc && prettier --check src && eslint src",
-    "lint:fix": "prettier --write src && eslint src --fix",
-    test: "vitest"
-  },
-  license: "ISC",
-  devDependencies: {
-    "@eslint/js": "^9.35.0",
-    "@types/node": "^22.18.3",
-    esbuild: "^0.25.9",
-    eslint: "^9.35.0",
-    "eslint-config-prettier": "^10.1.8",
-    prettier: "3.6.2",
-    typescript: "^5.9.2",
-    "typescript-eslint": "^8.44.0",
-    vitest: "^3.2.4"
-  },
-  dependencies: {
-    "@stainless-api/github-internal": "^0.15.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.19",
-    "nano-spawn": "^1.0.3",
-    "ts-dedent": "^2.2.0",
-    yaml: "^2.8.1"
-  }
-};
-
-// src/compat/index.ts
-var crypto = __toESM(require("node:crypto"));
-var fs = __toESM(require("node:fs"));
-
-// node_modules/@stainless-api/github-internal/core/resource.mjs
-var APIResource2 = /* @__PURE__ */ (() => {
-  class APIResource3 {
-    constructor(client) {
-      this._client = client;
-    }
-  }
-  APIResource3._key = [];
-  return APIResource3;
-})();
-
-// node_modules/@stainless-api/github-internal/internal/tslib.mjs
-function __classPrivateFieldSet2(receiver, state, value, kind, f) {
-  if (kind === "m")
-    throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-}
-function __classPrivateFieldGet2(receiver, state, kind, f) {
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}
-
-// node_modules/@stainless-api/github-internal/internal/errors.mjs
-function isAbortError2(err) {
-  return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
-  ("name" in err && err.name === "AbortError" || // Expo fetch
-  "message" in err && String(err.message).includes("FetchRequestCanceledException"));
-}
-var castToError2 = (err) => {
-  if (err instanceof Error)
-    return err;
-  if (typeof err === "object" && err !== null) {
-    try {
-      if (Object.prototype.toString.call(err) === "[object Error]") {
-        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
-        if (err.stack)
-          error.stack = err.stack;
-        if (err.cause && !error.cause)
-          error.cause = err.cause;
-        if (err.name)
-          error.name = err.name;
-        return error;
-      }
-    } catch {
-    }
-    try {
-      return new Error(JSON.stringify(err));
-    } catch {
-    }
-  }
-  return new Error(err);
-};
-
-// node_modules/@stainless-api/github-internal/core/error.mjs
-var GitHubError = /* @__PURE__ */ (() => {
-  class GitHubError2 extends Error {
-  }
-  return GitHubError2;
-})();
-var APIError2 = class _APIError extends GitHubError {
-  constructor(status, error, message, headers) {
-    super(`${_APIError.makeMessage(status, error, message)}`);
-    this.status = status;
-    this.headers = headers;
-    this.error = error;
-  }
-  static makeMessage(status, error, message) {
-    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
-    if (status && msg) {
-      return `${status} ${msg}`;
-    }
-    if (status) {
-      return `${status} status code (no body)`;
-    }
-    if (msg) {
-      return msg;
-    }
-    return "(no status code or body)";
-  }
-  static generate(status, errorResponse, message, headers) {
-    if (!status || !headers) {
-      return new APIConnectionError2({ message, cause: castToError2(errorResponse) });
-    }
-    const error = errorResponse;
-    if (status === 400) {
-      return new BadRequestError2(status, error, message, headers);
-    }
-    if (status === 401) {
-      return new AuthenticationError2(status, error, message, headers);
-    }
-    if (status === 403) {
-      return new PermissionDeniedError2(status, error, message, headers);
-    }
-    if (status === 404) {
-      return new NotFoundError2(status, error, message, headers);
-    }
-    if (status === 409) {
-      return new ConflictError2(status, error, message, headers);
-    }
-    if (status === 422) {
-      return new UnprocessableEntityError2(status, error, message, headers);
-    }
-    if (status === 429) {
-      return new RateLimitError2(status, error, message, headers);
-    }
-    if (status >= 500) {
-      return new InternalServerError2(status, error, message, headers);
-    }
-    return new _APIError(status, error, message, headers);
-  }
-};
-var APIUserAbortError2 = class extends APIError2 {
-  constructor({ message } = {}) {
-    super(void 0, void 0, message || "Request was aborted.", void 0);
-  }
-};
-var APIConnectionError2 = class extends APIError2 {
-  constructor({ message, cause }) {
-    super(void 0, void 0, message || "Connection error.", void 0);
-    if (cause)
-      this.cause = cause;
-  }
-};
-var APIConnectionTimeoutError2 = class extends APIConnectionError2 {
-  constructor({ message } = {}) {
-    super({ message: message ?? "Request timed out." });
-  }
-};
-var BadRequestError2 = class extends APIError2 {
-};
-var AuthenticationError2 = class extends APIError2 {
-};
-var PermissionDeniedError2 = class extends APIError2 {
-};
-var NotFoundError2 = class extends APIError2 {
-};
-var ConflictError2 = class extends APIError2 {
-};
-var UnprocessableEntityError2 = class extends APIError2 {
-};
-var RateLimitError2 = class extends APIError2 {
-};
-var InternalServerError2 = class extends APIError2 {
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
-var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
-var isAbsoluteURL2 = (url) => {
-  return startsWithSchemeRegexp2.test(url);
-};
-var isArray2 = (val) => (isArray2 = Array.isArray, isArray2(val));
-var isReadonlyArray2 = isArray2;
-function maybeObj2(x) {
-  if (typeof x !== "object") {
-    return {};
-  }
-  return x ?? {};
-}
-function isEmptyObj2(obj) {
-  if (!obj)
-    return true;
-  for (const _k in obj)
-    return false;
-  return true;
-}
-function hasOwn2(obj, key) {
-  return Object.prototype.hasOwnProperty.call(obj, key);
-}
-var validatePositiveInteger2 = (name, n) => {
-  if (typeof n !== "number" || !Number.isInteger(n)) {
-    throw new GitHubError(`${name} must be an integer`);
-  }
-  if (n < 0) {
-    throw new GitHubError(`${name} must be a positive integer`);
-  }
-  return n;
-};
-var safeJSON2 = (text) => {
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    return void 0;
-  }
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
-var levelNumbers2 = {
-  off: 0,
-  error: 200,
-  warn: 300,
-  info: 400,
-  debug: 500
-};
-var parseLogLevel2 = (maybeLevel, sourceName, client) => {
-  if (!maybeLevel) {
-    return void 0;
-  }
-  if (hasOwn2(levelNumbers2, maybeLevel)) {
-    return maybeLevel;
-  }
-  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
-  return void 0;
-};
-function noop2() {
-}
-function makeLogFn2(fnLevel, logger2, logLevel) {
-  if (!logger2 || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
-    return noop2;
-  } else {
-    return logger2[fnLevel].bind(logger2);
-  }
-}
-var noopLogger2 = {
-  error: noop2,
-  warn: noop2,
-  info: noop2,
-  debug: noop2
-};
-var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
-function loggerFor2(client) {
-  const logger2 = client.logger;
-  const logLevel = client.logLevel ?? "off";
-  if (!logger2) {
-    return noopLogger2;
-  }
-  const cachedLogger = cachedLoggers2.get(logger2);
-  if (cachedLogger && cachedLogger[0] === logLevel) {
-    return cachedLogger[1];
-  }
-  const levelLogger = {
-    error: makeLogFn2("error", logger2, logLevel),
-    warn: makeLogFn2("warn", logger2, logLevel),
-    info: makeLogFn2("info", logger2, logLevel),
-    debug: makeLogFn2("debug", logger2, logLevel)
-  };
-  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
-  return levelLogger;
-}
-var formatRequestDetails2 = (details) => {
-  if (details.options) {
-    details.options = { ...details.options };
-    delete details.options["headers"];
-  }
-  if (details.headers) {
-    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
-      name,
-      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
-    ]));
-  }
-  if ("retryOfRequestLogID" in details) {
-    if (details.retryOfRequestLogID) {
-      details.retryOf = details.retryOfRequestLogID;
-    }
-    delete details.retryOfRequestLogID;
-  }
-  return details;
-};
-
-// node_modules/@stainless-api/github-internal/internal/parse.mjs
-async function defaultParseResponse2(client, props) {
-  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
-  const body = await (async () => {
-    if (response.status === 204) {
-      return null;
-    }
-    if (props.options.__binaryResponse) {
-      return response;
-    }
-    const contentType = response.headers.get("content-type");
-    const mediaType = contentType?.split(";")[0]?.trim();
-    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
-    if (isJSON) {
-      const json = await response.json();
-      return json;
-    }
-    const text = await response.text();
-    return text;
-  })();
-  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
-    retryOfRequestLogID,
-    url: response.url,
-    status: response.status,
-    body,
-    durationMs: Date.now() - startTime
-  }));
-  return body;
-}
-
-// node_modules/@stainless-api/github-internal/core/api-promise.mjs
-var _APIPromise_client2;
-var APIPromise2 = /* @__PURE__ */ (() => {
-  class APIPromise3 extends Promise {
-    constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
-      super((resolve) => {
-        resolve(null);
-      });
-      this.responsePromise = responsePromise;
-      this.parseResponse = parseResponse;
-      _APIPromise_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
-    }
-    _thenUnwrap(transform) {
-      return new APIPromise3(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
-    }
-    /**
-     * Gets the raw `Response` instance instead of parsing the response
-     * data.
-     *
-     * If you want to parse the response body but still get the `Response`
-     * instance, you can use {@link withResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    asResponse() {
-      return this.responsePromise.then((p) => p.response);
-    }
-    /**
-     * Gets the parsed response data and the raw `Response` instance.
-     *
-     * If you just want to get the raw `Response` instance without parsing it,
-     * you can use {@link asResponse()}.
-     *
-     * 👋 Getting the wrong TypeScript type for `Response`?
-     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
-     * to your `tsconfig.json`.
-     */
-    async withResponse() {
-      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
-      return { data, response };
-    }
-    parse() {
-      if (!this.parsedPromise) {
-        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
-      }
-      return this.parsedPromise;
-    }
-    then(onfulfilled, onrejected) {
-      return this.parse().then(onfulfilled, onrejected);
-    }
-    catch(onrejected) {
-      return this.parse().catch(onrejected);
-    }
-    finally(onfinally) {
-      return this.parse().finally(onfinally);
-    }
-  }
-  _APIPromise_client2 = /* @__PURE__ */ new WeakMap();
-  return APIPromise3;
-})();
-
-// node_modules/@stainless-api/github-internal/core/pagination.mjs
-var _AbstractPage_client2;
-var AbstractPage2 = /* @__PURE__ */ (() => {
-  class AbstractPage3 {
-    constructor(client, response, body, options) {
-      _AbstractPage_client2.set(this, void 0);
-      __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
-      this.options = options;
-      this.response = response;
-      this.body = body;
-    }
-    hasNextPage() {
-      const items = this.getPaginatedItems();
-      if (!items.length)
-        return false;
-      return this.nextPageRequestOptions() != null;
-    }
-    async getNextPage() {
-      const nextOptions = this.nextPageRequestOptions();
-      if (!nextOptions) {
-        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
-      }
-      return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
-    }
-    async *iterPages() {
-      let page = this;
-      yield page;
-      while (page.hasNextPage()) {
-        page = await page.getNextPage();
-        yield page;
-      }
-    }
-    async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
-      for await (const page of this.iterPages()) {
-        for (const item of page.getPaginatedItems()) {
-          yield item;
-        }
-      }
-    }
-  }
-  return AbstractPage3;
-})();
-var PagePromise2 = /* @__PURE__ */ (() => {
-  class PagePromise3 extends APIPromise2 {
-    constructor(client, request, Page2) {
-      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
-    }
-    /**
-     * Allow auto-paginating iteration on an unawaited list call, eg:
-     *
-     *    for await (const item of client.items.list()) {
-     *      console.log(item)
-     *    }
-     */
-    async *[Symbol.asyncIterator]() {
-      const page = await this;
-      for await (const item of page) {
-        yield item;
-      }
-    }
-  }
-  return PagePromise3;
-})();
-var ErrorsPage = class extends AbstractPage2 {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.errors = body.errors || [];
-  }
-  getPaginatedItems() {
-    return this.errors ?? [];
-  }
-  nextPageRequestOptions() {
-    return null;
-  }
-};
-var NumberedPage = class extends AbstractPage2 {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body || [];
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const query = this.options.query;
-    const currentPage = query?.page ?? 1;
-    return {
-      ...this.options,
-      query: {
-        ...maybeObj2(this.options.query),
-        page: currentPage + 1
-      }
-    };
-  }
-};
-var HypermediaPage = class extends AbstractPage2 {
-  constructor(client, response, body, options) {
-    super(client, response, body, options);
-    this.data = body || [];
-    this.next = this.response.headers.get("link")?.match(/<([^>]+)>; rel="next"/)?.[1] ?? null;
-  }
-  getPaginatedItems() {
-    return this.data ?? [];
-  }
-  nextPageRequestOptions() {
-    const urlString = this.next;
-    if (!urlString)
-      return null;
-    const url = new URL(urlString);
-    const params = [...Object.entries(this.options.query || {}), ...url.searchParams.entries()];
-    for (const [key, value] of params) {
-      url.searchParams.set(key, value);
-    }
-    return {
-      ...this.options,
-      path: url.toString(),
-      query: void 0
-    };
-  }
-};
-
-// node_modules/@stainless-api/github-internal/internal/headers.mjs
-var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
-function* iterateHeaders2(headers) {
-  if (!headers)
-    return;
-  if (brand_privateNullableHeaders2 in headers) {
-    const { values, nulls } = headers;
-    yield* values.entries();
-    for (const name of nulls) {
-      yield [name, null];
-    }
-    return;
-  }
-  let shouldClear = false;
-  let iter;
-  if (headers instanceof Headers) {
-    iter = headers.entries();
-  } else if (isReadonlyArray2(headers)) {
-    iter = headers;
-  } else {
-    shouldClear = true;
-    iter = Object.entries(headers ?? {});
-  }
-  for (let row of iter) {
-    const name = row[0];
-    if (typeof name !== "string")
-      throw new TypeError("expected header name to be a string");
-    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
-    let didClear = false;
-    for (const value of values) {
-      if (value === void 0)
-        continue;
-      if (shouldClear && !didClear) {
-        didClear = true;
-        yield [name, null];
-      }
-      yield [name, value];
-    }
-  }
-}
-var buildHeaders2 = (newHeaders) => {
-  const targetHeaders = new Headers();
-  const nullHeaders = /* @__PURE__ */ new Set();
-  for (const headers of newHeaders) {
-    const seenHeaders = /* @__PURE__ */ new Set();
-    for (const [name, value] of iterateHeaders2(headers)) {
-      const lowerName = name.toLowerCase();
-      if (!seenHeaders.has(lowerName)) {
-        targetHeaders.delete(name);
-        seenHeaders.add(lowerName);
-      }
-      if (value === null) {
-        targetHeaders.delete(name);
-        nullHeaders.add(lowerName);
-      } else {
-        targetHeaders.append(name, value);
-        nullHeaders.delete(lowerName);
-      }
-    }
-  }
-  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
-function encodeURIPath2(str) {
-  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
-}
-var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path6(statics, ...params) {
-  if (statics.length === 1)
-    return statics[0];
-  let postPath = false;
-  const invalidSegments = [];
-  const path7 = statics.reduce((previousValue, currentValue, index) => {
-    if (/[?#]/.test(currentValue)) {
-      postPath = true;
-    }
-    const value = params[index];
-    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
-    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
-      encoded = value + "";
-      invalidSegments.push({
-        start: previousValue.length + currentValue.length,
-        length: encoded.length,
-        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
-      });
-    }
-    return previousValue + currentValue + (index === params.length ? "" : encoded);
-  }, "");
-  const pathOnly = path7.split(/[?#]/, 1)[0];
-  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
-  let match;
-  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
-    invalidSegments.push({
-      start: match.index,
-      length: match[0].length,
-      error: `Value "${match[0]}" can't be safely passed as a path parameter`
-    });
-  }
-  invalidSegments.sort((a, b) => a.start - b.start);
-  if (invalidSegments.length > 0) {
-    let lastEnd = 0;
-    const underline = invalidSegments.reduce((acc, segment) => {
-      const spaces = " ".repeat(segment.start - lastEnd);
-      const arrows = "^".repeat(segment.length);
-      lastEnd = segment.start + segment.length;
-      return acc + spaces + arrows;
-    }, "");
-    throw new GitHubError(`Path parameters result in path with invalid segments:
-${invalidSegments.map((e) => e.error).join("\n")}
-${path7}
-${underline}`);
-  }
-  return path7;
-};
-var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
-var BaseReactions = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
-    /**
-     * Create a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     * A response with an HTTP `200` status means that you already added the reaction
-     * type to this issue comment.
-     *
-     * @example
-     * ```ts
-     * const reaction =
-     *   await client.repos.issues.comments.reactions.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     content: 'heart',
-     *   });
-     * ```
-     */
-    create(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * List the reactions to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const reactionListResponse of client.repos.issues.comments.reactions.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
-    }
-    /**
-     * > [!NOTE] You can also specify a repository by `repository_id` using the route
-     * > `DELETE delete /repositories/:repository_id/issues/comments/:comment_id/reactions/:reaction_id`.
-     *
-     * Delete a reaction to an
-     * [issue comment](https://docs.github.com/rest/issues/comments#get-an-issue-comment).
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.reactions.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   comment_id: 0,
-     * });
-     * ```
-     */
-    delete(reactionID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
-    }
-  }
-  BaseReactions8._key = Object.freeze([
-    "repos",
-    "issues",
-    "comments",
-    "reactions"
-  ]);
-  return BaseReactions8;
-})();
-var Reactions = class extends BaseReactions {
-};
-
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
-var BaseComments = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
-    /**
-     * You can use the REST API to create comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.create(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    create(issueNumber, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * You can use the REST API to get comments on issues and pull requests. Every pull
-     * request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.retrieve(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *   });
-     * ```
-     */
-    retrieve(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
-    }
-    /**
-     * You can use the REST API to update comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const issueComment =
-     *   await client.repos.issues.comments.update(0, {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Me too',
-     *   });
-     * ```
-     */
-    update(commentID, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        body,
-        ...options
-      });
-    }
-    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
-      const comments = await this.list(issueNumber);
-      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
-      if (match) {
-        return this.update(match.id, updateParams, options);
-      } else {
-        return this.create(issueNumber, createParams, options);
-      }
-    }
-    /**
-     * You can use the REST API to list comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * Issue comments are ordered by ascending ID.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const issueComment of client.repos.issues.comments.list(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(issueNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
-    }
-    /**
-     * You can use the REST API to delete comments on issues and pull requests. Every
-     * pull request is an issue, but not every issue is a pull request.
-     *
-     * @example
-     * ```ts
-     * await client.repos.issues.comments.delete(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * });
-     * ```
-     */
-    delete(commentID, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
-        ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
-      });
-    }
-  }
-  BaseComments7._key = Object.freeze([
-    "repos",
-    "issues",
-    "comments"
-  ]);
-  return BaseComments7;
-})();
-var Comments = /* @__PURE__ */ (() => {
-  class Comments7 extends BaseComments {
-    constructor() {
-      super(...arguments);
-      this.reactions = new Reactions(this._client);
-    }
-  }
-  Comments7.Reactions = Reactions;
-  Comments7.BaseReactions = BaseReactions;
-  return Comments7;
-})();
-
-// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
-var uuid42 = function() {
-  const { crypto: crypto2 } = globalThis;
-  if (crypto2?.randomUUID) {
-    uuid42 = crypto2.randomUUID.bind(crypto2);
-    return crypto2.randomUUID();
-  }
-  const u8 = new Uint8Array(1);
-  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
-  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
-};
-
-// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
-var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// node_modules/@stainless-api/github-internal/version.mjs
-var VERSION2 = "0.15.0";
-
-// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
-function getDetectedPlatform2() {
-  if (typeof Deno !== "undefined" && Deno.build != null) {
-    return "deno";
-  }
-  if (typeof EdgeRuntime !== "undefined") {
-    return "edge";
-  }
-  if (Object.prototype.toString.call(typeof globalThis.process !== "undefined" ? globalThis.process : 0) === "[object process]") {
-    return "node";
-  }
-  return "unknown";
-}
-var getPlatformProperties2 = () => {
-  const detectedPlatform = getDetectedPlatform2();
-  if (detectedPlatform === "deno") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION2,
-      "X-Stainless-OS": normalizePlatform2(Deno.build.os),
-      "X-Stainless-Arch": normalizeArch2(Deno.build.arch),
-      "X-Stainless-Runtime": "deno",
-      "X-Stainless-Runtime-Version": typeof Deno.version === "string" ? Deno.version : Deno.version?.deno ?? "unknown"
-    };
-  }
-  if (typeof EdgeRuntime !== "undefined") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION2,
-      "X-Stainless-OS": "Unknown",
-      "X-Stainless-Arch": `other:${EdgeRuntime}`,
-      "X-Stainless-Runtime": "edge",
-      "X-Stainless-Runtime-Version": globalThis.process.version
-    };
-  }
-  if (detectedPlatform === "node") {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION2,
-      "X-Stainless-OS": normalizePlatform2(globalThis.process.platform ?? "unknown"),
-      "X-Stainless-Arch": normalizeArch2(globalThis.process.arch ?? "unknown"),
-      "X-Stainless-Runtime": "node",
-      "X-Stainless-Runtime-Version": globalThis.process.version ?? "unknown"
-    };
-  }
-  const browserInfo = getBrowserInfo2();
-  if (browserInfo) {
-    return {
-      "X-Stainless-Lang": "js",
-      "X-Stainless-Package-Version": VERSION2,
-      "X-Stainless-OS": "Unknown",
-      "X-Stainless-Arch": "unknown",
-      "X-Stainless-Runtime": `browser:${browserInfo.browser}`,
-      "X-Stainless-Runtime-Version": browserInfo.version
-    };
-  }
-  return {
-    "X-Stainless-Lang": "js",
-    "X-Stainless-Package-Version": VERSION2,
-    "X-Stainless-OS": "Unknown",
-    "X-Stainless-Arch": "unknown",
-    "X-Stainless-Runtime": "unknown",
-    "X-Stainless-Runtime-Version": "unknown"
-  };
-};
-function getBrowserInfo2() {
-  if (typeof navigator === "undefined" || !navigator) {
-    return null;
-  }
-  const browserPatterns = [
-    { key: "edge", pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "ie", pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "ie", pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "chrome", pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "firefox", pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
-    { key: "safari", pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ }
-  ];
-  for (const { key, pattern } of browserPatterns) {
-    const match = pattern.exec(navigator.userAgent);
-    if (match) {
-      const major = match[1] || 0;
-      const minor = match[2] || 0;
-      const patch = match[3] || 0;
-      return { browser: key, version: `${major}.${minor}.${patch}` };
-    }
-  }
-  return null;
-}
-var normalizeArch2 = (arch) => {
-  if (arch === "x32")
-    return "x32";
-  if (arch === "x86_64" || arch === "x64")
-    return "x64";
-  if (arch === "arm")
-    return "arm";
-  if (arch === "aarch64" || arch === "arm64")
-    return "arm64";
-  if (arch)
-    return `other:${arch}`;
-  return "unknown";
-};
-var normalizePlatform2 = (platform) => {
-  platform = platform.toLowerCase();
-  if (platform.includes("ios"))
-    return "iOS";
-  if (platform === "android")
-    return "Android";
-  if (platform === "darwin")
-    return "MacOS";
-  if (platform === "win32")
-    return "Windows";
-  if (platform === "freebsd")
-    return "FreeBSD";
-  if (platform === "openbsd")
-    return "OpenBSD";
-  if (platform === "linux")
-    return "Linux";
-  if (platform)
-    return `Other:${platform}`;
-  return "Unknown";
-};
-var _platformHeaders2;
-var getPlatformHeaders2 = () => {
-  return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
-};
-
-// node_modules/@stainless-api/github-internal/internal/shims.mjs
-function getDefaultFetch2() {
-  if (typeof fetch !== "undefined") {
-    return fetch;
-  }
-  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitHub({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
-}
-function makeReadableStream2(...args) {
-  const ReadableStream = globalThis.ReadableStream;
-  if (typeof ReadableStream === "undefined") {
-    throw new Error("`ReadableStream` is not defined as a global; You will need to polyfill it, `globalThis.ReadableStream = ReadableStream`");
-  }
-  return new ReadableStream(...args);
-}
-function ReadableStreamFrom2(iterable) {
-  let iter = Symbol.asyncIterator in iterable ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
-  return makeReadableStream2({
-    start() {
-    },
-    async pull(controller) {
-      const { done, value } = await iter.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
-      }
-    },
-    async cancel() {
-      await iter.return?.();
-    }
-  });
-}
-async function CancelReadableStream2(stream) {
-  if (stream === null || typeof stream !== "object")
-    return;
-  if (stream[Symbol.asyncIterator]) {
-    await stream[Symbol.asyncIterator]().return?.();
-    return;
-  }
-  const reader = stream.getReader();
-  const cancelPromise = reader.cancel();
-  reader.releaseLock();
-  await cancelPromise;
-}
-
-// node_modules/@stainless-api/github-internal/internal/request-options.mjs
-var FallbackEncoder2 = ({ headers, body }) => {
-  return {
-    bodyHeaders: {
-      "content-type": "application/json"
-    },
-    body: JSON.stringify(body)
-  };
-};
-
-// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
-var default_format2 = "RFC3986";
-var default_formatter2 = (v) => String(v);
-var formatters2 = {
-  RFC1738: (v) => String(v).replace(/%20/g, "+"),
-  RFC3986: default_formatter2
-};
-var RFC17382 = "RFC1738";
-
-// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
-var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
-var hex_table2 = /* @__PURE__ */ (() => {
-  const array = [];
-  for (let i = 0; i < 256; ++i) {
-    array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
-  }
-  return array;
-})();
-var limit2 = 1024;
-var encode2 = (str, _defaultEncoder, charset, _kind, format) => {
-  if (str.length === 0) {
-    return str;
-  }
-  let string = str;
-  if (typeof str === "symbol") {
-    string = Symbol.prototype.toString.call(str);
-  } else if (typeof str !== "string") {
-    string = String(str);
-  }
-  if (charset === "iso-8859-1") {
-    return escape(string).replace(/%u[0-9a-f]{4}/gi, function($0) {
-      return "%26%23" + parseInt($0.slice(2), 16) + "%3B";
-    });
-  }
-  let out = "";
-  for (let j = 0; j < string.length; j += limit2) {
-    const segment = string.length >= limit2 ? string.slice(j, j + limit2) : string;
-    const arr = [];
-    for (let i = 0; i < segment.length; ++i) {
-      let c = segment.charCodeAt(i);
-      if (c === 45 || // -
-      c === 46 || // .
-      c === 95 || // _
-      c === 126 || // ~
-      c >= 48 && c <= 57 || // 0-9
-      c >= 65 && c <= 90 || // a-z
-      c >= 97 && c <= 122 || // A-Z
-      format === RFC17382 && (c === 40 || c === 41)) {
-        arr[arr.length] = segment.charAt(i);
-        continue;
-      }
-      if (c < 128) {
-        arr[arr.length] = hex_table2[c];
-        continue;
-      }
-      if (c < 2048) {
-        arr[arr.length] = hex_table2[192 | c >> 6] + hex_table2[128 | c & 63];
-        continue;
-      }
-      if (c < 55296 || c >= 57344) {
-        arr[arr.length] = hex_table2[224 | c >> 12] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
-        continue;
-      }
-      i += 1;
-      c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
-      arr[arr.length] = hex_table2[240 | c >> 18] + hex_table2[128 | c >> 12 & 63] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
-    }
-    out += arr.join("");
-  }
-  return out;
-};
-function is_buffer2(obj) {
-  if (!obj || typeof obj !== "object") {
-    return false;
-  }
-  return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
-}
-function maybe_map2(val, fn) {
-  if (isArray2(val)) {
-    const mapped = [];
-    for (let i = 0; i < val.length; i += 1) {
-      mapped.push(fn(val[i]));
-    }
-    return mapped;
-  }
-  return fn(val);
-}
-
-// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
-var array_prefix_generators2 = {
-  brackets(prefix) {
-    return String(prefix) + "[]";
-  },
-  comma: "comma",
-  indices(prefix, key) {
-    return String(prefix) + "[" + key + "]";
-  },
-  repeat(prefix) {
-    return String(prefix);
-  }
-};
-var push_to_array2 = function(arr, value_or_array) {
-  Array.prototype.push.apply(arr, isArray2(value_or_array) ? value_or_array : [value_or_array]);
-};
-var toISOString2;
-var defaults2 = {
-  addQueryPrefix: false,
-  allowDots: false,
-  allowEmptyArrays: false,
-  arrayFormat: "indices",
-  charset: "utf-8",
-  charsetSentinel: false,
-  delimiter: "&",
-  encode: true,
-  encodeDotInKeys: false,
-  encoder: encode2,
-  encodeValuesOnly: false,
-  format: default_format2,
-  formatter: default_formatter2,
-  /** @deprecated */
-  indices: false,
-  serializeDate(date) {
-    return (toISOString2 ?? (toISOString2 = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
-  },
-  skipNulls: false,
-  strictNullHandling: false
-};
-function is_non_nullish_primitive2(v) {
-  return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
-}
-var sentinel2 = {};
-function inner_stringify2(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
-  let obj = object;
-  let tmp_sc = sideChannel;
-  let step = 0;
-  let find_flag = false;
-  while ((tmp_sc = tmp_sc.get(sentinel2)) !== void 0 && !find_flag) {
-    const pos = tmp_sc.get(object);
-    step += 1;
-    if (typeof pos !== "undefined") {
-      if (pos === step) {
-        throw new RangeError("Cyclic object value");
-      } else {
-        find_flag = true;
-      }
-    }
-    if (typeof tmp_sc.get(sentinel2) === "undefined") {
-      step = 0;
-    }
-  }
-  if (typeof filter === "function") {
-    obj = filter(prefix, obj);
-  } else if (obj instanceof Date) {
-    obj = serializeDate?.(obj);
-  } else if (generateArrayPrefix === "comma" && isArray2(obj)) {
-    obj = maybe_map2(obj, function(value) {
-      if (value instanceof Date) {
-        return serializeDate?.(value);
-      }
-      return value;
-    });
-  }
-  if (obj === null) {
-    if (strictNullHandling) {
-      return encoder && !encodeValuesOnly ? (
-        // @ts-expect-error
-        encoder(prefix, defaults2.encoder, charset, "key", format)
-      ) : prefix;
-    }
-    obj = "";
-  }
-  if (is_non_nullish_primitive2(obj) || is_buffer2(obj)) {
-    if (encoder) {
-      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults2.encoder, charset, "key", format);
-      return [
-        formatter?.(key_value) + "=" + // @ts-expect-error
-        formatter?.(encoder(obj, defaults2.encoder, charset, "value", format))
-      ];
-    }
-    return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
-  }
-  const values = [];
-  if (typeof obj === "undefined") {
-    return values;
-  }
-  let obj_keys;
-  if (generateArrayPrefix === "comma" && isArray2(obj)) {
-    if (encodeValuesOnly && encoder) {
-      obj = maybe_map2(obj, encoder);
-    }
-    obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : void 0 }];
-  } else if (isArray2(filter)) {
-    obj_keys = filter;
-  } else {
-    const keys = Object.keys(obj);
-    obj_keys = sort ? keys.sort(sort) : keys;
-  }
-  const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
-  const adjusted_prefix = commaRoundTrip && isArray2(obj) && obj.length === 1 ? encoded_prefix + "[]" : encoded_prefix;
-  if (allowEmptyArrays && isArray2(obj) && obj.length === 0) {
-    return adjusted_prefix + "[]";
-  }
-  for (let j = 0; j < obj_keys.length; ++j) {
-    const key = obj_keys[j];
-    const value = (
-      // @ts-ignore
-      typeof key === "object" && typeof key.value !== "undefined" ? key.value : obj[key]
-    );
-    if (skipNulls && value === null) {
-      continue;
-    }
-    const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, "%2E") : key;
-    const key_prefix = isArray2(obj) ? typeof generateArrayPrefix === "function" ? generateArrayPrefix(adjusted_prefix, encoded_key) : adjusted_prefix : adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
-    sideChannel.set(object, step);
-    const valueSideChannel = /* @__PURE__ */ new WeakMap();
-    valueSideChannel.set(sentinel2, sideChannel);
-    push_to_array2(values, inner_stringify2(
-      value,
-      key_prefix,
-      generateArrayPrefix,
-      commaRoundTrip,
-      allowEmptyArrays,
-      strictNullHandling,
-      skipNulls,
-      encodeDotInKeys,
-      // @ts-ignore
-      generateArrayPrefix === "comma" && encodeValuesOnly && isArray2(obj) ? null : encoder,
-      filter,
-      sort,
-      allowDots,
-      serializeDate,
-      format,
-      formatter,
-      encodeValuesOnly,
-      charset,
-      valueSideChannel
-    ));
-  }
-  return values;
-}
-function normalize_stringify_options2(opts = defaults2) {
-  if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
-    throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
-  }
-  if (typeof opts.encodeDotInKeys !== "undefined" && typeof opts.encodeDotInKeys !== "boolean") {
-    throw new TypeError("`encodeDotInKeys` option can only be `true` or `false`, when provided");
-  }
-  if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
-    throw new TypeError("Encoder has to be a function.");
-  }
-  const charset = opts.charset || defaults2.charset;
-  if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
-    throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
-  }
-  let format = default_format2;
-  if (typeof opts.format !== "undefined") {
-    if (!has2(formatters2, opts.format)) {
-      throw new TypeError("Unknown format option provided.");
-    }
-    format = opts.format;
-  }
-  const formatter = formatters2[format];
-  let filter = defaults2.filter;
-  if (typeof opts.filter === "function" || isArray2(opts.filter)) {
-    filter = opts.filter;
-  }
-  let arrayFormat;
-  if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators2) {
-    arrayFormat = opts.arrayFormat;
-  } else if ("indices" in opts) {
-    arrayFormat = opts.indices ? "indices" : "repeat";
-  } else {
-    arrayFormat = defaults2.arrayFormat;
-  }
-  if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
-    throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
-  }
-  const allowDots = typeof opts.allowDots === "undefined" ? !!opts.encodeDotInKeys === true ? true : defaults2.allowDots : !!opts.allowDots;
-  return {
-    addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults2.addQueryPrefix,
-    // @ts-ignore
-    allowDots,
-    allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults2.allowEmptyArrays,
-    arrayFormat,
-    charset,
-    charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults2.charsetSentinel,
-    commaRoundTrip: !!opts.commaRoundTrip,
-    delimiter: typeof opts.delimiter === "undefined" ? defaults2.delimiter : opts.delimiter,
-    encode: typeof opts.encode === "boolean" ? opts.encode : defaults2.encode,
-    encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults2.encodeDotInKeys,
-    encoder: typeof opts.encoder === "function" ? opts.encoder : defaults2.encoder,
-    encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults2.encodeValuesOnly,
-    filter,
-    format,
-    formatter,
-    serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults2.serializeDate,
-    skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults2.skipNulls,
-    // @ts-ignore
-    sort: typeof opts.sort === "function" ? opts.sort : null,
-    strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults2.strictNullHandling
-  };
-}
-function stringify2(object, opts = {}) {
-  let obj = object;
-  const options = normalize_stringify_options2(opts);
-  let obj_keys;
-  let filter;
-  if (typeof options.filter === "function") {
-    filter = options.filter;
-    obj = filter("", obj);
-  } else if (isArray2(options.filter)) {
-    filter = options.filter;
-    obj_keys = filter;
-  }
-  const keys = [];
-  if (typeof obj !== "object" || obj === null) {
-    return "";
-  }
-  const generateArrayPrefix = array_prefix_generators2[options.arrayFormat];
-  const commaRoundTrip = generateArrayPrefix === "comma" && options.commaRoundTrip;
-  if (!obj_keys) {
-    obj_keys = Object.keys(obj);
-  }
-  if (options.sort) {
-    obj_keys.sort(options.sort);
-  }
-  const sideChannel = /* @__PURE__ */ new WeakMap();
-  for (let i = 0; i < obj_keys.length; ++i) {
-    const key = obj_keys[i];
-    if (options.skipNulls && obj[key] === null) {
-      continue;
-    }
-    push_to_array2(keys, inner_stringify2(
-      obj[key],
-      key,
-      // @ts-expect-error
-      generateArrayPrefix,
-      commaRoundTrip,
-      options.allowEmptyArrays,
-      options.strictNullHandling,
-      options.skipNulls,
-      options.encodeDotInKeys,
-      options.encode ? options.encoder : null,
-      options.filter,
-      options.sort,
-      options.allowDots,
-      options.serializeDate,
-      options.format,
-      options.formatter,
-      options.encodeValuesOnly,
-      options.charset,
-      sideChannel
-    ));
-  }
-  const joined = keys.join(options.delimiter);
-  let prefix = options.addQueryPrefix === true ? "?" : "";
-  if (options.charsetSentinel) {
-    if (options.charset === "iso-8859-1") {
-      prefix += "utf8=%26%2310003%3B&";
-    } else {
-      prefix += "utf8=%E2%9C%93&";
-    }
-  }
-  return joined.length > 0 ? prefix + joined : "";
-}
-
-// node_modules/@stainless-api/github-internal/internal/uploads.mjs
-var checkFileSupport2 = () => {
-  if (typeof File === "undefined") {
-    const { process: process7 } = globalThis;
-    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
-    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
-  }
-};
-function makeFile2(fileBits, fileName, options) {
-  checkFileSupport2();
-  return new File(fileBits, fileName ?? "unknown_file", options);
-}
-function getName2(value) {
-  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
-}
-var isAsyncIterable2 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
-
-// node_modules/@stainless-api/github-internal/internal/to-file.mjs
-var isBlobLike2 = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
-var isFileLike2 = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike2(value);
-var isResponseLike2 = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
-async function toFile2(value, name, options) {
-  checkFileSupport2();
-  value = await value;
-  if (isFileLike2(value)) {
-    if (value instanceof File) {
-      return value;
-    }
-    return makeFile2([await value.arrayBuffer()], value.name);
-  }
-  if (isResponseLike2(value)) {
-    const blob = await value.blob();
-    name || (name = new URL(value.url).pathname.split(/[\\/]/).pop());
-    return makeFile2(await getBytes2(blob), name, options);
-  }
-  const parts = await getBytes2(value);
-  name || (name = getName2(value));
-  if (!options?.type) {
-    const type = parts.find((part) => typeof part === "object" && "type" in part && part.type);
-    if (typeof type === "string") {
-      options = { ...options, type };
-    }
-  }
-  return makeFile2(parts, name, options);
-}
-async function getBytes2(value) {
-  let parts = [];
-  if (typeof value === "string" || ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
-  value instanceof ArrayBuffer) {
-    parts.push(value);
-  } else if (isBlobLike2(value)) {
-    parts.push(value instanceof Blob ? value : await value.arrayBuffer());
-  } else if (isAsyncIterable2(value)) {
-    for await (const chunk of value) {
-      parts.push(...await getBytes2(chunk));
-    }
-  } else {
-    const constructor = value?.constructor?.name;
-    throw new Error(`Unexpected data type: ${typeof value}${constructor ? `; constructor: ${constructor}` : ""}${propsForError2(value)}`);
-  }
-  return parts;
-}
-function propsForError2(value) {
-  if (typeof value !== "object" || value === null)
-    return "";
-  const props = Object.getOwnPropertyNames(value);
-  return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
-}
-
 // node_modules/@stainless-api/github-internal/resources/advisories.mjs
 var BaseAdvisories = /* @__PURE__ */ (() => {
-  class BaseAdvisories2 extends APIResource2 {
+  class BaseAdvisories2 extends APIResource {
     /**
      * Gets a global security advisory using its GitHub Security Advisory (GHSA)
      * identifier.
      */
     retrieve(ghsaID, options) {
-      return this._client.get(path2`/advisories/${ghsaID}`, options);
+      return this._client.get(path`/advisories/${ghsaID}`, options);
     }
     /**
      * Lists all global security advisories that match the specified parameters. If no
@@ -12539,7 +10660,7 @@ var Advisories = class extends BaseAdvisories {
 
 // node_modules/@stainless-api/github-internal/resources/app-manifests.mjs
 var BaseAppManifests = /* @__PURE__ */ (() => {
-  class BaseAppManifests2 extends APIResource2 {
+  class BaseAppManifests2 extends APIResource {
     /**
      * Use this endpoint to complete the handshake necessary when implementing the
      * [GitHub App Manifest flow](https://docs.github.com/apps/building-github-apps/creating-github-apps-from-a-manifest/).
@@ -12548,7 +10669,7 @@ var BaseAppManifests = /* @__PURE__ */ (() => {
      * `webhook_secret`.
      */
     createConversion(code, options) {
-      return this._client.post(path2`/app-manifests/${code}/conversions`, options);
+      return this._client.post(path`/app-manifests/${code}/conversions`, options);
     }
   }
   BaseAppManifests2._key = Object.freeze(["appManifests"]);
@@ -12559,7 +10680,7 @@ var AppManifests = class extends BaseAppManifests {
 
 // node_modules/@stainless-api/github-internal/resources/applications/token.mjs
 var BaseToken = /* @__PURE__ */ (() => {
-  class BaseToken2 extends APIResource2 {
+  class BaseToken2 extends APIResource {
     /**
      * OAuth or GitHub application owners can revoke a single token for an OAuth
      * application or a GitHub application with an OAuth authorization.
@@ -12572,10 +10693,10 @@ var BaseToken = /* @__PURE__ */ (() => {
      * ```
      */
     delete(clientID, body, options) {
-      return this._client.delete(path2`/applications/${clientID}/token`, {
+      return this._client.delete(path`/applications/${clientID}/token`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -12596,7 +10717,7 @@ var BaseToken = /* @__PURE__ */ (() => {
      * ```
      */
     check(clientID, body, options) {
-      return this._client.post(path2`/applications/${clientID}/token`, { body, ...options });
+      return this._client.post(path`/applications/${clientID}/token`, { body, ...options });
     }
     /**
      * Use a non-scoped user access token to create a repository-scoped and/or
@@ -12624,7 +10745,7 @@ var BaseToken = /* @__PURE__ */ (() => {
      * ```
      */
     createScoped(clientID, body, options) {
-      return this._client.post(path2`/applications/${clientID}/token/scoped`, { body, ...options });
+      return this._client.post(path`/applications/${clientID}/token/scoped`, { body, ...options });
     }
     /**
      * OAuth applications and GitHub applications with OAuth authorizations can use
@@ -12644,7 +10765,7 @@ var BaseToken = /* @__PURE__ */ (() => {
      * ```
      */
     reset(clientID, body, options) {
-      return this._client.patch(path2`/applications/${clientID}/token`, { body, ...options });
+      return this._client.patch(path`/applications/${clientID}/token`, { body, ...options });
     }
   }
   BaseToken2._key = Object.freeze([
@@ -12658,7 +10779,7 @@ var Token = class extends BaseToken {
 
 // node_modules/@stainless-api/github-internal/resources/applications/applications.mjs
 var BaseApplications = /* @__PURE__ */ (() => {
-  class BaseApplications2 extends APIResource2 {
+  class BaseApplications2 extends APIResource {
     /**
      * OAuth and GitHub application owners can revoke a grant for their application and
      * a specific user. You must provide a valid OAuth `access_token` as an input
@@ -12676,10 +10797,10 @@ var BaseApplications = /* @__PURE__ */ (() => {
      * ```
      */
     deleteGrant(clientID, body, options) {
-      return this._client.delete(path2`/applications/${clientID}/grant`, {
+      return this._client.delete(path`/applications/${clientID}/grant`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -12700,7 +10821,7 @@ var Applications = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/apps/hook/config.mjs
 var BaseConfig = /* @__PURE__ */ (() => {
-  class BaseConfig4 extends APIResource2 {
+  class BaseConfig4 extends APIResource {
     /**
      * Returns the webhook configuration for a GitHub App. For more information about
      * configuring a webhook for your app, see
@@ -12754,7 +10875,7 @@ var Config = class extends BaseConfig {
 
 // node_modules/@stainless-api/github-internal/resources/apps/hook/deliveries.mjs
 var BaseDeliveries = /* @__PURE__ */ (() => {
-  class BaseDeliveries4 extends APIResource2 {
+  class BaseDeliveries4 extends APIResource {
     /**
      * Returns a delivery for the webhook configured for a GitHub App.
      *
@@ -12770,7 +10891,7 @@ var BaseDeliveries = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(deliveryID, options) {
-      return this._client.get(path2`/app/hook/deliveries/${deliveryID}`, options);
+      return this._client.get(path`/app/hook/deliveries/${deliveryID}`, options);
     }
     /**
      * Returns a list of webhook deliveries for the webhook configured for a GitHub
@@ -12808,7 +10929,7 @@ var BaseDeliveries = /* @__PURE__ */ (() => {
      * ```
      */
     redeliver(deliveryID, options) {
-      return this._client.post(path2`/app/hook/deliveries/${deliveryID}/attempts`, options);
+      return this._client.post(path`/app/hook/deliveries/${deliveryID}/attempts`, options);
     }
   }
   BaseDeliveries4._key = Object.freeze([
@@ -12823,7 +10944,7 @@ var Deliveries = class extends BaseDeliveries {
 
 // node_modules/@stainless-api/github-internal/resources/apps/hook/hook.mjs
 var BaseHook = /* @__PURE__ */ (() => {
-  class BaseHook2 extends APIResource2 {
+  class BaseHook2 extends APIResource {
   }
   BaseHook2._key = Object.freeze(["apps", "hook"]);
   return BaseHook2;
@@ -12845,7 +10966,7 @@ var Hook = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/apps/installations/suspended.mjs
 var BaseSuspended = /* @__PURE__ */ (() => {
-  class BaseSuspended2 extends APIResource2 {
+  class BaseSuspended2 extends APIResource {
     /**
      * Suspends a GitHub App on a user, organization, or enterprise account, which
      * blocks the app from accessing the account's resources. When a GitHub App is
@@ -12862,9 +10983,9 @@ var BaseSuspended = /* @__PURE__ */ (() => {
      * ```
      */
     suspend(installationID, options) {
-      return this._client.put(path2`/app/installations/${installationID}/suspended`, {
+      return this._client.put(path`/app/installations/${installationID}/suspended`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -12880,9 +11001,9 @@ var BaseSuspended = /* @__PURE__ */ (() => {
      * ```
      */
     unsuspend(installationID, options) {
-      return this._client.delete(path2`/app/installations/${installationID}/suspended`, {
+      return this._client.delete(path`/app/installations/${installationID}/suspended`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -12898,7 +11019,7 @@ var Suspended = class extends BaseSuspended {
 
 // node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
 var BaseInstallations = /* @__PURE__ */ (() => {
-  class BaseInstallations3 extends APIResource2 {
+  class BaseInstallations3 extends APIResource {
     /**
      * Enables an authenticated GitHub App to find an installation's information using
      * the installation id.
@@ -12914,7 +11035,7 @@ var BaseInstallations = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(installationID, options) {
-      return this._client.get(path2`/app/installations/${installationID}`, options);
+      return this._client.get(path`/app/installations/${installationID}`, options);
     }
     /**
      * The permissions the installation has are included under the `permissions` key.
@@ -12954,9 +11075,9 @@ var BaseInstallations = /* @__PURE__ */ (() => {
      * ```
      */
     delete(installationID, options) {
-      return this._client.delete(path2`/app/installations/${installationID}`, {
+      return this._client.delete(path`/app/installations/${installationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -12995,7 +11116,7 @@ var BaseInstallations = /* @__PURE__ */ (() => {
      * ```
      */
     createAccessToken(installationID, body = {}, options) {
-      return this._client.post(path2`/app/installations/${installationID}/access_tokens`, { body, ...options });
+      return this._client.post(path`/app/installations/${installationID}/access_tokens`, { body, ...options });
     }
   }
   BaseInstallations3._key = Object.freeze([
@@ -13018,7 +11139,7 @@ var Installations = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/apps/apps.mjs
 var BaseApps = /* @__PURE__ */ (() => {
-  class BaseApps3 extends APIResource2 {
+  class BaseApps3 extends APIResource {
     /**
      * > [!NOTE] The `:app_slug` is just the URL-friendly name of your GitHub App. You
      * > can find this on the settings page for your GitHub App (e.g.,
@@ -13030,7 +11151,7 @@ var BaseApps = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(appSlug, options) {
-      return this._client.get(path2`/apps/${appSlug}`, options);
+      return this._client.get(path`/apps/${appSlug}`, options);
     }
     /**
      * Lists all the pending installation requests for the authenticated GitHub App.
@@ -13087,13 +11208,13 @@ var Apps = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/assignments.mjs
 var BaseAssignments = /* @__PURE__ */ (() => {
-  class BaseAssignments2 extends APIResource2 {
+  class BaseAssignments2 extends APIResource {
     /**
      * Gets a GitHub Classroom assignment. Assignment will only be returned if the
      * current user is an administrator of the GitHub Classroom for the assignment.
      */
     retrieve(assignmentID, options) {
-      return this._client.get(path2`/assignments/${assignmentID}`, options);
+      return this._client.get(path`/assignments/${assignmentID}`, options);
     }
     /**
      * Lists any assignment repositories that have been created by students accepting a
@@ -13101,14 +11222,14 @@ var BaseAssignments = /* @__PURE__ */ (() => {
      * current user is an administrator of the GitHub Classroom for the assignment.
      */
     listAccepted(assignmentID, query = {}, options) {
-      return this._client.getAPIList(path2`/assignments/${assignmentID}/accepted_assignments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/assignments/${assignmentID}/accepted_assignments`, NumberedPage, { query, ...options });
     }
     /**
      * Gets grades for a GitHub Classroom assignment. Grades will only be returned if
      * the current user is an administrator of the GitHub Classroom for the assignment.
      */
     retrieveGrades(assignmentID, options) {
-      return this._client.get(path2`/assignments/${assignmentID}/grades`, options);
+      return this._client.get(path`/assignments/${assignmentID}/grades`, options);
     }
   }
   BaseAssignments2._key = Object.freeze(["assignments"]);
@@ -13119,13 +11240,13 @@ var Assignments = class extends BaseAssignments {
 
 // node_modules/@stainless-api/github-internal/resources/classrooms.mjs
 var BaseClassrooms = /* @__PURE__ */ (() => {
-  class BaseClassrooms2 extends APIResource2 {
+  class BaseClassrooms2 extends APIResource {
     /**
      * Gets a GitHub Classroom classroom for the current user. Classroom will only be
      * returned if the current user is an administrator of the GitHub Classroom.
      */
     retrieve(classroomID, options) {
-      return this._client.get(path2`/classrooms/${classroomID}`, options);
+      return this._client.get(path`/classrooms/${classroomID}`, options);
     }
     /**
      * Lists GitHub Classroom classrooms for the current user. Classrooms will only be
@@ -13140,7 +11261,7 @@ var BaseClassrooms = /* @__PURE__ */ (() => {
      * returned if the current user is an administrator of the GitHub Classroom.
      */
     listAssignments(classroomID, query = {}, options) {
-      return this._client.getAPIList(path2`/classrooms/${classroomID}/assignments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/classrooms/${classroomID}/assignments`, NumberedPage, { query, ...options });
     }
   }
   BaseClassrooms2._key = Object.freeze(["classrooms"]);
@@ -13151,12 +11272,12 @@ var Classrooms = class extends BaseClassrooms {
 
 // node_modules/@stainless-api/github-internal/resources/codes-of-conduct.mjs
 var BaseCodesOfConduct = /* @__PURE__ */ (() => {
-  class BaseCodesOfConduct2 extends APIResource2 {
+  class BaseCodesOfConduct2 extends APIResource {
     /**
      * Returns information about the specified GitHub code of conduct.
      */
     retrieve(key, options) {
-      return this._client.get(path2`/codes_of_conduct/${key}`, options);
+      return this._client.get(path`/codes_of_conduct/${key}`, options);
     }
     /**
      * Returns array of all GitHub's codes of conduct.
@@ -13173,7 +11294,7 @@ var CodesOfConduct = class extends BaseCodesOfConduct {
 
 // node_modules/@stainless-api/github-internal/resources/emojis.mjs
 var BaseEmojis = /* @__PURE__ */ (() => {
-  class BaseEmojis2 extends APIResource2 {
+  class BaseEmojis2 extends APIResource {
     /**
      * Lists all the emojis available to use on GitHub.
      */
@@ -13189,7 +11310,7 @@ var Emojis = class extends BaseEmojis {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/dependabot.mjs
 var BaseDependabot = /* @__PURE__ */ (() => {
-  class BaseDependabot4 extends APIResource2 {
+  class BaseDependabot4 extends APIResource {
     /**
      * Lists Dependabot alerts for repositories that are owned by the specified
      * enterprise.
@@ -13213,7 +11334,7 @@ var BaseDependabot = /* @__PURE__ */ (() => {
      * ```
      */
     listAlerts(enterprise, query = {}, options) {
-      return this._client.get(path2`/enterprises/${enterprise}/dependabot/alerts`, { query, ...options });
+      return this._client.get(path`/enterprises/${enterprise}/dependabot/alerts`, { query, ...options });
     }
   }
   BaseDependabot4._key = Object.freeze([
@@ -13227,7 +11348,7 @@ var Dependabot = class extends BaseDependabot {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/secret-scanning.mjs
 var BaseSecretScanning = /* @__PURE__ */ (() => {
-  class BaseSecretScanning4 extends APIResource2 {
+  class BaseSecretScanning4 extends APIResource {
     /**
      * Lists secret scanning alerts for eligible repositories in an enterprise, from
      * newest to oldest.
@@ -13251,7 +11372,7 @@ var BaseSecretScanning = /* @__PURE__ */ (() => {
      * ```
      */
     listAlerts(enterprise, query = {}, options) {
-      return this._client.get(path2`/enterprises/${enterprise}/secret-scanning/alerts`, { query, ...options });
+      return this._client.get(path`/enterprises/${enterprise}/secret-scanning/alerts`, { query, ...options });
     }
   }
   BaseSecretScanning4._key = Object.freeze([
@@ -13265,7 +11386,7 @@ var SecretScanning = class extends BaseSecretScanning {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/defaults.mjs
 var BaseDefaults = /* @__PURE__ */ (() => {
-  class BaseDefaults3 extends APIResource2 {
+  class BaseDefaults3 extends APIResource {
     /**
      * Lists the default code security configurations for an enterprise.
      *
@@ -13284,7 +11405,7 @@ var BaseDefaults = /* @__PURE__ */ (() => {
      * ```
      */
     list(enterprise, options) {
-      return this._client.get(path2`/enterprises/${enterprise}/code-security/configurations/defaults`, options);
+      return this._client.get(path`/enterprises/${enterprise}/code-security/configurations/defaults`, options);
     }
     /**
      * Sets a code security configuration as a default to be applied to new
@@ -13314,7 +11435,7 @@ var BaseDefaults = /* @__PURE__ */ (() => {
      */
     set(configurationID, params, options) {
       const { enterprise, ...body } = params;
-      return this._client.put(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}/defaults`, { body, ...options });
+      return this._client.put(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}/defaults`, { body, ...options });
     }
   }
   BaseDefaults3._key = Object.freeze(["enterprises", "codeSecurity", "configurations", "defaults"]);
@@ -13325,7 +11446,7 @@ var Defaults = class extends BaseDefaults {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/repositories.mjs
 var BaseRepositories = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Lists the repositories associated with an enterprise code security configuration
      * in an organization.
@@ -13347,7 +11468,7 @@ var BaseRepositories = /* @__PURE__ */ (() => {
      */
     list(configurationID, params, options) {
       const { enterprise, ...query } = params;
-      return this._client.get(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}/repositories`, { query, ...options });
+      return this._client.get(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}/repositories`, { query, ...options });
     }
   }
   BaseRepositories10._key = Object.freeze(["enterprises", "codeSecurity", "configurations", "repositories"]);
@@ -13358,7 +11479,7 @@ var Repositories = class extends BaseRepositories {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/configurations.mjs
 var BaseConfigurations = /* @__PURE__ */ (() => {
-  class BaseConfigurations3 extends APIResource2 {
+  class BaseConfigurations3 extends APIResource {
     /**
      * Creates a code security configuration in an enterprise.
      *
@@ -13386,7 +11507,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      * ```
      */
     create(enterprise, body, options) {
-      return this._client.post(path2`/enterprises/${enterprise}/code-security/configurations`, {
+      return this._client.post(path`/enterprises/${enterprise}/code-security/configurations`, {
         body,
         ...options
       });
@@ -13411,7 +11532,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      */
     retrieve(configurationID, params, options) {
       const { enterprise } = params;
-      return this._client.get(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, options);
+      return this._client.get(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, options);
     }
     /**
      * Updates a code security configuration in an enterprise.
@@ -13438,7 +11559,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      */
     update(configurationID, params, options) {
       const { enterprise, ...body } = params;
-      return this._client.patch(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, { body, ...options });
+      return this._client.patch(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, { body, ...options });
     }
     /**
      * Lists all code security configurations available in an enterprise.
@@ -13458,7 +11579,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      * ```
      */
     list(enterprise, query = {}, options) {
-      return this._client.get(path2`/enterprises/${enterprise}/code-security/configurations`, {
+      return this._client.get(path`/enterprises/${enterprise}/code-security/configurations`, {
         query,
         ...options
       });
@@ -13484,7 +11605,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      */
     delete(configurationID, params, options) {
       const { enterprise } = params;
-      return this._client.delete(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Attaches an enterprise code security configuration to repositories. If the
@@ -13511,7 +11632,7 @@ var BaseConfigurations = /* @__PURE__ */ (() => {
      */
     attach(configurationID, params, options) {
       const { enterprise, ...body } = params;
-      return this._client.post(path2`/enterprises/${enterprise}/code-security/configurations/${configurationID}/attach`, { body, ...options });
+      return this._client.post(path`/enterprises/${enterprise}/code-security/configurations/${configurationID}/attach`, { body, ...options });
     }
   }
   BaseConfigurations3._key = Object.freeze([
@@ -13538,7 +11659,7 @@ var Configurations = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/code-security/code-security.mjs
 var BaseCodeSecurity = /* @__PURE__ */ (() => {
-  class BaseCodeSecurity3 extends APIResource2 {
+  class BaseCodeSecurity3 extends APIResource {
   }
   BaseCodeSecurity3._key = Object.freeze([
     "enterprises",
@@ -13560,7 +11681,7 @@ var CodeSecurity = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/enterprises/enterprises.mjs
 var BaseEnterprises = /* @__PURE__ */ (() => {
-  class BaseEnterprises2 extends APIResource2 {
+  class BaseEnterprises2 extends APIResource {
   }
   BaseEnterprises2._key = Object.freeze(["enterprises"]);
   return BaseEnterprises2;
@@ -13585,7 +11706,7 @@ var Enterprises = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/events.mjs
 var BaseEvents = /* @__PURE__ */ (() => {
-  class BaseEvents4 extends APIResource2 {
+  class BaseEvents4 extends APIResource {
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
      * > time of day, event latency can be anywhere from 30s to 6h.
@@ -13602,7 +11723,7 @@ var Events = class extends BaseEvents {
 
 // node_modules/@stainless-api/github-internal/resources/feeds.mjs
 var BaseFeeds = /* @__PURE__ */ (() => {
-  class BaseFeeds2 extends APIResource2 {
+  class BaseFeeds2 extends APIResource {
     /**
      * Lists the feeds available to the authenticated user. The response provides a URL
      * for each feed. You can then get a specific feed by sending a request to one of
@@ -13642,7 +11763,7 @@ var Feeds = class extends BaseFeeds {
 
 // node_modules/@stainless-api/github-internal/resources/gists/comments.mjs
 var BaseComments2 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
+  class BaseComments7 extends APIResource {
     /**
      * Creates a comment on a gist.
      *
@@ -13664,7 +11785,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
      * ```
      */
     create(gistID, body, options) {
-      return this._client.post(path2`/gists/${gistID}/comments`, { body, ...options });
+      return this._client.post(path`/gists/${gistID}/comments`, { body, ...options });
     }
     /**
      * Gets a comment on a gist.
@@ -13687,7 +11808,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
      */
     retrieve(commentID, params, options) {
       const { gist_id } = params;
-      return this._client.get(path2`/gists/${gist_id}/comments/${commentID}`, options);
+      return this._client.get(path`/gists/${gist_id}/comments/${commentID}`, options);
     }
     /**
      * Updates a comment on a gist.
@@ -13711,7 +11832,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
      */
     update(commentID, params, options) {
       const { gist_id, ...body } = params;
-      return this._client.patch(path2`/gists/${gist_id}/comments/${commentID}`, { body, ...options });
+      return this._client.patch(path`/gists/${gist_id}/comments/${commentID}`, { body, ...options });
     }
     /**
      * Lists the comments on a gist.
@@ -13736,7 +11857,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(gistID, query = {}, options) {
-      return this._client.getAPIList(path2`/gists/${gistID}/comments`, NumberedPage, {
+      return this._client.getAPIList(path`/gists/${gistID}/comments`, NumberedPage, {
         query,
         ...options
       });
@@ -13753,9 +11874,9 @@ var BaseComments2 = /* @__PURE__ */ (() => {
      */
     delete(commentID, params, options) {
       const { gist_id } = params;
-      return this._client.delete(path2`/gists/${gist_id}/comments/${commentID}`, {
+      return this._client.delete(path`/gists/${gist_id}/comments/${commentID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -13770,7 +11891,7 @@ var Comments2 = class extends BaseComments2 {
 
 // node_modules/@stainless-api/github-internal/resources/gists/forks.mjs
 var BaseForks = /* @__PURE__ */ (() => {
-  class BaseForks3 extends APIResource2 {
+  class BaseForks3 extends APIResource {
     /**
      * Fork a gist
      *
@@ -13780,7 +11901,7 @@ var BaseForks = /* @__PURE__ */ (() => {
      * ```
      */
     create(gistID, options) {
-      return this._client.post(path2`/gists/${gistID}/forks`, options);
+      return this._client.post(path`/gists/${gistID}/forks`, options);
     }
     /**
      * List gist forks
@@ -13796,7 +11917,7 @@ var BaseForks = /* @__PURE__ */ (() => {
      * ```
      */
     list(gistID, query = {}, options) {
-      return this._client.getAPIList(path2`/gists/${gistID}/forks`, NumberedPage, {
+      return this._client.getAPIList(path`/gists/${gistID}/forks`, NumberedPage, {
         query,
         ...options
       });
@@ -13810,7 +11931,7 @@ var Forks = class extends BaseForks {
 
 // node_modules/@stainless-api/github-internal/resources/gists/star.mjs
 var BaseStar = /* @__PURE__ */ (() => {
-  class BaseStar2 extends APIResource2 {
+  class BaseStar2 extends APIResource {
     /**
      * Note that you'll need to set `Content-Length` to zero when calling out to this
      * endpoint. For more information, see
@@ -13822,9 +11943,9 @@ var BaseStar = /* @__PURE__ */ (() => {
      * ```
      */
     create(gistID, options) {
-      return this._client.put(path2`/gists/${gistID}/star`, {
+      return this._client.put(path`/gists/${gistID}/star`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -13836,9 +11957,9 @@ var BaseStar = /* @__PURE__ */ (() => {
      * ```
      */
     delete(gistID, options) {
-      return this._client.delete(path2`/gists/${gistID}/star`, {
+      return this._client.delete(path`/gists/${gistID}/star`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -13850,9 +11971,9 @@ var BaseStar = /* @__PURE__ */ (() => {
      * ```
      */
     check(gistID, options) {
-      return this._client.get(path2`/gists/${gistID}/star`, {
+      return this._client.get(path`/gists/${gistID}/star`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -13864,7 +11985,7 @@ var Star = class extends BaseStar {
 
 // node_modules/@stainless-api/github-internal/resources/gists/gists.mjs
 var BaseGists = /* @__PURE__ */ (() => {
-  class BaseGists2 extends APIResource2 {
+  class BaseGists2 extends APIResource {
     /**
      * Allows you to add a new gist with one or more files.
      *
@@ -13900,7 +12021,7 @@ var BaseGists = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(gistID, options) {
-      return this._client.get(path2`/gists/${gistID}`, options);
+      return this._client.get(path`/gists/${gistID}`, options);
     }
     /**
      * Allows you to update a gist's description and to update, delete, or rename gist
@@ -13929,7 +12050,7 @@ var BaseGists = /* @__PURE__ */ (() => {
      * ```
      */
     update(gistID, body, options) {
-      return this._client.patch(path2`/gists/${gistID}`, { body, ...options });
+      return this._client.patch(path`/gists/${gistID}`, { body, ...options });
     }
     /**
      * Lists the authenticated user's gists or if called anonymously, this endpoint
@@ -13955,9 +12076,9 @@ var BaseGists = /* @__PURE__ */ (() => {
      * ```
      */
     delete(gistID, options) {
-      return this._client.delete(path2`/gists/${gistID}`, {
+      return this._client.delete(path`/gists/${gistID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -13974,7 +12095,7 @@ var BaseGists = /* @__PURE__ */ (() => {
      * ```
      */
     listCommits(gistID, query = {}, options) {
-      return this._client.getAPIList(path2`/gists/${gistID}/commits`, NumberedPage, {
+      return this._client.getAPIList(path`/gists/${gistID}/commits`, NumberedPage, {
         query,
         ...options
       });
@@ -14040,7 +12161,7 @@ var BaseGists = /* @__PURE__ */ (() => {
      */
     retrieveRevision(sha, params, options) {
       const { gist_id } = params;
-      return this._client.get(path2`/gists/${gist_id}/${sha}`, options);
+      return this._client.get(path`/gists/${gist_id}/${sha}`, options);
     }
   }
   BaseGists2._key = Object.freeze(["gists"]);
@@ -14066,7 +12187,7 @@ var Gists = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/gitignore/templates.mjs
 var BaseTemplates = /* @__PURE__ */ (() => {
-  class BaseTemplates2 extends APIResource2 {
+  class BaseTemplates2 extends APIResource {
     /**
      * Get the content of a gitignore template.
      *
@@ -14077,7 +12198,7 @@ var BaseTemplates = /* @__PURE__ */ (() => {
      * - **`application/vnd.github.raw+json`**: Returns the raw .gitignore contents.
      */
     retrieve(name, options) {
-      return this._client.get(path2`/gitignore/templates/${name}`, options);
+      return this._client.get(path`/gitignore/templates/${name}`, options);
     }
     /**
      * List all templates available to pass as an option when
@@ -14098,7 +12219,7 @@ var Templates = class extends BaseTemplates {
 
 // node_modules/@stainless-api/github-internal/resources/gitignore/gitignore.mjs
 var BaseGitignore = /* @__PURE__ */ (() => {
-  class BaseGitignore2 extends APIResource2 {
+  class BaseGitignore2 extends APIResource {
   }
   BaseGitignore2._key = Object.freeze(["gitignore"]);
   return BaseGitignore2;
@@ -14117,7 +12238,7 @@ var Gitignore = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/installation.mjs
 var BaseInstallation = /* @__PURE__ */ (() => {
-  class BaseInstallation2 extends APIResource2 {
+  class BaseInstallation2 extends APIResource {
     /**
      * List repositories that an app installation can access.
      */
@@ -14137,7 +12258,7 @@ var BaseInstallation = /* @__PURE__ */ (() => {
     revokeToken(options) {
       return this._client.delete("/installation/token", {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -14149,7 +12270,7 @@ var Installation = class extends BaseInstallation {
 
 // node_modules/@stainless-api/github-internal/resources/issues.mjs
 var BaseIssues = /* @__PURE__ */ (() => {
-  class BaseIssues3 extends APIResource2 {
+  class BaseIssues3 extends APIResource {
     /**
      * List issues assigned to the authenticated user across all visible repositories
      * including owned repositories, member repositories, and organization
@@ -14191,13 +12312,13 @@ var Issues = class extends BaseIssues {
 
 // node_modules/@stainless-api/github-internal/resources/licenses.mjs
 var BaseLicenses = /* @__PURE__ */ (() => {
-  class BaseLicenses2 extends APIResource2 {
+  class BaseLicenses2 extends APIResource {
     /**
      * Gets information about a specific license. For more information, see
      * "[Licensing a repository ](https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository)."
      */
     retrieve(license, options) {
-      return this._client.get(path2`/licenses/${license}`, options);
+      return this._client.get(path`/licenses/${license}`, options);
     }
     /**
      * Lists the most commonly used licenses on GitHub. For more information, see
@@ -14215,7 +12336,7 @@ var Licenses = class extends BaseLicenses {
 
 // node_modules/@stainless-api/github-internal/resources/markdown.mjs
 var BaseMarkdown = /* @__PURE__ */ (() => {
-  class BaseMarkdown2 extends APIResource2 {
+  class BaseMarkdown2 extends APIResource {
     /**
      * Depending on what is rendered in the Markdown, you may need to provide
      * additional token scopes for labels, such as `issues:read` or
@@ -14232,7 +12353,7 @@ var BaseMarkdown = /* @__PURE__ */ (() => {
       return this._client.post("/markdown", {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "text/html" }, options?.headers])
+        headers: buildHeaders([{ Accept: "text/html" }, options?.headers])
       });
     }
     /**
@@ -14252,7 +12373,7 @@ var BaseMarkdown = /* @__PURE__ */ (() => {
       return this._client.post("/markdown/raw", {
         body,
         ...options,
-        headers: buildHeaders2([{ "Content-Type": "text/plain", Accept: "text/html" }, options?.headers])
+        headers: buildHeaders([{ "Content-Type": "text/plain", Accept: "text/html" }, options?.headers])
       });
     }
   }
@@ -14264,7 +12385,7 @@ var Markdown = class extends BaseMarkdown {
 
 // node_modules/@stainless-api/github-internal/resources/marketplace-listing/stubbed.mjs
 var BaseStubbed = /* @__PURE__ */ (() => {
-  class BaseStubbed2 extends APIResource2 {
+  class BaseStubbed2 extends APIResource {
     /**
      * Shows whether the user or organization account actively subscribes to a plan
      * listed by the authenticated GitHub App. When someone submits a plan change that
@@ -14278,7 +12399,7 @@ var BaseStubbed = /* @__PURE__ */ (() => {
      * with their client ID and client secret to access this endpoint.
      */
     getAccountSubscription(accountID, options) {
-      return this._client.get(path2`/marketplace_listing/stubbed/accounts/${accountID}`, options);
+      return this._client.get(path`/marketplace_listing/stubbed/accounts/${accountID}`, options);
     }
     /**
      * Returns repository and organization accounts associated with the specified plan,
@@ -14294,7 +12415,7 @@ var BaseStubbed = /* @__PURE__ */ (() => {
      * with their client ID and client secret to access this endpoint.
      */
     listPlanAccounts(planID, query = {}, options) {
-      return this._client.getAPIList(path2`/marketplace_listing/stubbed/plans/${planID}/accounts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/marketplace_listing/stubbed/plans/${planID}/accounts`, NumberedPage, { query, ...options });
     }
     /**
      * Lists all plans that are part of your GitHub Marketplace listing.
@@ -14320,7 +12441,7 @@ var Stubbed = class extends BaseStubbed {
 
 // node_modules/@stainless-api/github-internal/resources/marketplace-listing/marketplace-listing.mjs
 var BaseMarketplaceListing = /* @__PURE__ */ (() => {
-  class BaseMarketplaceListing2 extends APIResource2 {
+  class BaseMarketplaceListing2 extends APIResource {
     /**
      * Shows whether the user or organization account actively subscribes to a plan
      * listed by the authenticated GitHub App. When someone submits a plan change that
@@ -14334,7 +12455,7 @@ var BaseMarketplaceListing = /* @__PURE__ */ (() => {
      * with their client ID and client secret to access this endpoint.
      */
     getAccountSubscription(accountID, options) {
-      return this._client.get(path2`/marketplace_listing/accounts/${accountID}`, options);
+      return this._client.get(path`/marketplace_listing/accounts/${accountID}`, options);
     }
     /**
      * Returns user and organization accounts associated with the specified plan,
@@ -14350,7 +12471,7 @@ var BaseMarketplaceListing = /* @__PURE__ */ (() => {
      * with their client ID and client secret to access this endpoint.
      */
     listPlanAccounts(planID, query = {}, options) {
-      return this._client.getAPIList(path2`/marketplace_listing/plans/${planID}/accounts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/marketplace_listing/plans/${planID}/accounts`, NumberedPage, { query, ...options });
     }
     /**
      * Lists all plans that are part of your GitHub Marketplace listing.
@@ -14387,7 +12508,7 @@ var MarketplaceListing = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/meta.mjs
 var BaseMeta = /* @__PURE__ */ (() => {
-  class BaseMeta2 extends APIResource2 {
+  class BaseMeta2 extends APIResource {
     /**
      * Returns meta information about GitHub, including a list of GitHub's IP
      * addresses. For more information, see
@@ -14414,14 +12535,14 @@ var Meta = class extends BaseMeta {
 
 // node_modules/@stainless-api/github-internal/resources/networks.mjs
 var BaseNetworks = /* @__PURE__ */ (() => {
-  class BaseNetworks2 extends APIResource2 {
+  class BaseNetworks2 extends APIResource {
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
      * > time of day, event latency can be anywhere from 30s to 6h.
      */
     listEvents(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/networks/${owner}/${repo}/events`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/networks/${owner}/${repo}/events`, NumberedPage, { query, ...options });
     }
   }
   BaseNetworks2._key = Object.freeze(["networks"]);
@@ -14432,7 +12553,7 @@ var Networks = class extends BaseNetworks {
 
 // node_modules/@stainless-api/github-internal/resources/notifications/threads/subscription.mjs
 var BaseSubscription = /* @__PURE__ */ (() => {
-  class BaseSubscription3 extends APIResource2 {
+  class BaseSubscription3 extends APIResource {
     /**
      * This checks to see if the current user is subscribed to a thread. You can also
      * [get a repository subscription](https://docs.github.com/rest/activity/watching#get-a-repository-subscription).
@@ -14450,7 +12571,7 @@ var BaseSubscription = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(threadID, options) {
-      return this._client.get(path2`/notifications/threads/${threadID}/subscription`, options);
+      return this._client.get(path`/notifications/threads/${threadID}/subscription`, options);
     }
     /**
      * Mutes all future notifications for a conversation until you comment on the
@@ -14466,9 +12587,9 @@ var BaseSubscription = /* @__PURE__ */ (() => {
      * ```
      */
     delete(threadID, options) {
-      return this._client.delete(path2`/notifications/threads/${threadID}/subscription`, {
+      return this._client.delete(path`/notifications/threads/${threadID}/subscription`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14492,7 +12613,7 @@ var BaseSubscription = /* @__PURE__ */ (() => {
      * ```
      */
     set(threadID, body = {}, options) {
-      return this._client.put(path2`/notifications/threads/${threadID}/subscription`, { body, ...options });
+      return this._client.put(path`/notifications/threads/${threadID}/subscription`, { body, ...options });
     }
   }
   BaseSubscription3._key = Object.freeze([
@@ -14507,7 +12628,7 @@ var Subscription = class extends BaseSubscription {
 
 // node_modules/@stainless-api/github-internal/resources/notifications/threads/threads.mjs
 var BaseThreads = /* @__PURE__ */ (() => {
-  class BaseThreads2 extends APIResource2 {
+  class BaseThreads2 extends APIResource {
     /**
      * Gets information about a notification thread.
      *
@@ -14519,7 +12640,7 @@ var BaseThreads = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(threadID, options) {
-      return this._client.get(path2`/notifications/threads/${threadID}`, options);
+      return this._client.get(path`/notifications/threads/${threadID}`, options);
     }
     /**
      * Marks a thread as "done." Marking a thread as "done" is equivalent to marking a
@@ -14532,9 +12653,9 @@ var BaseThreads = /* @__PURE__ */ (() => {
      * ```
      */
     markAsDone(threadID, options) {
-      return this._client.delete(path2`/notifications/threads/${threadID}`, {
+      return this._client.delete(path`/notifications/threads/${threadID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14548,9 +12669,9 @@ var BaseThreads = /* @__PURE__ */ (() => {
      * ```
      */
     markAsRead(threadID, options) {
-      return this._client.patch(path2`/notifications/threads/${threadID}`, {
+      return this._client.patch(path`/notifications/threads/${threadID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -14574,7 +12695,7 @@ var Threads = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/notifications/notifications.mjs
 var BaseNotifications = /* @__PURE__ */ (() => {
-  class BaseNotifications3 extends APIResource2 {
+  class BaseNotifications3 extends APIResource {
     /**
      * List all notifications for the current user, sorted by most recently updated.
      *
@@ -14630,7 +12751,7 @@ var Notifications = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/octocat.mjs
 var BaseOctocat = /* @__PURE__ */ (() => {
-  class BaseOctocat2 extends APIResource2 {
+  class BaseOctocat2 extends APIResource {
     /**
      * Get the octocat as ASCII art
      */
@@ -14638,7 +12759,7 @@ var BaseOctocat = /* @__PURE__ */ (() => {
       return this._client.get("/octocat", {
         query,
         ...options,
-        headers: buildHeaders2([{ Accept: "application/octocat-stream" }, options?.headers]),
+        headers: buildHeaders([{ Accept: "application/octocat-stream" }, options?.headers]),
         __binaryResponse: true
       });
     }
@@ -14651,7 +12772,7 @@ var Octocat = class extends BaseOctocat {
 
 // node_modules/@stainless-api/github-internal/resources/organizations/settings/billing.mjs
 var BaseBilling = /* @__PURE__ */ (() => {
-  class BaseBilling5 extends APIResource2 {
+  class BaseBilling5 extends APIResource {
     /**
      * Gets a report of the total usage for an organization. To use this endpoint, you
      * must be an administrator of an organization within an enterprise or an
@@ -14662,7 +12783,7 @@ var BaseBilling = /* @__PURE__ */ (() => {
      * "[About the enhanced billing platform](https://docs.github.com/billing/using-the-new-billing-platform)."
      */
     retrieveUsage(org, query = {}, options) {
-      return this._client.get(path2`/organizations/${org}/settings/billing/usage`, { query, ...options });
+      return this._client.get(path`/organizations/${org}/settings/billing/usage`, { query, ...options });
     }
   }
   BaseBilling5._key = Object.freeze([
@@ -14677,7 +12798,7 @@ var Billing = class extends BaseBilling {
 
 // node_modules/@stainless-api/github-internal/resources/organizations/settings/settings.mjs
 var BaseSettings = /* @__PURE__ */ (() => {
-  class BaseSettings4 extends APIResource2 {
+  class BaseSettings4 extends APIResource {
   }
   BaseSettings4._key = Object.freeze([
     "organizations",
@@ -14699,7 +12820,7 @@ var Settings = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/organizations/organizations.mjs
 var BaseOrganizations = /* @__PURE__ */ (() => {
-  class BaseOrganizations2 extends APIResource2 {
+  class BaseOrganizations2 extends APIResource {
     /**
      * Lists all organizations, in the order that they were created.
      *
@@ -14728,7 +12849,7 @@ var Organizations = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/blocks.mjs
 var BaseBlocks = /* @__PURE__ */ (() => {
-  class BaseBlocks3 extends APIResource2 {
+  class BaseBlocks3 extends APIResource {
     /**
      * List the users blocked by an organization.
      *
@@ -14743,7 +12864,7 @@ var BaseBlocks = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/blocks`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/blocks`, NumberedPage, {
         query,
         ...options
       });
@@ -14759,9 +12880,9 @@ var BaseBlocks = /* @__PURE__ */ (() => {
      */
     block(username, params, options) {
       const { org } = params;
-      return this._client.put(path2`/orgs/${org}/blocks/${username}`, {
+      return this._client.put(path`/orgs/${org}/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14776,9 +12897,9 @@ var BaseBlocks = /* @__PURE__ */ (() => {
      */
     check(username, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/blocks/${username}`, {
+      return this._client.get(path`/orgs/${org}/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14793,9 +12914,9 @@ var BaseBlocks = /* @__PURE__ */ (() => {
      */
     unblock(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/blocks/${username}`, {
+      return this._client.delete(path`/orgs/${org}/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -14807,7 +12928,7 @@ var Blocks = class extends BaseBlocks {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/code-scanning.mjs
 var BaseCodeScanning = /* @__PURE__ */ (() => {
-  class BaseCodeScanning3 extends APIResource2 {
+  class BaseCodeScanning3 extends APIResource {
     /**
      * Lists code scanning alerts for the default branch for all eligible repositories
      * in an organization. Eligible repositories are repositories that are owned by
@@ -14833,7 +12954,7 @@ var BaseCodeScanning = /* @__PURE__ */ (() => {
      * ```
      */
     listAlerts(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/code-scanning/alerts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/code-scanning/alerts`, NumberedPage, { query, ...options });
     }
   }
   BaseCodeScanning3._key = Object.freeze([
@@ -14847,7 +12968,7 @@ var CodeScanning = class extends BaseCodeScanning {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/docker.mjs
 var BaseDocker = /* @__PURE__ */ (() => {
-  class BaseDocker3 extends APIResource2 {
+  class BaseDocker3 extends APIResource {
     /**
      * Lists all packages that are in a specific organization, are readable by the
      * requesting user, and that encountered a conflict during a Docker migration.
@@ -14862,7 +12983,7 @@ var BaseDocker = /* @__PURE__ */ (() => {
      * ```
      */
     listConflictingPackages(org, options) {
-      return this._client.get(path2`/orgs/${org}/docker/conflicts`, options);
+      return this._client.get(path`/orgs/${org}/docker/conflicts`, options);
     }
   }
   BaseDocker3._key = Object.freeze(["orgs", "docker"]);
@@ -14873,7 +12994,7 @@ var Docker = class extends BaseDocker {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/interaction-limits.mjs
 var BaseInteractionLimits = /* @__PURE__ */ (() => {
-  class BaseInteractionLimits4 extends APIResource2 {
+  class BaseInteractionLimits4 extends APIResource {
     /**
      * Shows which type of GitHub user can interact with this organization and when the
      * restriction expires. If there is no restrictions, you will see an empty
@@ -14888,7 +13009,7 @@ var BaseInteractionLimits = /* @__PURE__ */ (() => {
      * ```
      */
     getInteractionLimits(org, options) {
-      return this._client.get(path2`/orgs/${org}/interaction-limits`, options);
+      return this._client.get(path`/orgs/${org}/interaction-limits`, options);
     }
     /**
      * Removes all interaction restrictions from public repositories in the given
@@ -14902,9 +13023,9 @@ var BaseInteractionLimits = /* @__PURE__ */ (() => {
      * ```
      */
     removeInteractionLimits(org, options) {
-      return this._client.delete(path2`/orgs/${org}/interaction-limits`, {
+      return this._client.delete(path`/orgs/${org}/interaction-limits`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14924,7 +13045,7 @@ var BaseInteractionLimits = /* @__PURE__ */ (() => {
      * ```
      */
     setInteractionLimits(org, body, options) {
-      return this._client.put(path2`/orgs/${org}/interaction-limits`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/interaction-limits`, { body, ...options });
     }
   }
   BaseInteractionLimits4._key = Object.freeze([
@@ -14938,7 +13059,7 @@ var InteractionLimits = class extends BaseInteractionLimits {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/invitations.mjs
 var BaseInvitations = /* @__PURE__ */ (() => {
-  class BaseInvitations3 extends APIResource2 {
+  class BaseInvitations3 extends APIResource {
     /**
      * Cancel an organization invitation. In order to cancel an organization
      * invitation, the authenticated user must be an organization owner.
@@ -14955,9 +13076,9 @@ var BaseInvitations = /* @__PURE__ */ (() => {
      */
     cancelInvitation(invitationID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/invitations/${invitationID}`, {
+      return this._client.delete(path`/orgs/${org}/invitations/${invitationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -14984,7 +13105,7 @@ var BaseInvitations = /* @__PURE__ */ (() => {
      * ```
      */
     createInvitation(org, body = {}, options) {
-      return this._client.post(path2`/orgs/${org}/invitations`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/invitations`, { body, ...options });
     }
     /**
      * List all teams associated with an invitation. In order to see invitations in an
@@ -15003,7 +13124,7 @@ var BaseInvitations = /* @__PURE__ */ (() => {
      */
     listInvitationTeams(invitationID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/invitations/${invitationID}/teams`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/invitations/${invitationID}/teams`, NumberedPage, { query, ...options });
     }
     /**
      * The return hash contains a `role` field which refers to the Organization
@@ -15022,7 +13143,7 @@ var BaseInvitations = /* @__PURE__ */ (() => {
      * ```
      */
     listInvitations(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/invitations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/invitations`, NumberedPage, { query, ...options });
     }
   }
   BaseInvitations3._key = Object.freeze([
@@ -15036,7 +13157,7 @@ var Invitations = class extends BaseInvitations {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/memberships.mjs
 var BaseMemberships = /* @__PURE__ */ (() => {
-  class BaseMemberships4 extends APIResource2 {
+  class BaseMemberships4 extends APIResource {
     /**
      * In order to get a user's membership with an organization, the authenticated user
      * must be an organization member. The `state` parameter in the response can be
@@ -15052,7 +13173,7 @@ var BaseMemberships = /* @__PURE__ */ (() => {
      */
     retrieve(username, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/memberships/${username}`, options);
+      return this._client.get(path`/orgs/${org}/memberships/${username}`, options);
     }
     /**
      * Only authenticated organization owners can add a member to the organization or
@@ -15086,7 +13207,7 @@ var BaseMemberships = /* @__PURE__ */ (() => {
      */
     update(username, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/memberships/${username}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/memberships/${username}`, { body, ...options });
     }
     /**
      * In order to remove a user's membership with an organization, the authenticated
@@ -15111,9 +13232,9 @@ var BaseMemberships = /* @__PURE__ */ (() => {
      */
     remove(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/memberships/${username}`, {
+      return this._client.delete(path`/orgs/${org}/memberships/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -15128,7 +13249,7 @@ var Memberships = class extends BaseMemberships {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/outside-collaborators.mjs
 var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
-  class BaseOutsideCollaborators2 extends APIResource2 {
+  class BaseOutsideCollaborators2 extends APIResource {
     /**
      * List all users who are outside collaborators of an organization.
      *
@@ -15143,7 +13264,7 @@ var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/outside_collaborators`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/outside_collaborators`, NumberedPage, { query, ...options });
     }
     /**
      * When an organization member is converted to an outside collaborator, they'll
@@ -15166,7 +13287,7 @@ var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
      */
     convert(username, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/outside_collaborators/${username}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/outside_collaborators/${username}`, { body, ...options });
     }
     /**
      * Removing a user from this list will remove them from all the organization's
@@ -15181,9 +13302,9 @@ var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
      */
     remove(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/outside_collaborators/${username}`, {
+      return this._client.delete(path`/orgs/${org}/outside_collaborators/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -15198,7 +13319,7 @@ var OutsideCollaborators = class extends BaseOutsideCollaborators {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/personal-access-token-requests.mjs
 var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
-  class BasePersonalAccessTokenRequests2 extends APIResource2 {
+  class BasePersonalAccessTokenRequests2 extends APIResource {
     /**
      * Lists requests from organization members to access organization resources with a
      * fine-grained personal access token.
@@ -15216,7 +13337,7 @@ var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/personal-access-token-requests`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/personal-access-token-requests`, NumberedPage, { query, ...options });
     }
     /**
      * Lists the repositories a fine-grained personal access token request is
@@ -15237,7 +13358,7 @@ var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
      */
     listRepositories(patRequestID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/personal-access-token-requests/${patRequestID}/repositories`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/personal-access-token-requests/${patRequestID}/repositories`, NumberedPage, { query, ...options });
     }
     /**
      * Approves or denies multiple pending requests to access organization resources
@@ -15259,7 +13380,7 @@ var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
      * ```
      */
     review(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/personal-access-token-requests`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/personal-access-token-requests`, { body, ...options });
     }
     /**
      * Approves or denies a pending request to access organization resources via a
@@ -15282,10 +13403,10 @@ var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
      */
     reviewSingle(patRequestID, params, options) {
       const { org, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/personal-access-token-requests/${patRequestID}`, {
+      return this._client.post(path`/orgs/${org}/personal-access-token-requests/${patRequestID}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -15300,7 +13421,7 @@ var PersonalAccessTokenRequests = class extends BasePersonalAccessTokenRequests 
 
 // node_modules/@stainless-api/github-internal/resources/orgs/personal-access-tokens.mjs
 var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
-  class BasePersonalAccessTokens2 extends APIResource2 {
+  class BasePersonalAccessTokens2 extends APIResource {
     /**
      * Lists approved fine-grained personal access tokens owned by organization members
      * that can access organization resources.
@@ -15318,7 +13439,7 @@ var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/personal-access-tokens`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/personal-access-tokens`, NumberedPage, { query, ...options });
     }
     /**
      * Lists the repositories a fine-grained personal access token has access to.
@@ -15338,7 +13459,7 @@ var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
      */
     listRepositories(patID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/personal-access-tokens/${patID}/repositories`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/personal-access-tokens/${patID}/repositories`, NumberedPage, { query, ...options });
     }
     /**
      * Updates the access organization members have to organization resources via
@@ -15357,7 +13478,7 @@ var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
      * ```
      */
     updateAccess(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/personal-access-tokens`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/personal-access-tokens`, { body, ...options });
     }
     /**
      * Updates the access an organization member has to organization resources via a
@@ -15376,10 +13497,10 @@ var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
      */
     updateSingleAccess(patID, params, options) {
       const { org, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/personal-access-tokens/${patID}`, {
+      return this._client.post(path`/orgs/${org}/personal-access-tokens/${patID}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -15394,7 +13515,7 @@ var PersonalAccessTokens = class extends BasePersonalAccessTokens {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/private-registries.mjs
 var BasePrivateRegistries = /* @__PURE__ */ (() => {
-  class BasePrivateRegistries2 extends APIResource2 {
+  class BasePrivateRegistries2 extends APIResource {
     /**
      * Creates a private registry configuration with an encrypted value for an
      * organization. Encrypt your secret using
@@ -15419,7 +13540,7 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/private-registries`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/private-registries`, { body, ...options });
     }
     /**
      * Updates a private registry configuration with an encrypted value for an
@@ -15443,10 +13564,10 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      */
     update(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/private-registries/${secretName}`, {
+      return this._client.patch(path`/orgs/${org}/private-registries/${secretName}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -15463,7 +13584,7 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/private-registries`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/private-registries`, { query, ...options });
     }
     /**
      * Delete a private registry configuration at the organization-level.
@@ -15480,9 +13601,9 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      */
     delete(secretName, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/private-registries/${secretName}`, {
+      return this._client.delete(path`/orgs/${org}/private-registries/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -15499,7 +13620,7 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      * ```
      */
     getPublicKey(org, options) {
-      return this._client.get(path2`/orgs/${org}/private-registries/public-key`, options);
+      return this._client.get(path`/orgs/${org}/private-registries/public-key`, options);
     }
     /**
      * Get the configuration of a single private registry defined for an organization,
@@ -15519,7 +13640,7 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
      */
     getSingle(secretName, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/private-registries/${secretName}`, options);
+      return this._client.get(path`/orgs/${org}/private-registries/${secretName}`, options);
     }
   }
   BasePrivateRegistries2._key = Object.freeze([
@@ -15533,7 +13654,7 @@ var PrivateRegistries = class extends BasePrivateRegistries {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/public-members.mjs
 var BasePublicMembers = /* @__PURE__ */ (() => {
-  class BasePublicMembers2 extends APIResource2 {
+  class BasePublicMembers2 extends APIResource {
     /**
      * Members of an organization can choose to have their membership publicized or
      * not.
@@ -15549,7 +13670,7 @@ var BasePublicMembers = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/public_members`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/public_members`, NumberedPage, {
         query,
         ...options
       });
@@ -15566,9 +13687,9 @@ var BasePublicMembers = /* @__PURE__ */ (() => {
      */
     check(username, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/public_members/${username}`, {
+      return this._client.get(path`/orgs/${org}/public_members/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -15584,9 +13705,9 @@ var BasePublicMembers = /* @__PURE__ */ (() => {
      */
     remove(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/public_members/${username}`, {
+      return this._client.delete(path`/orgs/${org}/public_members/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -15606,9 +13727,9 @@ var BasePublicMembers = /* @__PURE__ */ (() => {
      */
     set(username, params, options) {
       const { org } = params;
-      return this._client.put(path2`/orgs/${org}/public_members/${username}`, {
+      return this._client.put(path`/orgs/${org}/public_members/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -15623,7 +13744,7 @@ var PublicMembers = class extends BasePublicMembers {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/secret-scanning.mjs
 var BaseSecretScanning2 = /* @__PURE__ */ (() => {
-  class BaseSecretScanning4 extends APIResource2 {
+  class BaseSecretScanning4 extends APIResource {
     /**
      * Lists secret scanning alerts for eligible repositories in an organization, from
      * newest to oldest.
@@ -15646,7 +13767,7 @@ var BaseSecretScanning2 = /* @__PURE__ */ (() => {
      * ```
      */
     listAlerts(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/secret-scanning/alerts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/secret-scanning/alerts`, NumberedPage, { query, ...options });
     }
   }
   BaseSecretScanning4._key = Object.freeze([
@@ -15660,7 +13781,7 @@ var SecretScanning2 = class extends BaseSecretScanning2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/cache.mjs
 var BaseCache = /* @__PURE__ */ (() => {
-  class BaseCache3 extends APIResource2 {
+  class BaseCache3 extends APIResource {
     /**
      * Lists repositories and their GitHub Actions cache usage for an organization. The
      * data fetched using this API is refreshed approximately every 5 minutes, so
@@ -15678,7 +13799,7 @@ var BaseCache = /* @__PURE__ */ (() => {
      * ```
      */
     listUsageByRepository(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/cache/usage-by-repository`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/cache/usage-by-repository`, { query, ...options });
     }
     /**
      * Gets the total GitHub Actions cache usage for an organization. The data fetched
@@ -15695,7 +13816,7 @@ var BaseCache = /* @__PURE__ */ (() => {
      * ```
      */
     retrieveUsage(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/cache/usage`, options);
+      return this._client.get(path`/orgs/${org}/actions/cache/usage`, options);
     }
   }
   BaseCache3._key = Object.freeze([
@@ -15710,7 +13831,7 @@ var Cache = class extends BaseCache {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/images.mjs
 var BaseImages = /* @__PURE__ */ (() => {
-  class BaseImages2 extends APIResource2 {
+  class BaseImages2 extends APIResource {
     /**
      * Get the list of GitHub-owned images available for GitHub-hosted runners for an
      * organization.
@@ -15724,7 +13845,7 @@ var BaseImages = /* @__PURE__ */ (() => {
      * ```
      */
     listGitHubOwned(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/images/github-owned`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/images/github-owned`, options);
     }
     /**
      * Get the list of partner images available for GitHub-hosted runners for an
@@ -15739,7 +13860,7 @@ var BaseImages = /* @__PURE__ */ (() => {
      * ```
      */
     listPartner(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/images/partner`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/images/partner`, options);
     }
   }
   BaseImages2._key = Object.freeze([
@@ -15755,7 +13876,7 @@ var Images = class extends BaseImages {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/hosted-runners.mjs
 var BaseHostedRunners = /* @__PURE__ */ (() => {
-  class BaseHostedRunners2 extends APIResource2 {
+  class BaseHostedRunners2 extends APIResource {
     /**
      * Creates a GitHub-hosted runner for an organization. OAuth tokens and personal
      * access tokens (classic) need the `manage_runners:org` scope to use this
@@ -15774,7 +13895,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/actions/hosted-runners`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/actions/hosted-runners`, { body, ...options });
     }
     /**
      * Gets a GitHub-hosted runner configured in an organization.
@@ -15792,7 +13913,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      */
     retrieve(hostedRunnerID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, options);
     }
     /**
      * Updates a GitHub-hosted runner for an organization. OAuth app tokens and
@@ -15812,7 +13933,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      */
     update(hostedRunnerID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, {
+      return this._client.patch(path`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, {
         body,
         ...options
       });
@@ -15830,7 +13951,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners`, { query, ...options });
     }
     /**
      * Deletes a GitHub-hosted runner for an organization.
@@ -15845,7 +13966,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      */
     delete(hostedRunnerID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, options);
+      return this._client.delete(path`/orgs/${org}/actions/hosted-runners/${hostedRunnerID}`, options);
     }
     /**
      * Get the GitHub-hosted runners limits for an organization.
@@ -15859,7 +13980,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      * ```
      */
     retrieveLimits(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/limits`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/limits`, options);
     }
     /**
      * Get the list of machine specs available for GitHub-hosted runners for an
@@ -15874,7 +13995,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      * ```
      */
     retrieveMachineSizes(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/machine-sizes`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/machine-sizes`, options);
     }
     /**
      * Get the list of platforms available for GitHub-hosted runners for an
@@ -15889,7 +14010,7 @@ var BaseHostedRunners = /* @__PURE__ */ (() => {
      * ```
      */
     retrievePlatforms(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/hosted-runners/platforms`, options);
+      return this._client.get(path`/orgs/${org}/actions/hosted-runners/platforms`, options);
     }
   }
   BaseHostedRunners2._key = Object.freeze([
@@ -15913,7 +14034,7 @@ var HostedRunners = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/sub.mjs
 var BaseSub = /* @__PURE__ */ (() => {
-  class BaseSub3 extends APIResource2 {
+  class BaseSub3 extends APIResource {
     /**
      * Gets the customization template for an OpenID Connect (OIDC) subject claim.
      *
@@ -15929,7 +14050,7 @@ var BaseSub = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/oidc/customization/sub`, options);
+      return this._client.get(path`/orgs/${org}/actions/oidc/customization/sub`, options);
     }
     /**
      * Creates or updates the customization template for an OpenID Connect (OIDC)
@@ -15948,7 +14069,7 @@ var BaseSub = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.put(path2`/orgs/${org}/actions/oidc/customization/sub`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/actions/oidc/customization/sub`, { body, ...options });
     }
   }
   BaseSub3._key = Object.freeze(["orgs", "actions", "oidc", "customization", "sub"]);
@@ -15959,7 +14080,7 @@ var Sub = class extends BaseSub {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/customization.mjs
 var BaseCustomization = /* @__PURE__ */ (() => {
-  class BaseCustomization3 extends APIResource2 {
+  class BaseCustomization3 extends APIResource {
   }
   BaseCustomization3._key = Object.freeze([
     "orgs",
@@ -15983,7 +14104,7 @@ var Customization = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/oidc.mjs
 var BaseOidc = /* @__PURE__ */ (() => {
-  class BaseOidc3 extends APIResource2 {
+  class BaseOidc3 extends APIResource {
   }
   BaseOidc3._key = Object.freeze([
     "orgs",
@@ -16006,7 +14127,7 @@ var Oidc = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/repositories.mjs
 var BaseRepositories2 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Replaces the list of selected repositories that are enabled for GitHub Actions
      * in an organization. To use this endpoint, the organization permission policy for
@@ -16026,10 +14147,10 @@ var BaseRepositories2 = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.put(path2`/orgs/${org}/actions/permissions/repositories`, {
+      return this._client.put(path`/orgs/${org}/actions/permissions/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16051,7 +14172,7 @@ var BaseRepositories2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/permissions/repositories`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/permissions/repositories`, { query, ...options });
     }
     /**
      * Removes a repository from the list of selected repositories that are enabled for
@@ -16073,9 +14194,9 @@ var BaseRepositories2 = /* @__PURE__ */ (() => {
      */
     disable(repositoryID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/permissions/repositories/${repositoryID}`, {
+      return this._client.delete(path`/orgs/${org}/actions/permissions/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16098,9 +14219,9 @@ var BaseRepositories2 = /* @__PURE__ */ (() => {
      */
     enable(repositoryID, params, options) {
       const { org } = params;
-      return this._client.put(path2`/orgs/${org}/actions/permissions/repositories/${repositoryID}`, {
+      return this._client.put(path`/orgs/${org}/actions/permissions/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -16117,7 +14238,7 @@ var Repositories2 = class extends BaseRepositories2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/selected-actions.mjs
 var BaseSelectedActions = /* @__PURE__ */ (() => {
-  class BaseSelectedActions3 extends APIResource2 {
+  class BaseSelectedActions3 extends APIResource {
     /**
      * Gets the selected actions and reusable workflows that are allowed in an
      * organization. To use this endpoint, the organization permission policy for
@@ -16136,7 +14257,7 @@ var BaseSelectedActions = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/permissions/selected-actions`, options);
+      return this._client.get(path`/orgs/${org}/actions/permissions/selected-actions`, options);
     }
     /**
      * Sets the actions and reusable workflows that are allowed in an organization. To
@@ -16159,10 +14280,10 @@ var BaseSelectedActions = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body = {}, options) {
-      return this._client.put(path2`/orgs/${org}/actions/permissions/selected-actions`, {
+      return this._client.put(path`/orgs/${org}/actions/permissions/selected-actions`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -16174,7 +14295,7 @@ var SelectedActions = class extends BaseSelectedActions {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/workflow.mjs
 var BaseWorkflow = /* @__PURE__ */ (() => {
-  class BaseWorkflow3 extends APIResource2 {
+  class BaseWorkflow3 extends APIResource {
     /**
      * Gets the default workflow permissions granted to the `GITHUB_TOKEN` when running
      * workflows in an organization, as well as whether GitHub Actions can submit
@@ -16193,7 +14314,7 @@ var BaseWorkflow = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/permissions/workflow`, options);
+      return this._client.get(path`/orgs/${org}/actions/permissions/workflow`, options);
     }
     /**
      * Sets the default workflow permissions granted to the `GITHUB_TOKEN` when running
@@ -16216,10 +14337,10 @@ var BaseWorkflow = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body = {}, options) {
-      return this._client.put(path2`/orgs/${org}/actions/permissions/workflow`, {
+      return this._client.put(path`/orgs/${org}/actions/permissions/workflow`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -16236,7 +14357,7 @@ var Workflow = class extends BaseWorkflow {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/permissions.mjs
 var BasePermissions = /* @__PURE__ */ (() => {
-  class BasePermissions3 extends APIResource2 {
+  class BasePermissions3 extends APIResource {
     /**
      * Gets the GitHub Actions permissions policy for repositories and allowed actions
      * and reusable workflows in an organization.
@@ -16251,7 +14372,7 @@ var BasePermissions = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/permissions`, options);
+      return this._client.get(path`/orgs/${org}/actions/permissions`, options);
     }
     /**
      * Sets the GitHub Actions permissions policy for repositories and allowed actions
@@ -16269,10 +14390,10 @@ var BasePermissions = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.put(path2`/orgs/${org}/actions/permissions`, {
+      return this._client.put(path`/orgs/${org}/actions/permissions`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -16303,7 +14424,7 @@ var Permissions = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/repositories.mjs
 var BaseRepositories3 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Replaces the list of repositories that have access to a self-hosted runner group
      * configured in an organization.
@@ -16321,10 +14442,10 @@ var BaseRepositories3 = /* @__PURE__ */ (() => {
      */
     update(runnerGroupID, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}/repositories`, {
+      return this._client.put(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16345,7 +14466,7 @@ var BaseRepositories3 = /* @__PURE__ */ (() => {
      */
     list(runnerGroupID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}/repositories`, {
+      return this._client.get(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}/repositories`, {
         query,
         ...options
       });
@@ -16369,7 +14490,7 @@ var BaseRepositories3 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { org, runner_group_id } = params;
-      return this._client.put(path2`/orgs/${org}/actions/runner-groups/${runner_group_id}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.put(path`/orgs/${org}/actions/runner-groups/${runner_group_id}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Removes a repository from the list of selected repositories that can access a
@@ -16390,7 +14511,7 @@ var BaseRepositories3 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { org, runner_group_id } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runner-groups/${runner_group_id}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/actions/runner-groups/${runner_group_id}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRepositories10._key = Object.freeze(["orgs", "actions", "runnerGroups", "repositories"]);
@@ -16401,7 +14522,7 @@ var Repositories3 = class extends BaseRepositories3 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runners.mjs
 var BaseRunners = /* @__PURE__ */ (() => {
-  class BaseRunners4 extends APIResource2 {
+  class BaseRunners4 extends APIResource {
     /**
      * Replaces the list of self-hosted runners that are part of an organization runner
      * group.
@@ -16419,10 +14540,10 @@ var BaseRunners = /* @__PURE__ */ (() => {
      */
     update(runnerGroupID, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}/runners`, {
+      return this._client.put(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}/runners`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16441,7 +14562,7 @@ var BaseRunners = /* @__PURE__ */ (() => {
      */
     list(runnerGroupID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}/runners`, {
+      return this._client.get(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}/runners`, {
         query,
         ...options
       });
@@ -16462,9 +14583,9 @@ var BaseRunners = /* @__PURE__ */ (() => {
      */
     add(runnerID, params, options) {
       const { org, runner_group_id } = params;
-      return this._client.put(path2`/orgs/${org}/actions/runner-groups/${runner_group_id}/runners/${runnerID}`, {
+      return this._client.put(path`/orgs/${org}/actions/runner-groups/${runner_group_id}/runners/${runnerID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16484,7 +14605,7 @@ var BaseRunners = /* @__PURE__ */ (() => {
      */
     remove(runnerID, params, options) {
       const { org, runner_group_id } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runner-groups/${runner_group_id}/runners/${runnerID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/actions/runner-groups/${runner_group_id}/runners/${runnerID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRunners4._key = Object.freeze([
@@ -16500,7 +14621,7 @@ var Runners = class extends BaseRunners {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runner-groups.mjs
 var BaseRunnerGroups = /* @__PURE__ */ (() => {
-  class BaseRunnerGroups2 extends APIResource2 {
+  class BaseRunnerGroups2 extends APIResource {
     /**
      * Creates a new self-hosted runner group for an organization.
      *
@@ -16519,7 +14640,7 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/actions/runner-groups`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/actions/runner-groups`, { body, ...options });
     }
     /**
      * Gets a specific self-hosted runner group for an organization.
@@ -16537,7 +14658,7 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      */
     retrieve(runnerGroupID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, options);
+      return this._client.get(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, options);
     }
     /**
      * Updates the `name` and `visibility` of a self-hosted runner group in an
@@ -16558,7 +14679,7 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      */
     update(runnerGroupID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, {
+      return this._client.patch(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, {
         body,
         ...options
       });
@@ -16577,7 +14698,7 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/runner-groups`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/runner-groups`, { query, ...options });
     }
     /**
      * Deletes a self-hosted runner group for an organization.
@@ -16594,9 +14715,9 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      */
     delete(runnerGroupID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, {
+      return this._client.delete(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16616,7 +14737,7 @@ var BaseRunnerGroups = /* @__PURE__ */ (() => {
      */
     listHostedRunners(runnerGroupID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runner-groups/${runnerGroupID}/hosted-runners`, {
+      return this._client.get(path`/orgs/${org}/actions/runner-groups/${runnerGroupID}/hosted-runners`, {
         query,
         ...options
       });
@@ -16646,7 +14767,7 @@ var RunnerGroups = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/labels.mjs
 var BaseLabels = /* @__PURE__ */ (() => {
-  class BaseLabels5 extends APIResource2 {
+  class BaseLabels5 extends APIResource {
     /**
      * Lists all labels for a self-hosted runner configured in an organization.
      *
@@ -16667,7 +14788,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
      */
     list(runnerID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runners/${runnerID}/labels`, options);
+      return this._client.get(path`/orgs/${org}/actions/runners/${runnerID}/labels`, options);
     }
     /**
      * Adds custom labels to a self-hosted runner configured in an organization.
@@ -16689,7 +14810,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
      */
     add(runnerID, params, options) {
       const { org, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/actions/runners/${runnerID}/labels`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/actions/runners/${runnerID}/labels`, { body, ...options });
     }
     /**
      * Remove a custom label from a self-hosted runner configured in an organization.
@@ -16716,7 +14837,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
      */
     remove(name, params, options) {
       const { org, runner_id } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runners/${runner_id}/labels/${name}`, options);
+      return this._client.delete(path`/orgs/${org}/actions/runners/${runner_id}/labels/${name}`, options);
     }
     /**
      * Remove all custom labels from a self-hosted runner configured in an
@@ -16739,7 +14860,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
      */
     removeAll(runnerID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runners/${runnerID}/labels`, options);
+      return this._client.delete(path`/orgs/${org}/actions/runners/${runnerID}/labels`, options);
     }
     /**
      * Remove all previous custom labels and set the new custom labels for a specific
@@ -16763,7 +14884,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
      */
     set(runnerID, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/runners/${runnerID}/labels`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/actions/runners/${runnerID}/labels`, { body, ...options });
     }
   }
   BaseLabels5._key = Object.freeze([
@@ -16779,7 +14900,7 @@ var Labels = class extends BaseLabels {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/runners.mjs
 var BaseRunners2 = /* @__PURE__ */ (() => {
-  class BaseRunners4 extends APIResource2 {
+  class BaseRunners4 extends APIResource {
     /**
      * Gets a specific self-hosted runner configured in an organization.
      *
@@ -16800,7 +14921,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      */
     retrieve(runnerID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/runners/${runnerID}`, options);
+      return this._client.get(path`/orgs/${org}/actions/runners/${runnerID}`, options);
     }
     /**
      * Lists all self-hosted runners configured in an organization.
@@ -16820,7 +14941,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/runners`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/runners`, { query, ...options });
     }
     /**
      * Forces the removal of a self-hosted runner from an organization. You can use
@@ -16841,9 +14962,9 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      */
     delete(runnerID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/runners/${runnerID}`, {
+      return this._client.delete(path`/orgs/${org}/actions/runners/${runnerID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -16874,7 +14995,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      * ```
      */
     createRegistrationToken(org, options) {
-      return this._client.post(path2`/orgs/${org}/actions/runners/registration-token`, options);
+      return this._client.post(path`/orgs/${org}/actions/runners/registration-token`, options);
     }
     /**
      * Returns a token that you can pass to the `config` script to remove a self-hosted
@@ -16904,7 +15025,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      * ```
      */
     createRemoveToken(org, options) {
-      return this._client.post(path2`/orgs/${org}/actions/runners/remove-token`, options);
+      return this._client.post(path`/orgs/${org}/actions/runners/remove-token`, options);
     }
     /**
      * Generates a configuration that can be passed to the runner application at
@@ -16931,7 +15052,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      * ```
      */
     generateJitconfig(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/actions/runners/generate-jitconfig`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/actions/runners/generate-jitconfig`, { body, ...options });
     }
     /**
      * Lists binaries for the runner application that you can download and run.
@@ -16950,7 +15071,7 @@ var BaseRunners2 = /* @__PURE__ */ (() => {
      * ```
      */
     listDownloads(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/runners/downloads`, options);
+      return this._client.get(path`/orgs/${org}/actions/runners/downloads`, options);
     }
   }
   BaseRunners4._key = Object.freeze([
@@ -16974,7 +15095,7 @@ var Runners2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/repositories.mjs
 var BaseRepositories4 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Replaces all repositories for an organization secret when the `visibility` for
      * repository access is set to `selected`. The visibility is set when you
@@ -16997,10 +15118,10 @@ var BaseRepositories4 = /* @__PURE__ */ (() => {
      */
     update(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/secrets/${secretName}/repositories`, {
+      return this._client.put(path`/orgs/${org}/actions/secrets/${secretName}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17025,7 +15146,7 @@ var BaseRepositories4 = /* @__PURE__ */ (() => {
      */
     list(secretName, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/actions/secrets/${secretName}/repositories`, {
+      return this._client.get(path`/orgs/${org}/actions/secrets/${secretName}/repositories`, {
         query,
         ...options
       });
@@ -17053,9 +15174,9 @@ var BaseRepositories4 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.put(path2`/orgs/${org}/actions/secrets/${secret_name}/repositories/${repositoryID}`, {
+      return this._client.put(path`/orgs/${org}/actions/secrets/${secret_name}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17080,7 +15201,7 @@ var BaseRepositories4 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/actions/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRepositories10._key = Object.freeze([
@@ -17096,7 +15217,7 @@ var Repositories4 = class extends BaseRepositories4 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/secrets.mjs
 var BaseSecrets = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Gets a single organization secret without revealing its encrypted value.
      *
@@ -17117,7 +15238,7 @@ var BaseSecrets = /* @__PURE__ */ (() => {
      */
     retrieve(secretName, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/secrets/${secretName}`, options);
+      return this._client.get(path`/orgs/${org}/actions/secrets/${secretName}`, options);
     }
     /**
      * Lists all secrets available in an organization without revealing their encrypted
@@ -17138,7 +15259,7 @@ var BaseSecrets = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/secrets`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/secrets`, { query, ...options });
     }
     /**
      * Deletes a secret in an organization using the secret name.
@@ -17159,9 +15280,9 @@ var BaseSecrets = /* @__PURE__ */ (() => {
      */
     delete(secretName, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/secrets/${secretName}`, {
+      return this._client.delete(path`/orgs/${org}/actions/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17195,7 +15316,7 @@ var BaseSecrets = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/secrets/${secretName}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/actions/secrets/${secretName}`, { body, ...options });
     }
     /**
      * Gets your public key, which you need to encrypt secrets. You need to encrypt a
@@ -17217,7 +15338,7 @@ var BaseSecrets = /* @__PURE__ */ (() => {
      * ```
      */
     retrievePublicKey(org, options) {
-      return this._client.get(path2`/orgs/${org}/actions/secrets/public-key`, options);
+      return this._client.get(path`/orgs/${org}/actions/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -17241,7 +15362,7 @@ var Secrets = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/repositories.mjs
 var BaseRepositories5 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Replaces all repositories for an organization variable that is available to
      * selected repositories. Organization variables that are available to selected
@@ -17264,10 +15385,10 @@ var BaseRepositories5 = /* @__PURE__ */ (() => {
      */
     update(name, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/actions/variables/${name}/repositories`, {
+      return this._client.put(path`/orgs/${org}/actions/variables/${name}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17292,7 +15413,7 @@ var BaseRepositories5 = /* @__PURE__ */ (() => {
      */
     list(name, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/actions/variables/${name}/repositories`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/variables/${name}/repositories`, { query, ...options });
     }
     /**
      * Adds a repository to an organization variable that is available to selected
@@ -17316,9 +15437,9 @@ var BaseRepositories5 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { org, name } = params;
-      return this._client.put(path2`/orgs/${org}/actions/variables/${name}/repositories/${repositoryID}`, {
+      return this._client.put(path`/orgs/${org}/actions/variables/${name}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17343,9 +15464,9 @@ var BaseRepositories5 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { org, name } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/variables/${name}/repositories/${repositoryID}`, {
+      return this._client.delete(path`/orgs/${org}/actions/variables/${name}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -17362,7 +15483,7 @@ var Repositories5 = class extends BaseRepositories5 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/variables.mjs
 var BaseVariables = /* @__PURE__ */ (() => {
-  class BaseVariables4 extends APIResource2 {
+  class BaseVariables4 extends APIResource {
     /**
      * Creates an organization variable that you can reference in a GitHub Actions
      * workflow.
@@ -17388,7 +15509,7 @@ var BaseVariables = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/actions/variables`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/actions/variables`, { body, ...options });
     }
     /**
      * Gets a specific variable in an organization.
@@ -17410,7 +15531,7 @@ var BaseVariables = /* @__PURE__ */ (() => {
      */
     retrieve(name, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/actions/variables/${name}`, options);
+      return this._client.get(path`/orgs/${org}/actions/variables/${name}`, options);
     }
     /**
      * Updates an organization variable that you can reference in a GitHub Actions
@@ -17436,10 +15557,10 @@ var BaseVariables = /* @__PURE__ */ (() => {
      */
     update(pathName, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/actions/variables/${pathName}`, {
+      return this._client.patch(path`/orgs/${org}/actions/variables/${pathName}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17460,7 +15581,7 @@ var BaseVariables = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/actions/variables`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/actions/variables`, { query, ...options });
     }
     /**
      * Deletes an organization variable using the variable name.
@@ -17481,9 +15602,9 @@ var BaseVariables = /* @__PURE__ */ (() => {
      */
     delete(name, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/actions/variables/${name}`, {
+      return this._client.delete(path`/orgs/${org}/actions/variables/${name}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -17508,7 +15629,7 @@ var Variables = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/actions/actions.mjs
 var BaseActions = /* @__PURE__ */ (() => {
-  class BaseActions3 extends APIResource2 {
+  class BaseActions3 extends APIResource {
   }
   BaseActions3._key = Object.freeze(["orgs", "actions"]);
   return BaseActions3;
@@ -17548,7 +15669,7 @@ var Actions = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/defaults.mjs
 var BaseDefaults2 = /* @__PURE__ */ (() => {
-  class BaseDefaults3 extends APIResource2 {
+  class BaseDefaults3 extends APIResource {
     /**
      * Lists the default code security configurations for an organization.
      *
@@ -17567,7 +15688,7 @@ var BaseDefaults2 = /* @__PURE__ */ (() => {
      * ```
      */
     get(org, options) {
-      return this._client.get(path2`/orgs/${org}/code-security/configurations/defaults`, options);
+      return this._client.get(path`/orgs/${org}/code-security/configurations/defaults`, options);
     }
     /**
      * Sets a code security configuration as a default to be applied to new
@@ -17593,7 +15714,7 @@ var BaseDefaults2 = /* @__PURE__ */ (() => {
      */
     set(configurationID, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/code-security/configurations/${configurationID}/defaults`, {
+      return this._client.put(path`/orgs/${org}/code-security/configurations/${configurationID}/defaults`, {
         body,
         ...options
       });
@@ -17607,7 +15728,7 @@ var Defaults2 = class extends BaseDefaults2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/configurations.mjs
 var BaseConfigurations2 = /* @__PURE__ */ (() => {
-  class BaseConfigurations3 extends APIResource2 {
+  class BaseConfigurations3 extends APIResource {
     /**
      * Creates a code security configuration in an organization.
      *
@@ -17635,7 +15756,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/code-security/configurations`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/code-security/configurations`, { body, ...options });
     }
     /**
      * Gets a code security configuration available in an organization.
@@ -17657,7 +15778,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      */
     retrieve(configurationID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/code-security/configurations/${configurationID}`, options);
+      return this._client.get(path`/orgs/${org}/code-security/configurations/${configurationID}`, options);
     }
     /**
      * Updates a code security configuration in an organization.
@@ -17681,7 +15802,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      */
     update(configurationID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/code-security/configurations/${configurationID}`, {
+      return this._client.patch(path`/orgs/${org}/code-security/configurations/${configurationID}`, {
         body,
         ...options
       });
@@ -17702,7 +15823,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/code-security/configurations`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/code-security/configurations`, { query, ...options });
     }
     /**
      * Deletes the desired code security configuration from an organization.
@@ -17724,9 +15845,9 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      */
     delete(configurationID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/code-security/configurations/${configurationID}`, {
+      return this._client.delete(path`/orgs/${org}/code-security/configurations/${configurationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17755,7 +15876,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      */
     attach(configurationID, params, options) {
       const { org, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/code-security/configurations/${configurationID}/attach`, {
+      return this._client.post(path`/orgs/${org}/code-security/configurations/${configurationID}/attach`, {
         body,
         ...options
       });
@@ -17780,10 +15901,10 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      * ```
      */
     detach(org, body, options) {
-      return this._client.delete(path2`/orgs/${org}/code-security/configurations/detach`, {
+      return this._client.delete(path`/orgs/${org}/code-security/configurations/detach`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -17807,7 +15928,7 @@ var BaseConfigurations2 = /* @__PURE__ */ (() => {
      */
     getRepositories(configurationID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/code-security/configurations/${configurationID}/repositories`, {
+      return this._client.get(path`/orgs/${org}/code-security/configurations/${configurationID}/repositories`, {
         query,
         ...options
       });
@@ -17834,7 +15955,7 @@ var Configurations2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/code-security/code-security.mjs
 var BaseCodeSecurity2 = /* @__PURE__ */ (() => {
-  class BaseCodeSecurity3 extends APIResource2 {
+  class BaseCodeSecurity3 extends APIResource {
   }
   BaseCodeSecurity3._key = Object.freeze([
     "orgs",
@@ -17856,7 +15977,7 @@ var CodeSecurity2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/repositories.mjs
 var BaseRepositories6 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Lists all repositories that have been selected when the `visibility` for
      * repository access to a secret is set to `selected`.
@@ -17875,7 +15996,7 @@ var BaseRepositories6 = /* @__PURE__ */ (() => {
      */
     list(secretName, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/codespaces/secrets/${secretName}/repositories`, {
+      return this._client.get(path`/orgs/${org}/codespaces/secrets/${secretName}/repositories`, {
         query,
         ...options
       });
@@ -17898,7 +16019,7 @@ var BaseRepositories6 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.put(path2`/orgs/${org}/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.put(path`/orgs/${org}/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Removes a repository from an organization development environment secret when
@@ -17919,7 +16040,7 @@ var BaseRepositories6 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.delete(path2`/orgs/${org}/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Replaces all repositories for an organization development environment secret
@@ -17940,10 +16061,10 @@ var BaseRepositories6 = /* @__PURE__ */ (() => {
      */
     set(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/codespaces/secrets/${secretName}/repositories`, {
+      return this._client.put(path`/orgs/${org}/codespaces/secrets/${secretName}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -17960,7 +16081,7 @@ var Repositories6 = class extends BaseRepositories6 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/secrets.mjs
 var BaseSecrets2 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Lists all Codespaces development environment secrets available at the
      * organization-level without revealing their encrypted values.
@@ -17976,7 +16097,7 @@ var BaseSecrets2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/codespaces/secrets`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/codespaces/secrets`, { query, ...options });
     }
     /**
      * Deletes an organization development environment secret using the secret name.
@@ -17993,9 +16114,9 @@ var BaseSecrets2 = /* @__PURE__ */ (() => {
      */
     delete(secretName, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/codespaces/secrets/${secretName}`, {
+      return this._client.delete(path`/orgs/${org}/codespaces/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -18025,7 +16146,7 @@ var BaseSecrets2 = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/codespaces/secrets/${secretName}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/codespaces/secrets/${secretName}`, { body, ...options });
     }
     /**
      * Gets an organization development environment secret without revealing its
@@ -18044,7 +16165,7 @@ var BaseSecrets2 = /* @__PURE__ */ (() => {
      */
     get(secretName, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/codespaces/secrets/${secretName}`, options);
+      return this._client.get(path`/orgs/${org}/codespaces/secrets/${secretName}`, options);
     }
     /**
      * Gets a public key for an organization, which is required in order to encrypt
@@ -18059,7 +16180,7 @@ var BaseSecrets2 = /* @__PURE__ */ (() => {
      * ```
      */
     getPublicKey(org, options) {
-      return this._client.get(path2`/orgs/${org}/codespaces/secrets/public-key`, options);
+      return this._client.get(path`/orgs/${org}/codespaces/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -18083,7 +16204,7 @@ var Secrets2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/codespaces/codespaces.mjs
 var BaseCodespaces = /* @__PURE__ */ (() => {
-  class BaseCodespaces5 extends APIResource2 {
+  class BaseCodespaces5 extends APIResource {
     /**
      * Lists the codespaces associated to a specified organization.
      *
@@ -18096,7 +16217,7 @@ var BaseCodespaces = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/codespaces`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/codespaces`, { query, ...options });
     }
   }
   BaseCodespaces5._key = Object.freeze([
@@ -18119,7 +16240,7 @@ var Codespaces = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-teams.mjs
 var BaseSelectedTeams = /* @__PURE__ */ (() => {
-  class BaseSelectedTeams2 extends APIResource2 {
+  class BaseSelectedTeams2 extends APIResource {
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
      *
@@ -18154,7 +16275,7 @@ var BaseSelectedTeams = /* @__PURE__ */ (() => {
      * ```
      */
     add(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/copilot/billing/selected_teams`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/copilot/billing/selected_teams`, { body, ...options });
     }
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
@@ -18186,7 +16307,7 @@ var BaseSelectedTeams = /* @__PURE__ */ (() => {
      * ```
      */
     remove(org, body, options) {
-      return this._client.delete(path2`/orgs/${org}/copilot/billing/selected_teams`, { body, ...options });
+      return this._client.delete(path`/orgs/${org}/copilot/billing/selected_teams`, { body, ...options });
     }
   }
   BaseSelectedTeams2._key = Object.freeze([
@@ -18202,7 +16323,7 @@ var SelectedTeams = class extends BaseSelectedTeams {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-users.mjs
 var BaseSelectedUsers = /* @__PURE__ */ (() => {
-  class BaseSelectedUsers2 extends APIResource2 {
+  class BaseSelectedUsers2 extends APIResource {
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
      *
@@ -18241,7 +16362,7 @@ var BaseSelectedUsers = /* @__PURE__ */ (() => {
      * ```
      */
     add(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/copilot/billing/selected_users`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/copilot/billing/selected_users`, { body, ...options });
     }
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
@@ -18276,7 +16397,7 @@ var BaseSelectedUsers = /* @__PURE__ */ (() => {
      * ```
      */
     remove(org, body, options) {
-      return this._client.delete(path2`/orgs/${org}/copilot/billing/selected_users`, { body, ...options });
+      return this._client.delete(path`/orgs/${org}/copilot/billing/selected_users`, { body, ...options });
     }
   }
   BaseSelectedUsers2._key = Object.freeze([
@@ -18292,7 +16413,7 @@ var SelectedUsers = class extends BaseSelectedUsers {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/billing.mjs
 var BaseBilling2 = /* @__PURE__ */ (() => {
-  class BaseBilling5 extends APIResource2 {
+  class BaseBilling5 extends APIResource {
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
      *
@@ -18315,7 +16436,7 @@ var BaseBilling2 = /* @__PURE__ */ (() => {
      * ```
      */
     getInfo(org, options) {
-      return this._client.get(path2`/orgs/${org}/copilot/billing`, options);
+      return this._client.get(path`/orgs/${org}/copilot/billing`, options);
     }
     /**
      * > [!NOTE] This endpoint is in public preview and is subject to change.
@@ -18340,7 +16461,7 @@ var BaseBilling2 = /* @__PURE__ */ (() => {
      * ```
      */
     listSeats(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/copilot/billing/seats`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/copilot/billing/seats`, { query, ...options });
     }
   }
   BaseBilling5._key = Object.freeze([
@@ -18367,7 +16488,7 @@ var Billing2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/copilot/copilot.mjs
 var BaseCopilot = /* @__PURE__ */ (() => {
-  class BaseCopilot3 extends APIResource2 {
+  class BaseCopilot3 extends APIResource {
     /**
      * Use this endpoint to see a breakdown of aggregated metrics for various GitHub
      * Copilot features. See the response schema tab for detailed metrics definitions.
@@ -18397,7 +16518,7 @@ var BaseCopilot = /* @__PURE__ */ (() => {
      * ```
      */
     getMetrics(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/copilot/metrics`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/copilot/metrics`, { query, ...options });
     }
   }
   BaseCopilot3._key = Object.freeze(["orgs", "copilot"]);
@@ -18417,7 +16538,7 @@ var Copilot = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/repositories.mjs
 var BaseRepositories7 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * Adds a repository to an organization secret when the `visibility` for repository
      * access is set to `selected`. The visibility is set when you
@@ -18436,7 +16557,7 @@ var BaseRepositories7 = /* @__PURE__ */ (() => {
      */
     addSelectedRepository(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.put(path2`/orgs/${org}/dependabot/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.put(path`/orgs/${org}/dependabot/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Lists all repositories that have been selected when the `visibility` for
@@ -18456,7 +16577,7 @@ var BaseRepositories7 = /* @__PURE__ */ (() => {
      */
     listSelectedRepositories(secretName, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/dependabot/secrets/${secretName}/repositories`, {
+      return this._client.get(path`/orgs/${org}/dependabot/secrets/${secretName}/repositories`, {
         query,
         ...options
       });
@@ -18479,7 +16600,7 @@ var BaseRepositories7 = /* @__PURE__ */ (() => {
      */
     removeSelectedRepository(repositoryID, params, options) {
       const { org, secret_name } = params;
-      return this._client.delete(path2`/orgs/${org}/dependabot/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/dependabot/secrets/${secret_name}/repositories/${repositoryID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Replaces all repositories for an organization secret when the `visibility` for
@@ -18499,10 +16620,10 @@ var BaseRepositories7 = /* @__PURE__ */ (() => {
      */
     setSelectedRepositories(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/dependabot/secrets/${secretName}/repositories`, {
+      return this._client.put(path`/orgs/${org}/dependabot/secrets/${secretName}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -18519,7 +16640,7 @@ var Repositories7 = class extends BaseRepositories7 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/secrets.mjs
 var BaseSecrets3 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Creates or updates an organization secret with an encrypted value. Encrypt your
      * secret using
@@ -18547,7 +16668,7 @@ var BaseSecrets3 = /* @__PURE__ */ (() => {
      */
     createOrUpdateSecret(secretName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/dependabot/secrets/${secretName}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/dependabot/secrets/${secretName}`, { body, ...options });
     }
     /**
      * Deletes a secret in an organization using the secret name.
@@ -18565,9 +16686,9 @@ var BaseSecrets3 = /* @__PURE__ */ (() => {
      */
     deleteSecret(secretName, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/dependabot/secrets/${secretName}`, {
+      return this._client.delete(path`/orgs/${org}/dependabot/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -18584,7 +16705,7 @@ var BaseSecrets3 = /* @__PURE__ */ (() => {
      * ```
      */
     getPublicKey(org, options) {
-      return this._client.get(path2`/orgs/${org}/dependabot/secrets/public-key`, options);
+      return this._client.get(path`/orgs/${org}/dependabot/secrets/public-key`, options);
     }
     /**
      * Lists all secrets available in an organization without revealing their encrypted
@@ -18600,7 +16721,7 @@ var BaseSecrets3 = /* @__PURE__ */ (() => {
      * ```
      */
     listSecrets(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/dependabot/secrets`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/dependabot/secrets`, { query, ...options });
     }
     /**
      * Gets a single organization secret without revealing its encrypted value.
@@ -18619,7 +16740,7 @@ var BaseSecrets3 = /* @__PURE__ */ (() => {
      */
     retrieveSecret(secretName, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/dependabot/secrets/${secretName}`, options);
+      return this._client.get(path`/orgs/${org}/dependabot/secrets/${secretName}`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -18643,7 +16764,7 @@ var Secrets3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/dependabot/dependabot.mjs
 var BaseDependabot2 = /* @__PURE__ */ (() => {
-  class BaseDependabot4 extends APIResource2 {
+  class BaseDependabot4 extends APIResource {
     /**
      * Lists Dependabot alerts for an organization.
      *
@@ -18662,7 +16783,7 @@ var BaseDependabot2 = /* @__PURE__ */ (() => {
      * ```
      */
     listAlerts(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/dependabot/alerts`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/dependabot/alerts`, { query, ...options });
     }
   }
   BaseDependabot4._key = Object.freeze([
@@ -18685,7 +16806,7 @@ var Dependabot2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/hooks/config.mjs
 var BaseConfig2 = /* @__PURE__ */ (() => {
-  class BaseConfig4 extends APIResource2 {
+  class BaseConfig4 extends APIResource {
     /**
      * Returns the webhook configuration for an organization. To get more information
      * about the webhook, including the `active` state and `events`, use
@@ -18707,7 +16828,7 @@ var BaseConfig2 = /* @__PURE__ */ (() => {
      */
     retrieveWebhookConfig(hookID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/hooks/${hookID}/config`, options);
+      return this._client.get(path`/orgs/${org}/hooks/${hookID}/config`, options);
     }
     /**
      * Updates the webhook configuration for an organization. To update more
@@ -18734,7 +16855,7 @@ var BaseConfig2 = /* @__PURE__ */ (() => {
      */
     updateWebhookConfig(hookID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/hooks/${hookID}/config`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}/hooks/${hookID}/config`, { body, ...options });
     }
   }
   BaseConfig4._key = Object.freeze([
@@ -18749,7 +16870,7 @@ var Config2 = class extends BaseConfig2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/hooks/deliveries.mjs
 var BaseDeliveries2 = /* @__PURE__ */ (() => {
-  class BaseDeliveries4 extends APIResource2 {
+  class BaseDeliveries4 extends APIResource {
     /**
      * Returns a list of webhook deliveries for a webhook configured in an
      * organization.
@@ -18773,7 +16894,7 @@ var BaseDeliveries2 = /* @__PURE__ */ (() => {
      */
     listDeliveries(hookID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/hooks/${hookID}/deliveries`, HypermediaPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/hooks/${hookID}/deliveries`, HypermediaPage, { query, ...options });
     }
     /**
      * Redeliver a delivery for a webhook configured in an organization.
@@ -18795,7 +16916,7 @@ var BaseDeliveries2 = /* @__PURE__ */ (() => {
      */
     redeliverDelivery(deliveryID, params, options) {
       const { org, hook_id } = params;
-      return this._client.post(path2`/orgs/${org}/hooks/${hook_id}/deliveries/${deliveryID}/attempts`, options);
+      return this._client.post(path`/orgs/${org}/hooks/${hook_id}/deliveries/${deliveryID}/attempts`, options);
     }
     /**
      * Returns a delivery for a webhook configured in an organization.
@@ -18817,7 +16938,7 @@ var BaseDeliveries2 = /* @__PURE__ */ (() => {
      */
     retrieveDelivery(deliveryID, params, options) {
       const { org, hook_id } = params;
-      return this._client.get(path2`/orgs/${org}/hooks/${hook_id}/deliveries/${deliveryID}`, options);
+      return this._client.get(path`/orgs/${org}/hooks/${hook_id}/deliveries/${deliveryID}`, options);
     }
   }
   BaseDeliveries4._key = Object.freeze([
@@ -18832,7 +16953,7 @@ var Deliveries2 = class extends BaseDeliveries2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/hooks/hooks.mjs
 var BaseHooks = /* @__PURE__ */ (() => {
-  class BaseHooks3 extends APIResource2 {
+  class BaseHooks3 extends APIResource {
     /**
      * Create a hook that posts payloads in JSON format.
      *
@@ -18859,7 +16980,7 @@ var BaseHooks = /* @__PURE__ */ (() => {
      * ```
      */
     createWebhook(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/hooks`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/hooks`, { body, ...options });
     }
     /**
      * Delete a webhook for an organization.
@@ -18877,9 +16998,9 @@ var BaseHooks = /* @__PURE__ */ (() => {
      */
     deleteWebhook(hookID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/hooks/${hookID}`, {
+      return this._client.delete(path`/orgs/${org}/hooks/${hookID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -18902,7 +17023,7 @@ var BaseHooks = /* @__PURE__ */ (() => {
      * ```
      */
     listWebhooks(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/hooks`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/hooks`, NumberedPage, {
         query,
         ...options
       });
@@ -18924,9 +17045,9 @@ var BaseHooks = /* @__PURE__ */ (() => {
      */
     pingWebhook(hookID, params, options) {
       const { org } = params;
-      return this._client.post(path2`/orgs/${org}/hooks/${hookID}/pings`, {
+      return this._client.post(path`/orgs/${org}/hooks/${hookID}/pings`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -18950,7 +17071,7 @@ var BaseHooks = /* @__PURE__ */ (() => {
      */
     retrieveWebhook(hookID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/hooks/${hookID}`, options);
+      return this._client.get(path`/orgs/${org}/hooks/${hookID}`, options);
     }
     /**
      * Updates a webhook configured in an organization. When you update a webhook, the
@@ -18976,7 +17097,7 @@ var BaseHooks = /* @__PURE__ */ (() => {
      */
     updateWebhook(hookID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/hooks/${hookID}`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}/hooks/${hookID}`, { body, ...options });
     }
   }
   BaseHooks3._key = Object.freeze(["orgs", "hooks"]);
@@ -18999,7 +17120,7 @@ var Hooks = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/insights/api/summary-stats.mjs
 var BaseSummaryStats = /* @__PURE__ */ (() => {
-  class BaseSummaryStats2 extends APIResource2 {
+  class BaseSummaryStats2 extends APIResource {
     /**
      * Get overall statistics of API requests made within an organization by all users
      * and apps within a specified time frame.
@@ -19014,7 +17135,7 @@ var BaseSummaryStats = /* @__PURE__ */ (() => {
      * ```
      */
     getSummaryStats(org, query, options) {
-      return this._client.get(path2`/orgs/${org}/insights/api/summary-stats`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/insights/api/summary-stats`, { query, ...options });
     }
     /**
      * Get overall statistics of API requests within the organization made by a
@@ -19036,7 +17157,7 @@ var BaseSummaryStats = /* @__PURE__ */ (() => {
      */
     getSummaryStatsByActor(actorID, params, options) {
       const { org, actor_type, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/summary-stats/${actor_type}/${actorID}`, {
+      return this._client.get(path`/orgs/${org}/insights/api/summary-stats/${actor_type}/${actorID}`, {
         query,
         ...options
       });
@@ -19055,7 +17176,7 @@ var BaseSummaryStats = /* @__PURE__ */ (() => {
      */
     getSummaryStatsByUser(userID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/summary-stats/users/${userID}`, {
+      return this._client.get(path`/orgs/${org}/insights/api/summary-stats/users/${userID}`, {
         query,
         ...options
       });
@@ -19074,7 +17195,7 @@ var SummaryStats = class extends BaseSummaryStats {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/insights/api/time-stats.mjs
 var BaseTimeStats = /* @__PURE__ */ (() => {
-  class BaseTimeStats2 extends APIResource2 {
+  class BaseTimeStats2 extends APIResource {
     /**
      * Get the number of API requests and rate-limited requests made within an
      * organization over a specified time period.
@@ -19092,7 +17213,7 @@ var BaseTimeStats = /* @__PURE__ */ (() => {
      * ```
      */
     getTimeStats(org, query, options) {
-      return this._client.get(path2`/orgs/${org}/insights/api/time-stats`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/insights/api/time-stats`, { query, ...options });
     }
     /**
      * Get the number of API requests and rate-limited requests made within an
@@ -19114,7 +17235,7 @@ var BaseTimeStats = /* @__PURE__ */ (() => {
      */
     getTimeStatsByActor(actorID, params, options) {
       const { org, actor_type, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/time-stats/${actor_type}/${actorID}`, {
+      return this._client.get(path`/orgs/${org}/insights/api/time-stats/${actor_type}/${actorID}`, {
         query,
         ...options
       });
@@ -19138,7 +17259,7 @@ var BaseTimeStats = /* @__PURE__ */ (() => {
      */
     getTimeStatsByUser(userID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/time-stats/users/${userID}`, {
+      return this._client.get(path`/orgs/${org}/insights/api/time-stats/users/${userID}`, {
         query,
         ...options
       });
@@ -19157,7 +17278,7 @@ var TimeStats = class extends BaseTimeStats {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/insights/api/api.mjs
 var BaseAPI = /* @__PURE__ */ (() => {
-  class BaseAPI2 extends APIResource2 {
+  class BaseAPI2 extends APIResource {
     /**
      * Get API request count statistics for an actor broken down by route within a
      * specified time frame.
@@ -19174,7 +17295,7 @@ var BaseAPI = /* @__PURE__ */ (() => {
      */
     getRouteStatsByActor(actorID, params, options) {
       const { org, actor_type, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/route-stats/${actor_type}/${actorID}`, {
+      return this._client.get(path`/orgs/${org}/insights/api/route-stats/${actor_type}/${actorID}`, {
         query,
         ...options
       });
@@ -19192,7 +17313,7 @@ var BaseAPI = /* @__PURE__ */ (() => {
      * ```
      */
     getSubjectStats(org, query, options) {
-      return this._client.get(path2`/orgs/${org}/insights/api/subject-stats`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/insights/api/subject-stats`, { query, ...options });
     }
     /**
      * Get API usage statistics within an organization for a user broken down by the
@@ -19209,7 +17330,7 @@ var BaseAPI = /* @__PURE__ */ (() => {
      */
     getUserStats(userID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/insights/api/user-stats/${userID}`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/insights/api/user-stats/${userID}`, { query, ...options });
     }
   }
   BaseAPI2._key = Object.freeze([
@@ -19236,7 +17357,7 @@ var API = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/insights/insights.mjs
 var BaseInsights = /* @__PURE__ */ (() => {
-  class BaseInsights2 extends APIResource2 {
+  class BaseInsights2 extends APIResource {
   }
   BaseInsights2._key = Object.freeze(["orgs", "insights"]);
   return BaseInsights2;
@@ -19255,7 +17376,7 @@ var Insights = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/members/codespaces.mjs
 var BaseCodespaces2 = /* @__PURE__ */ (() => {
-  class BaseCodespaces5 extends APIResource2 {
+  class BaseCodespaces5 extends APIResource {
     /**
      * Lists the codespaces that a member of an organization has for repositories in
      * that organization.
@@ -19273,7 +17394,7 @@ var BaseCodespaces2 = /* @__PURE__ */ (() => {
      */
     list(username, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/members/${username}/codespaces`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/members/${username}/codespaces`, { query, ...options });
     }
     /**
      * Deletes a user's codespace.
@@ -19292,7 +17413,7 @@ var BaseCodespaces2 = /* @__PURE__ */ (() => {
      */
     delete(codespaceName, params, options) {
       const { org, username } = params;
-      return this._client.delete(path2`/orgs/${org}/members/${username}/codespaces/${codespaceName}`, options);
+      return this._client.delete(path`/orgs/${org}/members/${username}/codespaces/${codespaceName}`, options);
     }
     /**
      * Stops a user's codespace.
@@ -19310,7 +17431,7 @@ var BaseCodespaces2 = /* @__PURE__ */ (() => {
      */
     stop(codespaceName, params, options) {
       const { org, username } = params;
-      return this._client.post(path2`/orgs/${org}/members/${username}/codespaces/${codespaceName}/stop`, options);
+      return this._client.post(path`/orgs/${org}/members/${username}/codespaces/${codespaceName}/stop`, options);
     }
   }
   BaseCodespaces5._key = Object.freeze([
@@ -19325,7 +17446,7 @@ var Codespaces2 = class extends BaseCodespaces2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/members/members.mjs
 var BaseMembers = /* @__PURE__ */ (() => {
-  class BaseMembers2 extends APIResource2 {
+  class BaseMembers2 extends APIResource {
     /**
      * Check if a user is, publicly or privately, a member of the organization.
      *
@@ -19338,9 +17459,9 @@ var BaseMembers = /* @__PURE__ */ (() => {
      */
     retrieve(username, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/members/${username}`, {
+      return this._client.get(path`/orgs/${org}/members/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19359,7 +17480,7 @@ var BaseMembers = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/members`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/members`, NumberedPage, {
         query,
         ...options
       });
@@ -19392,7 +17513,7 @@ var BaseMembers = /* @__PURE__ */ (() => {
      */
     getCopilot(username, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/members/${username}/copilot`, options);
+      return this._client.get(path`/orgs/${org}/members/${username}/copilot`, options);
     }
     /**
      * Removing a user from this list will remove them from all teams and they will no
@@ -19412,9 +17533,9 @@ var BaseMembers = /* @__PURE__ */ (() => {
      */
     remove(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/members/${username}`, {
+      return this._client.delete(path`/orgs/${org}/members/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -19435,7 +17556,7 @@ var Members = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/migrations/archive.mjs
 var BaseArchive = /* @__PURE__ */ (() => {
-  class BaseArchive3 extends APIResource2 {
+  class BaseArchive3 extends APIResource {
     /**
      * Fetches the URL to a migration archive.
      *
@@ -19448,9 +17569,9 @@ var BaseArchive = /* @__PURE__ */ (() => {
      */
     retrieve(migrationID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/migrations/${migrationID}/archive`, {
+      return this._client.get(path`/orgs/${org}/migrations/${migrationID}/archive`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19466,9 +17587,9 @@ var BaseArchive = /* @__PURE__ */ (() => {
      */
     delete(migrationID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/migrations/${migrationID}/archive`, {
+      return this._client.delete(path`/orgs/${org}/migrations/${migrationID}/archive`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -19484,7 +17605,7 @@ var Archive = class extends BaseArchive {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/migrations/repos.mjs
 var BaseRepos = /* @__PURE__ */ (() => {
-  class BaseRepos6 extends APIResource2 {
+  class BaseRepos6 extends APIResource {
     /**
      * Unlocks a repository that was locked for migration. You should unlock each
      * migrated repository and
@@ -19501,9 +17622,9 @@ var BaseRepos = /* @__PURE__ */ (() => {
      */
     unlock(repoName, params, options) {
       const { org, migration_id } = params;
-      return this._client.delete(path2`/orgs/${org}/migrations/${migration_id}/repos/${repoName}/lock`, {
+      return this._client.delete(path`/orgs/${org}/migrations/${migration_id}/repos/${repoName}/lock`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -19519,7 +17640,7 @@ var Repos = class extends BaseRepos {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/migrations/migrations.mjs
 var BaseMigrations = /* @__PURE__ */ (() => {
-  class BaseMigrations3 extends APIResource2 {
+  class BaseMigrations3 extends APIResource {
     /**
      * Initiates the generation of a migration archive.
      *
@@ -19535,7 +17656,7 @@ var BaseMigrations = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/migrations`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/migrations`, { body, ...options });
     }
     /**
      * Fetches the status of a migration.
@@ -19556,7 +17677,7 @@ var BaseMigrations = /* @__PURE__ */ (() => {
      */
     retrieve(migrationID, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/migrations/${migrationID}`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/migrations/${migrationID}`, { query, ...options });
     }
     /**
      * Lists the most recent migrations, including both exports (which can be started
@@ -19575,7 +17696,7 @@ var BaseMigrations = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/migrations`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/migrations`, NumberedPage, {
         query,
         ...options
       });
@@ -19596,7 +17717,7 @@ var BaseMigrations = /* @__PURE__ */ (() => {
      */
     listRepositories(migrationID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/migrations/${migrationID}/repositories`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/migrations/${migrationID}/repositories`, NumberedPage, { query, ...options });
     }
   }
   BaseMigrations3._key = Object.freeze([
@@ -19622,7 +17743,7 @@ var Migrations = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/teams.mjs
 var BaseTeams = /* @__PURE__ */ (() => {
-  class BaseTeams5 extends APIResource2 {
+  class BaseTeams5 extends APIResource {
     /**
      * Lists the teams that are assigned to an organization role. For more information
      * on organization roles, see
@@ -19646,7 +17767,7 @@ var BaseTeams = /* @__PURE__ */ (() => {
      */
     list(roleID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/organization-roles/${roleID}/teams`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/organization-roles/${roleID}/teams`, NumberedPage, { query, ...options });
     }
     /**
      * Assigns an organization role to a team in an organization. For more information
@@ -19669,9 +17790,9 @@ var BaseTeams = /* @__PURE__ */ (() => {
      */
     assign(roleID, params, options) {
       const { org, team_slug } = params;
-      return this._client.put(path2`/orgs/${org}/organization-roles/teams/${team_slug}/${roleID}`, {
+      return this._client.put(path`/orgs/${org}/organization-roles/teams/${team_slug}/${roleID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19695,9 +17816,9 @@ var BaseTeams = /* @__PURE__ */ (() => {
      */
     remove(roleID, params, options) {
       const { org, team_slug } = params;
-      return this._client.delete(path2`/orgs/${org}/organization-roles/teams/${team_slug}/${roleID}`, {
+      return this._client.delete(path`/orgs/${org}/organization-roles/teams/${team_slug}/${roleID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19721,9 +17842,9 @@ var BaseTeams = /* @__PURE__ */ (() => {
      */
     removeAll(teamSlug, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/organization-roles/teams/${teamSlug}`, {
+      return this._client.delete(path`/orgs/${org}/organization-roles/teams/${teamSlug}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -19739,7 +17860,7 @@ var Teams = class extends BaseTeams {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/users.mjs
 var BaseUsers = /* @__PURE__ */ (() => {
-  class BaseUsers4 extends APIResource2 {
+  class BaseUsers4 extends APIResource {
     /**
      * Lists organization members that are assigned to an organization role. For more
      * information on organization roles, see
@@ -19763,7 +17884,7 @@ var BaseUsers = /* @__PURE__ */ (() => {
      */
     list(roleID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/organization-roles/${roleID}/users`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/organization-roles/${roleID}/users`, NumberedPage, { query, ...options });
     }
     /**
      * Assigns an organization role to a member of an organization. For more
@@ -19786,9 +17907,9 @@ var BaseUsers = /* @__PURE__ */ (() => {
      */
     assign(roleID, params, options) {
       const { org, username } = params;
-      return this._client.put(path2`/orgs/${org}/organization-roles/users/${username}/${roleID}`, {
+      return this._client.put(path`/orgs/${org}/organization-roles/users/${username}/${roleID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19812,9 +17933,9 @@ var BaseUsers = /* @__PURE__ */ (() => {
      */
     remove(roleID, params, options) {
       const { org, username } = params;
-      return this._client.delete(path2`/orgs/${org}/organization-roles/users/${username}/${roleID}`, {
+      return this._client.delete(path`/orgs/${org}/organization-roles/users/${username}/${roleID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -19838,9 +17959,9 @@ var BaseUsers = /* @__PURE__ */ (() => {
      */
     removeAll(username, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/organization-roles/users/${username}`, {
+      return this._client.delete(path`/orgs/${org}/organization-roles/users/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -19856,7 +17977,7 @@ var Users = class extends BaseUsers {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/organization-roles.mjs
 var BaseOrganizationRoles = /* @__PURE__ */ (() => {
-  class BaseOrganizationRoles2 extends APIResource2 {
+  class BaseOrganizationRoles2 extends APIResource {
     /**
      * Gets an organization role that is available to this organization. For more
      * information on organization roles, see
@@ -19881,7 +18002,7 @@ var BaseOrganizationRoles = /* @__PURE__ */ (() => {
      */
     retrieve(roleID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/organization-roles/${roleID}`, options);
+      return this._client.get(path`/orgs/${org}/organization-roles/${roleID}`, options);
     }
     /**
      * Lists the organization roles available in this organization. For more
@@ -19904,7 +18025,7 @@ var BaseOrganizationRoles = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, options) {
-      return this._client.get(path2`/orgs/${org}/organization-roles`, options);
+      return this._client.get(path`/orgs/${org}/organization-roles`, options);
     }
   }
   BaseOrganizationRoles2._key = Object.freeze([
@@ -19930,7 +18051,7 @@ var OrganizationRoles = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/packages/versions.mjs
 var BaseVersions = /* @__PURE__ */ (() => {
-  class BaseVersions4 extends APIResource2 {
+  class BaseVersions4 extends APIResource {
     /**
      * Gets a specific package version in an organization.
      *
@@ -19950,7 +18071,7 @@ var BaseVersions = /* @__PURE__ */ (() => {
      */
     retrieve(packageVersionID, params, options) {
       const { org, package_type, package_name } = params;
-      return this._client.get(path2`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, options);
+      return this._client.get(path`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, options);
     }
     /**
      * Lists package versions for a package owned by an organization.
@@ -19972,7 +18093,7 @@ var BaseVersions = /* @__PURE__ */ (() => {
      */
     list(packageName, params, options) {
       const { org, package_type, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/packages/${package_type}/${packageName}/versions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/packages/${package_type}/${packageName}/versions`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a specific package version in an organization. If the package is public
@@ -20001,7 +18122,7 @@ var BaseVersions = /* @__PURE__ */ (() => {
      */
     delete(packageVersionID, params, options) {
       const { org, package_type, package_name } = params;
-      return this._client.delete(path2`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Restores a specific package version in an organization.
@@ -20036,7 +18157,7 @@ var BaseVersions = /* @__PURE__ */ (() => {
      */
     restore(packageVersionID, params, options) {
       const { org, package_type, package_name } = params;
-      return this._client.post(path2`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}/restore`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.post(path`/orgs/${org}/packages/${package_type}/${package_name}/versions/${packageVersionID}/restore`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseVersions4._key = Object.freeze([
@@ -20051,7 +18172,7 @@ var Versions = class extends BaseVersions {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/packages/packages.mjs
 var BasePackages = /* @__PURE__ */ (() => {
-  class BasePackages3 extends APIResource2 {
+  class BasePackages3 extends APIResource {
     /**
      * Gets a specific package in an organization.
      *
@@ -20069,7 +18190,7 @@ var BasePackages = /* @__PURE__ */ (() => {
      */
     retrieve(packageName, params, options) {
       const { org, package_type } = params;
-      return this._client.get(path2`/orgs/${org}/packages/${package_type}/${packageName}`, options);
+      return this._client.get(path`/orgs/${org}/packages/${package_type}/${packageName}`, options);
     }
     /**
      * Lists packages in an organization readable by the user.
@@ -20090,7 +18211,7 @@ var BasePackages = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/packages`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/packages`, NumberedPage, {
         query,
         ...options
       });
@@ -20120,9 +18241,9 @@ var BasePackages = /* @__PURE__ */ (() => {
      */
     delete(packageName, params, options) {
       const { org, package_type } = params;
-      return this._client.delete(path2`/orgs/${org}/packages/${package_type}/${packageName}`, {
+      return this._client.delete(path`/orgs/${org}/packages/${package_type}/${packageName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -20157,10 +18278,10 @@ var BasePackages = /* @__PURE__ */ (() => {
      */
     restore(packageName, params, options) {
       const { org, package_type, token } = params;
-      return this._client.post(path2`/orgs/${org}/packages/${package_type}/${packageName}/restore`, {
+      return this._client.post(path`/orgs/${org}/packages/${package_type}/${packageName}/restore`, {
         query: { token },
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -20181,7 +18302,7 @@ var Packages = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/properties/schema.mjs
 var BaseSchema = /* @__PURE__ */ (() => {
-  class BaseSchema2 extends APIResource2 {
+  class BaseSchema2 extends APIResource {
     /**
      * Gets a custom property that is defined for an organization. Organization members
      * can read these properties.
@@ -20196,7 +18317,7 @@ var BaseSchema = /* @__PURE__ */ (() => {
      */
     retrieve(customPropertyName, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/properties/schema/${customPropertyName}`, options);
+      return this._client.get(path`/orgs/${org}/properties/schema/${customPropertyName}`, options);
     }
     /**
      * Creates new or updates existing custom properties defined for an organization in
@@ -20241,7 +18362,7 @@ var BaseSchema = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.patch(path2`/orgs/${org}/properties/schema`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}/properties/schema`, { body, ...options });
     }
     /**
      * Gets all custom properties defined for an organization. Organization members can
@@ -20255,7 +18376,7 @@ var BaseSchema = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, options) {
-      return this._client.get(path2`/orgs/${org}/properties/schema`, options);
+      return this._client.get(path`/orgs/${org}/properties/schema`, options);
     }
     /**
      * Removes a custom property that is defined for an organization.
@@ -20276,9 +18397,9 @@ var BaseSchema = /* @__PURE__ */ (() => {
      */
     delete(customPropertyName, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/properties/schema/${customPropertyName}`, {
+      return this._client.delete(path`/orgs/${org}/properties/schema/${customPropertyName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -20309,7 +18430,7 @@ var BaseSchema = /* @__PURE__ */ (() => {
      */
     createOrUpdate(customPropertyName, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/properties/schema/${customPropertyName}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/properties/schema/${customPropertyName}`, { body, ...options });
     }
   }
   BaseSchema2._key = Object.freeze([
@@ -20324,7 +18445,7 @@ var Schema = class extends BaseSchema {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/properties/values.mjs
 var BaseValues = /* @__PURE__ */ (() => {
-  class BaseValues3 extends APIResource2 {
+  class BaseValues3 extends APIResource {
     /**
      * Create new or update existing custom property values for repositories in a batch
      * that belong to an organization. Each target repository will have its custom
@@ -20354,10 +18475,10 @@ var BaseValues = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.patch(path2`/orgs/${org}/properties/values`, {
+      return this._client.patch(path`/orgs/${org}/properties/values`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -20375,7 +18496,7 @@ var BaseValues = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/properties/values`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/properties/values`, NumberedPage, {
         query,
         ...options
       });
@@ -20393,7 +18514,7 @@ var Values = class extends BaseValues {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/properties/properties.mjs
 var BaseProperties = /* @__PURE__ */ (() => {
-  class BaseProperties3 extends APIResource2 {
+  class BaseProperties3 extends APIResource {
   }
   BaseProperties3._key = Object.freeze([
     "orgs",
@@ -20418,7 +18539,7 @@ var Properties = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/rulesets/history.mjs
 var BaseHistory = /* @__PURE__ */ (() => {
-  class BaseHistory3 extends APIResource2 {
+  class BaseHistory3 extends APIResource {
     /**
      * Get a version of an organization ruleset.
      *
@@ -20432,7 +18553,7 @@ var BaseHistory = /* @__PURE__ */ (() => {
      */
     retrieve(versionID, params, options) {
       const { org, ruleset_id } = params;
-      return this._client.get(path2`/orgs/${org}/rulesets/${ruleset_id}/history/${versionID}`, options);
+      return this._client.get(path`/orgs/${org}/rulesets/${ruleset_id}/history/${versionID}`, options);
     }
     /**
      * Get the history of an organization ruleset.
@@ -20450,7 +18571,7 @@ var BaseHistory = /* @__PURE__ */ (() => {
      */
     list(rulesetID, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/rulesets/${rulesetID}/history`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/rulesets/${rulesetID}/history`, NumberedPage, { query, ...options });
     }
   }
   BaseHistory3._key = Object.freeze([
@@ -20465,7 +18586,7 @@ var History = class extends BaseHistory {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rule-suites.mjs
 var BaseRuleSuites = /* @__PURE__ */ (() => {
-  class BaseRuleSuites3 extends APIResource2 {
+  class BaseRuleSuites3 extends APIResource {
     /**
      * Gets information about a suite of rule evaluations from within an organization.
      * For more information, see
@@ -20481,7 +18602,7 @@ var BaseRuleSuites = /* @__PURE__ */ (() => {
      */
     retrieve(ruleSuiteID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/rulesets/rule-suites/${ruleSuiteID}`, options);
+      return this._client.get(path`/orgs/${org}/rulesets/rule-suites/${ruleSuiteID}`, options);
     }
     /**
      * Lists suites of rule evaluations at the organization level. For more
@@ -20499,7 +18620,7 @@ var BaseRuleSuites = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/rulesets/rule-suites`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/rulesets/rule-suites`, NumberedPage, { query, ...options });
     }
   }
   BaseRuleSuites3._key = Object.freeze([
@@ -20514,7 +18635,7 @@ var RuleSuites = class extends BaseRuleSuites {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rulesets.mjs
 var BaseRulesets = /* @__PURE__ */ (() => {
-  class BaseRulesets3 extends APIResource2 {
+  class BaseRulesets3 extends APIResource {
     /**
      * Create a repository ruleset for an organization.
      *
@@ -20539,7 +18660,7 @@ var BaseRulesets = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/rulesets`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/rulesets`, { body, ...options });
     }
     /**
      * Get a repository ruleset for an organization.
@@ -20557,7 +18678,7 @@ var BaseRulesets = /* @__PURE__ */ (() => {
      */
     retrieve(rulesetID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/rulesets/${rulesetID}`, options);
+      return this._client.get(path`/orgs/${org}/rulesets/${rulesetID}`, options);
     }
     /**
      * Update a ruleset for an organization.
@@ -20585,7 +18706,7 @@ var BaseRulesets = /* @__PURE__ */ (() => {
      */
     update(rulesetID, params, options) {
       const { org, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/rulesets/${rulesetID}`, { body, ...options });
+      return this._client.put(path`/orgs/${org}/rulesets/${rulesetID}`, { body, ...options });
     }
     /**
      * Get all the repository rulesets for an organization.
@@ -20601,7 +18722,7 @@ var BaseRulesets = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/rulesets`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/rulesets`, NumberedPage, {
         query,
         ...options
       });
@@ -20616,9 +18737,9 @@ var BaseRulesets = /* @__PURE__ */ (() => {
      */
     delete(rulesetID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/rulesets/${rulesetID}`, {
+      return this._client.delete(path`/orgs/${org}/rulesets/${rulesetID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -20642,7 +18763,7 @@ var Rulesets = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/settings/billing.mjs
 var BaseBilling3 = /* @__PURE__ */ (() => {
-  class BaseBilling5 extends APIResource2 {
+  class BaseBilling5 extends APIResource {
     /**
      * Gets the summary of the free and paid GitHub Actions minutes used.
      *
@@ -20663,7 +18784,7 @@ var BaseBilling3 = /* @__PURE__ */ (() => {
      * ```
      */
     getActions(org, options) {
-      return this._client.get(path2`/orgs/${org}/settings/billing/actions`, options);
+      return this._client.get(path`/orgs/${org}/settings/billing/actions`, options);
     }
     /**
      * Gets the free and paid storage used for GitHub Packages in gigabytes.
@@ -20682,7 +18803,7 @@ var BaseBilling3 = /* @__PURE__ */ (() => {
      * ```
      */
     getPackages(org, options) {
-      return this._client.get(path2`/orgs/${org}/settings/billing/packages`, options);
+      return this._client.get(path`/orgs/${org}/settings/billing/packages`, options);
     }
     /**
      * Gets the estimated paid and estimated total storage used for GitHub Actions and
@@ -20704,7 +18825,7 @@ var BaseBilling3 = /* @__PURE__ */ (() => {
      * ```
      */
     getSharedStorage(org, options) {
-      return this._client.get(path2`/orgs/${org}/settings/billing/shared-storage`, options);
+      return this._client.get(path`/orgs/${org}/settings/billing/shared-storage`, options);
     }
   }
   BaseBilling5._key = Object.freeze([
@@ -20719,7 +18840,7 @@ var Billing3 = class extends BaseBilling3 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/settings/network-configurations.mjs
 var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
-  class BaseNetworkConfigurations2 extends APIResource2 {
+  class BaseNetworkConfigurations2 extends APIResource {
     /**
      * Creates a hosted compute network configuration for an organization.
      *
@@ -20740,7 +18861,7 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/settings/network-configurations`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/settings/network-configurations`, { body, ...options });
     }
     /**
      * Gets a hosted compute network configuration configured in an organization.
@@ -20759,7 +18880,7 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
      */
     retrieve(networkConfigurationID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, options);
+      return this._client.get(path`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, options);
     }
     /**
      * Updates a hosted compute network configuration for an organization.
@@ -20783,7 +18904,7 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
      */
     update(networkConfigurationID, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, {
+      return this._client.patch(path`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, {
         body,
         ...options
       });
@@ -20803,7 +18924,7 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/settings/network-configurations`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/settings/network-configurations`, { query, ...options });
     }
     /**
      * Deletes a hosted compute network configuration from an organization.
@@ -20821,9 +18942,9 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
      */
     delete(networkConfigurationID, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, {
+      return this._client.delete(path`/orgs/${org}/settings/network-configurations/${networkConfigurationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -20839,7 +18960,7 @@ var NetworkConfigurations = class extends BaseNetworkConfigurations {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/settings/settings.mjs
 var BaseSettings2 = /* @__PURE__ */ (() => {
-  class BaseSettings4 extends APIResource2 {
+  class BaseSettings4 extends APIResource {
     /**
      * Gets a hosted compute network settings resource configured for an organization.
      *
@@ -20857,7 +18978,7 @@ var BaseSettings2 = /* @__PURE__ */ (() => {
      */
     getNetworkSettings(networkSettingsID, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/settings/network-settings/${networkSettingsID}`, options);
+      return this._client.get(path`/orgs/${org}/settings/network-settings/${networkSettingsID}`, options);
     }
   }
   BaseSettings4._key = Object.freeze(["orgs", "settings"]);
@@ -20880,7 +19001,7 @@ var Settings2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/copilot.mjs
 var BaseCopilot2 = /* @__PURE__ */ (() => {
-  class BaseCopilot3 extends APIResource2 {
+  class BaseCopilot3 extends APIResource {
     /**
      * Use this endpoint to see a breakdown of aggregated metrics for various GitHub
      * Copilot features. See the response schema tab for detailed metrics definitions.
@@ -20913,7 +19034,7 @@ var BaseCopilot2 = /* @__PURE__ */ (() => {
      */
     getMetrics(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/team/${teamSlug}/copilot/metrics`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/team/${teamSlug}/copilot/metrics`, { query, ...options });
     }
   }
   BaseCopilot3._key = Object.freeze([
@@ -20928,7 +19049,7 @@ var Copilot2 = class extends BaseCopilot2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/memberships.mjs
 var BaseMemberships2 = /* @__PURE__ */ (() => {
-  class BaseMemberships4 extends APIResource2 {
+  class BaseMemberships4 extends APIResource {
     /**
      * Team members will include the members of child teams.
      *
@@ -20956,7 +19077,7 @@ var BaseMemberships2 = /* @__PURE__ */ (() => {
      */
     retrieve(username, params, options) {
       const { org, team_slug } = params;
-      return this._client.get(path2`/orgs/${org}/teams/${team_slug}/memberships/${username}`, options);
+      return this._client.get(path`/orgs/${org}/teams/${team_slug}/memberships/${username}`, options);
     }
     /**
      * Adds an organization member to a team. An authenticated organization owner or
@@ -21001,7 +19122,7 @@ var BaseMemberships2 = /* @__PURE__ */ (() => {
      */
     update(username, params, options) {
       const { org, team_slug, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/teams/${team_slug}/memberships/${username}`, {
+      return this._client.put(path`/orgs/${org}/teams/${team_slug}/memberships/${username}`, {
         body,
         ...options
       });
@@ -21038,9 +19159,9 @@ var BaseMemberships2 = /* @__PURE__ */ (() => {
      */
     delete(username, params, options) {
       const { org, team_slug } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${team_slug}/memberships/${username}`, {
+      return this._client.delete(path`/orgs/${org}/teams/${team_slug}/memberships/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -21056,7 +19177,7 @@ var Memberships2 = class extends BaseMemberships2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/repos.mjs
 var BaseRepos2 = /* @__PURE__ */ (() => {
-  class BaseRepos6 extends APIResource2 {
+  class BaseRepos6 extends APIResource {
     /**
      * Checks whether a team has `admin`, `push`, `maintain`, `triage`, or `pull`
      * permission for a repository. Repositories inherited through a parent team will
@@ -21087,7 +19208,7 @@ var BaseRepos2 = /* @__PURE__ */ (() => {
      */
     retrieve(teamSlug, params, options) {
       const { org, owner = this._client.owner, repo = this._client.repo } = params;
-      return this._client.get(path2`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, options);
+      return this._client.get(path`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, options);
     }
     /**
      * To add a repository to a team or update the team's permission on a repository,
@@ -21118,10 +19239,10 @@ var BaseRepos2 = /* @__PURE__ */ (() => {
      */
     update(teamSlug, params, options) {
       const { org, owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, {
+      return this._client.put(path`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -21143,7 +19264,7 @@ var BaseRepos2 = /* @__PURE__ */ (() => {
      */
     list(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${teamSlug}/repos`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${teamSlug}/repos`, NumberedPage, { query, ...options });
     }
     /**
      * If the authenticated user is an organization owner or a team maintainer, they
@@ -21166,9 +19287,9 @@ var BaseRepos2 = /* @__PURE__ */ (() => {
      */
     delete(teamSlug, params, options) {
       const { org, owner = this._client.owner, repo = this._client.repo } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, {
+      return this._client.delete(path`/orgs/${org}/teams/${teamSlug}/repos/${owner}/${repo}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -21184,7 +19305,7 @@ var Repos2 = class extends BaseRepos2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/reactions.mjs
 var BaseReactions2 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to a
      * [team discussion](https://docs.github.com/rest/teams/discussions#get-a-discussion).
@@ -21210,7 +19331,7 @@ var BaseReactions2 = /* @__PURE__ */ (() => {
      */
     create(discussionNumber, params, options) {
       const { org, team_slug, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/reactions`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/reactions`, { body, ...options });
     }
     /**
      * List the reactions to a
@@ -21235,7 +19356,7 @@ var BaseReactions2 = /* @__PURE__ */ (() => {
      */
     list(discussionNumber, params, options) {
       const { org, team_slug, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a team or organization with `team_id` and
@@ -21259,7 +19380,7 @@ var BaseReactions2 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { org, team_slug, discussion_number } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/reactions/${reactionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseReactions8._key = Object.freeze([
@@ -21275,7 +19396,7 @@ var Reactions2 = class extends BaseReactions2 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/reactions.mjs
 var BaseReactions3 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to a
      * [team discussion comment](https://docs.github.com/rest/teams/discussion-comments#get-a-discussion-comment).
@@ -21305,7 +19426,7 @@ var BaseReactions3 = /* @__PURE__ */ (() => {
      */
     create(commentNumber, params, options) {
       const { org, team_slug, discussion_number, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}/reactions`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}/reactions`, { body, ...options });
     }
     /**
      * List the reactions to a
@@ -21334,7 +19455,7 @@ var BaseReactions3 = /* @__PURE__ */ (() => {
      */
     list(commentNumber, params, options) {
       const { org, team_slug, discussion_number, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a team or organization with `team_id` and
@@ -21362,7 +19483,7 @@ var BaseReactions3 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { org, team_slug, discussion_number, comment_number } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${comment_number}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${comment_number}/reactions/${reactionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseReactions8._key = Object.freeze(["orgs", "teams", "discussions", "comments", "reactions"]);
@@ -21373,7 +19494,7 @@ var Reactions3 = class extends BaseReactions3 {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/comments.mjs
 var BaseComments3 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
+  class BaseComments7 extends APIResource {
     /**
      * Creates a new comment on a team discussion.
      *
@@ -21403,7 +19524,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
      */
     create(discussionNumber, params, options) {
       const { org, team_slug, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/comments`, {
+      return this._client.post(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/comments`, {
         body,
         ...options
       });
@@ -21429,7 +19550,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
      */
     retrieve(commentNumber, params, options) {
       const { org, team_slug, discussion_number } = params;
-      return this._client.get(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, options);
+      return this._client.get(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, options);
     }
     /**
      * Edits the body text of a discussion comment.
@@ -21453,7 +19574,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
      */
     update(commentNumber, params, options) {
       const { org, team_slug, discussion_number, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, { body, ...options });
     }
     /**
      * List all comments on a team discussion.
@@ -21477,7 +19598,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
      */
     list(discussionNumber, params, options) {
       const { org, team_slug, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a comment on a team discussion.
@@ -21499,7 +19620,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
      */
     delete(commentNumber, params, options) {
       const { org, team_slug, discussion_number } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/orgs/${org}/teams/${team_slug}/discussions/${discussion_number}/comments/${commentNumber}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseComments7._key = Object.freeze([
@@ -21524,7 +19645,7 @@ var Comments3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/discussions.mjs
 var BaseDiscussions = /* @__PURE__ */ (() => {
-  class BaseDiscussions2 extends APIResource2 {
+  class BaseDiscussions2 extends APIResource {
     /**
      * Creates a new discussion post on a team's page.
      *
@@ -21554,7 +19675,7 @@ var BaseDiscussions = /* @__PURE__ */ (() => {
      */
     create(teamSlug, params, options) {
       const { org, ...body } = params;
-      return this._client.post(path2`/orgs/${org}/teams/${teamSlug}/discussions`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/teams/${teamSlug}/discussions`, { body, ...options });
     }
     /**
      * Get a specific discussion on a team's page.
@@ -21576,7 +19697,7 @@ var BaseDiscussions = /* @__PURE__ */ (() => {
      */
     retrieve(discussionNumber, params, options) {
       const { org, team_slug } = params;
-      return this._client.get(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, options);
+      return this._client.get(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, options);
     }
     /**
      * Edits the title and body text of a discussion post. Only the parameters you
@@ -21600,7 +19721,7 @@ var BaseDiscussions = /* @__PURE__ */ (() => {
      */
     update(discussionNumber, params, options) {
       const { org, team_slug, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, {
+      return this._client.patch(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, {
         body,
         ...options
       });
@@ -21627,7 +19748,7 @@ var BaseDiscussions = /* @__PURE__ */ (() => {
      */
     list(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${teamSlug}/discussions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${teamSlug}/discussions`, NumberedPage, { query, ...options });
     }
     /**
      * Delete a discussion from a team's page.
@@ -21648,9 +19769,9 @@ var BaseDiscussions = /* @__PURE__ */ (() => {
      */
     delete(discussionNumber, params, options) {
       const { org, team_slug } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, {
+      return this._client.delete(path`/orgs/${org}/teams/${team_slug}/discussions/${discussionNumber}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -21678,7 +19799,7 @@ var Discussions = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/teams.mjs
 var BaseTeams2 = /* @__PURE__ */ (() => {
-  class BaseTeams5 extends APIResource2 {
+  class BaseTeams5 extends APIResource {
     /**
      * To create a team, the authenticated user must be a member or owner of `{org}`.
      * By default, organization members can create teams. Organization owners can limit
@@ -21702,7 +19823,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      * ```
      */
     create(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/teams`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/teams`, { body, ...options });
     }
     /**
      * Gets a team using the team's `slug`. To create the `slug`, GitHub replaces
@@ -21722,7 +19843,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     retrieve(teamSlug, params, options) {
       const { org } = params;
-      return this._client.get(path2`/orgs/${org}/teams/${teamSlug}`, options);
+      return this._client.get(path`/orgs/${org}/teams/${teamSlug}`, options);
     }
     /**
      * To edit a team, the authenticated user must either be an organization owner or a
@@ -21744,7 +19865,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     update(teamSlug, params, options) {
       const { org, ...body } = params;
-      return this._client.patch(path2`/orgs/${org}/teams/${teamSlug}`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}/teams/${teamSlug}`, { body, ...options });
     }
     /**
      * Lists all teams in an organization that are visible to the authenticated user.
@@ -21758,7 +19879,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/teams`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/teams`, NumberedPage, {
         query,
         ...options
       });
@@ -21780,9 +19901,9 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     delete(teamSlug, params, options) {
       const { org } = params;
-      return this._client.delete(path2`/orgs/${org}/teams/${teamSlug}`, {
+      return this._client.delete(path`/orgs/${org}/teams/${teamSlug}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -21804,7 +19925,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     listChildTeams(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${teamSlug}/teams`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/teams/${teamSlug}/teams`, NumberedPage, {
         query,
         ...options
       });
@@ -21831,7 +19952,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     listInvitations(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${teamSlug}/invitations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${teamSlug}/invitations`, NumberedPage, { query, ...options });
     }
     /**
      * Team members will include the members of child teams.
@@ -21851,7 +19972,7 @@ var BaseTeams2 = /* @__PURE__ */ (() => {
      */
     listMembers(teamSlug, params, options) {
       const { org, ...query } = params;
-      return this._client.getAPIList(path2`/orgs/${org}/teams/${teamSlug}/members`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/teams/${teamSlug}/members`, NumberedPage, { query, ...options });
     }
   }
   BaseTeams5._key = Object.freeze(["orgs", "teams"]);
@@ -21880,7 +20001,7 @@ var Teams2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
 var BaseOrgs = /* @__PURE__ */ (() => {
-  class BaseOrgs3 extends APIResource2 {
+  class BaseOrgs3 extends APIResource {
     /**
      * Gets information about an organization.
      *
@@ -21905,7 +20026,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(org, options) {
-      return this._client.get(path2`/orgs/${org}`, options);
+      return this._client.get(path`/orgs/${org}`, options);
     }
     /**
      * > [!WARNING] > **Closing down notice:** GitHub will replace and discontinue
@@ -21949,7 +20070,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body = {}, options) {
-      return this._client.patch(path2`/orgs/${org}`, { body, ...options });
+      return this._client.patch(path`/orgs/${org}`, { body, ...options });
     }
     /**
      * Deletes an organization and all its repositories.
@@ -21967,7 +20088,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     delete(org, options) {
-      return this._client.delete(path2`/orgs/${org}`, options);
+      return this._client.delete(path`/orgs/${org}`, options);
     }
     /**
      * List a collection of artifact attestations with a given subject digest that are
@@ -21997,7 +20118,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      */
     listAttestations(subjectDigest, params, options) {
       const { org, ...query } = params;
-      return this._client.get(path2`/orgs/${org}/attestations/${subjectDigest}`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/attestations/${subjectDigest}`, { query, ...options });
     }
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
@@ -22014,7 +20135,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     listEvents(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/events`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/events`, NumberedPage, {
         query,
         ...options
       });
@@ -22034,7 +20155,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     listFailedInvitations(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/failed_invitations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/orgs/${org}/failed_invitations`, NumberedPage, { query, ...options });
     }
     /**
      * Lists all GitHub Apps in an organization. The installation count includes all
@@ -22051,7 +20172,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     listInstallations(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/installations`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/installations`, { query, ...options });
     }
     /**
      * List issues in an organization assigned to the authenticated user.
@@ -22088,7 +20209,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     listIssues(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/issues`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/issues`, NumberedPage, {
         query,
         ...options
       });
@@ -22110,7 +20231,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     listSecurityAdvisories(org, query = {}, options) {
-      return this._client.get(path2`/orgs/${org}/security-advisories`, { query, ...options });
+      return this._client.get(path`/orgs/${org}/security-advisories`, { query, ...options });
     }
     /**
      * Enables an authenticated GitHub App to find the organization's installation
@@ -22128,13 +20249,13 @@ var BaseOrgs = /* @__PURE__ */ (() => {
      * ```
      */
     retrieveInstallation(org, options) {
-      return this._client.get(path2`/orgs/${org}/installation`, options);
+      return this._client.get(path`/orgs/${org}/installation`, options);
     }
   }
   BaseOrgs3._key = Object.freeze(["orgs"]);
   return BaseOrgs3;
 })();
-var Orgs2 = /* @__PURE__ */ (() => {
+var Orgs = /* @__PURE__ */ (() => {
   class Orgs4 extends BaseOrgs {
     constructor() {
       super(...arguments);
@@ -22226,7 +20347,7 @@ var Orgs2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/rate-limit.mjs
 var BaseRateLimitResource = /* @__PURE__ */ (() => {
-  class BaseRateLimitResource2 extends APIResource2 {
+  class BaseRateLimitResource2 extends APIResource {
     /**
      * > [!NOTE] Accessing this endpoint does not count against your REST API rate
      * > limit.
@@ -22284,7 +20405,7 @@ var RateLimitResource = class extends BaseRateLimitResource {
 
 // node_modules/@stainless-api/github-internal/resources/search.mjs
 var BaseSearch = /* @__PURE__ */ (() => {
-  class BaseSearch2 extends APIResource2 {
+  class BaseSearch2 extends APIResource {
     /**
      * Searches for query terms inside of a file. This method returns up to 100 results
      * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
@@ -22459,7 +20580,7 @@ var Search = class extends BaseSearch {
 
 // node_modules/@stainless-api/github-internal/resources/repos/assignees.mjs
 var BaseAssignees = /* @__PURE__ */ (() => {
-  class BaseAssignees3 extends APIResource2 {
+  class BaseAssignees3 extends APIResource {
     /**
      * Checks if a user has permission to be assigned to an issue in this repository.
      *
@@ -22478,9 +20599,9 @@ var BaseAssignees = /* @__PURE__ */ (() => {
      */
     checkPermission(assignee, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/assignees/${assignee}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/assignees/${assignee}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -22500,7 +20621,7 @@ var BaseAssignees = /* @__PURE__ */ (() => {
      */
     listAvailable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/assignees`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/assignees`, NumberedPage, { query, ...options });
     }
   }
   BaseAssignees3._key = Object.freeze([
@@ -22514,7 +20635,7 @@ var Assignees = class extends BaseAssignees {
 
 // node_modules/@stainless-api/github-internal/resources/repos/attestations.mjs
 var BaseAttestations = /* @__PURE__ */ (() => {
-  class BaseAttestations2 extends APIResource2 {
+  class BaseAttestations2 extends APIResource {
     /**
      * Store an artifact attestation and associate it with a repository.
      *
@@ -22538,7 +20659,7 @@ var BaseAttestations = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/attestations`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/attestations`, { body, ...options });
     }
     /**
      * List a collection of artifact attestations with a given subject digest that are
@@ -22566,7 +20687,7 @@ var BaseAttestations = /* @__PURE__ */ (() => {
      */
     list(subjectDigest, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/attestations/${subjectDigest}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/attestations/${subjectDigest}`, {
         query,
         ...options
       });
@@ -22583,7 +20704,7 @@ var Attestations = class extends BaseAttestations {
 
 // node_modules/@stainless-api/github-internal/resources/repos/autolinks.mjs
 var BaseAutolinks = /* @__PURE__ */ (() => {
-  class BaseAutolinks2 extends APIResource2 {
+  class BaseAutolinks2 extends APIResource {
     /**
      * Users with admin access to the repository can create an autolink.
      *
@@ -22600,7 +20721,7 @@ var BaseAutolinks = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/autolinks`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/autolinks`, { body, ...options });
     }
     /**
      * This returns a single autolink reference by ID that was configured for the given
@@ -22618,7 +20739,7 @@ var BaseAutolinks = /* @__PURE__ */ (() => {
      */
     retrieve(autolinkID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/autolinks/${autolinkID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/autolinks/${autolinkID}`, options);
     }
     /**
      * Gets all autolinks that are configured for a repository.
@@ -22635,7 +20756,7 @@ var BaseAutolinks = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/autolinks`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/autolinks`, options);
     }
     /**
      * This deletes a single autolink reference by ID that was configured for the given
@@ -22653,9 +20774,9 @@ var BaseAutolinks = /* @__PURE__ */ (() => {
      */
     delete(autolinkID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/autolinks/${autolinkID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/autolinks/${autolinkID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -22670,7 +20791,7 @@ var Autolinks = class extends BaseAutolinks {
 
 // node_modules/@stainless-api/github-internal/resources/repos/automated-security-fixes.mjs
 var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
-  class BaseAutomatedSecurityFixes2 extends APIResource2 {
+  class BaseAutomatedSecurityFixes2 extends APIResource {
     /**
      * Shows whether Dependabot security updates are enabled, disabled or paused for a
      * repository. The authenticated user must have admin read access to the
@@ -22688,7 +20809,7 @@ var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
      */
     check(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/automated-security-fixes`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/automated-security-fixes`, options);
     }
     /**
      * Disables Dependabot security updates for a repository. The authenticated user
@@ -22705,9 +20826,9 @@ var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
      */
     disable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/automated-security-fixes`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/automated-security-fixes`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -22725,9 +20846,9 @@ var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
      */
     enable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/automated-security-fixes`, {
+      return this._client.put(path`/repos/${owner}/${repo}/automated-security-fixes`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -22742,7 +20863,7 @@ var AutomatedSecurityFixes = class extends BaseAutomatedSecurityFixes {
 
 // node_modules/@stainless-api/github-internal/resources/repos/check-runs.mjs
 var BaseCheckRuns = /* @__PURE__ */ (() => {
-  class BaseCheckRuns2 extends APIResource2 {
+  class BaseCheckRuns2 extends APIResource {
     /**
      * Creates a new check run for a specific commit in a repository.
      *
@@ -22778,7 +20899,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
      */
     create(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/check-runs`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/check-runs`, { body, ...options });
     }
     /**
      * Gets a single check run using its `id`.
@@ -22800,7 +20921,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
      */
     retrieve(checkRunID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/check-runs/${checkRunID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/check-runs/${checkRunID}`, options);
     }
     /**
      * Updates a check run for a specific commit in a repository.
@@ -22838,7 +20959,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
      */
     update(checkRunID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/check-runs/${checkRunID}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/check-runs/${checkRunID}`, { body, ...options });
     }
     /**
      * Lists annotations for a check run using the annotation `id`.
@@ -22859,7 +20980,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
      */
     listAnnotations(checkRunID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/check-runs/${checkRunID}/annotations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/check-runs/${checkRunID}/annotations`, NumberedPage, { query, ...options });
     }
     /**
      * Triggers GitHub to rerequest an existing check run, without pushing new code to
@@ -22888,7 +21009,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
      */
     rerequest(checkRunID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/check-runs/${checkRunID}/rerequest`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/check-runs/${checkRunID}/rerequest`, options);
     }
   }
   BaseCheckRuns2._key = Object.freeze([
@@ -22902,7 +21023,7 @@ var CheckRuns = class extends BaseCheckRuns {
 
 // node_modules/@stainless-api/github-internal/resources/repos/check-suites.mjs
 var BaseCheckSuites = /* @__PURE__ */ (() => {
-  class BaseCheckSuites2 extends APIResource2 {
+  class BaseCheckSuites2 extends APIResource {
     /**
      * Creates a check suite manually. By default, check suites are automatically
      * created when you create a [check run](https://docs.github.com/rest/checks/runs).
@@ -22928,7 +21049,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/check-suites`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/check-suites`, { body, ...options });
     }
     /**
      * Gets a single check suite using its `id`.
@@ -22951,7 +21072,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
      */
     retrieve(checkSuiteID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/check-suites/${checkSuiteID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/check-suites/${checkSuiteID}`, options);
     }
     /**
      * Lists check runs for a check suite using its `id`.
@@ -22974,7 +21095,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
      */
     listCheckRuns(checkSuiteID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/check-suites/${checkSuiteID}/check-runs`, {
+      return this._client.get(path`/repos/${owner}/${repo}/check-suites/${checkSuiteID}/check-runs`, {
         query,
         ...options
       });
@@ -22996,7 +21117,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
      */
     rerequest(checkSuiteID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/check-suites/${checkSuiteID}/rerequest`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/check-suites/${checkSuiteID}/rerequest`, options);
     }
     /**
      * Changes the default automatic flow when creating check suites. By default, a
@@ -23018,7 +21139,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
      */
     updatePreferences(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/check-suites/preferences`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/check-suites/preferences`, { body, ...options });
     }
   }
   BaseCheckSuites2._key = Object.freeze([
@@ -23032,7 +21153,7 @@ var CheckSuites = class extends BaseCheckSuites {
 
 // node_modules/@stainless-api/github-internal/resources/repos/codeowners.mjs
 var BaseCodeowners = /* @__PURE__ */ (() => {
-  class BaseCodeowners2 extends APIResource2 {
+  class BaseCodeowners2 extends APIResource {
     /**
      * List any syntax errors that are detected in the CODEOWNERS file.
      *
@@ -23051,7 +21172,7 @@ var BaseCodeowners = /* @__PURE__ */ (() => {
      */
     listErrors(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/codeowners/errors`, ErrorsPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/codeowners/errors`, ErrorsPage, { query, ...options });
     }
   }
   BaseCodeowners2._key = Object.freeze([
@@ -23065,7 +21186,7 @@ var Codeowners = class extends BaseCodeowners {
 
 // node_modules/@stainless-api/github-internal/resources/repos/collaborators.mjs
 var BaseCollaborators = /* @__PURE__ */ (() => {
-  class BaseCollaborators2 extends APIResource2 {
+  class BaseCollaborators2 extends APIResource {
     /**
      * For organization-owned repositories, the list of collaborators includes outside
      * collaborators, organization members that are direct collaborators, organization
@@ -23098,7 +21219,7 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/collaborators`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/collaborators`, NumberedPage, { query, ...options });
     }
     /**
      * Add a user to a repository with a specified level of access. If the repository
@@ -23170,7 +21291,7 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
      */
     add(username, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/collaborators/${username}`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/collaborators/${username}`, { body, ...options });
     }
     /**
      * For organization-owned repositories, the list of collaborators includes outside
@@ -23196,9 +21317,9 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
      */
     check(username, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/collaborators/${username}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/collaborators/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -23227,7 +21348,7 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
      */
     getPermission(username, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/collaborators/${username}/permission`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/collaborators/${username}/permission`, options);
     }
     /**
      * Removes a collaborator from a repository.
@@ -23271,9 +21392,9 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
      */
     remove(username, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/collaborators/${username}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/collaborators/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -23288,7 +21409,7 @@ var Collaborators = class extends BaseCollaborators {
 
 // node_modules/@stainless-api/github-internal/resources/repos/community.mjs
 var BaseCommunity = /* @__PURE__ */ (() => {
-  class BaseCommunity2 extends APIResource2 {
+  class BaseCommunity2 extends APIResource {
     /**
      * Returns all community profile metrics for a repository. The repository cannot be
      * a fork.
@@ -23314,7 +21435,7 @@ var BaseCommunity = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/community/profile`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/community/profile`, options);
     }
   }
   BaseCommunity2._key = Object.freeze([
@@ -23328,7 +21449,7 @@ var Community = class extends BaseCommunity {
 
 // node_modules/@stainless-api/github-internal/resources/repos/contents.mjs
 var BaseContents = /* @__PURE__ */ (() => {
-  class BaseContents2 extends APIResource2 {
+  class BaseContents2 extends APIResource {
     /**
      * Gets the contents of a file or directory in a repository. Specify the file path
      * or directory with the `path` parameter. If you omit the `path` parameter, you
@@ -23396,7 +21517,7 @@ var BaseContents = /* @__PURE__ */ (() => {
      */
     retrieve(path_, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/contents/${path_}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/contents/${path_}`, { query, ...options });
     }
     /**
      * Deletes a file in a repository.
@@ -23433,7 +21554,7 @@ var BaseContents = /* @__PURE__ */ (() => {
      */
     delete(path_, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/contents/${path_}`, { body, ...options });
+      return this._client.delete(path`/repos/${owner}/${repo}/contents/${path_}`, { body, ...options });
     }
     /**
      * Creates a new file or replaces an existing file in a repository.
@@ -23466,7 +21587,7 @@ var BaseContents = /* @__PURE__ */ (() => {
      */
     createOrUpdate(path_, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/contents/${path_}`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/contents/${path_}`, { body, ...options });
     }
   }
   BaseContents2._key = Object.freeze([
@@ -23480,7 +21601,7 @@ var Contents = class extends BaseContents {
 
 // node_modules/@stainless-api/github-internal/resources/repos/contributors.mjs
 var BaseContributors = /* @__PURE__ */ (() => {
-  class BaseContributors2 extends APIResource2 {
+  class BaseContributors2 extends APIResource {
     /**
      * Lists contributors to the specified repository and sorts them by the number of
      * commits per contributor in descending order. This endpoint may return
@@ -23505,7 +21626,7 @@ var BaseContributors = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/contributors`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/contributors`, NumberedPage, {
         query,
         ...options
       });
@@ -23522,7 +21643,7 @@ var Contributors = class extends BaseContributors {
 
 // node_modules/@stainless-api/github-internal/resources/repos/dependency-graph.mjs
 var BaseDependencyGraph = /* @__PURE__ */ (() => {
-  class BaseDependencyGraph2 extends APIResource2 {
+  class BaseDependencyGraph2 extends APIResource {
     /**
      * Gets the diff of the dependency changes between two commits of a repository,
      * based on the changes to the dependency manifests made in those commits.
@@ -23537,7 +21658,7 @@ var BaseDependencyGraph = /* @__PURE__ */ (() => {
      */
     compare(basehead, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependency-graph/compare/${basehead}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/dependency-graph/compare/${basehead}`, {
         query,
         ...options
       });
@@ -23573,7 +21694,7 @@ var BaseDependencyGraph = /* @__PURE__ */ (() => {
      */
     createSnapshot(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/dependency-graph/snapshots`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/dependency-graph/snapshots`, { body, ...options });
     }
     /**
      * Exports the software bill of materials (SBOM) for a repository in SPDX JSON
@@ -23590,7 +21711,7 @@ var BaseDependencyGraph = /* @__PURE__ */ (() => {
      */
     exportSbom(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependency-graph/sbom`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/dependency-graph/sbom`, options);
     }
   }
   BaseDependencyGraph2._key = Object.freeze([
@@ -23604,7 +21725,7 @@ var DependencyGraph = class extends BaseDependencyGraph {
 
 // node_modules/@stainless-api/github-internal/resources/repos/forks.mjs
 var BaseForks2 = /* @__PURE__ */ (() => {
-  class BaseForks3 extends APIResource2 {
+  class BaseForks3 extends APIResource {
     /**
      * Create a fork for the authenticated user.
      *
@@ -23630,7 +21751,7 @@ var BaseForks2 = /* @__PURE__ */ (() => {
      */
     create(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/forks`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/forks`, { body, ...options });
     }
     /**
      * List forks
@@ -23647,7 +21768,7 @@ var BaseForks2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/forks`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/forks`, NumberedPage, { query, ...options });
     }
   }
   BaseForks3._key = Object.freeze(["repos", "forks"]);
@@ -23658,7 +21779,7 @@ var Forks2 = class extends BaseForks2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/interaction-limits.mjs
 var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
-  class BaseInteractionLimits4 extends APIResource2 {
+  class BaseInteractionLimits4 extends APIResource {
     /**
      * Shows which type of GitHub user can interact with this repository and when the
      * restriction expires. If there are no restrictions, you will see an empty
@@ -23675,7 +21796,7 @@ var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/interaction-limits`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/interaction-limits`, options);
     }
     /**
      * Temporarily restricts interactions to a certain type of GitHub user within the
@@ -23697,7 +21818,7 @@ var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
      */
     update(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/interaction-limits`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/interaction-limits`, { body, ...options });
     }
     /**
      * Removes all interaction restrictions from the given repository. You must have
@@ -23716,9 +21837,9 @@ var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
      */
     delete(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/interaction-limits`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/interaction-limits`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -23733,7 +21854,7 @@ var InteractionLimits2 = class extends BaseInteractionLimits2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/invitations.mjs
 var BaseInvitations2 = /* @__PURE__ */ (() => {
-  class BaseInvitations3 extends APIResource2 {
+  class BaseInvitations3 extends APIResource {
     /**
      * Update a repository invitation
      *
@@ -23747,7 +21868,7 @@ var BaseInvitations2 = /* @__PURE__ */ (() => {
      */
     update(invitationID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/invitations/${invitationID}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/invitations/${invitationID}`, {
         body,
         ...options
       });
@@ -23768,7 +21889,7 @@ var BaseInvitations2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/invitations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/invitations`, NumberedPage, { query, ...options });
     }
     /**
      * Delete a repository invitation
@@ -23783,9 +21904,9 @@ var BaseInvitations2 = /* @__PURE__ */ (() => {
      */
     delete(invitationID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/invitations/${invitationID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/invitations/${invitationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -23800,7 +21921,7 @@ var Invitations2 = class extends BaseInvitations2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/keys.mjs
 var BaseKeys = /* @__PURE__ */ (() => {
-  class BaseKeys3 extends APIResource2 {
+  class BaseKeys3 extends APIResource {
     /**
      * You can create a read-only deploy key.
      *
@@ -23817,7 +21938,7 @@ var BaseKeys = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/keys`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/keys`, { body, ...options });
     }
     /**
      * Get a deploy key
@@ -23832,7 +21953,7 @@ var BaseKeys = /* @__PURE__ */ (() => {
      */
     retrieve(keyID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/keys/${keyID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/keys/${keyID}`, options);
     }
     /**
      * List deploy keys
@@ -23850,7 +21971,7 @@ var BaseKeys = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/keys`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/keys`, NumberedPage, {
         query,
         ...options
       });
@@ -23869,9 +21990,9 @@ var BaseKeys = /* @__PURE__ */ (() => {
      */
     delete(keyID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/keys/${keyID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/keys/${keyID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -23883,7 +22004,7 @@ var Keys = class extends BaseKeys {
 
 // node_modules/@stainless-api/github-internal/resources/repos/labels.mjs
 var BaseLabels2 = /* @__PURE__ */ (() => {
-  class BaseLabels5 extends APIResource2 {
+  class BaseLabels5 extends APIResource {
     /**
      * Creates a label for the specified repository with the given name and color. The
      * name and color parameters are required. The color must be a valid
@@ -23902,7 +22023,7 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/labels`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/labels`, { body, ...options });
     }
     /**
      * Gets a label using the given name.
@@ -23917,7 +22038,7 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
      */
     retrieve(name, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/labels/${name}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/labels/${name}`, options);
     }
     /**
      * Updates a label using the given label name.
@@ -23935,7 +22056,7 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
      */
     update(name, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/labels/${name}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/labels/${name}`, { body, ...options });
     }
     /**
      * Lists all labels for a repository.
@@ -23952,7 +22073,7 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/labels`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/labels`, NumberedPage, {
         query,
         ...options
       });
@@ -23970,9 +22091,9 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
      */
     delete(name, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/labels/${name}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/labels/${name}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -23984,7 +22105,7 @@ var Labels2 = class extends BaseLabels2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/languages.mjs
 var BaseLanguages = /* @__PURE__ */ (() => {
-  class BaseLanguages2 extends APIResource2 {
+  class BaseLanguages2 extends APIResource {
     /**
      * Lists languages for the specified repository. The value shown for each language
      * is the number of bytes of code written in that language.
@@ -23999,7 +22120,7 @@ var BaseLanguages = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/languages`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/languages`, options);
     }
   }
   BaseLanguages2._key = Object.freeze([
@@ -24013,7 +22134,7 @@ var Languages = class extends BaseLanguages {
 
 // node_modules/@stainless-api/github-internal/resources/repos/milestones.mjs
 var BaseMilestones = /* @__PURE__ */ (() => {
-  class BaseMilestones2 extends APIResource2 {
+  class BaseMilestones2 extends APIResource {
     /**
      * Creates a milestone.
      *
@@ -24031,7 +22152,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/milestones`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/milestones`, { body, ...options });
     }
     /**
      * Gets a milestone using the given milestone number.
@@ -24046,7 +22167,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     retrieve(milestoneNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, options);
     }
     /**
      * Update a milestone
@@ -24065,7 +22186,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     update(milestoneNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, {
         body,
         ...options
       });
@@ -24085,7 +22206,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/milestones`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/milestones`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a milestone using the given milestone number.
@@ -24100,9 +22221,9 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     delete(milestoneNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/milestones/${milestoneNumber}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24121,7 +22242,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
      */
     listLabels(milestoneNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/milestones/${milestoneNumber}/labels`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/milestones/${milestoneNumber}/labels`, NumberedPage, { query, ...options });
     }
   }
   BaseMilestones2._key = Object.freeze([
@@ -24135,7 +22256,7 @@ var Milestones = class extends BaseMilestones {
 
 // node_modules/@stainless-api/github-internal/resources/repos/notifications.mjs
 var BaseNotifications2 = /* @__PURE__ */ (() => {
-  class BaseNotifications3 extends APIResource2 {
+  class BaseNotifications3 extends APIResource {
     /**
      * Lists all notifications for the current user in the specified repository.
      *
@@ -24151,7 +22272,7 @@ var BaseNotifications2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/notifications`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/notifications`, NumberedPage, { query, ...options });
     }
     /**
      * Marks all notifications in a repository as "read" for the current user. If the
@@ -24174,7 +22295,7 @@ var BaseNotifications2 = /* @__PURE__ */ (() => {
      */
     markAsRead(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/notifications`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/notifications`, { body, ...options });
     }
   }
   BaseNotifications3._key = Object.freeze([
@@ -24188,7 +22309,7 @@ var Notifications2 = class extends BaseNotifications2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/private-vulnerability-reporting.mjs
 var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
-  class BasePrivateVulnerabilityReporting2 extends APIResource2 {
+  class BasePrivateVulnerabilityReporting2 extends APIResource {
     /**
      * Returns a boolean indicating whether or not private vulnerability reporting is
      * enabled for the repository. For more information, see
@@ -24204,7 +22325,7 @@ var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
      */
     checkEnabled(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/private-vulnerability-reporting`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/private-vulnerability-reporting`, options);
     }
     /**
      * Disables private vulnerability reporting for a repository. The authenticated
@@ -24221,9 +22342,9 @@ var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
      */
     disable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/private-vulnerability-reporting`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/private-vulnerability-reporting`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24241,9 +22362,9 @@ var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
      */
     enable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/private-vulnerability-reporting`, {
+      return this._client.put(path`/repos/${owner}/${repo}/private-vulnerability-reporting`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -24258,7 +22379,7 @@ var PrivateVulnerabilityReporting = class extends BasePrivateVulnerabilityReport
 
 // node_modules/@stainless-api/github-internal/resources/repos/readme.mjs
 var BaseReadme = /* @__PURE__ */ (() => {
-  class BaseReadme2 extends APIResource2 {
+  class BaseReadme2 extends APIResource {
     /**
      * Gets the preferred README for a repository.
      *
@@ -24282,7 +22403,7 @@ var BaseReadme = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/readme`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/readme`, { query, ...options });
     }
     /**
      * Gets the README from a repository directory.
@@ -24308,7 +22429,7 @@ var BaseReadme = /* @__PURE__ */ (() => {
      */
     retrieveForDirectory(dir, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/readme/${dir}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/readme/${dir}`, { query, ...options });
     }
   }
   BaseReadme2._key = Object.freeze(["repos", "readme"]);
@@ -24319,7 +22440,7 @@ var Readme = class extends BaseReadme {
 
 // node_modules/@stainless-api/github-internal/resources/repos/rules.mjs
 var BaseRules = /* @__PURE__ */ (() => {
-  class BaseRules2 extends APIResource2 {
+  class BaseRules2 extends APIResource {
     /**
      * Returns all active rules that apply to the specified branch. The branch does not
      * need to exist; rules that would apply to a branch with that name will be
@@ -24337,7 +22458,7 @@ var BaseRules = /* @__PURE__ */ (() => {
      */
     retrieveForBranch(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/rules/branches/${branch}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/rules/branches/${branch}`, { query, ...options });
     }
   }
   BaseRules2._key = Object.freeze(["repos", "rules"]);
@@ -24348,7 +22469,7 @@ var Rules = class extends BaseRules {
 
 // node_modules/@stainless-api/github-internal/resources/repos/security-advisories.mjs
 var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
-  class BaseSecurityAdvisories2 extends APIResource2 {
+  class BaseSecurityAdvisories2 extends APIResource {
     /**
      * Creates a new repository security advisory.
      *
@@ -24386,7 +22507,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/security-advisories`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/security-advisories`, { body, ...options });
     }
     /**
      * Get a repository security advisory using its GitHub Security Advisory (GHSA)
@@ -24414,7 +22535,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     retrieve(ghsaID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/security-advisories/${ghsaID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/security-advisories/${ghsaID}`, options);
     }
     /**
      * Update a repository security advisory using its GitHub Security Advisory (GHSA)
@@ -24440,7 +22561,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     update(ghsaID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/security-advisories/${ghsaID}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/security-advisories/${ghsaID}`, {
         body,
         ...options
       });
@@ -24468,7 +22589,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/security-advisories`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/security-advisories`, { query, ...options });
     }
     /**
      * Create a temporary private fork to collaborate on fixing a security
@@ -24488,7 +22609,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     createFork(ghsaID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/security-advisories/${ghsaID}/forks`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/security-advisories/${ghsaID}/forks`, options);
     }
     /**
      * Report a security vulnerability to the maintainers of the repository. See
@@ -24519,7 +22640,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     report(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/security-advisories/reports`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/security-advisories/reports`, { body, ...options });
     }
     /**
      * If you want a CVE identification number for the security vulnerability in your
@@ -24547,7 +22668,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
      */
     requestCve(ghsaID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/security-advisories/${ghsaID}/cve`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/security-advisories/${ghsaID}/cve`, options);
     }
   }
   BaseSecurityAdvisories2._key = Object.freeze([
@@ -24561,7 +22682,7 @@ var SecurityAdvisories = class extends BaseSecurityAdvisories {
 
 // node_modules/@stainless-api/github-internal/resources/repos/stats.mjs
 var BaseStats = /* @__PURE__ */ (() => {
-  class BaseStats2 extends APIResource2 {
+  class BaseStats2 extends APIResource {
     /**
      * Returns a weekly aggregate of the number of additions and deletions pushed to a
      * repository.
@@ -24580,7 +22701,7 @@ var BaseStats = /* @__PURE__ */ (() => {
      */
     getCodeFrequency(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stats/code_frequency`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/stats/code_frequency`, options);
     }
     /**
      * Returns the last year of commit activity grouped by week. The `days` array is a
@@ -24595,7 +22716,7 @@ var BaseStats = /* @__PURE__ */ (() => {
      */
     getCommitActivity(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stats/commit_activity`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/stats/commit_activity`, options);
     }
     /**
      * Returns the `total` number of commits authored by the contributor. In addition,
@@ -24621,7 +22742,7 @@ var BaseStats = /* @__PURE__ */ (() => {
      */
     getContributors(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stats/contributors`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/stats/contributors`, options);
     }
     /**
      * Returns the total commit counts for the `owner` and total commit counts in
@@ -24643,7 +22764,7 @@ var BaseStats = /* @__PURE__ */ (() => {
      */
     getParticipation(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stats/participation`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/stats/participation`, options);
     }
     /**
      * Each array contains the day number, hour number, and number of commits:
@@ -24666,7 +22787,7 @@ var BaseStats = /* @__PURE__ */ (() => {
      */
     getPunchCard(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stats/punch_card`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/stats/punch_card`, options);
     }
   }
   BaseStats2._key = Object.freeze(["repos", "stats"]);
@@ -24677,7 +22798,7 @@ var Stats = class extends BaseStats {
 
 // node_modules/@stainless-api/github-internal/resources/repos/subscription.mjs
 var BaseSubscription2 = /* @__PURE__ */ (() => {
-  class BaseSubscription3 extends APIResource2 {
+  class BaseSubscription3 extends APIResource {
     /**
      * This endpoint should only be used to stop watching a repository. To control
      * whether or not you wish to receive notifications from a repository,
@@ -24693,9 +22814,9 @@ var BaseSubscription2 = /* @__PURE__ */ (() => {
      */
     delete(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/subscription`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/subscription`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24712,7 +22833,7 @@ var BaseSubscription2 = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/subscription`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/subscription`, options);
     }
     /**
      * If you would like to watch a repository, set `subscribed` to `true`. If you
@@ -24732,7 +22853,7 @@ var BaseSubscription2 = /* @__PURE__ */ (() => {
      */
     set(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/subscription`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/subscription`, { body, ...options });
     }
   }
   BaseSubscription3._key = Object.freeze([
@@ -24746,7 +22867,7 @@ var Subscription2 = class extends BaseSubscription2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/tags.mjs
 var BaseTags = /* @__PURE__ */ (() => {
-  class BaseTags3 extends APIResource2 {
+  class BaseTags3 extends APIResource {
     /**
      * List repository tags
      *
@@ -24763,7 +22884,7 @@ var BaseTags = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/tags`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/tags`, NumberedPage, {
         query,
         ...options
       });
@@ -24777,7 +22898,7 @@ var Tags = class extends BaseTags {
 
 // node_modules/@stainless-api/github-internal/resources/repos/teams.mjs
 var BaseTeams3 = /* @__PURE__ */ (() => {
-  class BaseTeams5 extends APIResource2 {
+  class BaseTeams5 extends APIResource {
     /**
      * Lists the teams that have access to the specified repository and that are also
      * visible to the authenticated user.
@@ -24802,7 +22923,7 @@ var BaseTeams3 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/teams`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/teams`, NumberedPage, {
         query,
         ...options
       });
@@ -24816,7 +22937,7 @@ var Teams3 = class extends BaseTeams3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/topics.mjs
 var BaseTopics = /* @__PURE__ */ (() => {
-  class BaseTopics2 extends APIResource2 {
+  class BaseTopics2 extends APIResource {
     /**
      * Get all repository topics
      *
@@ -24830,7 +22951,7 @@ var BaseTopics = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/topics`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/topics`, { query, ...options });
     }
     /**
      * Replace all repository topics
@@ -24846,7 +22967,7 @@ var BaseTopics = /* @__PURE__ */ (() => {
      */
     replace(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/topics`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/topics`, { body, ...options });
     }
   }
   BaseTopics2._key = Object.freeze(["repos", "topics"]);
@@ -24857,7 +22978,7 @@ var Topics = class extends BaseTopics {
 
 // node_modules/@stainless-api/github-internal/resources/repos/tory-invitations.mjs
 var BaseToryInvitations = /* @__PURE__ */ (() => {
-  class BaseToryInvitations2 extends APIResource2 {
+  class BaseToryInvitations2 extends APIResource {
     /**
      * When authenticating as a user, this endpoint will list all currently open
      * repository invitations for that user.
@@ -24885,9 +23006,9 @@ var BaseToryInvitations = /* @__PURE__ */ (() => {
      * ```
      */
     accept(invitationID, options) {
-      return this._client.patch(path2`/user/repository_invitations/${invitationID}`, {
+      return this._client.patch(path`/user/repository_invitations/${invitationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24899,9 +23020,9 @@ var BaseToryInvitations = /* @__PURE__ */ (() => {
      * ```
      */
     decline(invitationID, options) {
-      return this._client.delete(path2`/user/repository_invitations/${invitationID}`, {
+      return this._client.delete(path`/user/repository_invitations/${invitationID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -24916,7 +23037,7 @@ var ToryInvitations = class extends BaseToryInvitations {
 
 // node_modules/@stainless-api/github-internal/resources/repos/vulnerability-alerts.mjs
 var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
-  class BaseVulnerabilityAlerts2 extends APIResource2 {
+  class BaseVulnerabilityAlerts2 extends APIResource {
     /**
      * Shows whether dependency alerts are enabled or disabled for a repository. The
      * authenticated user must have admin read access to the repository. For more
@@ -24933,9 +23054,9 @@ var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
      */
     checkEnabled(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/vulnerability-alerts`, {
+      return this._client.get(path`/repos/${owner}/${repo}/vulnerability-alerts`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24954,9 +23075,9 @@ var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
      */
     disable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/vulnerability-alerts`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/vulnerability-alerts`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -24975,9 +23096,9 @@ var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
      */
     enable(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/vulnerability-alerts`, {
+      return this._client.put(path`/repos/${owner}/${repo}/vulnerability-alerts`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -24992,7 +23113,7 @@ var VulnerabilityAlerts = class extends BaseVulnerabilityAlerts {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/artifacts.mjs
 var BaseArtifacts = /* @__PURE__ */ (() => {
-  class BaseArtifacts2 extends APIResource2 {
+  class BaseArtifacts2 extends APIResource {
     /**
      * Gets a specific artifact for a workflow run.
      *
@@ -25012,7 +23133,7 @@ var BaseArtifacts = /* @__PURE__ */ (() => {
      */
     retrieve(artifactID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/artifacts/${artifactID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/artifacts/${artifactID}`, options);
     }
     /**
      * Lists all artifacts for a repository.
@@ -25031,7 +23152,7 @@ var BaseArtifacts = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/artifacts`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/artifacts`, { query, ...options });
     }
     /**
      * Deletes an artifact for a workflow run. OAuth tokens and personal access tokens
@@ -25047,9 +23168,9 @@ var BaseArtifacts = /* @__PURE__ */ (() => {
      */
     delete(artifactID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/artifacts/${artifactID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/artifacts/${artifactID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25070,9 +23191,9 @@ var BaseArtifacts = /* @__PURE__ */ (() => {
      */
     download(archiveFormat, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, artifact_id } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/artifacts/${artifact_id}/${archiveFormat}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/artifacts/${artifact_id}/${archiveFormat}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -25088,7 +23209,7 @@ var Artifacts = class extends BaseArtifacts {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/cache.mjs
 var BaseCache2 = /* @__PURE__ */ (() => {
-  class BaseCache3 extends APIResource2 {
+  class BaseCache3 extends APIResource {
     /**
      * Gets GitHub Actions cache usage for a repository. The data fetched using this
      * API is refreshed approximately every 5 minutes, so values returned from this
@@ -25109,7 +23230,7 @@ var BaseCache2 = /* @__PURE__ */ (() => {
      */
     getUsage(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/cache/usage`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/cache/usage`, options);
     }
   }
   BaseCache3._key = Object.freeze([
@@ -25124,7 +23245,7 @@ var Cache2 = class extends BaseCache2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/caches.mjs
 var BaseCaches = /* @__PURE__ */ (() => {
-  class BaseCaches2 extends APIResource2 {
+  class BaseCaches2 extends APIResource {
     /**
      * Lists the GitHub Actions caches for a repository.
      *
@@ -25141,7 +23262,7 @@ var BaseCaches = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/caches`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/caches`, { query, ...options });
     }
     /**
      * Deletes one or more GitHub Actions caches for a repository, using a complete
@@ -25163,7 +23284,7 @@ var BaseCaches = /* @__PURE__ */ (() => {
      */
     delete(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, key, ref } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/caches`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/caches`, {
         query: { key, ref },
         ...options
       });
@@ -25184,9 +23305,9 @@ var BaseCaches = /* @__PURE__ */ (() => {
      */
     deleteByID(cacheID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/caches/${cacheID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/caches/${cacheID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -25202,7 +23323,7 @@ var Caches = class extends BaseCaches {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/jobs.mjs
 var BaseJobs = /* @__PURE__ */ (() => {
-  class BaseJobs2 extends APIResource2 {
+  class BaseJobs2 extends APIResource {
     /**
      * Gets a specific job in a workflow run.
      *
@@ -25221,7 +23342,7 @@ var BaseJobs = /* @__PURE__ */ (() => {
      */
     retrieve(jobID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/jobs/${jobID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/jobs/${jobID}`, options);
     }
     /**
      * Gets a redirect URL to download a plain text file of logs for a workflow job.
@@ -25243,9 +23364,9 @@ var BaseJobs = /* @__PURE__ */ (() => {
      */
     downloadLogs(jobID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/jobs/${jobID}/logs`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/jobs/${jobID}/logs`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25264,7 +23385,7 @@ var BaseJobs = /* @__PURE__ */ (() => {
      */
     rerun(jobID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/jobs/${jobID}/rerun`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/actions/jobs/${jobID}/rerun`, { body, ...options });
     }
   }
   BaseJobs2._key = Object.freeze([
@@ -25291,7 +23412,7 @@ async function encryptSecret(value, publicKey) {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/secrets.mjs
 var BaseSecrets4 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Gets a single repository secret without revealing its encrypted value.
      *
@@ -25312,7 +23433,7 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
      */
     retrieve(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/secrets/${secretName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/secrets/${secretName}`, options);
     }
     /**
      * Lists all secrets available in a repository without revealing their encrypted
@@ -25334,7 +23455,7 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/secrets`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/secrets`, { query, ...options });
     }
     /**
      * Deletes a secret in a repository using the secret name.
@@ -25355,9 +23476,9 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
      */
     delete(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/secrets/${secretName}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25389,7 +23510,7 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/secrets/${secretName}`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/secrets/${secretName}`, {
         body,
         ...options
       });
@@ -25429,7 +23550,7 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
      */
     getPublicKey(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/secrets/public-key`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -25444,7 +23565,7 @@ var Secrets4 = class extends BaseSecrets4 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/variables.mjs
 var BaseVariables2 = /* @__PURE__ */ (() => {
-  class BaseVariables4 extends APIResource2 {
+  class BaseVariables4 extends APIResource {
     /**
      * Creates a repository variable that you can reference in a GitHub Actions
      * workflow.
@@ -25468,7 +23589,7 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/variables`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/actions/variables`, { body, ...options });
     }
     /**
      * Gets a specific variable in a repository.
@@ -25490,7 +23611,7 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
      */
     retrieve(name, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/variables/${name}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/variables/${name}`, options);
     }
     /**
      * Updates a repository variable that you can reference in a GitHub Actions
@@ -25514,10 +23635,10 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
      */
     update(pathName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/actions/variables/${pathName}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/actions/variables/${pathName}`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25538,7 +23659,7 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/variables`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/variables`, { query, ...options });
     }
     /**
      * Deletes a repository variable using the variable name.
@@ -25559,9 +23680,9 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
      */
     delete(name, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/variables/${name}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/variables/${name}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -25577,7 +23698,7 @@ var Variables2 = class extends BaseVariables2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/workflows.mjs
 var BaseWorkflows = /* @__PURE__ */ (() => {
-  class BaseWorkflows2 extends APIResource2 {
+  class BaseWorkflows2 extends APIResource {
     /**
      * Gets a specific workflow. You can replace `workflow_id` with the workflow file
      * name. For example, you could use `main.yaml`.
@@ -25598,7 +23719,7 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     retrieve(workflowID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}`, options);
     }
     /**
      * Lists the workflows in a repository.
@@ -25617,7 +23738,7 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/workflows`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/workflows`, { query, ...options });
     }
     /**
      * Disables a workflow and sets the `state` of the workflow to `disabled_manually`.
@@ -25637,9 +23758,9 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     disable(workflowID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}/disable`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}/disable`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25672,10 +23793,10 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     dispatch(workflowID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}/dispatches`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}/dispatches`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25696,9 +23817,9 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     enable(workflowID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}/enable`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}/enable`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -25735,7 +23856,7 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     getUsage(workflowID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}/timing`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}/timing`, options);
     }
     /**
      * List all workflow runs for a workflow. You can replace `workflow_id` with the
@@ -25764,7 +23885,7 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
      */
     listRuns(workflowID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/workflows/${workflowID}/runs`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/workflows/${workflowID}/runs`, {
         query,
         ...options
       });
@@ -25782,7 +23903,7 @@ var Workflows = class extends BaseWorkflows {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/sub.mjs
 var BaseSub2 = /* @__PURE__ */ (() => {
-  class BaseSub3 extends APIResource2 {
+  class BaseSub3 extends APIResource {
     /**
      * Gets the customization template for an OpenID Connect (OIDC) subject claim.
      *
@@ -25800,7 +23921,7 @@ var BaseSub2 = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/oidc/customization/sub`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/oidc/customization/sub`, options);
     }
     /**
      * Sets the customization template and `opt-in` or `opt-out` flag for an OpenID
@@ -25822,7 +23943,7 @@ var BaseSub2 = /* @__PURE__ */ (() => {
      */
     set(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/oidc/customization/sub`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/oidc/customization/sub`, {
         body,
         ...options
       });
@@ -25836,7 +23957,7 @@ var Sub2 = class extends BaseSub2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/customization.mjs
 var BaseCustomization2 = /* @__PURE__ */ (() => {
-  class BaseCustomization3 extends APIResource2 {
+  class BaseCustomization3 extends APIResource {
   }
   BaseCustomization3._key = Object.freeze([
     "repos",
@@ -25860,7 +23981,7 @@ var Customization2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/oidc.mjs
 var BaseOidc2 = /* @__PURE__ */ (() => {
-  class BaseOidc3 extends APIResource2 {
+  class BaseOidc3 extends APIResource {
   }
   BaseOidc3._key = Object.freeze([
     "repos",
@@ -25883,7 +24004,7 @@ var Oidc2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/access.mjs
 var BaseAccess = /* @__PURE__ */ (() => {
-  class BaseAccess2 extends APIResource2 {
+  class BaseAccess2 extends APIResource {
     /**
      * Gets the level of access that workflows outside of the repository have to
      * actions and reusable workflows in the repository. This endpoint only applies to
@@ -25904,7 +24025,7 @@ var BaseAccess = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/permissions/access`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/permissions/access`, options);
     }
     /**
      * Sets the level of access that workflows outside of the repository have to
@@ -25926,10 +24047,10 @@ var BaseAccess = /* @__PURE__ */ (() => {
      */
     set(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/permissions/access`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/permissions/access`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -25946,7 +24067,7 @@ var Access = class extends BaseAccess {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/selected-actions.mjs
 var BaseSelectedActions2 = /* @__PURE__ */ (() => {
-  class BaseSelectedActions3 extends APIResource2 {
+  class BaseSelectedActions3 extends APIResource {
     /**
      * Gets the settings for selected actions and reusable workflows that are allowed
      * in a repository. To use this endpoint, the repository policy for
@@ -25966,7 +24087,7 @@ var BaseSelectedActions2 = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/permissions/selected-actions`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/permissions/selected-actions`, options);
     }
     /**
      * Sets the actions and reusable workflows that are allowed in a repository. To use
@@ -25989,10 +24110,10 @@ var BaseSelectedActions2 = /* @__PURE__ */ (() => {
      */
     set(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/permissions/selected-actions`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/permissions/selected-actions`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -26004,7 +24125,7 @@ var SelectedActions2 = class extends BaseSelectedActions2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/workflow.mjs
 var BaseWorkflow2 = /* @__PURE__ */ (() => {
-  class BaseWorkflow3 extends APIResource2 {
+  class BaseWorkflow3 extends APIResource {
     /**
      * Gets the default workflow permissions granted to the `GITHUB_TOKEN` when running
      * workflows in a repository, as well as if GitHub Actions can submit approving
@@ -26025,7 +24146,7 @@ var BaseWorkflow2 = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/permissions/workflow`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/permissions/workflow`, options);
     }
     /**
      * Sets the default workflow permissions granted to the `GITHUB_TOKEN` when running
@@ -26048,10 +24169,10 @@ var BaseWorkflow2 = /* @__PURE__ */ (() => {
      */
     set(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/permissions/workflow`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/permissions/workflow`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -26068,7 +24189,7 @@ var Workflow2 = class extends BaseWorkflow2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/permissions.mjs
 var BasePermissions2 = /* @__PURE__ */ (() => {
-  class BasePermissions3 extends APIResource2 {
+  class BasePermissions3 extends APIResource {
     /**
      * Gets the GitHub Actions permissions policy for a repository, including whether
      * GitHub Actions is enabled and the actions and reusable workflows allowed to run
@@ -26088,7 +24209,7 @@ var BasePermissions2 = /* @__PURE__ */ (() => {
      */
     get(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/permissions`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/permissions`, options);
     }
     /**
      * Sets the GitHub Actions permissions policy for enabling GitHub Actions and
@@ -26109,10 +24230,10 @@ var BasePermissions2 = /* @__PURE__ */ (() => {
      */
     set(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/permissions`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/permissions`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -26143,7 +24264,7 @@ var Permissions2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runners/labels.mjs
 var BaseLabels3 = /* @__PURE__ */ (() => {
-  class BaseLabels5 extends APIResource2 {
+  class BaseLabels5 extends APIResource {
     /**
      * Lists all labels for a self-hosted runner configured in a repository.
      *
@@ -26164,7 +24285,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
      */
     list(runnerID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, options);
     }
     /**
      * Adds custom labels to a self-hosted runner configured in a repository.
@@ -26187,7 +24308,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
      */
     add(runnerID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, {
         body,
         ...options
       });
@@ -26217,7 +24338,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
      */
     remove(name, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, runner_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/runners/${runner_id}/labels/${name}`, options);
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/runners/${runner_id}/labels/${name}`, options);
     }
     /**
      * Remove all custom labels from a self-hosted runner configured in a repository.
@@ -26240,7 +24361,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
      */
     removeAll(runnerID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, options);
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, options);
     }
     /**
      * Remove all previous custom labels and set the new custom labels for a specific
@@ -26264,7 +24385,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
      */
     set(runnerID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, {
+      return this._client.put(path`/repos/${owner}/${repo}/actions/runners/${runnerID}/labels`, {
         body,
         ...options
       });
@@ -26283,7 +24404,7 @@ var Labels3 = class extends BaseLabels3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runners/runners.mjs
 var BaseRunners3 = /* @__PURE__ */ (() => {
-  class BaseRunners4 extends APIResource2 {
+  class BaseRunners4 extends APIResource {
     /**
      * Gets a specific self-hosted runner configured in a repository.
      *
@@ -26303,7 +24424,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     retrieve(runnerID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runners/${runnerID}`, options);
     }
     /**
      * Lists all self-hosted runners configured in a repository.
@@ -26324,7 +24445,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runners`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runners`, { query, ...options });
     }
     /**
      * Forces the removal of a self-hosted runner from a repository. You can use this
@@ -26347,9 +24468,9 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     delete(runnerID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/runners/${runnerID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/runners/${runnerID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -26380,7 +24501,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     createRegistrationToken(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runners/registration-token`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runners/registration-token`, options);
     }
     /**
      * Returns a token that you can pass to the `config` script to remove a self-hosted
@@ -26411,7 +24532,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     createRemoveToken(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runners/remove-token`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runners/remove-token`, options);
     }
     /**
      * Generates a configuration that can be passed to the runner application at
@@ -26437,7 +24558,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     generateJitconfig(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runners/generate-jitconfig`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runners/generate-jitconfig`, {
         body,
         ...options
       });
@@ -26462,7 +24583,7 @@ var BaseRunners3 = /* @__PURE__ */ (() => {
      */
     listDownloads(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runners/downloads`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runners/downloads`, options);
     }
   }
   BaseRunners4._key = Object.freeze([
@@ -26486,7 +24607,7 @@ var Runners3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runs/attempts.mjs
 var BaseAttempts = /* @__PURE__ */ (() => {
-  class BaseAttempts2 extends APIResource2 {
+  class BaseAttempts2 extends APIResource {
     /**
      * Gets a specific workflow run attempt.
      *
@@ -26507,7 +24628,7 @@ var BaseAttempts = /* @__PURE__ */ (() => {
      */
     retrieve(attemptNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, run_id, ...query } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}`, {
         query,
         ...options
       });
@@ -26533,7 +24654,7 @@ var BaseAttempts = /* @__PURE__ */ (() => {
      */
     downloadLogs(attemptNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, run_id } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}/logs`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}/logs`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Lists jobs for a specific workflow run attempt. You can use parameters to narrow
@@ -26557,7 +24678,7 @@ var BaseAttempts = /* @__PURE__ */ (() => {
      */
     listJobs(attemptNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, run_id, ...query } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}/jobs`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${run_id}/attempts/${attemptNumber}/jobs`, { query, ...options });
     }
   }
   BaseAttempts2._key = Object.freeze([
@@ -26573,7 +24694,7 @@ var Attempts = class extends BaseAttempts {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runs/logs.mjs
 var BaseLogs = /* @__PURE__ */ (() => {
-  class BaseLogs2 extends APIResource2 {
+  class BaseLogs2 extends APIResource {
     /**
      * Deletes all logs for a workflow run.
      *
@@ -26590,9 +24711,9 @@ var BaseLogs = /* @__PURE__ */ (() => {
      */
     delete(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/runs/${runID}/logs`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/runs/${runID}/logs`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -26615,9 +24736,9 @@ var BaseLogs = /* @__PURE__ */ (() => {
      */
     download(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/logs`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/logs`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -26634,7 +24755,7 @@ var Logs = class extends BaseLogs {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runs/pending-deployments.mjs
 var BasePendingDeployments = /* @__PURE__ */ (() => {
-  class BasePendingDeployments2 extends APIResource2 {
+  class BasePendingDeployments2 extends APIResource {
     /**
      * Get all deployment environments for a workflow run that are waiting for
      * protection rules to pass.
@@ -26655,7 +24776,7 @@ var BasePendingDeployments = /* @__PURE__ */ (() => {
      */
     get(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/pending_deployments`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/pending_deployments`, options);
     }
     /**
      * Approve or reject pending deployments that are waiting on approval by a required
@@ -26684,7 +24805,7 @@ var BasePendingDeployments = /* @__PURE__ */ (() => {
      */
     review(runID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/pending_deployments`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/pending_deployments`, {
         body,
         ...options
       });
@@ -26703,7 +24824,7 @@ var PendingDeployments = class extends BasePendingDeployments {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/runs/runs.mjs
 var BaseRuns = /* @__PURE__ */ (() => {
-  class BaseRuns2 extends APIResource2 {
+  class BaseRuns2 extends APIResource {
     /**
      * Gets a specific workflow run.
      *
@@ -26722,7 +24843,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     retrieve(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}`, { query, ...options });
     }
     /**
      * Lists all workflow runs for a repository. You can use parameters to narrow the
@@ -26748,7 +24869,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs`, { query, ...options });
     }
     /**
      * Deletes a specific workflow run.
@@ -26768,9 +24889,9 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     delete(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/actions/runs/${runID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/actions/runs/${runID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -26791,7 +24912,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     approve(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/approve`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/approve`, options);
     }
     /**
      * Cancels a workflow run using its `id`.
@@ -26809,7 +24930,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     cancel(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/cancel`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/cancel`, options);
     }
     /**
      * Cancels a workflow run and bypasses conditions that would otherwise cause a
@@ -26832,7 +24953,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     forceCancel(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/force-cancel`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/force-cancel`, options);
     }
     /**
      * Anyone with read access to the repository can use this endpoint.
@@ -26851,7 +24972,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     getApprovals(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/approvals`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/approvals`, options);
     }
     /**
      * > [!WARNING]
@@ -26882,7 +25003,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     getUsage(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/timing`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/timing`, options);
     }
     /**
      * Lists artifacts for a workflow run.
@@ -26903,7 +25024,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     listArtifacts(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/artifacts`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/artifacts`, {
         query,
         ...options
       });
@@ -26928,7 +25049,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     listJobs(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/runs/${runID}/jobs`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/actions/runs/${runID}/jobs`, { query, ...options });
     }
     /**
      * Re-runs your workflow run using its `id`.
@@ -26946,7 +25067,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     rerun(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/rerun`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/rerun`, { body, ...options });
     }
     /**
      * Re-run all of the failed jobs and their dependent jobs in a workflow run using
@@ -26966,7 +25087,7 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     rerunFailedJobs(runID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/rerun-failed-jobs`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/rerun-failed-jobs`, {
         body,
         ...options
       });
@@ -26999,10 +25120,10 @@ var BaseRuns = /* @__PURE__ */ (() => {
      */
     reviewDeploymentProtectionRule(runID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/actions/runs/${runID}/deployment_protection_rule`, {
+      return this._client.post(path`/repos/${owner}/${repo}/actions/runs/${runID}/deployment_protection_rule`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -27033,7 +25154,7 @@ var Runs = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/actions/actions.mjs
 var BaseActions2 = /* @__PURE__ */ (() => {
-  class BaseActions3 extends APIResource2 {
+  class BaseActions3 extends APIResource {
     /**
      * Lists all organization secrets shared with a repository without revealing their
      * encrypted values.
@@ -27055,7 +25176,7 @@ var BaseActions2 = /* @__PURE__ */ (() => {
      */
     listOrganizationSecrets(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/organization-secrets`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/organization-secrets`, {
         query,
         ...options
       });
@@ -27080,7 +25201,7 @@ var BaseActions2 = /* @__PURE__ */ (() => {
      */
     listOrganizationVariables(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/actions/organization-variables`, {
+      return this._client.get(path`/repos/${owner}/${repo}/actions/organization-variables`, {
         query,
         ...options
       });
@@ -27133,7 +25254,7 @@ var Actions2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/enforce-admins.mjs
 var BaseEnforceAdmins = /* @__PURE__ */ (() => {
-  class BaseEnforceAdmins2 extends APIResource2 {
+  class BaseEnforceAdmins2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27153,7 +25274,7 @@ var BaseEnforceAdmins = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27176,9 +25297,9 @@ var BaseEnforceAdmins = /* @__PURE__ */ (() => {
      */
     delete(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -27203,7 +25324,7 @@ var BaseEnforceAdmins = /* @__PURE__ */ (() => {
      */
     set(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/enforce_admins`, options);
     }
   }
   BaseEnforceAdmins2._key = Object.freeze(["repos", "branches", "protection", "enforceAdmins"]);
@@ -27214,7 +25335,7 @@ var EnforceAdmins = class extends BaseEnforceAdmins {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-pull-request-reviews.mjs
 var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
-  class BaseRequiredPullRequestReviews2 extends APIResource2 {
+  class BaseRequiredPullRequestReviews2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27234,7 +25355,7 @@ var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27278,7 +25399,7 @@ var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
      */
     update(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27298,7 +25419,7 @@ var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
      */
     delete(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_pull_request_reviews`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRequiredPullRequestReviews2._key = Object.freeze(["repos", "branches", "protection", "requiredPullRequestReviews"]);
@@ -27309,7 +25430,7 @@ var RequiredPullRequestReviews = class extends BaseRequiredPullRequestReviews {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-signatures.mjs
 var BaseRequiredSignatures = /* @__PURE__ */ (() => {
-  class BaseRequiredSignatures2 extends APIResource2 {
+  class BaseRequiredSignatures2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27333,7 +25454,7 @@ var BaseRequiredSignatures = /* @__PURE__ */ (() => {
      */
     create(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27363,7 +25484,7 @@ var BaseRequiredSignatures = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27387,7 +25508,7 @@ var BaseRequiredSignatures = /* @__PURE__ */ (() => {
      */
     delete(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_signatures`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRequiredSignatures2._key = Object.freeze(["repos", "branches", "protection", "requiredSignatures"]);
@@ -27398,7 +25519,7 @@ var RequiredSignatures = class extends BaseRequiredSignatures {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/contexts.mjs
 var BaseContexts = /* @__PURE__ */ (() => {
-  class BaseContexts2 extends APIResource2 {
+  class BaseContexts2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27418,7 +25539,7 @@ var BaseContexts = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27446,7 +25567,7 @@ var BaseContexts = /* @__PURE__ */ (() => {
      */
     add(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27471,7 +25592,7 @@ var BaseContexts = /* @__PURE__ */ (() => {
      */
     remove(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27496,7 +25617,7 @@ var BaseContexts = /* @__PURE__ */ (() => {
      */
     set(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks/contexts`, { body, ...options });
     }
   }
   BaseContexts2._key = Object.freeze(["repos", "branches", "protection", "requiredStatusChecks", "contexts"]);
@@ -27507,7 +25628,7 @@ var Contexts = class extends BaseContexts {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/required-status-checks.mjs
 var BaseRequiredStatusChecks = /* @__PURE__ */ (() => {
-  class BaseRequiredStatusChecks2 extends APIResource2 {
+  class BaseRequiredStatusChecks2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27527,7 +25648,7 @@ var BaseRequiredStatusChecks = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27551,7 +25672,7 @@ var BaseRequiredStatusChecks = /* @__PURE__ */ (() => {
      */
     update(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27571,7 +25692,7 @@ var BaseRequiredStatusChecks = /* @__PURE__ */ (() => {
      */
     remove(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/required_status_checks`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseRequiredStatusChecks2._key = Object.freeze(["repos", "branches", "protection", "requiredStatusChecks"]);
@@ -27591,7 +25712,7 @@ var RequiredStatusChecks = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/apps.mjs
 var BaseApps2 = /* @__PURE__ */ (() => {
-  class BaseApps3 extends APIResource2 {
+  class BaseApps3 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27615,7 +25736,7 @@ var BaseApps2 = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27640,7 +25761,7 @@ var BaseApps2 = /* @__PURE__ */ (() => {
      */
     add(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, {
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, {
         body,
         ...options
       });
@@ -27668,7 +25789,7 @@ var BaseApps2 = /* @__PURE__ */ (() => {
      */
     remove(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, { body, ...options });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27695,7 +25816,7 @@ var BaseApps2 = /* @__PURE__ */ (() => {
      */
     set(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, {
+      return this._client.put(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/apps`, {
         body,
         ...options
       });
@@ -27709,7 +25830,7 @@ var Apps2 = class extends BaseApps2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/teams.mjs
 var BaseTeams4 = /* @__PURE__ */ (() => {
-  class BaseTeams5 extends APIResource2 {
+  class BaseTeams5 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27732,7 +25853,7 @@ var BaseTeams4 = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27760,7 +25881,7 @@ var BaseTeams4 = /* @__PURE__ */ (() => {
      */
     add(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, {
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, {
         body,
         ...options
       });
@@ -27787,7 +25908,7 @@ var BaseTeams4 = /* @__PURE__ */ (() => {
      */
     remove(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, { body, ...options });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27816,7 +25937,7 @@ var BaseTeams4 = /* @__PURE__ */ (() => {
      */
     set(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, {
+      return this._client.put(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/teams`, {
         body,
         ...options
       });
@@ -27830,7 +25951,7 @@ var Teams4 = class extends BaseTeams4 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/users.mjs
 var BaseUsers2 = /* @__PURE__ */ (() => {
-  class BaseUsers4 extends APIResource2 {
+  class BaseUsers4 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27852,7 +25973,7 @@ var BaseUsers2 = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27879,7 +26000,7 @@ var BaseUsers2 = /* @__PURE__ */ (() => {
      */
     add(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, {
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, {
         body,
         ...options
       });
@@ -27909,7 +26030,7 @@ var BaseUsers2 = /* @__PURE__ */ (() => {
      */
     remove(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, { body, ...options });
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, { body, ...options });
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27938,7 +26059,7 @@ var BaseUsers2 = /* @__PURE__ */ (() => {
      */
     set(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, {
+      return this._client.put(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions/users`, {
         body,
         ...options
       });
@@ -27952,7 +26073,7 @@ var Users2 = class extends BaseUsers2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/restrictions.mjs
 var BaseRestrictions = /* @__PURE__ */ (() => {
-  class BaseRestrictions2 extends APIResource2 {
+  class BaseRestrictions2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -27977,7 +26098,7 @@ var BaseRestrictions = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -27999,9 +26120,9 @@ var BaseRestrictions = /* @__PURE__ */ (() => {
      */
     delete(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection/restrictions`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -28028,7 +26149,7 @@ var Restrictions = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/protection/protection.mjs
 var BaseProtection = /* @__PURE__ */ (() => {
-  class BaseProtection2 extends APIResource2 {
+  class BaseProtection2 extends APIResource {
     /**
      * Protected branches are available in public repositories with GitHub Free and
      * GitHub Free for organizations, and in public and private repositories with
@@ -28048,7 +26169,7 @@ var BaseProtection = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}/protection`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}/protection`, options);
     }
     /**
      * Protected branches are available in public repositories with GitHub Free and
@@ -28096,7 +26217,7 @@ var BaseProtection = /* @__PURE__ */ (() => {
      */
     update(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/branches/${branch}/protection`, {
+      return this._client.put(path`/repos/${owner}/${repo}/branches/${branch}/protection`, {
         body,
         ...options
       });
@@ -28119,9 +26240,9 @@ var BaseProtection = /* @__PURE__ */ (() => {
      */
     delete(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/branches/${branch}/protection`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/branches/${branch}/protection`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -28158,7 +26279,7 @@ var Protection = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/branches/branches.mjs
 var BaseBranches = /* @__PURE__ */ (() => {
-  class BaseBranches2 extends APIResource2 {
+  class BaseBranches2 extends APIResource {
     /**
      * Get a branch
      *
@@ -28172,7 +26293,7 @@ var BaseBranches = /* @__PURE__ */ (() => {
      */
     retrieve(branch, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/branches/${branch}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/branches/${branch}`, options);
     }
     /**
      * List branches
@@ -28189,7 +26310,7 @@ var BaseBranches = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/branches`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/branches`, NumberedPage, {
         query,
         ...options
       });
@@ -28224,7 +26345,7 @@ var BaseBranches = /* @__PURE__ */ (() => {
      */
     rename(branch, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/branches/${branch}/rename`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/branches/${branch}/rename`, { body, ...options });
     }
   }
   BaseBranches2._key = Object.freeze([
@@ -28233,7 +26354,7 @@ var BaseBranches = /* @__PURE__ */ (() => {
   ]);
   return BaseBranches2;
 })();
-var Branches2 = /* @__PURE__ */ (() => {
+var Branches = /* @__PURE__ */ (() => {
   class Branches3 extends BaseBranches {
     constructor() {
       super(...arguments);
@@ -28247,7 +26368,7 @@ var Branches2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/analyses.mjs
 var BaseAnalyses = /* @__PURE__ */ (() => {
-  class BaseAnalyses2 extends APIResource2 {
+  class BaseAnalyses2 extends APIResource {
     /**
      * Gets a specified code scanning analysis for a repository.
      *
@@ -28286,7 +26407,7 @@ var BaseAnalyses = /* @__PURE__ */ (() => {
      */
     retrieve(analysisID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/analyses/${analysisID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/analyses/${analysisID}`, options);
     }
     /**
      * Lists the details of all code scanning analyses for a repository, starting with
@@ -28319,7 +26440,7 @@ var BaseAnalyses = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/code-scanning/analyses`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/code-scanning/analyses`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a specified code scanning analysis from a repository.
@@ -28404,7 +26525,7 @@ var BaseAnalyses = /* @__PURE__ */ (() => {
      */
     delete(analysisID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, confirm_delete } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/code-scanning/analyses/${analysisID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/code-scanning/analyses/${analysisID}`, {
         query: { confirm_delete },
         ...options
       });
@@ -28422,7 +26543,7 @@ var Analyses = class extends BaseAnalyses {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/default-setup.mjs
 var BaseDefaultSetup = /* @__PURE__ */ (() => {
-  class BaseDefaultSetup2 extends APIResource2 {
+  class BaseDefaultSetup2 extends APIResource {
     /**
      * Gets a code scanning default setup configuration.
      *
@@ -28441,7 +26562,7 @@ var BaseDefaultSetup = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/default-setup`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/default-setup`, options);
     }
     /**
      * Updates a code scanning default setup configuration.
@@ -28463,7 +26584,7 @@ var BaseDefaultSetup = /* @__PURE__ */ (() => {
      */
     update(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/code-scanning/default-setup`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/code-scanning/default-setup`, {
         body,
         ...options
       });
@@ -28481,7 +26602,7 @@ var DefaultSetup = class extends BaseDefaultSetup {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/sarifs.mjs
 var BaseSarifs = /* @__PURE__ */ (() => {
-  class BaseSarifs2 extends APIResource2 {
+  class BaseSarifs2 extends APIResource {
     /**
      * Gets information about a SARIF upload, including the status and the URL of the
      * analysis that was uploaded so that you can retrieve details of the analysis. For
@@ -28504,7 +26625,7 @@ var BaseSarifs = /* @__PURE__ */ (() => {
      */
     retrieve(sarifID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/code-scanning/sarifs/${sarifID}`, ErrorsPage, options);
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/code-scanning/sarifs/${sarifID}`, ErrorsPage, options);
     }
     /**
      * Uploads SARIF data containing the results of a code scanning analysis to make
@@ -28576,7 +26697,7 @@ var BaseSarifs = /* @__PURE__ */ (() => {
      */
     upload(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/code-scanning/sarifs`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/code-scanning/sarifs`, { body, ...options });
     }
   }
   BaseSarifs2._key = Object.freeze([
@@ -28591,7 +26712,7 @@ var Sarifs = class extends BaseSarifs {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/autofix.mjs
 var BaseAutofix = /* @__PURE__ */ (() => {
-  class BaseAutofix2 extends APIResource2 {
+  class BaseAutofix2 extends APIResource {
     /**
      * Creates an autofix for a code scanning alert.
      *
@@ -28616,7 +26737,7 @@ var BaseAutofix = /* @__PURE__ */ (() => {
      */
     create(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix`, options);
     }
     /**
      * Gets the status and description of an autofix for a code scanning alert.
@@ -28636,7 +26757,7 @@ var BaseAutofix = /* @__PURE__ */ (() => {
      */
     retrieve(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix`, options);
     }
     /**
      * Commits an autofix for a code scanning alert.
@@ -28661,7 +26782,7 @@ var BaseAutofix = /* @__PURE__ */ (() => {
      */
     commit(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix/commits`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/autofix/commits`, { body, ...options });
     }
   }
   BaseAutofix2._key = Object.freeze([
@@ -28677,7 +26798,7 @@ var Autofix = class extends BaseAutofix {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/instances.mjs
 var BaseInstances = /* @__PURE__ */ (() => {
-  class BaseInstances2 extends APIResource2 {
+  class BaseInstances2 extends APIResource {
     /**
      * Lists all instances of the specified code scanning alert.
      *
@@ -28698,7 +26819,7 @@ var BaseInstances = /* @__PURE__ */ (() => {
      */
     list(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/instances`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}/instances`, NumberedPage, { query, ...options });
     }
   }
   BaseInstances2._key = Object.freeze([
@@ -28714,7 +26835,7 @@ var Instances = class extends BaseInstances {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/alerts.mjs
 var BaseAlerts = /* @__PURE__ */ (() => {
-  class BaseAlerts4 extends APIResource2 {
+  class BaseAlerts4 extends APIResource {
     /**
      * Gets a single code scanning alert.
      *
@@ -28733,7 +26854,7 @@ var BaseAlerts = /* @__PURE__ */ (() => {
      */
     retrieve(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}`, options);
     }
     /**
      * Updates the status of a single code scanning alert. OAuth app tokens and
@@ -28759,7 +26880,7 @@ var BaseAlerts = /* @__PURE__ */ (() => {
      */
     update(alertNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/code-scanning/alerts/${alertNumber}`, {
         body,
         ...options
       });
@@ -28787,7 +26908,7 @@ var BaseAlerts = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/code-scanning/alerts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/code-scanning/alerts`, NumberedPage, { query, ...options });
     }
   }
   BaseAlerts4._key = Object.freeze([
@@ -28814,7 +26935,7 @@ var Alerts = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/databases.mjs
 var BaseDatabases = /* @__PURE__ */ (() => {
-  class BaseDatabases2 extends APIResource2 {
+  class BaseDatabases2 extends APIResource {
     /**
      * Gets a CodeQL database for a language in a repository.
      *
@@ -28840,7 +26961,7 @@ var BaseDatabases = /* @__PURE__ */ (() => {
      */
     retrieve(language, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/codeql/databases/${language}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/codeql/databases/${language}`, options);
     }
     /**
      * Lists the CodeQL databases that are available in a repository.
@@ -28860,7 +26981,7 @@ var BaseDatabases = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/codeql/databases`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/codeql/databases`, options);
     }
     /**
      * Deletes a CodeQL database for a language in a repository.
@@ -28879,9 +27000,9 @@ var BaseDatabases = /* @__PURE__ */ (() => {
      */
     delete(language, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/code-scanning/codeql/databases/${language}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/code-scanning/codeql/databases/${language}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -28898,7 +27019,7 @@ var Databases = class extends BaseDatabases {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/variant-analyses.mjs
 var BaseVariantAnalyses = /* @__PURE__ */ (() => {
-  class BaseVariantAnalyses2 extends APIResource2 {
+  class BaseVariantAnalyses2 extends APIResource {
     /**
      * Creates a new CodeQL variant analysis, which will run a CodeQL query against one
      * or more repositories.
@@ -28932,7 +27053,7 @@ var BaseVariantAnalyses = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses`, {
+      return this._client.post(path`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses`, {
         body,
         ...options
       });
@@ -28955,7 +27076,7 @@ var BaseVariantAnalyses = /* @__PURE__ */ (() => {
      */
     retrieve(codeqlVariantAnalysisID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses/${codeqlVariantAnalysisID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses/${codeqlVariantAnalysisID}`, options);
     }
     /**
      * Gets the analysis status of a repository in a CodeQL variant analysis.
@@ -28980,7 +27101,7 @@ var BaseVariantAnalyses = /* @__PURE__ */ (() => {
      */
     getRepoAnalysisStatus(repoName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, codeql_variant_analysis_id, repo_owner } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses/${codeql_variant_analysis_id}/repos/${repo_owner}/${repoName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-scanning/codeql/variant-analyses/${codeql_variant_analysis_id}/repos/${repo_owner}/${repoName}`, options);
     }
   }
   BaseVariantAnalyses2._key = Object.freeze(["repos", "codeScanning", "codeql", "variantAnalyses"]);
@@ -28991,7 +27112,7 @@ var VariantAnalyses = class extends BaseVariantAnalyses {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/codeql.mjs
 var BaseCodeql = /* @__PURE__ */ (() => {
-  class BaseCodeql2 extends APIResource2 {
+  class BaseCodeql2 extends APIResource {
   }
   BaseCodeql2._key = Object.freeze([
     "repos",
@@ -29017,7 +27138,7 @@ var Codeql = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/code-scanning/code-scanning.mjs
 var BaseCodeScanning2 = /* @__PURE__ */ (() => {
-  class BaseCodeScanning3 extends APIResource2 {
+  class BaseCodeScanning3 extends APIResource {
   }
   BaseCodeScanning3._key = Object.freeze([
     "repos",
@@ -29051,7 +27172,7 @@ var CodeScanning2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/codespaces/secrets.mjs
 var BaseSecrets5 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Gets a single repository development environment secret without revealing its
      * encrypted value.
@@ -29070,7 +27191,7 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
      */
     retrieve(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, options);
     }
     /**
      * Lists all development environment secrets available in a repository without
@@ -29089,7 +27210,7 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/secrets`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/secrets`, { query, ...options });
     }
     /**
      * Deletes a development environment secret in a repository using the secret name.
@@ -29107,9 +27228,9 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
      */
     delete(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -29138,7 +27259,7 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, {
+      return this._client.put(path`/repos/${owner}/${repo}/codespaces/secrets/${secretName}`, {
         body,
         ...options
       });
@@ -29161,7 +27282,7 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
      */
     getPublicKey(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/secrets/public-key`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -29176,7 +27297,7 @@ var Secrets5 = class extends BaseSecrets5 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/codespaces/codespaces.mjs
 var BaseCodespaces3 = /* @__PURE__ */ (() => {
-  class BaseCodespaces5 extends APIResource2 {
+  class BaseCodespaces5 extends APIResource {
     /**
      * Creates a codespace owned by the authenticated user in the specified repository.
      *
@@ -29195,7 +27316,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     create(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/codespaces`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/codespaces`, { body, ...options });
     }
     /**
      * Lists the codespaces associated to a specified repository and the authenticated
@@ -29214,7 +27335,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces`, { query, ...options });
     }
     /**
      * Checks whether the permissions defined by a given devcontainer configuration
@@ -29237,7 +27358,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     checkPermissions(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/permissions_check`, {
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/permissions_check`, {
         query,
         ...options
       });
@@ -29260,7 +27381,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     getDefaultAttributes(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/new`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/new`, { query, ...options });
     }
     /**
      * Lists the devcontainer.json files associated with a specified repository and the
@@ -29281,7 +27402,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     listDevcontainers(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/devcontainers`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/devcontainers`, { query, ...options });
     }
     /**
      * List the machine types available for a given repository based on its
@@ -29299,7 +27420,7 @@ var BaseCodespaces3 = /* @__PURE__ */ (() => {
      */
     listMachines(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/codespaces/machines`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/codespaces/machines`, { query, ...options });
     }
   }
   BaseCodespaces5._key = Object.freeze([
@@ -29322,7 +27443,7 @@ var Codespaces3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/comments/reactions.mjs
 var BaseReactions4 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to a
      * [commit comment](https://docs.github.com/rest/commits/comments#get-a-commit-comment).
@@ -29341,7 +27462,7 @@ var BaseReactions4 = /* @__PURE__ */ (() => {
      */
     create(commentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/comments/${commentID}/reactions`, {
+      return this._client.post(path`/repos/${owner}/${repo}/comments/${commentID}/reactions`, {
         body,
         ...options
       });
@@ -29363,7 +27484,7 @@ var BaseReactions4 = /* @__PURE__ */ (() => {
      */
     list(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a repository by `repository_id` using the route
@@ -29383,9 +27504,9 @@ var BaseReactions4 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/comments/${comment_id}/reactions/${reactionID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/comments/${comment_id}/reactions/${reactionID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -29401,7 +27522,7 @@ var Reactions4 = class extends BaseReactions4 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/comments/comments.mjs
 var BaseComments4 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
+  class BaseComments7 extends APIResource {
     /**
      * Gets a specified commit comment.
      *
@@ -29430,7 +27551,7 @@ var BaseComments4 = /* @__PURE__ */ (() => {
      */
     retrieve(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/comments/${commentID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/comments/${commentID}`, options);
     }
     /**
      * Updates the contents of a specified commit comment.
@@ -29461,7 +27582,7 @@ var BaseComments4 = /* @__PURE__ */ (() => {
      */
     update(commentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/comments/${commentID}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/comments/${commentID}`, { body, ...options });
     }
     /**
      * Lists the commit comments for a specified repository. Comments are ordered by
@@ -29494,7 +27615,7 @@ var BaseComments4 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Delete a commit comment
@@ -29509,9 +27630,9 @@ var BaseComments4 = /* @__PURE__ */ (() => {
      */
     delete(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/comments/${commentID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/comments/${commentID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -29535,7 +27656,7 @@ var Comments4 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/commits/comments.mjs
 var BaseComments5 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
+  class BaseComments7 extends APIResource {
     /**
      * Create a comment for a commit using its `:commit_sha`.
      *
@@ -29579,7 +27700,7 @@ var BaseComments5 = /* @__PURE__ */ (() => {
      */
     create(commitSha, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/commits/${commitSha}/comments`, {
+      return this._client.post(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, {
         body,
         ...options
       });
@@ -29615,7 +27736,7 @@ var BaseComments5 = /* @__PURE__ */ (() => {
      */
     list(commitSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits/${commitSha}/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, NumberedPage, { query, ...options });
     }
   }
   BaseComments7._key = Object.freeze([
@@ -29630,7 +27751,7 @@ var Comments5 = class extends BaseComments5 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
 var BaseCommits = /* @__PURE__ */ (() => {
-  class BaseCommits3 extends APIResource2 {
+  class BaseCommits3 extends APIResource {
     /**
      * Returns the contents of a single commit reference. You must have `read` access
      * for the repository to use this endpoint.
@@ -29698,7 +27819,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     retrieve(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}`, { query, ...options });
     }
     /**
      * **Signature verification object**
@@ -29746,7 +27867,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits`, NumberedPage, {
         query,
         ...options
       });
@@ -29773,7 +27894,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     listBranchesWhereHead(commitSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/commits/${commitSha}/branches-where-head`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${commitSha}/branches-where-head`, options);
     }
     /**
      * Lists check runs for a commit ref. The `ref` can be a SHA, branch name, or a tag
@@ -29804,7 +27925,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     listCheckRuns(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/check-runs`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-runs`, { query, ...options });
     }
     /**
      * Lists check suites for a commit `ref`. The `ref` can be a SHA, branch name, or a
@@ -29828,7 +27949,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     listCheckSuites(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/check-suites`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-suites`, { query, ...options });
     }
     /**
      * Lists the merged pull request that introduced the commit to the repository. If
@@ -29851,7 +27972,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     listPullRequests(commitSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits/${commitSha}/pulls`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/pulls`, NumberedPage, { query, ...options });
     }
     /**
      * Users with pull access in a repository can view commit statuses for a given ref.
@@ -29875,7 +27996,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     listStatuses(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits/${ref}/statuses`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${ref}/statuses`, NumberedPage, { query, ...options });
     }
     /**
      * Users with pull access in a repository can access a combined view of commit
@@ -29897,7 +28018,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
      */
     retrieveStatus(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/status`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/status`, { query, ...options });
     }
   }
   BaseCommits3._key = Object.freeze(["repos", "commits"]);
@@ -29917,7 +28038,7 @@ var Commits = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/dependabot/alerts.mjs
 var BaseAlerts2 = /* @__PURE__ */ (() => {
-  class BaseAlerts4 extends APIResource2 {
+  class BaseAlerts4 extends APIResource {
     /**
      * OAuth app tokens and personal access tokens (classic) need the `security_events`
      * scope to use this endpoint. If this endpoint is only used with public
@@ -29933,7 +28054,7 @@ var BaseAlerts2 = /* @__PURE__ */ (() => {
      */
     retrieve(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependabot/alerts/${alertNumber}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/dependabot/alerts/${alertNumber}`, options);
     }
     /**
      * The authenticated user must have access to security alerts for the repository to
@@ -29961,7 +28082,7 @@ var BaseAlerts2 = /* @__PURE__ */ (() => {
      */
     update(alertNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/dependabot/alerts/${alertNumber}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/dependabot/alerts/${alertNumber}`, {
         body,
         ...options
       });
@@ -29981,7 +28102,7 @@ var BaseAlerts2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependabot/alerts`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/dependabot/alerts`, { query, ...options });
     }
   }
   BaseAlerts4._key = Object.freeze([
@@ -29996,7 +28117,7 @@ var Alerts2 = class extends BaseAlerts2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/dependabot/secrets.mjs
 var BaseSecrets6 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Gets a single repository secret without revealing its encrypted value.
      *
@@ -30014,7 +28135,7 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
      */
     retrieve(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, options);
     }
     /**
      * Lists all secrets available in a repository without revealing their encrypted
@@ -30033,7 +28154,7 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependabot/secrets`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/dependabot/secrets`, { query, ...options });
     }
     /**
      * Deletes a secret in a repository using the secret name.
@@ -30051,9 +28172,9 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
      */
     delete(secretName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -30082,7 +28203,7 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, {
+      return this._client.put(path`/repos/${owner}/${repo}/dependabot/secrets/${secretName}`, {
         body,
         ...options
       });
@@ -30106,7 +28227,7 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
      */
     getPublicKey(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/dependabot/secrets/public-key`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/dependabot/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -30121,7 +28242,7 @@ var Secrets6 = class extends BaseSecrets6 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/dependabot/dependabot.mjs
 var BaseDependabot3 = /* @__PURE__ */ (() => {
-  class BaseDependabot4 extends APIResource2 {
+  class BaseDependabot4 extends APIResource {
   }
   BaseDependabot4._key = Object.freeze([
     "repos",
@@ -30146,7 +28267,7 @@ var Dependabot3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/deployments/statuses.mjs
 var BaseStatuses = /* @__PURE__ */ (() => {
-  class BaseStatuses2 extends APIResource2 {
+  class BaseStatuses2 extends APIResource {
     /**
      * Users with `push` access can create deployment statuses for a given deployment.
      *
@@ -30168,7 +28289,7 @@ var BaseStatuses = /* @__PURE__ */ (() => {
      */
     create(deploymentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/deployments/${deploymentID}/statuses`, {
+      return this._client.post(path`/repos/${owner}/${repo}/deployments/${deploymentID}/statuses`, {
         body,
         ...options
       });
@@ -30188,7 +28309,7 @@ var BaseStatuses = /* @__PURE__ */ (() => {
      */
     retrieve(statusID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, deployment_id } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/deployments/${deployment_id}/statuses/${statusID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/deployments/${deployment_id}/statuses/${statusID}`, options);
     }
     /**
      * Users with pull access can view deployment statuses for a deployment:
@@ -30206,7 +28327,7 @@ var BaseStatuses = /* @__PURE__ */ (() => {
      */
     list(deploymentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/deployments/${deploymentID}/statuses`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/deployments/${deploymentID}/statuses`, NumberedPage, { query, ...options });
     }
   }
   BaseStatuses2._key = Object.freeze([
@@ -30221,7 +28342,7 @@ var Statuses = class extends BaseStatuses {
 
 // node_modules/@stainless-api/github-internal/resources/repos/deployments/deployments.mjs
 var BaseDeployments = /* @__PURE__ */ (() => {
-  class BaseDeployments3 extends APIResource2 {
+  class BaseDeployments3 extends APIResource {
     /**
      * Deployments offer a few configurable parameters with certain defaults.
      *
@@ -30297,7 +28418,7 @@ var BaseDeployments = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/deployments`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/deployments`, { body, ...options });
     }
     /**
      * Get a deployment
@@ -30312,7 +28433,7 @@ var BaseDeployments = /* @__PURE__ */ (() => {
      */
     retrieve(deploymentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/deployments/${deploymentID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/deployments/${deploymentID}`, options);
     }
     /**
      * Simple filtering of deployments is available via query parameters:
@@ -30329,7 +28450,7 @@ var BaseDeployments = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/deployments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/deployments`, NumberedPage, { query, ...options });
     }
     /**
      * If the repository only has one deployment, you can delete the deployment
@@ -30362,9 +28483,9 @@ var BaseDeployments = /* @__PURE__ */ (() => {
      */
     delete(deploymentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/deployments/${deploymentID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/deployments/${deploymentID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -30388,7 +28509,7 @@ var Deployments = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-branch-policies.mjs
 var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
-  class BaseDeploymentBranchPolicies2 extends APIResource2 {
+  class BaseDeploymentBranchPolicies2 extends APIResource {
     /**
      * Creates a deployment branch or tag policy for an environment.
      *
@@ -30406,7 +28527,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
      */
     create(environmentName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/environments/${environmentName}/deployment-branch-policies`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/environments/${environmentName}/deployment-branch-policies`, { body, ...options });
     }
     /**
      * Gets a deployment branch or tag policy for an environment.
@@ -30431,7 +28552,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
      */
     retrieve(branchPolicyID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, options);
     }
     /**
      * Updates a deployment branch or tag policy for an environment.
@@ -30455,7 +28576,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
      */
     update(branchPolicyID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, { body, ...options });
     }
     /**
      * Lists the deployment branch policies for an environment.
@@ -30476,7 +28597,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
      */
     list(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/deployment-branch-policies`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/deployment-branch-policies`, { query, ...options });
     }
     /**
      * Deletes a deployment branch or tag policy for an environment.
@@ -30498,7 +28619,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
      */
     delete(branchPolicyID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/environments/${environment_name}/deployment-branch-policies/${branchPolicyID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseDeploymentBranchPolicies2._key = Object.freeze(["repos", "environments", "deploymentBranchPolicies"]);
@@ -30509,7 +28630,7 @@ var DeploymentBranchPolicies = class extends BaseDeploymentBranchPolicies {
 
 // node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-protection-rules.mjs
 var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
-  class BaseDeploymentProtectionRules2 extends APIResource2 {
+  class BaseDeploymentProtectionRules2 extends APIResource {
     /**
      * Enable a custom deployment protection rule for an environment.
      *
@@ -30536,7 +28657,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
      */
     create(environmentName, params, options) {
       const { repo = this._client.repo, owner = this._client.owner, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules`, { body, ...options });
     }
     /**
      * Gets an enabled custom deployment protection rule for an environment. Anyone
@@ -30566,7 +28687,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
      */
     retrieve(protectionRuleID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environment_name}/deployment_protection_rules/${protectionRuleID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environment_name}/deployment_protection_rules/${protectionRuleID}`, options);
     }
     /**
      * Gets all custom deployment protection rules that are enabled for an environment.
@@ -30592,7 +28713,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
      */
     list(environmentName, params = {}, options) {
       const { repo = this._client.repo, owner = this._client.owner } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules`, options);
     }
     /**
      * Disables a custom deployment protection rule for an environment.
@@ -30617,7 +28738,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
      */
     delete(protectionRuleID, params, options) {
       const { repo = this._client.repo, owner = this._client.owner, environment_name } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/environments/${environment_name}/deployment_protection_rules/${protectionRuleID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/environments/${environment_name}/deployment_protection_rules/${protectionRuleID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Gets all custom deployment protection rule integrations that are available for
@@ -30646,7 +28767,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
      */
     listApps(environmentName, params = {}, options) {
       const { repo = this._client.repo, owner = this._client.owner, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules/apps`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/deployment_protection_rules/apps`, { query, ...options });
     }
   }
   BaseDeploymentProtectionRules2._key = Object.freeze(["repos", "environments", "deploymentProtectionRules"]);
@@ -30657,7 +28778,7 @@ var DeploymentProtectionRules = class extends BaseDeploymentProtectionRules {
 
 // node_modules/@stainless-api/github-internal/resources/repos/environments/secrets.mjs
 var BaseSecrets7 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Gets a single environment secret without revealing its encrypted value.
      *
@@ -30682,7 +28803,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
      */
     retrieve(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, options);
     }
     /**
      * Lists all secrets available in an environment without revealing their encrypted
@@ -30705,7 +28826,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
      */
     list(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/secrets`, {
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/secrets`, {
         query,
         ...options
       });
@@ -30733,7 +28854,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
      */
     delete(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Creates or updates an environment secret with an encrypted value. Encrypt your
@@ -30765,7 +28886,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
      */
     createOrUpdate(secretName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/environments/${environment_name}/secrets/${secretName}`, { body, ...options });
     }
     /**
      * Get the public key for an environment, which you need to encrypt environment
@@ -30787,7 +28908,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
      */
     getPublicKey(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/secrets/public-key`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/secrets/public-key`, options);
     }
   }
   BaseSecrets9._key = Object.freeze([
@@ -30802,7 +28923,7 @@ var Secrets7 = class extends BaseSecrets7 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/environments/variables.mjs
 var BaseVariables3 = /* @__PURE__ */ (() => {
-  class BaseVariables4 extends APIResource2 {
+  class BaseVariables4 extends APIResource {
     /**
      * Create an environment variable that you can reference in a GitHub Actions
      * workflow.
@@ -30829,7 +28950,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
      */
     create(environmentName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/environments/${environmentName}/variables`, {
+      return this._client.post(path`/repos/${owner}/${repo}/environments/${environmentName}/variables`, {
         body,
         ...options
       });
@@ -30858,7 +28979,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
      */
     retrieve(name, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environment_name}/variables/${name}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environment_name}/variables/${name}`, options);
     }
     /**
      * Updates an environment variable that you can reference in a GitHub Actions
@@ -30883,7 +29004,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
      */
     update(pathName, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/environments/${environment_name}/variables/${pathName}`, { body, ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.patch(path`/repos/${owner}/${repo}/environments/${environment_name}/variables/${pathName}`, { body, ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Lists all environment variables.
@@ -30905,7 +29026,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
      */
     list(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}/variables`, {
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}/variables`, {
         query,
         ...options
       });
@@ -30930,7 +29051,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
      */
     delete(name, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, environment_name } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/environments/${environment_name}/variables/${name}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/environments/${environment_name}/variables/${name}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseVariables4._key = Object.freeze([
@@ -30945,7 +29066,7 @@ var Variables3 = class extends BaseVariables3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/environments/environments.mjs
 var BaseEnvironments = /* @__PURE__ */ (() => {
-  class BaseEnvironments2 extends APIResource2 {
+  class BaseEnvironments2 extends APIResource {
     /**
      * > [!NOTE] To get information about name patterns that branches must match in
      * > order to deploy to this environment, see
@@ -30967,7 +29088,7 @@ var BaseEnvironments = /* @__PURE__ */ (() => {
      */
     retrieve(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments/${environmentName}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/environments/${environmentName}`, options);
     }
     /**
      * Lists the environments for a repository.
@@ -30987,7 +29108,7 @@ var BaseEnvironments = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/environments`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/environments`, { query, ...options });
     }
     /**
      * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
@@ -31003,9 +29124,9 @@ var BaseEnvironments = /* @__PURE__ */ (() => {
      */
     delete(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/environments/${environmentName}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/environments/${environmentName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -31046,7 +29167,7 @@ var BaseEnvironments = /* @__PURE__ */ (() => {
      */
     createOrUpdate(environmentName, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/environments/${environmentName}`, {
+      return this._client.put(path`/repos/${owner}/${repo}/environments/${environmentName}`, {
         body,
         ...options
       });
@@ -31081,7 +29202,7 @@ var Environments = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/git-refs/blobs.mjs
 var BaseBlobs = /* @__PURE__ */ (() => {
-  class BaseBlobs2 extends APIResource2 {
+  class BaseBlobs2 extends APIResource {
     /**
      * Create a blob
      *
@@ -31097,7 +29218,7 @@ var BaseBlobs = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/git/blobs`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/git/blobs`, { body, ...options });
     }
     /**
      * The `content` in the response will always be Base64 encoded.
@@ -31123,7 +29244,7 @@ var BaseBlobs = /* @__PURE__ */ (() => {
      */
     retrieve(fileSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/blobs/${fileSha}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/git/blobs/${fileSha}`, options);
     }
   }
   BaseBlobs2._key = Object.freeze([
@@ -31138,7 +29259,7 @@ var Blobs = class extends BaseBlobs {
 
 // node_modules/@stainless-api/github-internal/resources/repos/git-refs/commits.mjs
 var BaseCommits2 = /* @__PURE__ */ (() => {
-  class BaseCommits3 extends APIResource2 {
+  class BaseCommits3 extends APIResource {
     /**
      * Creates a new Git
      * [commit object](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects).
@@ -31195,7 +29316,7 @@ var BaseCommits2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/git/commits`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/git/commits`, { body, ...options });
     }
     /**
      * Gets a Git
@@ -31246,7 +29367,7 @@ var BaseCommits2 = /* @__PURE__ */ (() => {
      */
     retrieve(commitSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/commits/${commitSha}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/git/commits/${commitSha}`, options);
     }
   }
   BaseCommits3._key = Object.freeze([
@@ -31261,7 +29382,7 @@ var Commits2 = class extends BaseCommits2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/git-refs/tags.mjs
 var BaseTags2 = /* @__PURE__ */ (() => {
-  class BaseTags3 extends APIResource2 {
+  class BaseTags3 extends APIResource {
     /**
      * Note that creating a tag object does not create the reference that makes a tag
      * in Git. If you want to create an annotated tag in Git, you have to do this call
@@ -31322,7 +29443,7 @@ var BaseTags2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/git/tags`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/git/tags`, { body, ...options });
     }
     /**
      * **Signature verification object**
@@ -31367,7 +29488,7 @@ var BaseTags2 = /* @__PURE__ */ (() => {
      */
     retrieve(tagSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/tags/${tagSha}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/git/tags/${tagSha}`, options);
     }
   }
   BaseTags3._key = Object.freeze([
@@ -31382,7 +29503,7 @@ var Tags2 = class extends BaseTags2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/git-refs/trees.mjs
 var BaseTrees = /* @__PURE__ */ (() => {
-  class BaseTrees2 extends APIResource2 {
+  class BaseTrees2 extends APIResource {
     /**
      * The tree creation API accepts nested entries. If you specify both a tree and a
      * nested path modifying that tree, this endpoint will overwrite the contents of
@@ -31416,7 +29537,7 @@ var BaseTrees = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/git/trees`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/git/trees`, { body, ...options });
     }
     /**
      * Returns a single tree using the SHA1 value or ref name for that tree.
@@ -31438,7 +29559,7 @@ var BaseTrees = /* @__PURE__ */ (() => {
      */
     retrieve(treeSha, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/trees/${treeSha}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/git/trees/${treeSha}`, { query, ...options });
     }
   }
   BaseTrees2._key = Object.freeze([
@@ -31453,7 +29574,7 @@ var Trees = class extends BaseTrees {
 
 // node_modules/@stainless-api/github-internal/resources/repos/git-refs/git-refs.mjs
 var BaseGitRefs = /* @__PURE__ */ (() => {
-  class BaseGitRefs2 extends APIResource2 {
+  class BaseGitRefs2 extends APIResource {
     /**
      * Creates a reference for your repository. You are unable to create new references
      * for empty repositories, even if the commit SHA-1 hash used exists. Empty
@@ -31471,7 +29592,7 @@ var BaseGitRefs = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/git/refs`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/git/refs`, { body, ...options });
     }
     /**
      * Returns a single reference from your Git database. The `:ref` in the URL must be
@@ -31494,7 +29615,7 @@ var BaseGitRefs = /* @__PURE__ */ (() => {
      */
     retrieve(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/ref/${ref}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/git/ref/${ref}`, options);
     }
     /**
      * Updates the provided reference to point to a new SHA. For more information, see
@@ -31516,7 +29637,7 @@ var BaseGitRefs = /* @__PURE__ */ (() => {
      */
     update(ref, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/git/refs/${ref}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/git/refs/${ref}`, { body, ...options });
     }
     /**
      * Deletes the provided reference.
@@ -31531,9 +29652,9 @@ var BaseGitRefs = /* @__PURE__ */ (() => {
      */
     delete(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/git/refs/${ref}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/git/refs/${ref}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -31568,7 +29689,7 @@ var BaseGitRefs = /* @__PURE__ */ (() => {
      */
     listMatching(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/git/matching-refs/${ref}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/git/matching-refs/${ref}`, options);
     }
   }
   BaseGitRefs2._key = Object.freeze(["repos", "gitRefs"]);
@@ -31597,7 +29718,7 @@ var GitRefs = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/hooks/config.mjs
 var BaseConfig3 = /* @__PURE__ */ (() => {
-  class BaseConfig4 extends APIResource2 {
+  class BaseConfig4 extends APIResource {
     /**
      * Returns the webhook configuration for a repository. To get more information
      * about the webhook, including the `active` state and `events`, use
@@ -31617,7 +29738,7 @@ var BaseConfig3 = /* @__PURE__ */ (() => {
      */
     retrieve(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/hooks/${hookID}/config`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/hooks/${hookID}/config`, options);
     }
     /**
      * Updates the webhook configuration for a repository. To update more information
@@ -31640,7 +29761,7 @@ var BaseConfig3 = /* @__PURE__ */ (() => {
      */
     update(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/hooks/${hookID}/config`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/hooks/${hookID}/config`, { body, ...options });
     }
   }
   BaseConfig4._key = Object.freeze([
@@ -31655,7 +29776,7 @@ var Config3 = class extends BaseConfig3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/hooks/deliveries.mjs
 var BaseDeliveries3 = /* @__PURE__ */ (() => {
-  class BaseDeliveries4 extends APIResource2 {
+  class BaseDeliveries4 extends APIResource {
     /**
      * Returns a delivery for a webhook configured in a repository.
      *
@@ -31671,7 +29792,7 @@ var BaseDeliveries3 = /* @__PURE__ */ (() => {
      */
     retrieve(deliveryID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, hook_id } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/hooks/${hook_id}/deliveries/${deliveryID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/hooks/${hook_id}/deliveries/${deliveryID}`, options);
     }
     /**
      * Returns a list of webhook deliveries for a webhook configured in a repository.
@@ -31689,7 +29810,7 @@ var BaseDeliveries3 = /* @__PURE__ */ (() => {
      */
     list(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/hooks/${hookID}/deliveries`, HypermediaPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/hooks/${hookID}/deliveries`, HypermediaPage, { query, ...options });
     }
     /**
      * Redeliver a webhook delivery for a webhook configured in a repository.
@@ -31706,7 +29827,7 @@ var BaseDeliveries3 = /* @__PURE__ */ (() => {
      */
     redeliver(deliveryID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, hook_id } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/hooks/${hook_id}/deliveries/${deliveryID}/attempts`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/hooks/${hook_id}/deliveries/${deliveryID}/attempts`, options);
     }
   }
   BaseDeliveries4._key = Object.freeze([
@@ -31721,7 +29842,7 @@ var Deliveries3 = class extends BaseDeliveries3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/hooks/hooks.mjs
 var BaseHooks2 = /* @__PURE__ */ (() => {
-  class BaseHooks3 extends APIResource2 {
+  class BaseHooks3 extends APIResource {
     /**
      * Repositories can have multiple webhooks installed. Each webhook should have a
      * unique `config`. Multiple webhooks can share the same `config` as long as those
@@ -31745,7 +29866,7 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     create(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/hooks`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/hooks`, { body, ...options });
     }
     /**
      * Returns a webhook configured in a repository. To get only the webhook `config`
@@ -31762,7 +29883,7 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     retrieve(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/hooks/${hookID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/hooks/${hookID}`, options);
     }
     /**
      * Updates a webhook configured in a repository. If you previously had a `secret`
@@ -31782,7 +29903,7 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     update(hookID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/hooks/${hookID}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/hooks/${hookID}`, { body, ...options });
     }
     /**
      * Lists webhooks for a repository. `last response` may return null if there have
@@ -31800,7 +29921,7 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/hooks`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/hooks`, NumberedPage, {
         query,
         ...options
       });
@@ -31821,9 +29942,9 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     delete(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/hooks/${hookID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/hooks/${hookID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -31840,9 +29961,9 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     ping(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/hooks/${hookID}/pings`, {
+      return this._client.post(path`/repos/${owner}/${repo}/hooks/${hookID}/pings`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -31862,9 +29983,9 @@ var BaseHooks2 = /* @__PURE__ */ (() => {
      */
     test(hookID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/hooks/${hookID}/tests`, {
+      return this._client.post(path`/repos/${owner}/${repo}/hooks/${hookID}/tests`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -31888,7 +30009,7 @@ var Hooks2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/assignees.mjs
 var BaseAssignees2 = /* @__PURE__ */ (() => {
-  class BaseAssignees3 extends APIResource2 {
+  class BaseAssignees3 extends APIResource {
     /**
      * Adds up to 10 assignees to an issue. Users already assigned to an issue are not
      * replaced.
@@ -31904,7 +30025,7 @@ var BaseAssignees2 = /* @__PURE__ */ (() => {
      */
     add(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/assignees`, {
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/assignees`, {
         body,
         ...options
       });
@@ -31928,9 +30049,9 @@ var BaseAssignees2 = /* @__PURE__ */ (() => {
      */
     check(assignee, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, issue_number } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/${issue_number}/assignees/${assignee}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/issues/${issue_number}/assignees/${assignee}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -31950,7 +30071,7 @@ var BaseAssignees2 = /* @__PURE__ */ (() => {
      */
     remove(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issueNumber}/assignees`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issueNumber}/assignees`, {
         body,
         ...options
       });
@@ -31968,7 +30089,7 @@ var Assignees2 = class extends BaseAssignees2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/events.mjs
 var BaseEvents2 = /* @__PURE__ */ (() => {
-  class BaseEvents4 extends APIResource2 {
+  class BaseEvents4 extends APIResource {
     /**
      * Gets a single event by the event id.
      *
@@ -31982,7 +30103,7 @@ var BaseEvents2 = /* @__PURE__ */ (() => {
      */
     retrieve(eventID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/events/${eventID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/issues/events/${eventID}`, options);
     }
     /**
      * Lists all events for an issue.
@@ -32000,7 +30121,7 @@ var BaseEvents2 = /* @__PURE__ */ (() => {
      */
     list(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/events`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/events`, NumberedPage, { query, ...options });
     }
   }
   BaseEvents4._key = Object.freeze([
@@ -32015,7 +30136,7 @@ var Events2 = class extends BaseEvents2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/labels.mjs
 var BaseLabels4 = /* @__PURE__ */ (() => {
-  class BaseLabels5 extends APIResource2 {
+  class BaseLabels5 extends APIResource {
     /**
      * Lists all labels for an issue.
      *
@@ -32032,7 +30153,7 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
      */
     list(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, NumberedPage, { query, ...options });
     }
     /**
      * Adds labels to an issue. If you provide an empty array of labels, all labels are
@@ -32049,7 +30170,7 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
      */
     add(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, {
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, {
         body,
         ...options
       });
@@ -32069,7 +30190,7 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
      */
     remove(name, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, issue_number } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issue_number}/labels/${name}`, options);
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issue_number}/labels/${name}`, options);
     }
     /**
      * Removes all labels from an issue.
@@ -32084,9 +30205,9 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
      */
     removeAll(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -32103,7 +30224,7 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
      */
     set(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/issues/${issueNumber}/labels`, { body, ...options });
     }
   }
   BaseLabels5._key = Object.freeze([
@@ -32118,7 +30239,7 @@ var Labels4 = class extends BaseLabels4 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/lock.mjs
 var BaseLock = /* @__PURE__ */ (() => {
-  class BaseLock2 extends APIResource2 {
+  class BaseLock2 extends APIResource {
     /**
      * Users with push access can lock an issue or pull request's conversation.
      *
@@ -32138,10 +30259,10 @@ var BaseLock = /* @__PURE__ */ (() => {
      */
     lock(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/issues/${issueNumber}/lock`, {
+      return this._client.put(path`/repos/${owner}/${repo}/issues/${issueNumber}/lock`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -32157,9 +30278,9 @@ var BaseLock = /* @__PURE__ */ (() => {
      */
     unlock(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issueNumber}/lock`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issueNumber}/lock`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -32175,7 +30296,7 @@ var Lock = class extends BaseLock {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/reactions.mjs
 var BaseReactions5 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to an
      * [issue](https://docs.github.com/rest/issues/issues#get-an-issue). A response
@@ -32192,7 +30313,7 @@ var BaseReactions5 = /* @__PURE__ */ (() => {
      */
     create(issueNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/reactions`, {
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/reactions`, {
         body,
         ...options
       });
@@ -32214,7 +30335,7 @@ var BaseReactions5 = /* @__PURE__ */ (() => {
      */
     list(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a repository by `repository_id` using the route
@@ -32234,9 +30355,9 @@ var BaseReactions5 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, issue_number } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issue_number}/reactions/${reactionID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issue_number}/reactions/${reactionID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -32252,7 +30373,7 @@ var Reactions5 = class extends BaseReactions5 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/sub-issues.mjs
 var BaseSubIssues = /* @__PURE__ */ (() => {
-  class BaseSubIssues2 extends APIResource2 {
+  class BaseSubIssues2 extends APIResource {
     /**
      * You can use the REST API to list the sub-issues on an issue.
      *
@@ -32283,7 +30404,7 @@ var BaseSubIssues = /* @__PURE__ */ (() => {
      */
     list(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`, NumberedPage, { query, ...options });
     }
     /**
      * You can use the REST API to add sub-issues to issues.
@@ -32319,7 +30440,7 @@ var BaseSubIssues = /* @__PURE__ */ (() => {
      */
     add(issueNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`, {
+      return this._client.post(path`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues`, {
         body,
         ...options
       });
@@ -32341,7 +30462,7 @@ var BaseSubIssues = /* @__PURE__ */ (() => {
      */
     reprioritize(issueNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues/priority`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issues/priority`, {
         body,
         ...options
       });
@@ -32359,7 +30480,7 @@ var SubIssues = class extends BaseSubIssues {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/timeline.mjs
 var BaseTimeline = /* @__PURE__ */ (() => {
-  class BaseTimeline2 extends APIResource2 {
+  class BaseTimeline2 extends APIResource {
     /**
      * List all timeline events for an issue.
      *
@@ -32376,7 +30497,7 @@ var BaseTimeline = /* @__PURE__ */ (() => {
      */
     list(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/timeline`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/${issueNumber}/timeline`, NumberedPage, { query, ...options });
     }
   }
   BaseTimeline2._key = Object.freeze([
@@ -32391,7 +30512,7 @@ var Timeline = class extends BaseTimeline {
 
 // node_modules/@stainless-api/github-internal/resources/repos/issues/issues.mjs
 var BaseIssues2 = /* @__PURE__ */ (() => {
-  class BaseIssues3 extends APIResource2 {
+  class BaseIssues3 extends APIResource {
     /**
      * Any user with pull access to a repository can create an issue. If
      * [issues are disabled in the repository](https://docs.github.com/articles/disabling-issues/),
@@ -32434,7 +30555,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/issues`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/issues`, { body, ...options });
     }
     /**
      * The API returns a
@@ -32481,7 +30602,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     retrieve(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/issues/${issueNumber}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/issues/${issueNumber}`, options);
     }
     /**
      * Issue owners and users with push access or Triage role can edit an issue.
@@ -32516,7 +30637,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     update(issueNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/issues/${issueNumber}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/issues/${issueNumber}`, { body, ...options });
     }
     /**
      * List issues in a repository. Only open issues will be listed.
@@ -32557,7 +30678,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues`, NumberedPage, {
         query,
         ...options
       });
@@ -32595,7 +30716,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     listComments(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Lists events for a repository.
@@ -32612,7 +30733,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     listEvents(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/events`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/issues/events`, NumberedPage, { query, ...options });
     }
     /**
      * You can use the REST API to remove a sub-issue from an issue. Removing content
@@ -32646,7 +30767,7 @@ var BaseIssues2 = /* @__PURE__ */ (() => {
      */
     removeSubIssue(issueNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issue`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/issues/${issueNumber}/sub_issue`, {
         body,
         ...options
       });
@@ -32690,7 +30811,7 @@ var Issues2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pages/builds.mjs
 var BaseBuilds = /* @__PURE__ */ (() => {
-  class BaseBuilds2 extends APIResource2 {
+  class BaseBuilds2 extends APIResource {
     /**
      * Gets information about a GitHub Pages build.
      *
@@ -32707,7 +30828,7 @@ var BaseBuilds = /* @__PURE__ */ (() => {
      */
     retrieve(buildID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pages/builds/${buildID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pages/builds/${buildID}`, options);
     }
     /**
      * Lists builts of a GitHub Pages site.
@@ -32727,7 +30848,7 @@ var BaseBuilds = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pages/builds`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pages/builds`, NumberedPage, { query, ...options });
     }
     /**
      * Gets information about the single most recent build of a GitHub Pages site.
@@ -32745,7 +30866,7 @@ var BaseBuilds = /* @__PURE__ */ (() => {
      */
     getLatest(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pages/builds/latest`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pages/builds/latest`, options);
     }
     /**
      * You can request that your site be built from the latest revision on the default
@@ -32767,7 +30888,7 @@ var BaseBuilds = /* @__PURE__ */ (() => {
      */
     request(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/pages/builds`, options);
+      return this._client.post(path`/repos/${owner}/${repo}/pages/builds`, options);
     }
   }
   BaseBuilds2._key = Object.freeze([
@@ -32777,12 +30898,12 @@ var BaseBuilds = /* @__PURE__ */ (() => {
   ]);
   return BaseBuilds2;
 })();
-var Builds2 = class extends BaseBuilds {
+var Builds = class extends BaseBuilds {
 };
 
 // node_modules/@stainless-api/github-internal/resources/repos/pages/deployments.mjs
 var BaseDeployments2 = /* @__PURE__ */ (() => {
-  class BaseDeployments3 extends APIResource2 {
+  class BaseDeployments3 extends APIResource {
     /**
      * Create a GitHub Pages deployment for a repository.
      *
@@ -32805,7 +30926,7 @@ var BaseDeployments2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pages/deployments`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/pages/deployments`, { body, ...options });
     }
     /**
      * Cancels a GitHub Pages deployment.
@@ -32822,9 +30943,9 @@ var BaseDeployments2 = /* @__PURE__ */ (() => {
      */
     cancel(pagesDeploymentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/pages/deployments/${pagesDeploymentID}/cancel`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pages/deployments/${pagesDeploymentID}/cancel`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -32843,7 +30964,7 @@ var BaseDeployments2 = /* @__PURE__ */ (() => {
      */
     getStatus(pagesDeploymentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pages/deployments/${pagesDeploymentID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pages/deployments/${pagesDeploymentID}`, options);
     }
   }
   BaseDeployments3._key = Object.freeze([
@@ -32858,7 +30979,7 @@ var Deployments2 = class extends BaseDeployments2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pages/pages.mjs
 var BasePages = /* @__PURE__ */ (() => {
-  class BasePages2 extends APIResource2 {
+  class BasePages2 extends APIResource {
     /**
      * Configures a GitHub Pages site. For more information, see
      * "[About GitHub Pages](/github/working-with-github-pages/about-github-pages)."
@@ -32880,7 +31001,7 @@ var BasePages = /* @__PURE__ */ (() => {
      */
     create(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/pages`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/pages`, { body, ...options });
     }
     /**
      * Gets information about a GitHub Pages site.
@@ -32898,7 +31019,7 @@ var BasePages = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pages`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pages`, options);
     }
     /**
      * Updates information for a GitHub Pages site. For more information, see
@@ -32922,10 +31043,10 @@ var BasePages = /* @__PURE__ */ (() => {
      */
     update(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/pages`, {
+      return this._client.put(path`/repos/${owner}/${repo}/pages`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -32948,9 +31069,9 @@ var BasePages = /* @__PURE__ */ (() => {
      */
     delete(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/pages`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/pages`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -32978,7 +31099,7 @@ var BasePages = /* @__PURE__ */ (() => {
      */
     getHealth(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pages/health`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pages/health`, options);
     }
   }
   BasePages2._key = Object.freeze(["repos", "pages"]);
@@ -32988,11 +31109,11 @@ var Pages = /* @__PURE__ */ (() => {
   class Pages2 extends BasePages {
     constructor() {
       super(...arguments);
-      this.builds = new Builds2(this._client);
+      this.builds = new Builds(this._client);
       this.deployments = new Deployments2(this._client);
     }
   }
-  Pages2.Builds = Builds2;
+  Pages2.Builds = Builds;
   Pages2.BaseBuilds = BaseBuilds;
   Pages2.Deployments = Deployments2;
   Pages2.BaseDeployments = BaseDeployments2;
@@ -33001,7 +31122,7 @@ var Pages = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/properties/values.mjs
 var BaseValues2 = /* @__PURE__ */ (() => {
-  class BaseValues3 extends APIResource2 {
+  class BaseValues3 extends APIResource {
     /**
      * Gets all custom property values that are set for a repository. Users with read
      * access to the repository can use this endpoint.
@@ -33017,7 +31138,7 @@ var BaseValues2 = /* @__PURE__ */ (() => {
      */
     getAll(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/properties/values`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/properties/values`, options);
     }
     /**
      * Create new or update existing custom property values for a repository. Using a
@@ -33042,10 +31163,10 @@ var BaseValues2 = /* @__PURE__ */ (() => {
      */
     updateOrCreate(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/properties/values`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/properties/values`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -33061,7 +31182,7 @@ var Values2 = class extends BaseValues2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/properties/properties.mjs
 var BaseProperties2 = /* @__PURE__ */ (() => {
-  class BaseProperties3 extends APIResource2 {
+  class BaseProperties3 extends APIResource {
   }
   BaseProperties3._key = Object.freeze([
     "repos",
@@ -33083,7 +31204,7 @@ var Properties2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/merge.mjs
 var BaseMerge = /* @__PURE__ */ (() => {
-  class BaseMerge2 extends APIResource2 {
+  class BaseMerge2 extends APIResource {
     /**
      * Checks if a pull request has been merged into the base branch. The HTTP status
      * of the response indicates whether or not the pull request has been merged; the
@@ -33099,9 +31220,9 @@ var BaseMerge = /* @__PURE__ */ (() => {
      */
     check(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, {
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -33126,7 +31247,7 @@ var BaseMerge = /* @__PURE__ */ (() => {
      */
     perform(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pullNumber}/merge`, { body, ...options });
     }
   }
   BaseMerge2._key = Object.freeze([
@@ -33141,7 +31262,7 @@ var Merge = class extends BaseMerge {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/requested-reviewers.mjs
 var BaseRequestedReviewers = /* @__PURE__ */ (() => {
-  class BaseRequestedReviewers2 extends APIResource2 {
+  class BaseRequestedReviewers2 extends APIResource {
     /**
      * Gets the users or teams whose review is requested for a pull request. Once a
      * requested reviewer submits a review, they are no longer considered a requested
@@ -33160,7 +31281,7 @@ var BaseRequestedReviewers = /* @__PURE__ */ (() => {
      */
     list(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, options);
     }
     /**
      * Removes review requests from a pull request for a given set of users and/or
@@ -33179,7 +31300,7 @@ var BaseRequestedReviewers = /* @__PURE__ */ (() => {
      */
     remove(pullNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
         body,
         ...options
       });
@@ -33207,7 +31328,7 @@ var BaseRequestedReviewers = /* @__PURE__ */ (() => {
      */
     request(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/requested_reviewers`, {
         body,
         ...options
       });
@@ -33225,7 +31346,7 @@ var RequestedReviewers = class extends BaseRequestedReviewers {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/reviews.mjs
 var BaseReviews = /* @__PURE__ */ (() => {
-  class BaseReviews2 extends APIResource2 {
+  class BaseReviews2 extends APIResource {
     /**
      * Creates a review on a specified pull request.
      *
@@ -33291,7 +31412,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     create(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, { body, ...options });
     }
     /**
      * Retrieves a pull request review by its ID.
@@ -33321,7 +31442,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     retrieve(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, options);
     }
     /**
      * Updates the contents of a specified review summary comment.
@@ -33353,7 +31474,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     update(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, {
+      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, {
         body,
         ...options
       });
@@ -33390,7 +31511,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     list(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/reviews`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a pull request review that has not been submitted. Submitted reviews
@@ -33422,7 +31543,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     delete(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, options);
+      return this._client.delete(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}`, options);
     }
     /**
      * Dismisses a specified review on a pull request.
@@ -33463,7 +31584,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     dismiss(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number, ...body } = params;
-      return this._client.put(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/dismissals`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/dismissals`, { body, ...options });
     }
     /**
      * Lists comments for a specific pull request review.
@@ -33496,7 +31617,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     listComments(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number, ...query } = params;
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Submits a pending review for a pull request. For more information about creating
@@ -33534,7 +31655,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
      */
     submit(reviewID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/events`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pull_number}/reviews/${reviewID}/events`, {
         body,
         ...options
       });
@@ -33552,7 +31673,7 @@ var Reviews = class extends BaseReviews {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/reactions.mjs
 var BaseReactions6 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to a
      * [pull request review comment](https://docs.github.com/rest/pulls/comments#get-a-review-comment-for-a-pull-request).
@@ -33571,7 +31692,7 @@ var BaseReactions6 = /* @__PURE__ */ (() => {
      */
     create(commentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/comments/${commentID}/reactions`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/comments/${commentID}/reactions`, {
         body,
         ...options
       });
@@ -33593,7 +31714,7 @@ var BaseReactions6 = /* @__PURE__ */ (() => {
      */
     list(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/comments/${commentID}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a repository by `repository_id` using the route
@@ -33613,7 +31734,7 @@ var BaseReactions6 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, comment_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/pulls/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/repos/${owner}/${repo}/pulls/comments/${comment_id}/reactions/${reactionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseReactions8._key = Object.freeze([
@@ -33629,7 +31750,7 @@ var Reactions6 = class extends BaseReactions6 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/comments.mjs
 var BaseComments6 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource2 {
+  class BaseComments7 extends APIResource {
     /**
      * Provides details for a specified review comment.
      *
@@ -33658,7 +31779,7 @@ var BaseComments6 = /* @__PURE__ */ (() => {
      */
     retrieve(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pulls/comments/${commentID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/comments/${commentID}`, options);
     }
     /**
      * Edits the content of a specified review comment.
@@ -33692,7 +31813,7 @@ var BaseComments6 = /* @__PURE__ */ (() => {
      */
     update(commentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/pulls/comments/${commentID}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/pulls/comments/${commentID}`, {
         body,
         ...options
       });
@@ -33728,7 +31849,7 @@ var BaseComments6 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Deletes a review comment.
@@ -33743,9 +31864,9 @@ var BaseComments6 = /* @__PURE__ */ (() => {
      */
     delete(commentID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/pulls/comments/${commentID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/pulls/comments/${commentID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -33792,7 +31913,7 @@ var BaseComments6 = /* @__PURE__ */ (() => {
      */
     reply(commentID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, pull_number, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pull_number}/comments/${commentID}/replies`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pull_number}/comments/${commentID}/replies`, { body, ...options });
     }
   }
   BaseComments7._key = Object.freeze([
@@ -33816,7 +31937,7 @@ var Comments6 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
 var BasePulls = /* @__PURE__ */ (() => {
-  class BasePulls2 extends APIResource2 {
+  class BasePulls2 extends APIResource {
     /**
      * Draft pull requests are available in public repositories with GitHub Free and
      * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
@@ -33866,7 +31987,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/pulls`, { body, ...options });
     }
     /**
      * Draft pull requests are available in public repositories with GitHub Free and
@@ -33944,7 +32065,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     retrieve(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/pulls/${pullNumber}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, options);
     }
     /**
      * Draft pull requests are available in public repositories with GitHub Free and
@@ -33987,7 +32108,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     update(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/pulls/${pullNumber}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, { body, ...options });
     }
     /**
      * Lists pull requests in a specified repository.
@@ -34025,7 +32146,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls`, NumberedPage, {
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls`, NumberedPage, {
         query,
         ...options
       });
@@ -34047,7 +32168,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     createCodespace(pullNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/codespaces`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/codespaces`, {
         body,
         ...options
       });
@@ -34104,7 +32225,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     createComment(pullNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {
         body,
         ...options
       });
@@ -34141,7 +32262,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     listComments(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, NumberedPage, { query, ...options });
     }
     /**
      * Lists a maximum of 250 commits for a pull request. To receive a complete commit
@@ -34176,7 +32297,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     listCommits(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/commits`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/commits`, NumberedPage, { query, ...options });
     }
     /**
      * Lists the files in a specified pull request.
@@ -34211,7 +32332,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     listFiles(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/files`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/files`, NumberedPage, { query, ...options });
     }
     /**
      * Updates the pull request branch with the latest upstream changes by merging HEAD
@@ -34231,7 +32352,7 @@ var BasePulls = /* @__PURE__ */ (() => {
      */
     updateBranch(pullNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/update-branch`, {
+      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pullNumber}/update-branch`, {
         body,
         ...options
       });
@@ -34263,7 +32384,7 @@ var Pulls = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/releases/assets.mjs
 var BaseAssets = /* @__PURE__ */ (() => {
-  class BaseAssets2 extends APIResource2 {
+  class BaseAssets2 extends APIResource {
     /**
      * To download the asset's binary content:
      *
@@ -34285,7 +32406,7 @@ var BaseAssets = /* @__PURE__ */ (() => {
      */
     retrieve(assetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/releases/assets/${assetID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/releases/assets/${assetID}`, options);
     }
     /**
      * Users with push access to the repository can edit a release asset.
@@ -34303,7 +32424,7 @@ var BaseAssets = /* @__PURE__ */ (() => {
      */
     update(assetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/releases/assets/${assetID}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/releases/assets/${assetID}`, { body, ...options });
     }
     /**
      * List release assets
@@ -34321,7 +32442,7 @@ var BaseAssets = /* @__PURE__ */ (() => {
      */
     list(releaseID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/releases/${releaseID}/assets`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/releases/${releaseID}/assets`, NumberedPage, { query, ...options });
     }
     /**
      * Delete a release asset
@@ -34336,9 +32457,9 @@ var BaseAssets = /* @__PURE__ */ (() => {
      */
     delete(assetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/releases/assets/${assetID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/releases/assets/${assetID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -34354,7 +32475,7 @@ var Assets = class extends BaseAssets {
 
 // node_modules/@stainless-api/github-internal/resources/repos/releases/reactions.mjs
 var BaseReactions7 = /* @__PURE__ */ (() => {
-  class BaseReactions8 extends APIResource2 {
+  class BaseReactions8 extends APIResource {
     /**
      * Create a reaction to a
      * [release](https://docs.github.com/rest/releases/releases#get-a-release). A
@@ -34373,7 +32494,7 @@ var BaseReactions7 = /* @__PURE__ */ (() => {
      */
     create(releaseID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/releases/${releaseID}/reactions`, {
+      return this._client.post(path`/repos/${owner}/${repo}/releases/${releaseID}/reactions`, {
         body,
         ...options
       });
@@ -34395,7 +32516,7 @@ var BaseReactions7 = /* @__PURE__ */ (() => {
      */
     list(releaseID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/releases/${releaseID}/reactions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/releases/${releaseID}/reactions`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] You can also specify a repository by `repository_id` using the route
@@ -34415,9 +32536,9 @@ var BaseReactions7 = /* @__PURE__ */ (() => {
      */
     delete(reactionID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, release_id } = params;
-      return this._client.delete(path2`/repos/${owner}/${repo}/releases/${release_id}/reactions/${reactionID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/releases/${release_id}/reactions/${reactionID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -34433,7 +32554,7 @@ var Reactions7 = class extends BaseReactions7 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/releases/releases.mjs
 var BaseReleases = /* @__PURE__ */ (() => {
-  class BaseReleases2 extends APIResource2 {
+  class BaseReleases2 extends APIResource {
     /**
      * Users with push access to the repository can create a release.
      *
@@ -34459,7 +32580,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/releases`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/releases`, { body, ...options });
     }
     /**
      * Users with push access to the repository can edit a release.
@@ -34478,7 +32599,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     update(releaseID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}/releases/${releaseID}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}/releases/${releaseID}`, { body, ...options });
     }
     /**
      * This returns a list of releases, which does not include regular Git tags that
@@ -34500,7 +32621,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/releases`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/releases`, NumberedPage, { query, ...options });
     }
     /**
      * Users with push access to the repository can delete a release.
@@ -34515,9 +32636,9 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     delete(releaseID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/releases/${releaseID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/releases/${releaseID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -34543,7 +32664,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     generateNotes(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/releases/generate-notes`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/releases/generate-notes`, { body, ...options });
     }
     /**
      * Gets a public release with the specified release ID.
@@ -34563,7 +32684,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     retrieveByID(releaseID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/releases/${releaseID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/releases/${releaseID}`, options);
     }
     /**
      * Get a published release with the specified tag.
@@ -34578,7 +32699,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     retrieveByTag(tag, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/releases/tags/${tag}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/releases/tags/${tag}`, options);
     }
     /**
      * View the latest published full release for the repository.
@@ -34597,7 +32718,7 @@ var BaseReleases = /* @__PURE__ */ (() => {
      */
     retrieveLatest(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/releases/latest`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/releases/latest`, options);
     }
   }
   BaseReleases2._key = Object.freeze([
@@ -34623,7 +32744,7 @@ var Releases = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/rulesets/history.mjs
 var BaseHistory2 = /* @__PURE__ */ (() => {
-  class BaseHistory3 extends APIResource2 {
+  class BaseHistory3 extends APIResource {
     /**
      * Get the history of a repository ruleset.
      *
@@ -34638,7 +32759,7 @@ var BaseHistory2 = /* @__PURE__ */ (() => {
      */
     retrieve(rulesetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/rulesets/${rulesetID}/history`, {
+      return this._client.get(path`/repos/${owner}/${repo}/rulesets/${rulesetID}/history`, {
         query,
         ...options
       });
@@ -34658,7 +32779,7 @@ var BaseHistory2 = /* @__PURE__ */ (() => {
      */
     retrieveVersion(versionID, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ruleset_id } = params;
-      return this._client.get(path2`/repos/${owner}/${repo}/rulesets/${ruleset_id}/history/${versionID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/rulesets/${ruleset_id}/history/${versionID}`, options);
     }
   }
   BaseHistory3._key = Object.freeze([
@@ -34673,7 +32794,7 @@ var History2 = class extends BaseHistory2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/rulesets/rule-suites.mjs
 var BaseRuleSuites2 = /* @__PURE__ */ (() => {
-  class BaseRuleSuites3 extends APIResource2 {
+  class BaseRuleSuites3 extends APIResource {
     /**
      * Gets information about a suite of rule evaluations from within a repository. For
      * more information, see
@@ -34690,7 +32811,7 @@ var BaseRuleSuites2 = /* @__PURE__ */ (() => {
      */
     retrieve(ruleSuiteID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/rulesets/rule-suites/${ruleSuiteID}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/rulesets/rule-suites/${ruleSuiteID}`, options);
     }
     /**
      * Lists suites of rule evaluations at the repository level. For more information,
@@ -34709,7 +32830,7 @@ var BaseRuleSuites2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/rulesets/rule-suites`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/rulesets/rule-suites`, NumberedPage, { query, ...options });
     }
   }
   BaseRuleSuites3._key = Object.freeze([
@@ -34724,7 +32845,7 @@ var RuleSuites2 = class extends BaseRuleSuites2 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/rulesets/rulesets.mjs
 var BaseRulesets2 = /* @__PURE__ */ (() => {
-  class BaseRulesets3 extends APIResource2 {
+  class BaseRulesets3 extends APIResource {
     /**
      * Create a ruleset for a repository.
      *
@@ -34763,7 +32884,7 @@ var BaseRulesets2 = /* @__PURE__ */ (() => {
      */
     create(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/rulesets`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/rulesets`, { body, ...options });
     }
     /**
      * Get a ruleset for a repository.
@@ -34782,7 +32903,7 @@ var BaseRulesets2 = /* @__PURE__ */ (() => {
      */
     retrieve(rulesetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/rulesets/${rulesetID}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/rulesets/${rulesetID}`, { query, ...options });
     }
     /**
      * Update a ruleset for a repository.
@@ -34822,7 +32943,7 @@ var BaseRulesets2 = /* @__PURE__ */ (() => {
      */
     update(rulesetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path2`/repos/${owner}/${repo}/rulesets/${rulesetID}`, { body, ...options });
+      return this._client.put(path`/repos/${owner}/${repo}/rulesets/${rulesetID}`, { body, ...options });
     }
     /**
      * Get all the rulesets for a repository.
@@ -34839,7 +32960,7 @@ var BaseRulesets2 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/rulesets`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/rulesets`, NumberedPage, { query, ...options });
     }
     /**
      * Delete a ruleset for a repository.
@@ -34854,9 +32975,9 @@ var BaseRulesets2 = /* @__PURE__ */ (() => {
      */
     delete(rulesetID, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}/rulesets/${rulesetID}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}/rulesets/${rulesetID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -34883,7 +33004,7 @@ var Rulesets2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/alerts.mjs
 var BaseAlerts3 = /* @__PURE__ */ (() => {
-  class BaseAlerts4 extends APIResource2 {
+  class BaseAlerts4 extends APIResource {
     /**
      * Gets a single secret scanning alert detected in an eligible repository.
      *
@@ -34905,7 +33026,7 @@ var BaseAlerts3 = /* @__PURE__ */ (() => {
      */
     retrieve(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}`, {
         query,
         ...options
       });
@@ -34933,7 +33054,7 @@ var BaseAlerts3 = /* @__PURE__ */ (() => {
      */
     update(alertNumber, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.patch(path2`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}`, {
+      return this._client.patch(path`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}`, {
         body,
         ...options
       });
@@ -34960,7 +33081,7 @@ var BaseAlerts3 = /* @__PURE__ */ (() => {
      */
     list(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/secret-scanning/alerts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/secret-scanning/alerts`, NumberedPage, { query, ...options });
     }
     /**
      * Lists all locations for a given secret scanning alert for an eligible
@@ -34986,7 +33107,7 @@ var BaseAlerts3 = /* @__PURE__ */ (() => {
      */
     listLocations(alertNumber, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}/locations`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/secret-scanning/alerts/${alertNumber}/locations`, NumberedPage, { query, ...options });
     }
   }
   BaseAlerts4._key = Object.freeze([
@@ -35001,7 +33122,7 @@ var Alerts3 = class extends BaseAlerts3 {
 
 // node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/secret-scanning.mjs
 var BaseSecretScanning3 = /* @__PURE__ */ (() => {
-  class BaseSecretScanning4 extends APIResource2 {
+  class BaseSecretScanning4 extends APIResource {
     /**
      * Creates a bypass for a previously push protected secret.
      *
@@ -35025,7 +33146,7 @@ var BaseSecretScanning3 = /* @__PURE__ */ (() => {
      */
     createPushProtectionBypass(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/secret-scanning/push-protection-bypasses`, {
+      return this._client.post(path`/repos/${owner}/${repo}/secret-scanning/push-protection-bypasses`, {
         body,
         ...options
       });
@@ -35049,7 +33170,7 @@ var BaseSecretScanning3 = /* @__PURE__ */ (() => {
      */
     getScanHistory(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/secret-scanning/scan-history`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/secret-scanning/scan-history`, options);
     }
   }
   BaseSecretScanning4._key = Object.freeze([
@@ -35072,7 +33193,7 @@ var SecretScanning3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/traffic/popular.mjs
 var BasePopular = /* @__PURE__ */ (() => {
-  class BasePopular2 extends APIResource2 {
+  class BasePopular2 extends APIResource {
     /**
      * Get the top 10 popular contents over the last 14 days.
      *
@@ -35087,7 +33208,7 @@ var BasePopular = /* @__PURE__ */ (() => {
      */
     getPaths(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/traffic/popular/paths`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/traffic/popular/paths`, options);
     }
     /**
      * Get the top 10 referrers over the last 14 days.
@@ -35103,7 +33224,7 @@ var BasePopular = /* @__PURE__ */ (() => {
      */
     getReferrers(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/traffic/popular/referrers`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/traffic/popular/referrers`, options);
     }
   }
   BasePopular2._key = Object.freeze([
@@ -35118,7 +33239,7 @@ var Popular = class extends BasePopular {
 
 // node_modules/@stainless-api/github-internal/resources/repos/traffic/traffic.mjs
 var BaseTraffic = /* @__PURE__ */ (() => {
-  class BaseTraffic2 extends APIResource2 {
+  class BaseTraffic2 extends APIResource {
     /**
      * Get the total number of clones and breakdown per day or week for the last 14
      * days. Timestamps are aligned to UTC midnight of the beginning of the day or
@@ -35134,7 +33255,7 @@ var BaseTraffic = /* @__PURE__ */ (() => {
      */
     getClones(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/traffic/clones`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/traffic/clones`, { query, ...options });
     }
     /**
      * Get the total number of views and breakdown per day or week for the last 14
@@ -35151,7 +33272,7 @@ var BaseTraffic = /* @__PURE__ */ (() => {
      */
     getViews(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/traffic/views`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/traffic/views`, { query, ...options });
     }
   }
   BaseTraffic2._key = Object.freeze(["repos", "traffic"]);
@@ -35171,7 +33292,7 @@ var Traffic = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
 var BaseRepos3 = /* @__PURE__ */ (() => {
-  class BaseRepos6 extends APIResource2 {
+  class BaseRepos6 extends APIResource {
     constructor() {
       super(...arguments);
       this._client_search = new Search(this._client);
@@ -35239,7 +33360,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     retrieve(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}`, options);
+      return this._client.get(path`/repos/${owner}/${repo}`, options);
     }
     /**
      * **Note**: To edit a repository's topics, use the
@@ -35263,7 +33384,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     update(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path2`/repos/${owner}/${repo}`, { body, ...options });
+      return this._client.patch(path`/repos/${owner}/${repo}`, { body, ...options });
     }
     /**
      * Deleting a repository requires admin access.
@@ -35282,9 +33403,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     delete(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/repos/${owner}/${repo}`, {
+      return this._client.delete(path`/repos/${owner}/${repo}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35300,9 +33421,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     checkStarred(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/user/starred/${owner}/${repo}`, {
+      return this._client.get(path`/user/starred/${owner}/${repo}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35393,7 +33514,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     compareCommits(basehead, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/compare/${basehead}`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/compare/${basehead}`, { query, ...options });
     }
     /**
      * Users with push access in a repository can create commit statuses for a given
@@ -35420,7 +33541,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     createCommitStatus(sha, params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/statuses/${sha}`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/statuses/${sha}`, { body, ...options });
     }
     /**
      * You can use this endpoint to trigger a webhook event called
@@ -35454,10 +33575,10 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     createDispatchEvent(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/dispatches`, {
+      return this._client.post(path`/repos/${owner}/${repo}/dispatches`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35484,7 +33605,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      * ```
      */
     createForOrg(org, body, options) {
-      return this._client.post(path2`/orgs/${org}/repos`, { body, ...options });
+      return this._client.post(path`/orgs/${org}/repos`, { body, ...options });
     }
     /**
      * Creates a new repository using a repository template. Use the `template_owner`
@@ -35512,7 +33633,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     createFromTemplate(templateRepo, params, options) {
       const { template_owner, ...body } = params;
-      return this._client.post(path2`/repos/${template_owner}/${templateRepo}/generate`, { body, ...options });
+      return this._client.post(path`/repos/${template_owner}/${templateRepo}/generate`, { body, ...options });
     }
     /**
      * Gets a redirect URL to download a tar archive for a repository. If you omit
@@ -35533,9 +33654,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     downloadTarball(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/tarball/${ref}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/tarball/${ref}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35558,9 +33679,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     downloadZipball(ref, params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/zipball/${ref}`, {
+      return this._client.get(path`/repos/${owner}/${repo}/zipball/${ref}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35582,7 +33703,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     getInstallationInfo(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/installation`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/installation`, options);
     }
     /**
      * This method returns the contents of the repository's license file, if one is
@@ -35608,7 +33729,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     getLicense(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/license`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/license`, { query, ...options });
     }
     /**
      * Get the code security configuration that manages a repository's code security
@@ -35631,7 +33752,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     getSecurityConfiguration(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/code-security-configuration`, options);
+      return this._client.get(path`/repos/${owner}/${repo}/code-security-configuration`, options);
     }
     /**
      * Lists a detailed history of changes to a repository, such as pushes, merges,
@@ -35651,7 +33772,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     listActivity(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/activity`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/activity`, { query, ...options });
     }
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
@@ -35669,7 +33790,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     listEvents(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/events`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/events`, NumberedPage, { query, ...options });
     }
     /**
      * Lists repositories that the authenticated user has explicit permission (`:read`,
@@ -35710,7 +33831,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      * ```
      */
     listForOrg(org, query = {}, options) {
-      return this._client.getAPIList(path2`/orgs/${org}/repos`, NumberedPage, {
+      return this._client.getAPIList(path`/orgs/${org}/repos`, NumberedPage, {
         query,
         ...options
       });
@@ -35729,7 +33850,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      * ```
      */
     listForUser(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/repos`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/repos`, NumberedPage, {
         query,
         ...options
       });
@@ -35773,7 +33894,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     listStargazers(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path2`/repos/${owner}/${repo}/stargazers`, { query, ...options });
+      return this._client.get(path`/repos/${owner}/${repo}/stargazers`, { query, ...options });
     }
     /**
      * Lists repositories the authenticated user has starred.
@@ -35812,7 +33933,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     listWatchers(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path2`/repos/${owner}/${repo}/subscribers`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/subscribers`, NumberedPage, { query, ...options });
     }
     /**
      * Merge a branch
@@ -35830,7 +33951,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     mergeBranch(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/merges`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/merges`, { body, ...options });
     }
     /**
      * Note that you'll need to set `Content-Length` to zero when calling out to this
@@ -35844,9 +33965,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     star(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.put(path2`/user/starred/${owner}/${repo}`, {
+      return this._client.put(path`/user/starred/${owner}/${repo}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -35864,7 +33985,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     syncFork(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/merge-upstream`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/merge-upstream`, { body, ...options });
     }
     /**
      * A transfer request will need to be accepted by the new owner when transferring a
@@ -35886,7 +34007,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     transfer(params, options) {
       const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path2`/repos/${owner}/${repo}/transfer`, { body, ...options });
+      return this._client.post(path`/repos/${owner}/${repo}/transfer`, { body, ...options });
     }
     /**
      * Unstar a repository that the authenticated user has previously starred.
@@ -35898,9 +34019,9 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
      */
     unstar(params = {}, options) {
       const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.delete(path2`/user/starred/${owner}/${repo}`, {
+      return this._client.delete(path`/user/starred/${owner}/${repo}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -35926,7 +34047,7 @@ var Repos3 = /* @__PURE__ */ (() => {
       this.attestations = new Attestations(this._client);
       this.autolinks = new Autolinks(this._client);
       this.automatedSecurityFixes = new AutomatedSecurityFixes(this._client);
-      this.branches = new Branches2(this._client);
+      this.branches = new Branches(this._client);
       this.checkRuns = new CheckRuns(this._client);
       this.checkSuites = new CheckSuites(this._client);
       this.codeScanning = new CodeScanning2(this._client);
@@ -35993,7 +34114,7 @@ var Repos3 = /* @__PURE__ */ (() => {
   Repos6.BaseAutolinks = BaseAutolinks;
   Repos6.AutomatedSecurityFixes = AutomatedSecurityFixes;
   Repos6.BaseAutomatedSecurityFixes = BaseAutomatedSecurityFixes;
-  Repos6.Branches = Branches2;
+  Repos6.Branches = Branches;
   Repos6.BaseBranches = BaseBranches;
   Repos6.CheckRuns = CheckRuns;
   Repos6.BaseCheckRuns = BaseCheckRuns;
@@ -36068,7 +34189,7 @@ var Repos3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/blocks.mjs
 var BaseBlocks2 = /* @__PURE__ */ (() => {
-  class BaseBlocks3 extends APIResource2 {
+  class BaseBlocks3 extends APIResource {
     /**
      * List the users you've blocked on your personal account.
      *
@@ -36093,9 +34214,9 @@ var BaseBlocks2 = /* @__PURE__ */ (() => {
      * ```
      */
     block(username, options) {
-      return this._client.put(path2`/user/blocks/${username}`, {
+      return this._client.put(path`/user/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36109,9 +34230,9 @@ var BaseBlocks2 = /* @__PURE__ */ (() => {
      * ```
      */
     check(username, options) {
-      return this._client.get(path2`/user/blocks/${username}`, {
+      return this._client.get(path`/user/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36123,9 +34244,9 @@ var BaseBlocks2 = /* @__PURE__ */ (() => {
      * ```
      */
     unblock(username, options) {
-      return this._client.delete(path2`/user/blocks/${username}`, {
+      return this._client.delete(path`/user/blocks/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -36137,7 +34258,7 @@ var Blocks2 = class extends BaseBlocks2 {
 
 // node_modules/@stainless-api/github-internal/resources/users/docker.mjs
 var BaseDocker2 = /* @__PURE__ */ (() => {
-  class BaseDocker3 extends APIResource2 {
+  class BaseDocker3 extends APIResource {
     /**
      * Lists all packages that are owned by the authenticated user within the user's
      * namespace, and that encountered a conflict during a Docker migration.
@@ -36169,7 +34290,7 @@ var BaseDocker2 = /* @__PURE__ */ (() => {
      * ```
      */
     listMigrationConflicts(username, options) {
-      return this._client.get(path2`/users/${username}/docker/conflicts`, options);
+      return this._client.get(path`/users/${username}/docker/conflicts`, options);
     }
   }
   BaseDocker3._key = Object.freeze(["users", "docker"]);
@@ -36180,7 +34301,7 @@ var Docker2 = class extends BaseDocker2 {
 
 // node_modules/@stainless-api/github-internal/resources/users/emails.mjs
 var BaseEmails = /* @__PURE__ */ (() => {
-  class BaseEmails2 extends APIResource2 {
+  class BaseEmails2 extends APIResource {
     /**
      * OAuth app tokens and personal access tokens (classic) need the `user` scope to
      * use this endpoint.
@@ -36232,7 +34353,7 @@ var BaseEmails = /* @__PURE__ */ (() => {
       return this._client.delete("/user/emails", {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36257,7 +34378,7 @@ var Emails = class extends BaseEmails {
 
 // node_modules/@stainless-api/github-internal/resources/users/events.mjs
 var BaseEvents3 = /* @__PURE__ */ (() => {
-  class BaseEvents4 extends APIResource2 {
+  class BaseEvents4 extends APIResource {
     /**
      * If you are authenticated as the given user, you will see your private events.
      * Otherwise, you'll only see public events. _Optional_: use the fine-grained token
@@ -36278,7 +34399,7 @@ var BaseEvents3 = /* @__PURE__ */ (() => {
      * ```
      */
     listEvents(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/events`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/events`, NumberedPage, {
         query,
         ...options
       });
@@ -36303,7 +34424,7 @@ var BaseEvents3 = /* @__PURE__ */ (() => {
      */
     listOrgEvents(org, params, options) {
       const { username, ...query } = params;
-      return this._client.getAPIList(path2`/users/${username}/events/orgs/${org}`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/events/orgs/${org}`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
@@ -36320,7 +34441,7 @@ var BaseEvents3 = /* @__PURE__ */ (() => {
      * ```
      */
     listPublicEvents(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/events/public`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/events/public`, NumberedPage, { query, ...options });
     }
   }
   BaseEvents4._key = Object.freeze(["users", "events"]);
@@ -36331,7 +34452,7 @@ var Events3 = class extends BaseEvents3 {
 
 // node_modules/@stainless-api/github-internal/resources/users/following.mjs
 var BaseFollowing = /* @__PURE__ */ (() => {
-  class BaseFollowing2 extends APIResource2 {
+  class BaseFollowing2 extends APIResource {
     /**
      * Check if a user follows another user
      *
@@ -36344,9 +34465,9 @@ var BaseFollowing = /* @__PURE__ */ (() => {
      */
     checkFollowing(targetUser, params, options) {
       const { username } = params;
-      return this._client.get(path2`/users/${username}/following/${targetUser}`, {
+      return this._client.get(path`/users/${username}/following/${targetUser}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36363,7 +34484,7 @@ var BaseFollowing = /* @__PURE__ */ (() => {
      * ```
      */
     listFollowing(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/following`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/following`, NumberedPage, {
         query,
         ...options
       });
@@ -36380,7 +34501,7 @@ var Following = class extends BaseFollowing {
 
 // node_modules/@stainless-api/github-internal/resources/users/gpg-keys.mjs
 var BaseGpgKeys = /* @__PURE__ */ (() => {
-  class BaseGpgKeys2 extends APIResource2 {
+  class BaseGpgKeys2 extends APIResource {
     /**
      * Adds a GPG key to the authenticated user's GitHub account.
      *
@@ -36428,9 +34549,9 @@ var BaseGpgKeys = /* @__PURE__ */ (() => {
      * ```
      */
     delete(gpgKeyID, options) {
-      return this._client.delete(path2`/user/gpg_keys/${gpgKeyID}`, {
+      return this._client.delete(path`/user/gpg_keys/${gpgKeyID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36445,7 +34566,7 @@ var BaseGpgKeys = /* @__PURE__ */ (() => {
      * ```
      */
     get(gpgKeyID, options) {
-      return this._client.get(path2`/user/gpg_keys/${gpgKeyID}`, options);
+      return this._client.get(path`/user/gpg_keys/${gpgKeyID}`, options);
     }
   }
   BaseGpgKeys2._key = Object.freeze(["users", "gpgKeys"]);
@@ -36456,7 +34577,7 @@ var GpgKeys = class extends BaseGpgKeys {
 
 // node_modules/@stainless-api/github-internal/resources/users/interaction-limits.mjs
 var BaseInteractionLimits3 = /* @__PURE__ */ (() => {
-  class BaseInteractionLimits4 extends APIResource2 {
+  class BaseInteractionLimits4 extends APIResource {
     /**
      * Shows which type of GitHub user can interact with your public repositories and
      * when the restriction expires.
@@ -36481,7 +34602,7 @@ var BaseInteractionLimits3 = /* @__PURE__ */ (() => {
     remove(options) {
       return this._client.delete("/user/interaction-limits", {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36512,7 +34633,7 @@ var InteractionLimits3 = class extends BaseInteractionLimits3 {
 
 // node_modules/@stainless-api/github-internal/resources/users/keys.mjs
 var BaseKeys2 = /* @__PURE__ */ (() => {
-  class BaseKeys3 extends APIResource2 {
+  class BaseKeys3 extends APIResource {
     /**
      * Adds a public SSH key to the authenticated user's GitHub account.
      *
@@ -36559,9 +34680,9 @@ var BaseKeys2 = /* @__PURE__ */ (() => {
      * ```
      */
     delete(keyID, options) {
-      return this._client.delete(path2`/user/keys/${keyID}`, {
+      return this._client.delete(path`/user/keys/${keyID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -36576,7 +34697,7 @@ var BaseKeys2 = /* @__PURE__ */ (() => {
      * ```
      */
     get(keyID, options) {
-      return this._client.get(path2`/user/keys/${keyID}`, options);
+      return this._client.get(path`/user/keys/${keyID}`, options);
     }
   }
   BaseKeys3._key = Object.freeze(["users", "keys"]);
@@ -36587,7 +34708,7 @@ var Keys2 = class extends BaseKeys2 {
 
 // node_modules/@stainless-api/github-internal/resources/users/marketplace-purchases.mjs
 var BaseMarketplacePurchases = /* @__PURE__ */ (() => {
-  class BaseMarketplacePurchases2 extends APIResource2 {
+  class BaseMarketplacePurchases2 extends APIResource {
     /**
      * Lists the active subscriptions for the authenticated user.
      *
@@ -36628,7 +34749,7 @@ var MarketplacePurchases = class extends BaseMarketplacePurchases {
 
 // node_modules/@stainless-api/github-internal/resources/users/received-events.mjs
 var BaseReceivedEvents = /* @__PURE__ */ (() => {
-  class BaseReceivedEvents2 extends APIResource2 {
+  class BaseReceivedEvents2 extends APIResource {
     /**
      * These are events that you've received by watching repositories and following
      * users. If you are authenticated as the given user, you will see private events.
@@ -36648,7 +34769,7 @@ var BaseReceivedEvents = /* @__PURE__ */ (() => {
      * ```
      */
     listEvents(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/received_events`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/received_events`, NumberedPage, { query, ...options });
     }
     /**
      * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
@@ -36665,7 +34786,7 @@ var BaseReceivedEvents = /* @__PURE__ */ (() => {
      * ```
      */
     listPublicEvents(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/received_events/public`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/received_events/public`, NumberedPage, { query, ...options });
     }
   }
   BaseReceivedEvents2._key = Object.freeze([
@@ -36679,7 +34800,7 @@ var ReceivedEvents = class extends BaseReceivedEvents {
 
 // node_modules/@stainless-api/github-internal/resources/users/repos.mjs
 var BaseRepos4 = /* @__PURE__ */ (() => {
-  class BaseRepos6 extends APIResource2 {
+  class BaseRepos6 extends APIResource {
     /**
      * Lists public repositories for the specified user.
      *
@@ -36694,7 +34815,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     list(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/repos`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/repos`, NumberedPage, {
         query,
         ...options
       });
@@ -36720,7 +34841,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     getHovercard(username, query = {}, options) {
-      return this._client.get(path2`/users/${username}/hovercard`, { query, ...options });
+      return this._client.get(path`/users/${username}/hovercard`, { query, ...options });
     }
     /**
      * Enables an authenticated GitHub App to find the user’s installation information.
@@ -36737,7 +34858,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     getInstallation(username, options) {
-      return this._client.get(path2`/users/${username}/installation`, options);
+      return this._client.get(path`/users/${username}/installation`, options);
     }
     /**
      * List a collection of artifact attestations with a given subject digest that are
@@ -36767,7 +34888,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      */
     listAttestations(subjectDigest, params, options) {
       const { username, ...query } = params;
-      return this._client.get(path2`/users/${username}/attestations/${subjectDigest}`, { query, ...options });
+      return this._client.get(path`/users/${username}/attestations/${subjectDigest}`, { query, ...options });
     }
     /**
      * Lists the people following the specified user.
@@ -36783,7 +34904,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listFollowers(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/followers`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/followers`, NumberedPage, {
         query,
         ...options
       });
@@ -36802,7 +34923,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listGists(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/gists`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/gists`, NumberedPage, {
         query,
         ...options
       });
@@ -36821,7 +34942,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listGpgKeys(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/gpg_keys`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/gpg_keys`, NumberedPage, {
         query,
         ...options
       });
@@ -36848,7 +34969,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listOrganizations(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/orgs`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/orgs`, NumberedPage, { query, ...options });
     }
     /**
      * Lists the _verified_ public SSH keys for a user. This is accessible by anyone.
@@ -36864,7 +34985,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listPublicKeys(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/keys`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/keys`, NumberedPage, {
         query,
         ...options
       });
@@ -36883,7 +35004,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listSocialAccounts(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/social_accounts`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/social_accounts`, NumberedPage, { query, ...options });
     }
     /**
      * Lists the SSH signing keys for a user. This operation is accessible by anyone.
@@ -36899,7 +35020,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listSSHSigningKeys(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/ssh_signing_keys`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/ssh_signing_keys`, NumberedPage, { query, ...options });
     }
     /**
      * Lists repositories a user has starred.
@@ -36919,7 +35040,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listStarred(username, query = {}, options) {
-      return this._client.get(path2`/users/${username}/starred`, { query, ...options });
+      return this._client.get(path`/users/${username}/starred`, { query, ...options });
     }
     /**
      * Lists repositories a user is watching.
@@ -36935,7 +35056,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     listWatched(username, query = {}, options) {
-      return this._client.getAPIList(path2`/users/${username}/subscriptions`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/users/${username}/subscriptions`, NumberedPage, { query, ...options });
     }
     /**
      * Provides publicly available information about someone with a GitHub account.
@@ -36968,7 +35089,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
      * ```
      */
     retrieveUser(username, options) {
-      return this._client.get(path2`/users/${username}`, options);
+      return this._client.get(path`/users/${username}`, options);
     }
   }
   BaseRepos6._key = Object.freeze(["users", "repos"]);
@@ -36979,7 +35100,7 @@ var Repos4 = class extends BaseRepos4 {
 
 // node_modules/@stainless-api/github-internal/resources/users/social-accounts.mjs
 var BaseSocialAccounts = /* @__PURE__ */ (() => {
-  class BaseSocialAccounts2 extends APIResource2 {
+  class BaseSocialAccounts2 extends APIResource {
     /**
      * Lists all of your social accounts.
      *
@@ -37017,7 +35138,7 @@ var BaseSocialAccounts = /* @__PURE__ */ (() => {
       return this._client.delete("/user/social_accounts", {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37051,7 +35172,7 @@ var SocialAccounts = class extends BaseSocialAccounts {
 
 // node_modules/@stainless-api/github-internal/resources/users/ssh-signing-keys.mjs
 var BaseSSHSigningKeys = /* @__PURE__ */ (() => {
-  class BaseSSHSigningKeys2 extends APIResource2 {
+  class BaseSSHSigningKeys2 extends APIResource {
     /**
      * Creates an SSH signing key for the authenticated user's GitHub account.
      *
@@ -37102,9 +35223,9 @@ var BaseSSHSigningKeys = /* @__PURE__ */ (() => {
      * ```
      */
     delete(sshSigningKeyID, options) {
-      return this._client.delete(path2`/user/ssh_signing_keys/${sshSigningKeyID}`, {
+      return this._client.delete(path`/user/ssh_signing_keys/${sshSigningKeyID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37121,7 +35242,7 @@ var BaseSSHSigningKeys = /* @__PURE__ */ (() => {
      * ```
      */
     get(sshSigningKeyID, options) {
-      return this._client.get(path2`/user/ssh_signing_keys/${sshSigningKeyID}`, options);
+      return this._client.get(path`/user/ssh_signing_keys/${sshSigningKeyID}`, options);
     }
   }
   BaseSSHSigningKeys2._key = Object.freeze([
@@ -37135,7 +35256,7 @@ var SSHSigningKeys = class extends BaseSSHSigningKeys {
 
 // node_modules/@stainless-api/github-internal/resources/users/codespaces/exports.mjs
 var BaseExports = /* @__PURE__ */ (() => {
-  class BaseExports2 extends APIResource2 {
+  class BaseExports2 extends APIResource {
     /**
      * Triggers an export of the specified codespace and returns a URL and ID where the
      * status of the export can be monitored.
@@ -37155,7 +35276,7 @@ var BaseExports = /* @__PURE__ */ (() => {
      * ```
      */
     create(codespaceName, options) {
-      return this._client.post(path2`/user/codespaces/${codespaceName}/exports`, options);
+      return this._client.post(path`/user/codespaces/${codespaceName}/exports`, options);
     }
     /**
      * Gets information about an export of a codespace.
@@ -37173,7 +35294,7 @@ var BaseExports = /* @__PURE__ */ (() => {
      */
     get(exportID, params, options) {
       const { codespace_name } = params;
-      return this._client.get(path2`/user/codespaces/${codespace_name}/exports/${exportID}`, options);
+      return this._client.get(path`/user/codespaces/${codespace_name}/exports/${exportID}`, options);
     }
   }
   BaseExports2._key = Object.freeze([
@@ -37188,7 +35309,7 @@ var Exports = class extends BaseExports {
 
 // node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/repositories.mjs
 var BaseRepositories8 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * List the repositories that have been granted the ability to use a user's
      * development environment secret.
@@ -37207,7 +35328,7 @@ var BaseRepositories8 = /* @__PURE__ */ (() => {
      * ```
      */
     list(secretName, options) {
-      return this._client.get(path2`/user/codespaces/secrets/${secretName}/repositories`, options);
+      return this._client.get(path`/user/codespaces/secrets/${secretName}/repositories`, options);
     }
     /**
      * Adds a repository to the selected repositories for a user's development
@@ -37227,9 +35348,9 @@ var BaseRepositories8 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { secret_name } = params;
-      return this._client.put(path2`/user/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, {
+      return this._client.put(path`/user/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37251,9 +35372,9 @@ var BaseRepositories8 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { secret_name } = params;
-      return this._client.delete(path2`/user/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, {
+      return this._client.delete(path`/user/codespaces/secrets/${secret_name}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37273,10 +35394,10 @@ var BaseRepositories8 = /* @__PURE__ */ (() => {
      * ```
      */
     set(secretName, body, options) {
-      return this._client.put(path2`/user/codespaces/secrets/${secretName}/repositories`, {
+      return this._client.put(path`/user/codespaces/secrets/${secretName}/repositories`, {
         body,
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -37293,7 +35414,7 @@ var Repositories8 = class extends BaseRepositories8 {
 
 // node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/secrets.mjs
 var BaseSecrets8 = /* @__PURE__ */ (() => {
-  class BaseSecrets9 extends APIResource2 {
+  class BaseSecrets9 extends APIResource {
     /**
      * Lists all development environment secrets available for a user's codespaces
      * without revealing their encrypted values.
@@ -37328,9 +35449,9 @@ var BaseSecrets8 = /* @__PURE__ */ (() => {
      * ```
      */
     delete(secretName, options) {
-      return this._client.delete(path2`/user/codespaces/secrets/${secretName}`, {
+      return this._client.delete(path`/user/codespaces/secrets/${secretName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37359,7 +35480,7 @@ var BaseSecrets8 = /* @__PURE__ */ (() => {
      * ```
      */
     createOrUpdate(secretName, body, options) {
-      return this._client.put(path2`/user/codespaces/secrets/${secretName}`, { body, ...options });
+      return this._client.put(path`/user/codespaces/secrets/${secretName}`, { body, ...options });
     }
     /**
      * Gets a development environment secret available to a user's codespaces without
@@ -37378,7 +35499,7 @@ var BaseSecrets8 = /* @__PURE__ */ (() => {
      * ```
      */
     get(secretName, options) {
-      return this._client.get(path2`/user/codespaces/secrets/${secretName}`, options);
+      return this._client.get(path`/user/codespaces/secrets/${secretName}`, options);
     }
     /**
      * Gets your public key, which you need to encrypt secrets. You need to encrypt a
@@ -37420,7 +35541,7 @@ var Secrets8 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/codespaces/codespaces.mjs
 var BaseCodespaces4 = /* @__PURE__ */ (() => {
-  class BaseCodespaces5 extends APIResource2 {
+  class BaseCodespaces5 extends APIResource {
     /**
      * Creates a new codespace, owned by the authenticated user.
      *
@@ -37461,7 +35582,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     update(codespaceName, body = {}, options) {
-      return this._client.patch(path2`/user/codespaces/${codespaceName}`, { body, ...options });
+      return this._client.patch(path`/user/codespaces/${codespaceName}`, { body, ...options });
     }
     /**
      * Lists the authenticated user's codespaces.
@@ -37491,7 +35612,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     delete(codespaceName, options) {
-      return this._client.delete(path2`/user/codespaces/${codespaceName}`, options);
+      return this._client.delete(path`/user/codespaces/${codespaceName}`, options);
     }
     /**
      * Gets information about a user's codespace.
@@ -37507,7 +35628,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     get(codespaceName, options) {
-      return this._client.get(path2`/user/codespaces/${codespaceName}`, options);
+      return this._client.get(path`/user/codespaces/${codespaceName}`, options);
     }
     /**
      * List the machine types a codespace can transition to use.
@@ -37523,7 +35644,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     listMachines(codespaceName, options) {
-      return this._client.get(path2`/user/codespaces/${codespaceName}/machines`, options);
+      return this._client.get(path`/user/codespaces/${codespaceName}/machines`, options);
     }
     /**
      * Publishes an unpublished codespace, creating a new repository and assigning it
@@ -37546,7 +35667,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     publish(codespaceName, body, options) {
-      return this._client.post(path2`/user/codespaces/${codespaceName}/publish`, { body, ...options });
+      return this._client.post(path`/user/codespaces/${codespaceName}/publish`, { body, ...options });
     }
     /**
      * Starts a user's codespace.
@@ -37562,7 +35683,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     start(codespaceName, options) {
-      return this._client.post(path2`/user/codespaces/${codespaceName}/start`, options);
+      return this._client.post(path`/user/codespaces/${codespaceName}/start`, options);
     }
     /**
      * Stops a user's codespace.
@@ -37578,7 +35699,7 @@ var BaseCodespaces4 = /* @__PURE__ */ (() => {
      * ```
      */
     stop(codespaceName, options) {
-      return this._client.post(path2`/user/codespaces/${codespaceName}/stop`, options);
+      return this._client.post(path`/user/codespaces/${codespaceName}/stop`, options);
     }
   }
   BaseCodespaces5._key = Object.freeze([
@@ -37604,7 +35725,7 @@ var Codespaces4 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/installations/repositories.mjs
 var BaseRepositories9 = /* @__PURE__ */ (() => {
-  class BaseRepositories10 extends APIResource2 {
+  class BaseRepositories10 extends APIResource {
     /**
      * List repositories that the authenticated user has explicit permission (`:read`,
      * `:write`, or `:admin`) to access for an installation.
@@ -37623,7 +35744,7 @@ var BaseRepositories9 = /* @__PURE__ */ (() => {
      * ```
      */
     list(installationID, query = {}, options) {
-      return this._client.get(path2`/user/installations/${installationID}/repositories`, { query, ...options });
+      return this._client.get(path`/user/installations/${installationID}/repositories`, { query, ...options });
     }
     /**
      * Add a single repository to an installation. The authenticated user must have
@@ -37640,9 +35761,9 @@ var BaseRepositories9 = /* @__PURE__ */ (() => {
      */
     add(repositoryID, params, options) {
       const { installation_id } = params;
-      return this._client.put(path2`/user/installations/${installation_id}/repositories/${repositoryID}`, {
+      return this._client.put(path`/user/installations/${installation_id}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37661,9 +35782,9 @@ var BaseRepositories9 = /* @__PURE__ */ (() => {
      */
     remove(repositoryID, params, options) {
       const { installation_id } = params;
-      return this._client.delete(path2`/user/installations/${installation_id}/repositories/${repositoryID}`, {
+      return this._client.delete(path`/user/installations/${installation_id}/repositories/${repositoryID}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -37679,7 +35800,7 @@ var Repositories9 = class extends BaseRepositories9 {
 
 // node_modules/@stainless-api/github-internal/resources/users/installations/installations.mjs
 var BaseInstallations2 = /* @__PURE__ */ (() => {
-  class BaseInstallations3 extends APIResource2 {
+  class BaseInstallations3 extends APIResource {
     /**
      * Lists installations of your GitHub App that the authenticated user has explicit
      * permission (`:read`, `:write`, or `:admin`) to access.
@@ -37720,7 +35841,7 @@ var Installations2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/memberships/orgs.mjs
 var BaseOrgs2 = /* @__PURE__ */ (() => {
-  class BaseOrgs3 extends APIResource2 {
+  class BaseOrgs3 extends APIResource {
     /**
      * Converts the authenticated user to an active member of the organization, if that
      * user has a pending invitation from the organization.
@@ -37734,7 +35855,7 @@ var BaseOrgs2 = /* @__PURE__ */ (() => {
      * ```
      */
     update(org, body, options) {
-      return this._client.patch(path2`/user/memberships/orgs/${org}`, { body, ...options });
+      return this._client.patch(path`/user/memberships/orgs/${org}`, { body, ...options });
     }
     /**
      * Lists all of the authenticated user's organization memberships.
@@ -37766,7 +35887,7 @@ var BaseOrgs2 = /* @__PURE__ */ (() => {
      * ```
      */
     get(org, options) {
-      return this._client.get(path2`/user/memberships/orgs/${org}`, options);
+      return this._client.get(path`/user/memberships/orgs/${org}`, options);
     }
   }
   BaseOrgs3._key = Object.freeze([
@@ -37776,12 +35897,12 @@ var BaseOrgs2 = /* @__PURE__ */ (() => {
   ]);
   return BaseOrgs3;
 })();
-var Orgs3 = class extends BaseOrgs2 {
+var Orgs2 = class extends BaseOrgs2 {
 };
 
 // node_modules/@stainless-api/github-internal/resources/users/memberships/memberships.mjs
 var BaseMemberships3 = /* @__PURE__ */ (() => {
-  class BaseMemberships4 extends APIResource2 {
+  class BaseMemberships4 extends APIResource {
   }
   BaseMemberships4._key = Object.freeze([
     "users",
@@ -37793,17 +35914,17 @@ var Memberships3 = /* @__PURE__ */ (() => {
   class Memberships4 extends BaseMemberships3 {
     constructor() {
       super(...arguments);
-      this.orgs = new Orgs3(this._client);
+      this.orgs = new Orgs2(this._client);
     }
   }
-  Memberships4.Orgs = Orgs3;
+  Memberships4.Orgs = Orgs2;
   Memberships4.BaseOrgs = BaseOrgs2;
   return Memberships4;
 })();
 
 // node_modules/@stainless-api/github-internal/resources/users/migrations/archive.mjs
 var BaseArchive2 = /* @__PURE__ */ (() => {
-  class BaseArchive3 extends APIResource2 {
+  class BaseArchive3 extends APIResource {
     /**
      * Deletes a previous migration archive. Downloadable migration archives are
      * automatically deleted after seven days. Migration metadata, which is returned in
@@ -37819,9 +35940,9 @@ var BaseArchive2 = /* @__PURE__ */ (() => {
      * ```
      */
     delete(migrationID, options) {
-      return this._client.delete(path2`/user/migrations/${migrationID}/archive`, {
+      return this._client.delete(path`/user/migrations/${migrationID}/archive`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -37857,9 +35978,9 @@ var BaseArchive2 = /* @__PURE__ */ (() => {
      * ```
      */
     download(migrationID, options) {
-      return this._client.get(path2`/user/migrations/${migrationID}/archive`, {
+      return this._client.get(path`/user/migrations/${migrationID}/archive`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -37875,7 +35996,7 @@ var Archive2 = class extends BaseArchive2 {
 
 // node_modules/@stainless-api/github-internal/resources/users/migrations/repos.mjs
 var BaseRepos5 = /* @__PURE__ */ (() => {
-  class BaseRepos6 extends APIResource2 {
+  class BaseRepos6 extends APIResource {
     /**
      * Unlocks a repository. You can lock repositories when you
      * [start a user migration](https://docs.github.com/rest/migrations/users#start-a-user-migration).
@@ -37894,9 +36015,9 @@ var BaseRepos5 = /* @__PURE__ */ (() => {
      */
     unlock(repoName, params, options) {
       const { migration_id } = params;
-      return this._client.delete(path2`/user/migrations/${migration_id}/repos/${repoName}/lock`, {
+      return this._client.delete(path`/user/migrations/${migration_id}/repos/${repoName}/lock`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -37912,7 +36033,7 @@ var Repos5 = class extends BaseRepos5 {
 
 // node_modules/@stainless-api/github-internal/resources/users/migrations/migrations.mjs
 var BaseMigrations2 = /* @__PURE__ */ (() => {
-  class BaseMigrations3 extends APIResource2 {
+  class BaseMigrations3 extends APIResource {
     /**
      * Initiates the generation of a user migration archive.
      *
@@ -37945,7 +36066,7 @@ var BaseMigrations2 = /* @__PURE__ */ (() => {
      * ```
      */
     retrieve(migrationID, query = {}, options) {
-      return this._client.get(path2`/user/migrations/${migrationID}`, { query, ...options });
+      return this._client.get(path`/user/migrations/${migrationID}`, { query, ...options });
     }
     /**
      * Lists all migrations a user has started.
@@ -37978,7 +36099,7 @@ var BaseMigrations2 = /* @__PURE__ */ (() => {
      * ```
      */
     listRepositories(migrationID, query = {}, options) {
-      return this._client.getAPIList(path2`/user/migrations/${migrationID}/repositories`, NumberedPage, { query, ...options });
+      return this._client.getAPIList(path`/user/migrations/${migrationID}/repositories`, NumberedPage, { query, ...options });
     }
   }
   BaseMigrations3._key = Object.freeze([
@@ -38004,7 +36125,7 @@ var Migrations2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/packages/versions.mjs
 var BaseVersions2 = /* @__PURE__ */ (() => {
-  class BaseVersions4 extends APIResource2 {
+  class BaseVersions4 extends APIResource {
     /**
      * Gets a specific package version for a public package owned by a specified user.
      *
@@ -38024,7 +36145,7 @@ var BaseVersions2 = /* @__PURE__ */ (() => {
      */
     retrieve(packageVersionID, params, options) {
       const { username, package_type, package_name } = params;
-      return this._client.get(path2`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, options);
+      return this._client.get(path`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, options);
     }
     /**
      * Lists package versions for a public package owned by a specified user.
@@ -38043,7 +36164,7 @@ var BaseVersions2 = /* @__PURE__ */ (() => {
      */
     list(packageName, params, options) {
       const { username, package_type } = params;
-      return this._client.get(path2`/users/${username}/packages/${package_type}/${packageName}/versions`, options);
+      return this._client.get(path`/users/${username}/packages/${package_type}/${packageName}/versions`, options);
     }
     /**
      * Deletes a specific package version for a user. If the package is public and the
@@ -38070,7 +36191,7 @@ var BaseVersions2 = /* @__PURE__ */ (() => {
      */
     delete(packageVersionID, params, options) {
       const { username, package_type, package_name } = params;
-      return this._client.delete(path2`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.delete(path`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Restores a specific package version for a user.
@@ -38104,7 +36225,7 @@ var BaseVersions2 = /* @__PURE__ */ (() => {
      */
     restore(packageVersionID, params, options) {
       const { username, package_type, package_name } = params;
-      return this._client.post(path2`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}/restore`, { ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.post(path`/users/${username}/packages/${package_type}/${package_name}/versions/${packageVersionID}/restore`, { ...options, headers: buildHeaders([{ Accept: "*/*" }, options?.headers]) });
     }
   }
   BaseVersions4._key = Object.freeze([
@@ -38119,7 +36240,7 @@ var Versions2 = class extends BaseVersions2 {
 
 // node_modules/@stainless-api/github-internal/resources/users/packages/packages.mjs
 var BasePackages2 = /* @__PURE__ */ (() => {
-  class BasePackages3 extends APIResource2 {
+  class BasePackages3 extends APIResource {
     /**
      * Gets a specific package metadata for a public package owned by a user.
      *
@@ -38137,7 +36258,7 @@ var BasePackages2 = /* @__PURE__ */ (() => {
      */
     retrieve(packageName, params, options) {
       const { username, package_type } = params;
-      return this._client.get(path2`/users/${username}/packages/${package_type}/${packageName}`, options);
+      return this._client.get(path`/users/${username}/packages/${package_type}/${packageName}`, options);
     }
     /**
      * Lists all packages in a user's namespace for which the requesting user has
@@ -38159,7 +36280,7 @@ var BasePackages2 = /* @__PURE__ */ (() => {
      * ```
      */
     list(username, query, options) {
-      return this._client.getAPIList(path2`/users/${username}/packages`, NumberedPage, {
+      return this._client.getAPIList(path`/users/${username}/packages`, NumberedPage, {
         query,
         ...options
       });
@@ -38188,9 +36309,9 @@ var BasePackages2 = /* @__PURE__ */ (() => {
      */
     delete(packageName, params, options) {
       const { username, package_type } = params;
-      return this._client.delete(path2`/users/${username}/packages/${package_type}/${packageName}`, {
+      return this._client.delete(path`/users/${username}/packages/${package_type}/${packageName}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -38224,10 +36345,10 @@ var BasePackages2 = /* @__PURE__ */ (() => {
      */
     restore(packageName, params, options) {
       const { username, package_type, token } = params;
-      return this._client.post(path2`/users/${username}/packages/${package_type}/${packageName}/restore`, {
+      return this._client.post(path`/users/${username}/packages/${package_type}/${packageName}/restore`, {
         query: { token },
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -38251,7 +36372,7 @@ var Packages2 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/settings/billing.mjs
 var BaseBilling4 = /* @__PURE__ */ (() => {
-  class BaseBilling5 extends APIResource2 {
+  class BaseBilling5 extends APIResource {
     /**
      * Gets the summary of the free and paid GitHub Actions minutes used.
      *
@@ -38274,7 +36395,7 @@ var BaseBilling4 = /* @__PURE__ */ (() => {
      * ```
      */
     getActionsBilling(username, options) {
-      return this._client.get(path2`/users/${username}/settings/billing/actions`, options);
+      return this._client.get(path`/users/${username}/settings/billing/actions`, options);
     }
     /**
      * Gets the free and paid storage used for GitHub Packages in gigabytes.
@@ -38295,7 +36416,7 @@ var BaseBilling4 = /* @__PURE__ */ (() => {
      * ```
      */
     getPackagesBilling(username, options) {
-      return this._client.get(path2`/users/${username}/settings/billing/packages`, options);
+      return this._client.get(path`/users/${username}/settings/billing/packages`, options);
     }
     /**
      * Gets the estimated paid and estimated total storage used for GitHub Actions and
@@ -38317,7 +36438,7 @@ var BaseBilling4 = /* @__PURE__ */ (() => {
      * ```
      */
     getSharedStorageBilling(username, options) {
-      return this._client.get(path2`/users/${username}/settings/billing/shared-storage`, options);
+      return this._client.get(path`/users/${username}/settings/billing/shared-storage`, options);
     }
   }
   BaseBilling5._key = Object.freeze([
@@ -38332,7 +36453,7 @@ var Billing4 = class extends BaseBilling4 {
 
 // node_modules/@stainless-api/github-internal/resources/users/settings/settings.mjs
 var BaseSettings3 = /* @__PURE__ */ (() => {
-  class BaseSettings4 extends APIResource2 {
+  class BaseSettings4 extends APIResource {
   }
   BaseSettings4._key = Object.freeze([
     "users",
@@ -38354,7 +36475,7 @@ var Settings3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/users/users.mjs
 var BaseUsers3 = /* @__PURE__ */ (() => {
-  class BaseUsers4 extends APIResource2 {
+  class BaseUsers4 extends APIResource {
     /**
      * OAuth app tokens and personal access tokens (classic) need the `user` scope in
      * order for the response to include private profile information.
@@ -38409,9 +36530,9 @@ var BaseUsers3 = /* @__PURE__ */ (() => {
      * ```
      */
     checkFollowing(username, options) {
-      return this._client.get(path2`/user/following/${username}`, {
+      return this._client.get(path`/user/following/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -38428,9 +36549,9 @@ var BaseUsers3 = /* @__PURE__ */ (() => {
      * ```
      */
     follow(username, options) {
-      return this._client.put(path2`/user/following/${username}`, {
+      return this._client.put(path`/user/following/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
     /**
@@ -38464,7 +36585,7 @@ var BaseUsers3 = /* @__PURE__ */ (() => {
      * ```
      */
     getUserByID(accountID, options) {
-      return this._client.get(path2`/user/${accountID}`, options);
+      return this._client.get(path`/user/${accountID}`, options);
     }
     /**
      * Lists the people following the authenticated user.
@@ -38625,9 +36746,9 @@ var BaseUsers3 = /* @__PURE__ */ (() => {
      * ```
      */
     unfollow(username, options) {
-      return this._client.delete(path2`/user/following/${username}`, {
+      return this._client.delete(path`/user/following/${username}`, {
         ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+        headers: buildHeaders([{ Accept: "*/*" }, options?.headers])
       });
     }
   }
@@ -38702,7 +36823,7 @@ var Users3 = /* @__PURE__ */ (() => {
 
 // node_modules/@stainless-api/github-internal/resources/versions.mjs
 var BaseVersions3 = /* @__PURE__ */ (() => {
-  class BaseVersions4 extends APIResource2 {
+  class BaseVersions4 extends APIResource {
     /**
      * Get all supported GitHub API versions.
      */
@@ -38717,7 +36838,7 @@ var Versions3 = class extends BaseVersions3 {
 };
 
 // node_modules/@stainless-api/github-internal/internal/utils/env.mjs
-var readEnv2 = (env) => {
+var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
   }
@@ -38778,7 +36899,7 @@ async function getAppToken(method) {
 var _BaseGitHub_instances;
 var _BaseGitHub_encoder;
 var _BaseGitHub_baseURLOverridden;
-var _a2;
+var _a;
 var BaseGitHub = /* @__PURE__ */ (() => {
   class BaseGitHub2 {
     /**
@@ -38795,7 +36916,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
      * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
      * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
      */
-    constructor({ baseURL = readEnv2("GITHUB_BASE_URL"), authToken = readEnv2("GITHUB_AUTH_TOKEN") ?? null, owner = null, repo = null, ...opts } = {}) {
+    constructor({ baseURL = readEnv("GITHUB_BASE_URL"), authToken = readEnv("GITHUB_AUTH_TOKEN") ?? null, owner = null, repo = null, ...opts } = {}) {
       _BaseGitHub_instances.add(this);
       _BaseGitHub_encoder.set(this, void 0);
       const options = {
@@ -38810,11 +36931,11 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       this.logger = options.logger ?? console;
       const defaultLogLevel = "warn";
       this.logLevel = defaultLogLevel;
-      this.logLevel = parseLogLevel2(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel2(readEnv2("GITHUB_LOG"), "process.env['GITHUB_LOG']", this) ?? defaultLogLevel;
+      this.logLevel = parseLogLevel(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel(readEnv("GITHUB_LOG"), "process.env['GITHUB_LOG']", this) ?? defaultLogLevel;
       this.fetchOptions = options.fetchOptions;
       this.maxRetries = options.maxRetries ?? 2;
-      this.fetch = options.fetch ?? getDefaultFetch2();
-      __classPrivateFieldSet2(this, _BaseGitHub_encoder, FallbackEncoder2, "f");
+      this.fetch = options.fetch ?? getDefaultFetch();
+      __classPrivateFieldSet(this, _BaseGitHub_encoder, FallbackEncoder, "f");
       this._options = options;
       this.authToken = authToken;
       this.owner = owner;
@@ -38852,7 +36973,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     zen(options) {
       return this.get("/zen", {
         ...options,
-        headers: buildHeaders2([{ Accept: "text/plain" }, options?.headers])
+        headers: buildHeaders([{ Accept: "text/plain" }, options?.headers])
       });
     }
     defaultQuery() {
@@ -38865,7 +36986,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       if (this.authToken == null) {
         return void 0;
       }
-      return buildHeaders2([{ Authorization: `Bearer ${this.authToken}` }]);
+      return buildHeaders([{ Authorization: `Bearer ${this.authToken}` }]);
     }
     /**
      * Given a list of available auth methods, get an auth token to access the
@@ -38890,22 +37011,22 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       return authToken;
     }
     stringifyQuery(query) {
-      return stringify2(query, { arrayFormat: "comma" });
+      return stringify(query, { arrayFormat: "comma" });
     }
     getUserAgent() {
-      return `${this.constructor.name}/JS ${VERSION2}`;
+      return `${this.constructor.name}/JS ${VERSION}`;
     }
     defaultIdempotencyKey() {
-      return `stainless-node-retry-${uuid42()}`;
+      return `stainless-node-retry-${uuid4()}`;
     }
     makeStatusError(status, error, message, headers) {
-      return APIError2.generate(status, error, message, headers);
+      return APIError.generate(status, error, message, headers);
     }
     buildURL(path6, query, defaultBaseURL) {
-      const baseURL = !__classPrivateFieldGet2(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-      const url = isAbsoluteURL2(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
+      const baseURL = !__classPrivateFieldGet(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+      const url = isAbsoluteURL(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
       const defaultQuery = this.defaultQuery();
-      if (!isEmptyObj2(defaultQuery)) {
+      if (!isEmptyObj(defaultQuery)) {
         query = { ...defaultQuery, ...query };
       }
       if (typeof query === "object" && query && !Array.isArray(query)) {
@@ -38947,7 +37068,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       }));
     }
     request(options, remainingRetries = null) {
-      return new APIPromise2(this, this.makeRequest(options, remainingRetries, void 0));
+      return new APIPromise(this, this.makeRequest(options, remainingRetries, void 0));
     }
     async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
       const options = await optionsInput;
@@ -38963,7 +37084,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
       const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
       const startTime = Date.now();
-      loggerFor2(this).debug(`[${requestLogID}] sending request`, formatRequestDetails2({
+      loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({
         retryOfRequestLogID,
         method: options.method,
         url,
@@ -38971,20 +37092,20 @@ var BaseGitHub = /* @__PURE__ */ (() => {
         headers: req.headers
       }));
       if (options.signal?.aborted) {
-        throw new APIUserAbortError2();
+        throw new APIUserAbortError();
       }
       const controller = new AbortController();
-      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
+      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError);
       const headersTime = Date.now();
       if (response instanceof Error) {
         const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
         if (options.signal?.aborted) {
-          throw new APIUserAbortError2();
+          throw new APIUserAbortError();
         }
-        const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+        const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
         if (retriesRemaining) {
-          loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
-          loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails2({
+          loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+          loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
             retryOfRequestLogID,
             url,
             durationMs: headersTime - startTime,
@@ -38992,26 +37113,26 @@ var BaseGitHub = /* @__PURE__ */ (() => {
           }));
           return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
         }
-        loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
-        loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails2({
+        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails({
           retryOfRequestLogID,
           url,
           durationMs: headersTime - startTime,
           message: response.message
         }));
         if (isTimeout) {
-          throw new APIConnectionTimeoutError2();
+          throw new APIConnectionTimeoutError();
         }
-        throw new APIConnectionError2({ cause: response });
+        throw new APIConnectionError({ cause: response });
       }
       const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
       if (!response.ok) {
         const shouldRetry = await this.shouldRetry(response);
         if (retriesRemaining && shouldRetry) {
           const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
-          await CancelReadableStream2(response.body);
-          loggerFor2(this).info(`${responseInfo} - ${retryMessage2}`);
-          loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails2({
+          await CancelReadableStream(response.body);
+          loggerFor(this).info(`${responseInfo} - ${retryMessage2}`);
+          loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails({
             retryOfRequestLogID,
             url: response.url,
             status: response.status,
@@ -39021,11 +37142,11 @@ var BaseGitHub = /* @__PURE__ */ (() => {
           return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
         }
         const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
-        loggerFor2(this).info(`${responseInfo} - ${retryMessage}`);
-        const errText = await response.text().catch((err2) => castToError2(err2).message);
-        const errJSON = safeJSON2(errText);
+        loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
+        const errText = await response.text().catch((err2) => castToError(err2).message);
+        const errJSON = safeJSON(errText);
         const errMessage = errJSON ? void 0 : errText;
-        loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails2({
+        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({
           retryOfRequestLogID,
           url: response.url,
           status: response.status,
@@ -39036,8 +37157,8 @@ var BaseGitHub = /* @__PURE__ */ (() => {
         const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
         throw err;
       }
-      loggerFor2(this).info(responseInfo);
-      loggerFor2(this).debug(`[${requestLogID}] response start`, formatRequestDetails2({
+      loggerFor(this).info(responseInfo);
+      loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({
         retryOfRequestLogID,
         url: response.url,
         status: response.status,
@@ -39051,7 +37172,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     }
     requestAPIList(Page2, options) {
       const request = this.makeRequest(options, null, void 0);
-      return new PagePromise2(this, request, Page2);
+      return new PagePromise(this, request, Page2);
     }
     async fetchWithTimeout(url, init, ms, controller) {
       const { signal, method, ...options } = init || {};
@@ -39112,7 +37233,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
         const maxRetries = options.maxRetries ?? this.maxRetries;
         timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
       }
-      await sleep2(timeoutMillis);
+      await sleep(timeoutMillis);
       return this.makeRequest(options, retriesRemaining - 1, requestLogID);
     }
     calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
@@ -39128,7 +37249,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       const { method, path: path6, query, defaultBaseURL } = options;
       const url = this.buildURL(path6, query, defaultBaseURL);
       if ("timeout" in options)
-        validatePositiveInteger2("timeout", options.timeout);
+        validatePositiveInteger("timeout", options.timeout);
       options.timeout = options.timeout ?? this.timeout;
       const { bodyHeaders, body } = this.buildBody({ options });
       const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
@@ -39150,14 +37271,14 @@ var BaseGitHub = /* @__PURE__ */ (() => {
           options.idempotencyKey = this.defaultIdempotencyKey();
         idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
       }
-      const headers = buildHeaders2([
+      const headers = buildHeaders([
         idempotencyHeaders,
         {
           Accept: "application/json",
           "User-Agent": this.getUserAgent(),
           "X-Stainless-Retry-Count": String(retryCount),
           ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
-          ...getPlatformHeaders2()
+          ...getPlatformHeaders()
         },
         await this.authHeaders(options),
         this._options.defaultHeaders,
@@ -39171,7 +37292,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       if (!body) {
         return { bodyHeaders: void 0, body: void 0 };
       }
-      const headers = buildHeaders2([rawHeaders]);
+      const headers = buildHeaders([rawHeaders]);
       if (
         // Pass raw type verbatim
         ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
@@ -39183,9 +37304,9 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       ) {
         return { bodyHeaders: void 0, body };
       } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
-        return { bodyHeaders: void 0, body: ReadableStreamFrom2(body) };
+        return { bodyHeaders: void 0, body: ReadableStreamFrom(body) };
       } else {
-        return __classPrivateFieldGet2(this, _BaseGitHub_encoder, "f").call(this, { body, headers });
+        return __classPrivateFieldGet(this, _BaseGitHub_encoder, "f").call(this, { body, headers });
       }
     }
   }
@@ -39224,28 +37345,28 @@ var GitHub = /* @__PURE__ */ (() => {
       this.notifications = new Notifications(this);
       this.octocat = new Octocat(this);
       this.organizations = new Organizations(this);
-      this.orgs = new Orgs2(this);
+      this.orgs = new Orgs(this);
       this.rateLimit = new RateLimitResource(this);
       this.search = new Search(this);
       this.versions = new Versions3(this);
     }
   }
-  _a2 = GitHub2;
-  GitHub2.GitHub = _a2;
+  _a = GitHub2;
+  GitHub2.GitHub = _a;
   GitHub2.GitHubError = GitHubError;
-  GitHub2.APIError = APIError2;
-  GitHub2.APIConnectionError = APIConnectionError2;
-  GitHub2.APIConnectionTimeoutError = APIConnectionTimeoutError2;
-  GitHub2.APIUserAbortError = APIUserAbortError2;
-  GitHub2.NotFoundError = NotFoundError2;
-  GitHub2.ConflictError = ConflictError2;
-  GitHub2.RateLimitError = RateLimitError2;
-  GitHub2.BadRequestError = BadRequestError2;
-  GitHub2.AuthenticationError = AuthenticationError2;
-  GitHub2.InternalServerError = InternalServerError2;
-  GitHub2.PermissionDeniedError = PermissionDeniedError2;
-  GitHub2.UnprocessableEntityError = UnprocessableEntityError2;
-  GitHub2.toFile = toFile2;
+  GitHub2.APIError = APIError;
+  GitHub2.APIConnectionError = APIConnectionError;
+  GitHub2.APIConnectionTimeoutError = APIConnectionTimeoutError;
+  GitHub2.APIUserAbortError = APIUserAbortError;
+  GitHub2.NotFoundError = NotFoundError;
+  GitHub2.ConflictError = ConflictError;
+  GitHub2.RateLimitError = RateLimitError;
+  GitHub2.BadRequestError = BadRequestError;
+  GitHub2.AuthenticationError = AuthenticationError;
+  GitHub2.InternalServerError = InternalServerError;
+  GitHub2.PermissionDeniedError = PermissionDeniedError;
+  GitHub2.UnprocessableEntityError = UnprocessableEntityError;
+  GitHub2.toFile = toFile;
   GitHub2.getAuthToken = getAuthToken;
   GitHub2.Repos = Repos3;
   GitHub2.Users = Users3;
@@ -39272,7 +37393,7 @@ var GitHub = /* @__PURE__ */ (() => {
   GitHub2.Notifications = Notifications;
   GitHub2.Octocat = Octocat;
   GitHub2.Organizations = Organizations;
-  GitHub2.Orgs = Orgs2;
+  GitHub2.Orgs = Orgs;
   GitHub2.RateLimitResource = RateLimitResource;
   GitHub2.Search = Search;
   GitHub2.Versions = Versions3;
@@ -39286,7 +37407,7 @@ function createClient(options) {
     const resourceInstance = new ResourceClass(client);
     let object = client;
     for (const part of ResourceClass._key.slice(0, -1)) {
-      if (hasOwn2(object, part)) {
+      if (hasOwn(object, part)) {
         object = object[part];
       } else {
         Object.defineProperty(object, part, {
@@ -39298,7 +37419,7 @@ function createClient(options) {
       }
     }
     const name = ResourceClass._key.at(-1);
-    if (!hasOwn2(object, name)) {
+    if (!hasOwn(object, name)) {
       Object.defineProperty(object, name, {
         value: resourceInstance,
         configurable: true,
@@ -39306,7 +37427,7 @@ function createClient(options) {
         writable: true
       });
     } else {
-      if (object[name] instanceof APIResource2) {
+      if (object[name] instanceof APIResource) {
         throw new TypeError(`Resource at ${ResourceClass._key.join(".")} already exists!`);
       } else {
         object[name] = Object.assign(resourceInstance, object[name]);
@@ -39690,31 +37811,6 @@ var GitLabCommentClient = class {
     });
   }
 };
-
-// src/stainless.ts
-function getStainlessClient(action, opts) {
-  const headers = {
-    "User-Agent": `Stainless/Action ${package_default}`
-  };
-  if (action) {
-    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
-    if (isGitLabCI()) {
-      headers["X-GitLab-CI"] = actionPath;
-    } else {
-      headers["X-GitHub-Action"] = actionPath;
-    }
-  }
-  return new Stainless({
-    ...opts,
-    defaultHeaders: {
-      ...opts.defaultHeaders,
-      ...headers
-    }
-  });
-}
-
-// src/preview.ts
-var fs4 = __toESM(require("node:fs"));
 
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
@@ -40717,9 +38813,9 @@ function spawn2(file, second, third, previous) {
 // src/config.ts
 var fs3 = __toESM(require("node:fs"));
 var import_node_os = require("node:os");
-var path5 = __toESM(require("node:path"));
+var path4 = __toESM(require("node:path"));
 function getSavedFilePath(file, sha, extension) {
-  return path5.join(
+  return path4.join(
     (0, import_node_os.tmpdir)(),
     "stainless-generated-config",
     `${file}-${sha}${extension}`
@@ -40741,9 +38837,9 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "oas",
       savedSha,
-      path5.extname(oasPath)
+      path4.extname(oasPath)
     );
-    fs3.mkdirSync(path5.dirname(savedFilePath), { recursive: true });
+    fs3.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
     fs3.copyFileSync(oasPath, savedFilePath);
     fs3.rmSync(oasPath);
   }
@@ -40752,9 +38848,9 @@ async function saveConfig({
     const savedFilePath = getSavedFilePath(
       "config",
       savedSha,
-      path5.extname(configPath)
+      path4.extname(configPath)
     );
-    fs3.mkdirSync(path5.dirname(savedFilePath), { recursive: true });
+    fs3.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
     fs3.copyFileSync(configPath, savedFilePath);
     fs3.rmSync(configPath);
   }
@@ -40797,12 +38893,12 @@ async function readConfig({
   try {
     await addToResults(
       "oas",
-      getSavedFilePath("oas", sha, path5.extname(oasPath ?? "")),
+      getSavedFilePath("oas", sha, path4.extname(oasPath ?? "")),
       `saved ${sha}`
     );
     await addToResults(
       "config",
-      getSavedFilePath("config", sha, path5.extname(configPath ?? "")),
+      getSavedFilePath("config", sha, path4.extname(configPath ?? "")),
       `saved ${sha}`
     );
   } catch {
@@ -40899,6 +38995,1981 @@ async function isConfigChanged({
     changed = true;
   }
   return changed;
+}
+
+// node_modules/@stainless-api/sdk/internal/tslib.mjs
+function __classPrivateFieldSet2(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet2(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+var uuid42 = function() {
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid42 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/@stainless-api/sdk/internal/errors.mjs
+function isAbortError2(err) {
+  return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
+  ("name" in err && err.name === "AbortError" || // Expo fetch
+  "message" in err && String(err.message).includes("FetchRequestCanceledException"));
+}
+var castToError2 = (err) => {
+  if (err instanceof Error)
+    return err;
+  if (typeof err === "object" && err !== null) {
+    try {
+      if (Object.prototype.toString.call(err) === "[object Error]") {
+        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
+        if (err.stack)
+          error.stack = err.stack;
+        if (err.cause && !error.cause)
+          error.cause = err.cause;
+        if (err.name)
+          error.name = err.name;
+        return error;
+      }
+    } catch {
+    }
+    try {
+      return new Error(JSON.stringify(err));
+    } catch {
+    }
+  }
+  return new Error(err);
+};
+
+// node_modules/@stainless-api/sdk/core/error.mjs
+var StainlessError = class extends Error {
+};
+var APIError2 = class _APIError extends StainlessError {
+  constructor(status, error, message, headers) {
+    super(`${_APIError.makeMessage(status, error, message)}`);
+    this.status = status;
+    this.headers = headers;
+    this.error = error;
+  }
+  static makeMessage(status, error, message) {
+    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
+    if (status && msg) {
+      return `${status} ${msg}`;
+    }
+    if (status) {
+      return `${status} status code (no body)`;
+    }
+    if (msg) {
+      return msg;
+    }
+    return "(no status code or body)";
+  }
+  static generate(status, errorResponse, message, headers) {
+    if (!status || !headers) {
+      return new APIConnectionError2({ message, cause: castToError2(errorResponse) });
+    }
+    const error = errorResponse;
+    if (status === 400) {
+      return new BadRequestError2(status, error, message, headers);
+    }
+    if (status === 401) {
+      return new AuthenticationError2(status, error, message, headers);
+    }
+    if (status === 403) {
+      return new PermissionDeniedError2(status, error, message, headers);
+    }
+    if (status === 404) {
+      return new NotFoundError2(status, error, message, headers);
+    }
+    if (status === 409) {
+      return new ConflictError2(status, error, message, headers);
+    }
+    if (status === 422) {
+      return new UnprocessableEntityError2(status, error, message, headers);
+    }
+    if (status === 429) {
+      return new RateLimitError2(status, error, message, headers);
+    }
+    if (status >= 500) {
+      return new InternalServerError2(status, error, message, headers);
+    }
+    return new _APIError(status, error, message, headers);
+  }
+};
+var APIUserAbortError2 = class extends APIError2 {
+  constructor({ message } = {}) {
+    super(void 0, void 0, message || "Request was aborted.", void 0);
+  }
+};
+var APIConnectionError2 = class extends APIError2 {
+  constructor({ message, cause }) {
+    super(void 0, void 0, message || "Connection error.", void 0);
+    if (cause)
+      this.cause = cause;
+  }
+};
+var APIConnectionTimeoutError2 = class extends APIConnectionError2 {
+  constructor({ message } = {}) {
+    super({ message: message ?? "Request timed out." });
+  }
+};
+var BadRequestError2 = class extends APIError2 {
+};
+var AuthenticationError2 = class extends APIError2 {
+};
+var PermissionDeniedError2 = class extends APIError2 {
+};
+var NotFoundError2 = class extends APIError2 {
+};
+var ConflictError2 = class extends APIError2 {
+};
+var UnprocessableEntityError2 = class extends APIError2 {
+};
+var RateLimitError2 = class extends APIError2 {
+};
+var InternalServerError2 = class extends APIError2 {
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/values.mjs
+var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
+var isAbsoluteURL2 = (url) => {
+  return startsWithSchemeRegexp2.test(url);
+};
+var isArray2 = (val) => (isArray2 = Array.isArray, isArray2(val));
+var isReadonlyArray2 = isArray2;
+function maybeObj2(x) {
+  if (typeof x !== "object") {
+    return {};
+  }
+  return x ?? {};
+}
+function isEmptyObj2(obj) {
+  if (!obj)
+    return true;
+  for (const _k in obj)
+    return false;
+  return true;
+}
+function hasOwn2(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+var validatePositiveInteger2 = (name, n) => {
+  if (typeof n !== "number" || !Number.isInteger(n)) {
+    throw new StainlessError(`${name} must be an integer`);
+  }
+  if (n < 0) {
+    throw new StainlessError(`${name} must be a positive integer`);
+  }
+  return n;
+};
+var safeJSON2 = (text) => {
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return void 0;
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// node_modules/@stainless-api/sdk/version.mjs
+var VERSION2 = "0.1.0-alpha.19";
+
+// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+function getDetectedPlatform2() {
+  if (typeof Deno !== "undefined" && Deno.build != null) {
+    return "deno";
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return "edge";
+  }
+  if (Object.prototype.toString.call(typeof globalThis.process !== "undefined" ? globalThis.process : 0) === "[object process]") {
+    return "node";
+  }
+  return "unknown";
+}
+var getPlatformProperties2 = () => {
+  const detectedPlatform = getDetectedPlatform2();
+  if (detectedPlatform === "deno") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": normalizePlatform2(Deno.build.os),
+      "X-Stainless-Arch": normalizeArch2(Deno.build.arch),
+      "X-Stainless-Runtime": "deno",
+      "X-Stainless-Runtime-Version": typeof Deno.version === "string" ? Deno.version : Deno.version?.deno ?? "unknown"
+    };
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": `other:${EdgeRuntime}`,
+      "X-Stainless-Runtime": "edge",
+      "X-Stainless-Runtime-Version": globalThis.process.version
+    };
+  }
+  if (detectedPlatform === "node") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": normalizePlatform2(globalThis.process.platform ?? "unknown"),
+      "X-Stainless-Arch": normalizeArch2(globalThis.process.arch ?? "unknown"),
+      "X-Stainless-Runtime": "node",
+      "X-Stainless-Runtime-Version": globalThis.process.version ?? "unknown"
+    };
+  }
+  const browserInfo = getBrowserInfo2();
+  if (browserInfo) {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": "unknown",
+      "X-Stainless-Runtime": `browser:${browserInfo.browser}`,
+      "X-Stainless-Runtime-Version": browserInfo.version
+    };
+  }
+  return {
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Package-Version": VERSION2,
+    "X-Stainless-OS": "Unknown",
+    "X-Stainless-Arch": "unknown",
+    "X-Stainless-Runtime": "unknown",
+    "X-Stainless-Runtime-Version": "unknown"
+  };
+};
+function getBrowserInfo2() {
+  if (typeof navigator === "undefined" || !navigator) {
+    return null;
+  }
+  const browserPatterns = [
+    { key: "edge", pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "chrome", pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "firefox", pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "safari", pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ }
+  ];
+  for (const { key, pattern } of browserPatterns) {
+    const match = pattern.exec(navigator.userAgent);
+    if (match) {
+      const major = match[1] || 0;
+      const minor = match[2] || 0;
+      const patch = match[3] || 0;
+      return { browser: key, version: `${major}.${minor}.${patch}` };
+    }
+  }
+  return null;
+}
+var normalizeArch2 = (arch) => {
+  if (arch === "x32")
+    return "x32";
+  if (arch === "x86_64" || arch === "x64")
+    return "x64";
+  if (arch === "arm")
+    return "arm";
+  if (arch === "aarch64" || arch === "arm64")
+    return "arm64";
+  if (arch)
+    return `other:${arch}`;
+  return "unknown";
+};
+var normalizePlatform2 = (platform) => {
+  platform = platform.toLowerCase();
+  if (platform.includes("ios"))
+    return "iOS";
+  if (platform === "android")
+    return "Android";
+  if (platform === "darwin")
+    return "MacOS";
+  if (platform === "win32")
+    return "Windows";
+  if (platform === "freebsd")
+    return "FreeBSD";
+  if (platform === "openbsd")
+    return "OpenBSD";
+  if (platform === "linux")
+    return "Linux";
+  if (platform)
+    return `Other:${platform}`;
+  return "Unknown";
+};
+var _platformHeaders2;
+var getPlatformHeaders2 = () => {
+  return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
+};
+
+// node_modules/@stainless-api/sdk/internal/shims.mjs
+function getDefaultFetch2() {
+  if (typeof fetch !== "undefined") {
+    return fetch;
+  }
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new Stainless({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+}
+function makeReadableStream2(...args) {
+  const ReadableStream = globalThis.ReadableStream;
+  if (typeof ReadableStream === "undefined") {
+    throw new Error("`ReadableStream` is not defined as a global; You will need to polyfill it, `globalThis.ReadableStream = ReadableStream`");
+  }
+  return new ReadableStream(...args);
+}
+function ReadableStreamFrom2(iterable) {
+  let iter = Symbol.asyncIterator in iterable ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
+  return makeReadableStream2({
+    start() {
+    },
+    async pull(controller) {
+      const { done, value } = await iter.next();
+      if (done) {
+        controller.close();
+      } else {
+        controller.enqueue(value);
+      }
+    },
+    async cancel() {
+      await iter.return?.();
+    }
+  });
+}
+async function CancelReadableStream2(stream) {
+  if (stream === null || typeof stream !== "object")
+    return;
+  if (stream[Symbol.asyncIterator]) {
+    await stream[Symbol.asyncIterator]().return?.();
+    return;
+  }
+  const reader = stream.getReader();
+  const cancelPromise = reader.cancel();
+  reader.releaseLock();
+  await cancelPromise;
+}
+
+// node_modules/@stainless-api/sdk/internal/request-options.mjs
+var FallbackEncoder2 = ({ headers, body }) => {
+  return {
+    bodyHeaders: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  };
+};
+
+// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+var default_format2 = "RFC3986";
+var default_formatter2 = (v) => String(v);
+var formatters2 = {
+  RFC1738: (v) => String(v).replace(/%20/g, "+"),
+  RFC3986: default_formatter2
+};
+var RFC17382 = "RFC1738";
+
+// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
+var hex_table2 = /* @__PURE__ */ (() => {
+  const array = [];
+  for (let i = 0; i < 256; ++i) {
+    array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
+  }
+  return array;
+})();
+var limit2 = 1024;
+var encode2 = (str, _defaultEncoder, charset, _kind, format) => {
+  if (str.length === 0) {
+    return str;
+  }
+  let string = str;
+  if (typeof str === "symbol") {
+    string = Symbol.prototype.toString.call(str);
+  } else if (typeof str !== "string") {
+    string = String(str);
+  }
+  if (charset === "iso-8859-1") {
+    return escape(string).replace(/%u[0-9a-f]{4}/gi, function($0) {
+      return "%26%23" + parseInt($0.slice(2), 16) + "%3B";
+    });
+  }
+  let out = "";
+  for (let j = 0; j < string.length; j += limit2) {
+    const segment = string.length >= limit2 ? string.slice(j, j + limit2) : string;
+    const arr = [];
+    for (let i = 0; i < segment.length; ++i) {
+      let c = segment.charCodeAt(i);
+      if (c === 45 || // -
+      c === 46 || // .
+      c === 95 || // _
+      c === 126 || // ~
+      c >= 48 && c <= 57 || // 0-9
+      c >= 65 && c <= 90 || // a-z
+      c >= 97 && c <= 122 || // A-Z
+      format === RFC17382 && (c === 40 || c === 41)) {
+        arr[arr.length] = segment.charAt(i);
+        continue;
+      }
+      if (c < 128) {
+        arr[arr.length] = hex_table2[c];
+        continue;
+      }
+      if (c < 2048) {
+        arr[arr.length] = hex_table2[192 | c >> 6] + hex_table2[128 | c & 63];
+        continue;
+      }
+      if (c < 55296 || c >= 57344) {
+        arr[arr.length] = hex_table2[224 | c >> 12] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
+        continue;
+      }
+      i += 1;
+      c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
+      arr[arr.length] = hex_table2[240 | c >> 18] + hex_table2[128 | c >> 12 & 63] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
+    }
+    out += arr.join("");
+  }
+  return out;
+};
+function is_buffer2(obj) {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+  return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
+}
+function maybe_map2(val, fn) {
+  if (isArray2(val)) {
+    const mapped = [];
+    for (let i = 0; i < val.length; i += 1) {
+      mapped.push(fn(val[i]));
+    }
+    return mapped;
+  }
+  return fn(val);
+}
+
+// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+var array_prefix_generators2 = {
+  brackets(prefix) {
+    return String(prefix) + "[]";
+  },
+  comma: "comma",
+  indices(prefix, key) {
+    return String(prefix) + "[" + key + "]";
+  },
+  repeat(prefix) {
+    return String(prefix);
+  }
+};
+var push_to_array2 = function(arr, value_or_array) {
+  Array.prototype.push.apply(arr, isArray2(value_or_array) ? value_or_array : [value_or_array]);
+};
+var toISOString2;
+var defaults2 = {
+  addQueryPrefix: false,
+  allowDots: false,
+  allowEmptyArrays: false,
+  arrayFormat: "indices",
+  charset: "utf-8",
+  charsetSentinel: false,
+  delimiter: "&",
+  encode: true,
+  encodeDotInKeys: false,
+  encoder: encode2,
+  encodeValuesOnly: false,
+  format: default_format2,
+  formatter: default_formatter2,
+  /** @deprecated */
+  indices: false,
+  serializeDate(date) {
+    return (toISOString2 ?? (toISOString2 = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
+  },
+  skipNulls: false,
+  strictNullHandling: false
+};
+function is_non_nullish_primitive2(v) {
+  return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
+}
+var sentinel2 = {};
+function inner_stringify2(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
+  let obj = object;
+  let tmp_sc = sideChannel;
+  let step = 0;
+  let find_flag = false;
+  while ((tmp_sc = tmp_sc.get(sentinel2)) !== void 0 && !find_flag) {
+    const pos = tmp_sc.get(object);
+    step += 1;
+    if (typeof pos !== "undefined") {
+      if (pos === step) {
+        throw new RangeError("Cyclic object value");
+      } else {
+        find_flag = true;
+      }
+    }
+    if (typeof tmp_sc.get(sentinel2) === "undefined") {
+      step = 0;
+    }
+  }
+  if (typeof filter === "function") {
+    obj = filter(prefix, obj);
+  } else if (obj instanceof Date) {
+    obj = serializeDate?.(obj);
+  } else if (generateArrayPrefix === "comma" && isArray2(obj)) {
+    obj = maybe_map2(obj, function(value) {
+      if (value instanceof Date) {
+        return serializeDate?.(value);
+      }
+      return value;
+    });
+  }
+  if (obj === null) {
+    if (strictNullHandling) {
+      return encoder && !encodeValuesOnly ? (
+        // @ts-expect-error
+        encoder(prefix, defaults2.encoder, charset, "key", format)
+      ) : prefix;
+    }
+    obj = "";
+  }
+  if (is_non_nullish_primitive2(obj) || is_buffer2(obj)) {
+    if (encoder) {
+      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults2.encoder, charset, "key", format);
+      return [
+        formatter?.(key_value) + "=" + // @ts-expect-error
+        formatter?.(encoder(obj, defaults2.encoder, charset, "value", format))
+      ];
+    }
+    return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
+  }
+  const values = [];
+  if (typeof obj === "undefined") {
+    return values;
+  }
+  let obj_keys;
+  if (generateArrayPrefix === "comma" && isArray2(obj)) {
+    if (encodeValuesOnly && encoder) {
+      obj = maybe_map2(obj, encoder);
+    }
+    obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : void 0 }];
+  } else if (isArray2(filter)) {
+    obj_keys = filter;
+  } else {
+    const keys = Object.keys(obj);
+    obj_keys = sort ? keys.sort(sort) : keys;
+  }
+  const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
+  const adjusted_prefix = commaRoundTrip && isArray2(obj) && obj.length === 1 ? encoded_prefix + "[]" : encoded_prefix;
+  if (allowEmptyArrays && isArray2(obj) && obj.length === 0) {
+    return adjusted_prefix + "[]";
+  }
+  for (let j = 0; j < obj_keys.length; ++j) {
+    const key = obj_keys[j];
+    const value = (
+      // @ts-ignore
+      typeof key === "object" && typeof key.value !== "undefined" ? key.value : obj[key]
+    );
+    if (skipNulls && value === null) {
+      continue;
+    }
+    const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, "%2E") : key;
+    const key_prefix = isArray2(obj) ? typeof generateArrayPrefix === "function" ? generateArrayPrefix(adjusted_prefix, encoded_key) : adjusted_prefix : adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
+    sideChannel.set(object, step);
+    const valueSideChannel = /* @__PURE__ */ new WeakMap();
+    valueSideChannel.set(sentinel2, sideChannel);
+    push_to_array2(values, inner_stringify2(
+      value,
+      key_prefix,
+      generateArrayPrefix,
+      commaRoundTrip,
+      allowEmptyArrays,
+      strictNullHandling,
+      skipNulls,
+      encodeDotInKeys,
+      // @ts-ignore
+      generateArrayPrefix === "comma" && encodeValuesOnly && isArray2(obj) ? null : encoder,
+      filter,
+      sort,
+      allowDots,
+      serializeDate,
+      format,
+      formatter,
+      encodeValuesOnly,
+      charset,
+      valueSideChannel
+    ));
+  }
+  return values;
+}
+function normalize_stringify_options2(opts = defaults2) {
+  if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
+    throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
+  }
+  if (typeof opts.encodeDotInKeys !== "undefined" && typeof opts.encodeDotInKeys !== "boolean") {
+    throw new TypeError("`encodeDotInKeys` option can only be `true` or `false`, when provided");
+  }
+  if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
+    throw new TypeError("Encoder has to be a function.");
+  }
+  const charset = opts.charset || defaults2.charset;
+  if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
+    throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
+  }
+  let format = default_format2;
+  if (typeof opts.format !== "undefined") {
+    if (!has2(formatters2, opts.format)) {
+      throw new TypeError("Unknown format option provided.");
+    }
+    format = opts.format;
+  }
+  const formatter = formatters2[format];
+  let filter = defaults2.filter;
+  if (typeof opts.filter === "function" || isArray2(opts.filter)) {
+    filter = opts.filter;
+  }
+  let arrayFormat;
+  if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators2) {
+    arrayFormat = opts.arrayFormat;
+  } else if ("indices" in opts) {
+    arrayFormat = opts.indices ? "indices" : "repeat";
+  } else {
+    arrayFormat = defaults2.arrayFormat;
+  }
+  if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
+    throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
+  }
+  const allowDots = typeof opts.allowDots === "undefined" ? !!opts.encodeDotInKeys === true ? true : defaults2.allowDots : !!opts.allowDots;
+  return {
+    addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults2.addQueryPrefix,
+    // @ts-ignore
+    allowDots,
+    allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults2.allowEmptyArrays,
+    arrayFormat,
+    charset,
+    charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults2.charsetSentinel,
+    commaRoundTrip: !!opts.commaRoundTrip,
+    delimiter: typeof opts.delimiter === "undefined" ? defaults2.delimiter : opts.delimiter,
+    encode: typeof opts.encode === "boolean" ? opts.encode : defaults2.encode,
+    encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults2.encodeDotInKeys,
+    encoder: typeof opts.encoder === "function" ? opts.encoder : defaults2.encoder,
+    encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults2.encodeValuesOnly,
+    filter,
+    format,
+    formatter,
+    serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults2.serializeDate,
+    skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults2.skipNulls,
+    // @ts-ignore
+    sort: typeof opts.sort === "function" ? opts.sort : null,
+    strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults2.strictNullHandling
+  };
+}
+function stringify2(object, opts = {}) {
+  let obj = object;
+  const options = normalize_stringify_options2(opts);
+  let obj_keys;
+  let filter;
+  if (typeof options.filter === "function") {
+    filter = options.filter;
+    obj = filter("", obj);
+  } else if (isArray2(options.filter)) {
+    filter = options.filter;
+    obj_keys = filter;
+  }
+  const keys = [];
+  if (typeof obj !== "object" || obj === null) {
+    return "";
+  }
+  const generateArrayPrefix = array_prefix_generators2[options.arrayFormat];
+  const commaRoundTrip = generateArrayPrefix === "comma" && options.commaRoundTrip;
+  if (!obj_keys) {
+    obj_keys = Object.keys(obj);
+  }
+  if (options.sort) {
+    obj_keys.sort(options.sort);
+  }
+  const sideChannel = /* @__PURE__ */ new WeakMap();
+  for (let i = 0; i < obj_keys.length; ++i) {
+    const key = obj_keys[i];
+    if (options.skipNulls && obj[key] === null) {
+      continue;
+    }
+    push_to_array2(keys, inner_stringify2(
+      obj[key],
+      key,
+      // @ts-expect-error
+      generateArrayPrefix,
+      commaRoundTrip,
+      options.allowEmptyArrays,
+      options.strictNullHandling,
+      options.skipNulls,
+      options.encodeDotInKeys,
+      options.encode ? options.encoder : null,
+      options.filter,
+      options.sort,
+      options.allowDots,
+      options.serializeDate,
+      options.format,
+      options.formatter,
+      options.encodeValuesOnly,
+      options.charset,
+      sideChannel
+    ));
+  }
+  const joined = keys.join(options.delimiter);
+  let prefix = options.addQueryPrefix === true ? "?" : "";
+  if (options.charsetSentinel) {
+    if (options.charset === "iso-8859-1") {
+      prefix += "utf8=%26%2310003%3B&";
+    } else {
+      prefix += "utf8=%E2%9C%93&";
+    }
+  }
+  return joined.length > 0 ? prefix + joined : "";
+}
+
+// node_modules/@stainless-api/sdk/internal/utils/log.mjs
+var levelNumbers2 = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel2 = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn2(levelNumbers2, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
+  return void 0;
+};
+function noop2() {
+}
+function makeLogFn2(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
+    return noop2;
+  } else {
+    return logger2[fnLevel].bind(logger2);
+  }
+}
+var noopLogger2 = {
+  error: noop2,
+  warn: noop2,
+  info: noop2,
+  debug: noop2
+};
+var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
+function loggerFor2(client) {
+  const logger2 = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger2) {
+    return noopLogger2;
+  }
+  const cachedLogger = cachedLoggers2.get(logger2);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn2("error", logger2, logLevel),
+    warn: makeLogFn2("warn", logger2, logLevel),
+    info: makeLogFn2("info", logger2, logLevel),
+    debug: makeLogFn2("debug", logger2, logLevel)
+  };
+  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails2 = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
+
+// node_modules/@stainless-api/sdk/internal/parse.mjs
+async function defaultParseResponse2(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/@stainless-api/sdk/core/api-promise.mjs
+var _APIPromise_client2;
+var APIPromise2 = class _APIPromise extends Promise {
+  constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
+    super((resolve) => {
+      resolve(null);
+    });
+    this.responsePromise = responsePromise;
+    this.parseResponse = parseResponse;
+    _APIPromise_client2.set(this, void 0);
+    __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
+  }
+  _thenUnwrap(transform) {
+    return new _APIPromise(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+  }
+  /**
+   * Gets the raw `Response` instance instead of parsing the response
+   * data.
+   *
+   * If you want to parse the response body but still get the `Response`
+   * instance, you can use {@link withResponse()}.
+   *
+   * 👋 Getting the wrong TypeScript type for `Response`?
+   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+   * to your `tsconfig.json`.
+   */
+  asResponse() {
+    return this.responsePromise.then((p) => p.response);
+  }
+  /**
+   * Gets the parsed response data and the raw `Response` instance.
+   *
+   * If you just want to get the raw `Response` instance without parsing it,
+   * you can use {@link asResponse()}.
+   *
+   * 👋 Getting the wrong TypeScript type for `Response`?
+   * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+   * to your `tsconfig.json`.
+   */
+  async withResponse() {
+    const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+    return { data, response };
+  }
+  parse() {
+    if (!this.parsedPromise) {
+      this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
+    }
+    return this.parsedPromise;
+  }
+  then(onfulfilled, onrejected) {
+    return this.parse().then(onfulfilled, onrejected);
+  }
+  catch(onrejected) {
+    return this.parse().catch(onrejected);
+  }
+  finally(onfinally) {
+    return this.parse().finally(onfinally);
+  }
+};
+_APIPromise_client2 = /* @__PURE__ */ new WeakMap();
+
+// node_modules/@stainless-api/sdk/core/pagination.mjs
+var _AbstractPage_client2;
+var AbstractPage2 = class {
+  constructor(client, response, body, options) {
+    _AbstractPage_client2.set(this, void 0);
+    __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
+    this.options = options;
+    this.response = response;
+    this.body = body;
+  }
+  hasNextPage() {
+    const items = this.getPaginatedItems();
+    if (!items.length)
+      return false;
+    return this.nextPageRequestOptions() != null;
+  }
+  async getNextPage() {
+    const nextOptions = this.nextPageRequestOptions();
+    if (!nextOptions) {
+      throw new StainlessError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
+    }
+    return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
+  }
+  async *iterPages() {
+    let page = this;
+    yield page;
+    while (page.hasNextPage()) {
+      page = await page.getNextPage();
+      yield page;
+    }
+  }
+  async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
+    for await (const page of this.iterPages()) {
+      for (const item of page.getPaginatedItems()) {
+        yield item;
+      }
+    }
+  }
+};
+var PagePromise2 = class extends APIPromise2 {
+  constructor(client, request, Page2) {
+    super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
+  }
+  /**
+   * Allow auto-paginating iteration on an unawaited list call, eg:
+   *
+   *    for await (const item of client.items.list()) {
+   *      console.log(item)
+   *    }
+   */
+  async *[Symbol.asyncIterator]() {
+    const page = await this;
+    for await (const item of page) {
+      yield item;
+    }
+  }
+};
+var Page = class extends AbstractPage2 {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body.data || [];
+    this.next_cursor = body.next_cursor || "";
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const cursor = this.next_cursor;
+    if (!cursor) {
+      return null;
+    }
+    return {
+      ...this.options,
+      query: {
+        ...maybeObj2(this.options.query),
+        cursor
+      }
+    };
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/uploads.mjs
+var checkFileSupport2 = () => {
+  if (typeof File === "undefined") {
+    const { process: process7 } = globalThis;
+    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
+  }
+};
+function makeFile2(fileBits, fileName, options) {
+  checkFileSupport2();
+  return new File(fileBits, fileName ?? "unknown_file", options);
+}
+function getName2(value) {
+  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
+}
+var isAsyncIterable2 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
+
+// node_modules/@stainless-api/sdk/internal/to-file.mjs
+var isBlobLike2 = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
+var isFileLike2 = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike2(value);
+var isResponseLike2 = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
+async function toFile2(value, name, options) {
+  checkFileSupport2();
+  value = await value;
+  if (isFileLike2(value)) {
+    if (value instanceof File) {
+      return value;
+    }
+    return makeFile2([await value.arrayBuffer()], value.name);
+  }
+  if (isResponseLike2(value)) {
+    const blob = await value.blob();
+    name || (name = new URL(value.url).pathname.split(/[\\/]/).pop());
+    return makeFile2(await getBytes2(blob), name, options);
+  }
+  const parts = await getBytes2(value);
+  name || (name = getName2(value));
+  if (!options?.type) {
+    const type = parts.find((part) => typeof part === "object" && "type" in part && part.type);
+    if (typeof type === "string") {
+      options = { ...options, type };
+    }
+  }
+  return makeFile2(parts, name, options);
+}
+async function getBytes2(value) {
+  let parts = [];
+  if (typeof value === "string" || ArrayBuffer.isView(value) || // includes Uint8Array, Buffer, etc.
+  value instanceof ArrayBuffer) {
+    parts.push(value);
+  } else if (isBlobLike2(value)) {
+    parts.push(value instanceof Blob ? value : await value.arrayBuffer());
+  } else if (isAsyncIterable2(value)) {
+    for await (const chunk of value) {
+      parts.push(...await getBytes2(chunk));
+    }
+  } else {
+    const constructor = value?.constructor?.name;
+    throw new Error(`Unexpected data type: ${typeof value}${constructor ? `; constructor: ${constructor}` : ""}${propsForError2(value)}`);
+  }
+  return parts;
+}
+function propsForError2(value) {
+  if (typeof value !== "object" || value === null)
+    return "";
+  const props = Object.getOwnPropertyNames(value);
+  return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
+}
+
+// node_modules/@stainless-api/sdk/core/resource.mjs
+var APIResource2 = class {
+  constructor(client) {
+    this._client = client;
+  }
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/path.mjs
+function encodeURIPath2(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path6(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path7 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path7.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new StainlessError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path7}
+${underline}`);
+  }
+  return path7;
+};
+var path5 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
+
+// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+var Diagnostics = class extends APIResource2 {
+  /**
+   * Get the list of diagnostics for a given build.
+   *
+   * If no language targets are specified, diagnostics for all languages are
+   * returned.
+   */
+  list(buildID, query = {}, options) {
+    return this._client.getAPIList(path5`/v0/builds/${buildID}/diagnostics`, Page, {
+      query,
+      ...options
+    });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+var TargetOutputs = class extends APIResource2 {
+  /**
+   * Retrieve a method to download an output for a given build target.
+   *
+   * If the requested type of output is `source`, and the requested output method is
+   * `url`, a download link to a tarball of the source files is returned. If the
+   * requested output method is `git`, a Git remote, ref, and access token (if
+   * necessary) is returned.
+   *
+   * Otherwise, the possible types of outputs are specific to the requested target,
+   * and the output method _must_ be `url`. See the documentation for `type` for more
+   * information.
+   */
+  retrieve(query, options) {
+    return this._client.get("/v0/build_target_outputs", { query, ...options });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+var Builds2 = class extends APIResource2 {
+  constructor() {
+    super(...arguments);
+    this.diagnostics = new Diagnostics(this._client);
+    this.targetOutputs = new TargetOutputs(this._client);
+  }
+  /**
+   * Create a build, on top of a project branch, against a given input revision.
+   *
+   * The project branch will be modified so that its latest set of config files
+   * points to the one specified by the input revision.
+   */
+  create(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post("/v0/builds", { body: { project, ...body }, ...options });
+  }
+  /**
+   * Retrieve a build by its ID.
+   */
+  retrieve(buildID, options) {
+    return this._client.get(path5`/v0/builds/${buildID}`, options);
+  }
+  /**
+   * List user-triggered builds for a given project.
+   *
+   * An optional revision can be specified to filter by config commit SHA, or hashes
+   * of file contents.
+   */
+  list(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.getAPIList("/v0/builds", Page, { query: { project, ...query }, ...options });
+  }
+  /**
+   * Create two builds whose outputs can be directly compared with each other.
+   *
+   * Created builds _modify_ their project branches so that their latest sets of
+   * config files point to the ones specified by the input revision.
+   *
+   * This endpoint is useful because a build has more inputs than the set of config
+   * files it uses, so comparing two builds directly may return spurious differences.
+   * Builds made via this endpoint are guaranteed to have differences arising from
+   * the set of config files, and any custom code.
+   */
+  compare(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post("/v0/builds/compare", { body: { project, ...body }, ...options });
+  }
+};
+Builds2.Diagnostics = Diagnostics;
+Builds2.TargetOutputs = TargetOutputs;
+
+// node_modules/@stainless-api/sdk/resources/orgs.mjs
+var Orgs3 = class extends APIResource2 {
+  /**
+   * Retrieve an organization by name.
+   */
+  retrieve(org, options) {
+    return this._client.get(path5`/v0/orgs/${org}`, options);
+  }
+  /**
+   * List organizations accessible to the current authentication method.
+   */
+  list(options) {
+    return this._client.get("/v0/orgs", options);
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+var Branches2 = class extends APIResource2 {
+  /**
+   * Create a new branch for a project.
+   *
+   * The branch inherits the config files from the revision pointed to by the
+   * `branch_from` parameter. In addition, if the revision is a branch name, the
+   * branch will also inherit custom code changes from that branch.
+   */
+  create(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post(path5`/v0/projects/${project}/branches`, { body, ...options });
+  }
+  /**
+   * Retrieve a project branch by name.
+   */
+  retrieve(branch, params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.get(path5`/v0/projects/${project}/branches/${branch}`, options);
+  }
+  /**
+   * Retrieve a project branch by name.
+   */
+  list(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.getAPIList(path5`/v0/projects/${project}/branches`, Page, {
+      query,
+      ...options
+    });
+  }
+  /**
+   * Delete a project branch by name.
+   */
+  delete(branch, params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.delete(path5`/v0/projects/${project}/branches/${branch}`, options);
+  }
+  /**
+   * Rebase a project branch.
+   *
+   * The branch is rebased onto the `base` branch or commit SHA, inheriting any
+   * config and custom code changes.
+   */
+  rebase(branch, params = {}, options) {
+    const { project = this._client.project, base } = params ?? {};
+    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/rebase`, {
+      query: { base },
+      ...options
+    });
+  }
+  /**
+   * Reset a project branch.
+   *
+   * If `branch` === `main`, the branch is reset to `target_config_sha`. Otherwise,
+   * the branch is reset to `main`.
+   */
+  reset(branch, params = {}, options) {
+    const { project = this._client.project, target_config_sha } = params ?? {};
+    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/reset`, {
+      query: { target_config_sha },
+      ...options
+    });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+var Configs = class extends APIResource2 {
+  /**
+   * Retrieve the configuration files for a given project.
+   */
+  retrieve(params = {}, options) {
+    const { project = this._client.project, ...query } = params ?? {};
+    return this._client.get(path5`/v0/projects/${project}/configs`, { query, ...options });
+  }
+  /**
+   * Generate suggestions for changes to config files based on an OpenAPI spec.
+   */
+  guess(params, options) {
+    const { project = this._client.project, ...body } = params;
+    return this._client.post(path5`/v0/projects/${project}/configs/guess`, { body, ...options });
+  }
+};
+
+// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+var Projects = class extends APIResource2 {
+  constructor() {
+    super(...arguments);
+    this.branches = new Branches2(this._client);
+    this.configs = new Configs(this._client);
+  }
+  /**
+   * Create a new project.
+   */
+  create(body, options) {
+    return this._client.post("/v0/projects", { body, ...options });
+  }
+  /**
+   * Retrieve a project by name.
+   */
+  retrieve(params = {}, options) {
+    const { project = this._client.project } = params ?? {};
+    return this._client.get(path5`/v0/projects/${project}`, options);
+  }
+  /**
+   * Update a project's properties.
+   */
+  update(params = {}, options) {
+    const { project = this._client.project, ...body } = params ?? {};
+    return this._client.patch(path5`/v0/projects/${project}`, { body, ...options });
+  }
+  /**
+   * List projects in an organization, from oldest to newest.
+   */
+  list(query = {}, options) {
+    return this._client.getAPIList("/v0/projects", Page, { query, ...options });
+  }
+};
+Projects.Branches = Branches2;
+Projects.Configs = Configs;
+
+// node_modules/@stainless-api/sdk/internal/headers.mjs
+var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders2(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders2 in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray2(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders2 = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders2(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/@stainless-api/sdk/internal/utils/env.mjs
+var readEnv2 = (env) => {
+  if (typeof globalThis.process !== "undefined") {
+    return globalThis.process.env?.[env]?.trim() ?? void 0;
+  }
+  if (typeof globalThis.Deno !== "undefined") {
+    return globalThis.Deno.env?.get?.(env)?.trim();
+  }
+  return void 0;
+};
+
+// node_modules/@stainless-api/sdk/lib/unwrap.mjs
+async function unwrapFile(value) {
+  if (value === null) {
+    return null;
+  }
+  if (value.type === "content") {
+    return value.content;
+  }
+  const response = await fetch(value.url);
+  return response.text();
+}
+
+// node_modules/@stainless-api/sdk/client.mjs
+var _Stainless_instances;
+var _a2;
+var _Stainless_encoder;
+var _Stainless_baseURLOverridden;
+var environments = {
+  production: "https://api.stainless.com",
+  staging: "https://staging.stainless.com"
+};
+var Stainless = class {
+  /**
+   * API Client for interfacing with the Stainless API.
+   *
+   * @param {string | null | undefined} [opts.apiKey=process.env['STAINLESS_API_KEY'] ?? null]
+   * @param {string | null | undefined} [opts.project]
+   * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
+   * @param {string} [opts.baseURL=process.env['STAINLESS_BASE_URL'] ?? https://api.stainless.com] - Override the default base URL for the API.
+   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+   * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+   * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+   * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+   * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+   * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+   */
+  constructor({ baseURL = readEnv2("STAINLESS_BASE_URL"), apiKey = readEnv2("STAINLESS_API_KEY") ?? null, project = null, ...opts } = {}) {
+    _Stainless_instances.add(this);
+    _Stainless_encoder.set(this, void 0);
+    this.projects = new Projects(this);
+    this.builds = new Builds2(this);
+    this.orgs = new Orgs3(this);
+    const options = {
+      apiKey,
+      project,
+      ...opts,
+      baseURL,
+      environment: opts.environment ?? "production"
+    };
+    if (baseURL && opts.environment) {
+      throw new StainlessError("Ambiguous URL; The `baseURL` option (or STAINLESS_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null");
+    }
+    this.baseURL = options.baseURL || environments[options.environment || "production"];
+    this.timeout = options.timeout ?? _a2.DEFAULT_TIMEOUT;
+    this.logger = options.logger ?? console;
+    const defaultLogLevel = "warn";
+    this.logLevel = defaultLogLevel;
+    this.logLevel = parseLogLevel2(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel2(readEnv2("STAINLESS_LOG"), "process.env['STAINLESS_LOG']", this) ?? defaultLogLevel;
+    this.fetchOptions = options.fetchOptions;
+    this.maxRetries = options.maxRetries ?? 2;
+    this.fetch = options.fetch ?? getDefaultFetch2();
+    __classPrivateFieldSet2(this, _Stainless_encoder, FallbackEncoder2, "f");
+    this._options = options;
+    this.apiKey = apiKey;
+    this.project = project;
+  }
+  /**
+   * Create a new client instance re-using the same options given to the current client with optional overriding.
+   */
+  withOptions(options) {
+    const client = new this.constructor({
+      ...this._options,
+      environment: options.environment ? options.environment : void 0,
+      baseURL: options.environment ? void 0 : this.baseURL,
+      maxRetries: this.maxRetries,
+      timeout: this.timeout,
+      logger: this.logger,
+      logLevel: this.logLevel,
+      fetch: this.fetch,
+      fetchOptions: this.fetchOptions,
+      apiKey: this.apiKey,
+      project: this.project,
+      ...options
+    });
+    return client;
+  }
+  defaultQuery() {
+    return this._options.defaultQuery;
+  }
+  validateHeaders({ values, nulls }) {
+    if (this.apiKey && values.get("authorization")) {
+      return;
+    }
+    if (nulls.has("authorization")) {
+      return;
+    }
+    throw new Error('Could not resolve authentication method. Expected the apiKey to be set. Or for the "Authorization" headers to be explicitly omitted');
+  }
+  async authHeaders(opts) {
+    if (this.apiKey == null) {
+      return void 0;
+    }
+    return buildHeaders2([{ Authorization: `Bearer ${this.apiKey}` }]);
+  }
+  stringifyQuery(query) {
+    return stringify2(query, { arrayFormat: "comma" });
+  }
+  getUserAgent() {
+    return `${this.constructor.name}/JS ${VERSION2}`;
+  }
+  defaultIdempotencyKey() {
+    return `stainless-node-retry-${uuid42()}`;
+  }
+  makeStatusError(status, error, message, headers) {
+    return APIError2.generate(status, error, message, headers);
+  }
+  buildURL(path6, query, defaultBaseURL) {
+    const baseURL = !__classPrivateFieldGet2(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+    const url = isAbsoluteURL2(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
+    const defaultQuery = this.defaultQuery();
+    if (!isEmptyObj2(defaultQuery)) {
+      query = { ...defaultQuery, ...query };
+    }
+    if (typeof query === "object" && query && !Array.isArray(query)) {
+      url.search = this.stringifyQuery(query);
+    }
+    return url.toString();
+  }
+  /**
+   * Used as a callback for mutating the given `FinalRequestOptions` object.
+   */
+  async prepareOptions(options) {
+  }
+  /**
+   * Used as a callback for mutating the given `RequestInit` object.
+   *
+   * This is useful for cases where you want to add certain headers based off of
+   * the request properties, e.g. `method` or `url`.
+   */
+  async prepareRequest(request, { url, options }) {
+  }
+  get(path6, opts) {
+    return this.methodRequest("get", path6, opts);
+  }
+  post(path6, opts) {
+    return this.methodRequest("post", path6, opts);
+  }
+  patch(path6, opts) {
+    return this.methodRequest("patch", path6, opts);
+  }
+  put(path6, opts) {
+    return this.methodRequest("put", path6, opts);
+  }
+  delete(path6, opts) {
+    return this.methodRequest("delete", path6, opts);
+  }
+  methodRequest(method, path6, opts) {
+    return this.request(Promise.resolve(opts).then((opts2) => {
+      return { method, path: path6, ...opts2 };
+    }));
+  }
+  request(options, remainingRetries = null) {
+    return new APIPromise2(this, this.makeRequest(options, remainingRetries, void 0));
+  }
+  async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
+    const options = await optionsInput;
+    const maxRetries = options.maxRetries ?? this.maxRetries;
+    if (retriesRemaining == null) {
+      retriesRemaining = maxRetries;
+    }
+    await this.prepareOptions(options);
+    const { req, url, timeout } = await this.buildRequest(options, {
+      retryCount: maxRetries - retriesRemaining
+    });
+    await this.prepareRequest(req, { url, options });
+    const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
+    const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
+    const startTime = Date.now();
+    loggerFor2(this).debug(`[${requestLogID}] sending request`, formatRequestDetails2({
+      retryOfRequestLogID,
+      method: options.method,
+      url,
+      options,
+      headers: req.headers
+    }));
+    if (options.signal?.aborted) {
+      throw new APIUserAbortError2();
+    }
+    const controller = new AbortController();
+    const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
+    const headersTime = Date.now();
+    if (response instanceof globalThis.Error) {
+      const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+      if (options.signal?.aborted) {
+        throw new APIUserAbortError2();
+      }
+      const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+      if (retriesRemaining) {
+        loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+        loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails2({
+          retryOfRequestLogID,
+          url,
+          durationMs: headersTime - startTime,
+          message: response.message
+        }));
+        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
+      }
+      loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+      loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails2({
+        retryOfRequestLogID,
+        url,
+        durationMs: headersTime - startTime,
+        message: response.message
+      }));
+      if (isTimeout) {
+        throw new APIConnectionTimeoutError2();
+      }
+      throw new APIConnectionError2({ cause: response });
+    }
+    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
+    if (!response.ok) {
+      const shouldRetry = await this.shouldRetry(response);
+      if (retriesRemaining && shouldRetry) {
+        const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
+        await CancelReadableStream2(response.body);
+        loggerFor2(this).info(`${responseInfo} - ${retryMessage2}`);
+        loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails2({
+          retryOfRequestLogID,
+          url: response.url,
+          status: response.status,
+          headers: response.headers,
+          durationMs: headersTime - startTime
+        }));
+        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+      }
+      const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
+      loggerFor2(this).info(`${responseInfo} - ${retryMessage}`);
+      const errText = await response.text().catch((err2) => castToError2(err2).message);
+      const errJSON = safeJSON2(errText);
+      const errMessage = errJSON ? void 0 : errText;
+      loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails2({
+        retryOfRequestLogID,
+        url: response.url,
+        status: response.status,
+        headers: response.headers,
+        message: errMessage,
+        durationMs: Date.now() - startTime
+      }));
+      const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
+      throw err;
+    }
+    loggerFor2(this).info(responseInfo);
+    loggerFor2(this).debug(`[${requestLogID}] response start`, formatRequestDetails2({
+      retryOfRequestLogID,
+      url: response.url,
+      status: response.status,
+      headers: response.headers,
+      durationMs: headersTime - startTime
+    }));
+    return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
+  }
+  getAPIList(path6, Page2, opts) {
+    return this.requestAPIList(Page2, { method: "get", path: path6, ...opts });
+  }
+  requestAPIList(Page2, options) {
+    const request = this.makeRequest(options, null, void 0);
+    return new PagePromise2(this, request, Page2);
+  }
+  async fetchWithTimeout(url, init, ms, controller) {
+    const { signal, method, ...options } = init || {};
+    if (signal)
+      signal.addEventListener("abort", () => controller.abort());
+    const timeout = setTimeout(() => controller.abort(), ms);
+    const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
+    const fetchOptions = {
+      signal: controller.signal,
+      ...isReadableBody ? { duplex: "half" } : {},
+      method: "GET",
+      ...options
+    };
+    if (method) {
+      fetchOptions.method = method.toUpperCase();
+    }
+    try {
+      return await this.fetch.call(void 0, url, fetchOptions);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  async shouldRetry(response) {
+    const shouldRetryHeader = response.headers.get("x-should-retry");
+    if (shouldRetryHeader === "true")
+      return true;
+    if (shouldRetryHeader === "false")
+      return false;
+    if (response.status === 408)
+      return true;
+    if (response.status === 409)
+      return true;
+    if (response.status === 429)
+      return true;
+    if (response.status >= 500)
+      return true;
+    return false;
+  }
+  async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
+    let timeoutMillis;
+    const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
+    if (retryAfterMillisHeader) {
+      const timeoutMs = parseFloat(retryAfterMillisHeader);
+      if (!Number.isNaN(timeoutMs)) {
+        timeoutMillis = timeoutMs;
+      }
+    }
+    const retryAfterHeader = responseHeaders?.get("retry-after");
+    if (retryAfterHeader && !timeoutMillis) {
+      const timeoutSeconds = parseFloat(retryAfterHeader);
+      if (!Number.isNaN(timeoutSeconds)) {
+        timeoutMillis = timeoutSeconds * 1e3;
+      } else {
+        timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+      }
+    }
+    if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
+      const maxRetries = options.maxRetries ?? this.maxRetries;
+      timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+    }
+    await sleep2(timeoutMillis);
+    return this.makeRequest(options, retriesRemaining - 1, requestLogID);
+  }
+  calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+    const initialRetryDelay = 0.5;
+    const maxRetryDelay = 8;
+    const numRetries = maxRetries - retriesRemaining;
+    const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+    const jitter = 1 - Math.random() * 0.25;
+    return sleepSeconds * jitter * 1e3;
+  }
+  async buildRequest(inputOptions, { retryCount = 0 } = {}) {
+    const options = { ...inputOptions };
+    const { method, path: path6, query, defaultBaseURL } = options;
+    const url = this.buildURL(path6, query, defaultBaseURL);
+    if ("timeout" in options)
+      validatePositiveInteger2("timeout", options.timeout);
+    options.timeout = options.timeout ?? this.timeout;
+    const { bodyHeaders, body } = this.buildBody({ options });
+    const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+    const req = {
+      method,
+      headers: reqHeaders,
+      ...options.signal && { signal: options.signal },
+      ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
+      ...body && { body },
+      ...this.fetchOptions ?? {},
+      ...options.fetchOptions ?? {}
+    };
+    return { req, url, timeout: options.timeout };
+  }
+  async buildHeaders({ options, method, bodyHeaders, retryCount }) {
+    let idempotencyHeaders = {};
+    if (this.idempotencyHeader && method !== "get") {
+      if (!options.idempotencyKey)
+        options.idempotencyKey = this.defaultIdempotencyKey();
+      idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
+    }
+    const headers = buildHeaders2([
+      idempotencyHeaders,
+      {
+        Accept: "application/json",
+        "User-Agent": this.getUserAgent(),
+        "X-Stainless-Retry-Count": String(retryCount),
+        ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
+        ...getPlatformHeaders2()
+      },
+      await this.authHeaders(options),
+      this._options.defaultHeaders,
+      bodyHeaders,
+      options.headers
+    ]);
+    this.validateHeaders(headers);
+    return headers.values;
+  }
+  buildBody({ options: { body, headers: rawHeaders } }) {
+    if (!body) {
+      return { bodyHeaders: void 0, body: void 0 };
+    }
+    const headers = buildHeaders2([rawHeaders]);
+    if (
+      // Pass raw type verbatim
+      ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
+      headers.values.has("content-type") || // `Blob` is superset of `File`
+      globalThis.Blob && body instanceof globalThis.Blob || // `FormData` -> `multipart/form-data`
+      body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
+      body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
+      globalThis.ReadableStream && body instanceof globalThis.ReadableStream
+    ) {
+      return { bodyHeaders: void 0, body };
+    } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
+      return { bodyHeaders: void 0, body: ReadableStreamFrom2(body) };
+    } else {
+      return __classPrivateFieldGet2(this, _Stainless_encoder, "f").call(this, { body, headers });
+    }
+  }
+};
+_a2 = Stainless, _Stainless_encoder = /* @__PURE__ */ new WeakMap(), _Stainless_instances = /* @__PURE__ */ new WeakSet(), _Stainless_baseURLOverridden = function _Stainless_baseURLOverridden2() {
+  return this.baseURL !== environments[this._options.environment || "production"];
+};
+Stainless.Stainless = _a2;
+Stainless.DEFAULT_TIMEOUT = 6e4;
+Stainless.StainlessError = StainlessError;
+Stainless.APIError = APIError2;
+Stainless.APIConnectionError = APIConnectionError2;
+Stainless.APIConnectionTimeoutError = APIConnectionTimeoutError2;
+Stainless.APIUserAbortError = APIUserAbortError2;
+Stainless.NotFoundError = NotFoundError2;
+Stainless.ConflictError = ConflictError2;
+Stainless.RateLimitError = RateLimitError2;
+Stainless.BadRequestError = BadRequestError2;
+Stainless.AuthenticationError = AuthenticationError2;
+Stainless.InternalServerError = InternalServerError2;
+Stainless.PermissionDeniedError = PermissionDeniedError2;
+Stainless.UnprocessableEntityError = UnprocessableEntityError2;
+Stainless.toFile = toFile2;
+Stainless.unwrapFile = unwrapFile;
+Stainless.Projects = Projects;
+Stainless.Builds = Builds2;
+Stainless.Orgs = Orgs3;
+
+// package.json
+var package_default = {
+  name: "upload-openapi-spec-action",
+  version: "1.9.0",
+  main: "dist/index.js",
+  scripts: {
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-swagger",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
+    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
+    lint: "tsc && prettier --check src && eslint src",
+    "lint:fix": "prettier --write src && eslint src --fix",
+    test: "vitest"
+  },
+  license: "ISC",
+  devDependencies: {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^22.18.3",
+    esbuild: "^0.25.9",
+    eslint: "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    prettier: "3.6.2",
+    typescript: "^5.9.2",
+    "typescript-eslint": "^8.44.0",
+    vitest: "^3.2.4"
+  },
+  dependencies: {
+    "@stainless-api/github-internal": "^0.15.0",
+    "@stainless-api/sdk": "^0.1.0-alpha.19",
+    "nano-spawn": "^1.0.3",
+    "ts-dedent": "^2.2.0",
+    yaml: "^2.8.1"
+  }
+};
+
+// src/stainless.ts
+function getStainlessClient(action, opts) {
+  const headers = {
+    "User-Agent": `Stainless/Action ${package_default.version}`
+  };
+  if (action) {
+    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
+    if (isGitLabCI()) {
+      headers["X-GitLab-CI"] = actionPath;
+    } else {
+      headers["X-GitHub-Action"] = actionPath;
+    }
+  }
+  return new Stainless({
+    ...opts,
+    defaultHeaders: {
+      ...opts.defaultHeaders,
+      ...headers
+    }
+  });
+}
+
+// src/wrapAction.ts
+var accumulatedBuildIds = /* @__PURE__ */ new Set();
+function addBuildIdForTelemetry(buildId) {
+  accumulatedBuildIds.add(buildId);
+}
+function wrapAction(actionType, fn) {
+  return async () => {
+    let stainless;
+    let projectName;
+    try {
+      projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
+      stainless = getStainlessClient(actionType, {
+        project: projectName,
+        apiKey,
+        logLevel: "warn"
+      });
+      await fn(stainless);
+      await maybeReportResult({
+        stainless,
+        projectName,
+        actionType,
+        successOrError: { result: "success" }
+      });
+    } catch (error) {
+      logger.fatal("Error in action:", error);
+      if (stainless) {
+        await maybeReportResult({
+          stainless,
+          projectName,
+          actionType,
+          successOrError: serializeError(error)
+        });
+      }
+      process.exit(1);
+    }
+  };
+}
+function serializeError(error) {
+  const maybeTypedError = error instanceof Error ? error : void 0;
+  return {
+    result: "error",
+    error_message: maybeTypedError?.message ?? String(error),
+    error_name: maybeTypedError?.name,
+    error_stack: maybeTypedError?.stack
+  };
+}
+async function maybeReportResult({
+  stainless,
+  projectName,
+  actionType,
+  successOrError
+}) {
+  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
+    return;
+  }
+  try {
+    const body = {
+      project: projectName,
+      build_ids: [...accumulatedBuildIds],
+      action_type: actionType,
+      ...successOrError
+    };
+    await stainless.post("/api/reports/action-result", {
+      body
+    });
+  } catch (error) {
+    logger.error("Error reporting result to Stainless", error);
+  }
 }
 
 // src/runBuilds.ts
@@ -41117,6 +41188,7 @@ async function* pollBuild({
     log.info(
       `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
+    addBuildIdForTelemetry(buildId);
   } else {
     logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
@@ -41201,227 +41273,216 @@ async function* pollBuild({
 }
 
 // src/preview.ts
-async function main() {
+var main = wrapAction("preview", async (stainless) => {
+  const orgName = getInput("org", { required: true });
+  const projectName = getInput("project", { required: true });
+  const oasPath = getInput("oas_path", { required: false });
+  const configPath = getInput("config_path", { required: false });
+  const defaultCommitMessage = getInput("commit_message", { required: true });
+  const guessConfig = getBooleanInput("guess_config", { required: false });
+  const failRunOn = getInput("fail_on", {
+    choices: FailRunOn,
+    required: true
+  });
+  const makeComment = getBooleanInput("make_comment", { required: true });
+  let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+    required: false
+  });
+  const gitHostToken = getGitHostToken();
+  const baseSha = getInput("base_sha", { required: true });
+  const baseRef = getInput("base_ref", { required: true });
+  const baseBranch = getInput("base_branch", { required: true });
+  const defaultBranch = getInput("default_branch", { required: true });
+  const headSha = getInput("head_sha", { required: true });
+  const branch = getInput("branch", { required: true });
+  const outputDir = getInput("output_dir", { required: false }) || void 0;
+  const prNumber = getPRNumber();
+  const hasAiCommitMessageMap = {};
+  const { savedSha } = await saveConfig({
+    oasPath,
+    configPath
+  });
+  if (savedSha !== null && savedSha !== headSha) {
+    logger.warn(
+      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
+    );
+  }
+  let org = null;
   try {
-    const apiKey = await getStainlessAuthToken();
-    const orgName = getInput("org", { required: true });
-    const projectName = getInput("project", { required: true });
-    const oasPath = getInput("oas_path", { required: false });
-    const configPath = getInput("config_path", { required: false });
-    const defaultCommitMessage = getInput("commit_message", { required: true });
-    const guessConfig = getBooleanInput("guess_config", { required: false });
-    const failRunOn = getInput("fail_on", {
-      choices: FailRunOn,
-      required: true
-    });
-    const makeComment = getBooleanInput("make_comment", { required: true });
-    let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
-      required: false
-    });
-    const gitHostToken = getGitHostToken();
-    const baseSha = getInput("base_sha", { required: true });
-    const baseRef = getInput("base_ref", { required: true });
-    const baseBranch = getInput("base_branch", { required: true });
-    const defaultBranch = getInput("default_branch", { required: true });
-    const headSha = getInput("head_sha", { required: true });
-    const branch = getInput("branch", { required: true });
-    const outputDir = getInput("output_dir", { required: false }) || void 0;
-    const prNumber = getPRNumber();
-    const hasAiCommitMessageMap = {};
-    const { savedSha } = await saveConfig({
-      oasPath,
-      configPath
-    });
-    if (savedSha !== null && savedSha !== headSha) {
-      logger.warn(
-        `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
-      );
+    org = await stainless.get(`/v0/orgs/${orgName}`);
+  } catch (error) {
+    logger.warn(
+      `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
+      error
+    );
+  }
+  if (org?.enable_ai_commit_messages) {
+    multipleCommitMessages = true;
+  }
+  logger.group("Getting parent revision");
+  const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+  const { nonMainBaseRef } = await getNonMainBaseRef({
+    baseRef,
+    defaultBranch
+  });
+  const mergeBaseConfig = await readConfig({
+    oasPath,
+    configPath,
+    sha: mergeBaseSha
+  });
+  const headConfig = await readConfig({
+    oasPath,
+    configPath,
+    sha: headSha,
+    required: true
+  });
+  const configChanged = await isConfigChanged({
+    before: mergeBaseConfig,
+    after: headConfig
+  });
+  if (!configChanged) {
+    logger.info("No config files changed, skipping preview");
+    if (isPullRequestOpenedEvent() && makeComment) {
+      logger.group("Updating comment");
+      const commentBody = printComment({ noChanges: true });
+      await upsertComment({
+        body: commentBody,
+        token: gitHostToken,
+        skipCreate: true,
+        prNumber
+      });
+      logger.groupEnd();
     }
-    const stainless = getStainlessClient("preview", {
-      project: projectName,
-      apiKey,
-      logLevel: "warn"
-    });
-    let org = null;
-    try {
-      org = await stainless.get(`/v0/orgs/${orgName}`);
-    } catch (error) {
-      logger.warn(
-        `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-        error
-      );
+    return;
+  }
+  const branchFrom = await computeBranchFrom({
+    stainless,
+    projectName,
+    mergeBaseConfig,
+    nonMainBaseRef,
+    oasPath,
+    configPath
+  });
+  logger.groupEnd();
+  let commitMessage = defaultCommitMessage;
+  const commitMessages = {};
+  let shouldGenerateAiCommitMessages = false;
+  if (makeComment) {
+    const comment = await retrieveComment({ token: gitHostToken, prNumber });
+    if (multipleCommitMessages && org?.enable_ai_commit_messages && comment.commitMessage == null && comment.commitMessages == null) {
+      shouldGenerateAiCommitMessages = true;
     }
-    if (org?.enable_ai_commit_messages) {
-      multipleCommitMessages = true;
-    }
-    logger.group("Getting parent revision");
-    const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
-    const { nonMainBaseRef } = await getNonMainBaseRef({
-      baseRef,
-      defaultBranch
-    });
-    const mergeBaseConfig = await readConfig({
-      oasPath,
-      configPath,
-      sha: mergeBaseSha
-    });
-    const headConfig = await readConfig({
-      oasPath,
-      configPath,
-      sha: headSha,
-      required: true
-    });
-    const configChanged = await isConfigChanged({
-      before: mergeBaseConfig,
-      after: headConfig
-    });
-    if (!configChanged) {
-      logger.info("No config files changed, skipping preview");
-      if (isPullRequestOpenedEvent() && makeComment) {
-        logger.group("Updating comment");
-        const commentBody = printComment({ noChanges: true });
-        await upsertComment({
-          body: commentBody,
-          token: gitHostToken,
-          skipCreate: true,
-          prNumber
-        });
-        logger.groupEnd();
+    if (multipleCommitMessages && comment.commitMessages) {
+      for (const [lang, commentCommitMessage] of Object.entries(
+        comment.commitMessages
+      )) {
+        commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
       }
-      return;
+    } else if (comment.commitMessage) {
+      commitMessage = comment.commitMessage;
     }
-    const branchFrom = await computeBranchFrom({
-      stainless,
-      projectName,
-      mergeBaseConfig,
-      nonMainBaseRef,
-      oasPath,
-      configPath
-    });
-    logger.groupEnd();
-    let commitMessage = defaultCommitMessage;
-    const commitMessages = {};
-    let shouldGenerateAiCommitMessages = false;
-    if (makeComment) {
-      const comment = await retrieveComment({ token: gitHostToken, prNumber });
-      if (multipleCommitMessages && org?.enable_ai_commit_messages && comment.commitMessage == null && comment.commitMessages == null) {
-        shouldGenerateAiCommitMessages = true;
-      }
-      if (multipleCommitMessages && comment.commitMessages) {
-        for (const [lang, commentCommitMessage] of Object.entries(
-          comment.commitMessages
-        )) {
-          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-        }
-      } else if (comment.commitMessage) {
-        commitMessage = comment.commitMessage;
-      }
+  }
+  commitMessage = makeCommitMessageConventional(commitMessage);
+  logger.info("Using commit message:", commitMessage);
+  const generator = runBuilds({
+    stainless,
+    oasContent: headConfig.oas,
+    configContent: headConfig.config,
+    baseOasContent: mergeBaseConfig.oas,
+    baseConfigContent: mergeBaseConfig.config,
+    projectName,
+    branchFrom,
+    baseBranch,
+    branch,
+    guessConfig: guessConfig ?? (!configPath && !!oasPath),
+    commitMessage,
+    commitMessages
+  });
+  let latestRun = null;
+  const upsert = commentThrottler(gitHostToken, prNumber);
+  while (true) {
+    const run = await generator.next();
+    if (run.value) {
+      latestRun = run.value;
     }
-    commitMessage = makeCommitMessageConventional(commitMessage);
-    logger.info("Using commit message:", commitMessage);
-    const generator = runBuilds({
-      stainless,
-      oasContent: headConfig.oas,
-      configContent: headConfig.config,
-      baseOasContent: mergeBaseConfig.oas,
-      baseConfigContent: mergeBaseConfig.config,
-      projectName,
-      branchFrom,
-      baseBranch,
-      branch,
-      guessConfig: guessConfig ?? (!configPath && !!oasPath),
-      commitMessage,
-      commitMessages
-    });
-    let latestRun = null;
-    const upsert = commentThrottler(gitHostToken, prNumber);
-    while (true) {
-      const run = await generator.next();
-      if (run.value) {
-        latestRun = run.value;
+    if (makeComment && latestRun) {
+      const { outcomes, baseOutcomes } = latestRun;
+      const comment = await retrieveComment({
+        token: gitHostToken,
+        prNumber
+      });
+      if (comment.commitMessage) {
+        commitMessage = makeCommitMessageConventional(comment.commitMessage);
       }
-      if (makeComment && latestRun) {
-        const { outcomes, baseOutcomes } = latestRun;
-        const comment = await retrieveComment({
-          token: gitHostToken,
-          prNumber
-        });
-        if (comment.commitMessage) {
-          commitMessage = makeCommitMessageConventional(comment.commitMessage);
-        }
-        if (multipleCommitMessages) {
-          if (comment.commitMessages) {
-            for (const [lang, commentCommitMessage] of Object.entries(
-              comment.commitMessages
-            )) {
-              commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-            }
+      if (multipleCommitMessages) {
+        if (comment.commitMessages) {
+          for (const [lang, commentCommitMessage] of Object.entries(
+            comment.commitMessages
+          )) {
+            commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
           }
         }
-        if (multipleCommitMessages) {
-          for (const lang of Object.keys(outcomes)) {
-            const commit = outcomes[lang].commit?.completed?.commit;
-            const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
-            if (commit && baseCommit && shouldGenerateAiCommitMessages && !hasAiCommitMessageMap[lang]) {
-              const baseRef2 = baseCommit.sha;
-              const headRef = commit.sha;
-              try {
-                const message = await generateAICommitMessage(stainless, {
-                  projectName,
-                  target: lang,
-                  baseRef: baseRef2,
-                  headRef
-                });
-                commitMessages[lang] = message;
-              } catch (e) {
-                logger.error("Error in AI commit message generation:", e);
-                commitMessages[lang] = commitMessage;
-              }
-              hasAiCommitMessageMap[lang] = true;
-            }
-          }
-          for (const lang of Object.keys(outcomes)) {
-            if (!commitMessages[lang]) {
+      }
+      if (multipleCommitMessages) {
+        for (const lang of Object.keys(outcomes)) {
+          const commit = outcomes[lang].commit?.completed?.commit;
+          const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
+          if (commit && baseCommit && shouldGenerateAiCommitMessages && !hasAiCommitMessageMap[lang]) {
+            const baseRef2 = baseCommit.sha;
+            const headRef = commit.sha;
+            try {
+              const message = await generateAICommitMessage(stainless, {
+                projectName,
+                target: lang,
+                baseRef: baseRef2,
+                headRef
+              });
+              commitMessages[lang] = message;
+            } catch (e) {
+              logger.error("Error in AI commit message generation:", e);
               commitMessages[lang] = commitMessage;
             }
+            hasAiCommitMessageMap[lang] = true;
           }
         }
-        const commentBody = printComment({
-          orgName,
-          projectName,
-          branch,
-          commitMessage,
-          commitMessages: multipleCommitMessages ? commitMessages : void 0,
-          hasAiCommitMessageMap: shouldGenerateAiCommitMessages ? hasAiCommitMessageMap : void 0,
-          outcomes,
-          baseOutcomes
-        });
-        await upsert({ body: commentBody, force: run.done });
+        for (const lang of Object.keys(outcomes)) {
+          if (!commitMessages[lang]) {
+            commitMessages[lang] = commitMessage;
+          }
+        }
       }
-      if (run.done) {
-        if (!latestRun) {
-          throw new Error("No latest run found after build finish");
-        }
-        const { outcomes, baseOutcomes, documentedSpec } = latestRun;
-        setOutput("outcomes", outcomes);
-        setOutput("base_outcomes", baseOutcomes);
-        if (documentedSpec && outputDir) {
-          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-          fs4.mkdirSync(outputDir, { recursive: true });
-          fs4.writeFileSync(documentedSpecPath, documentedSpec);
-          setOutput("documented_spec_path", documentedSpecPath);
-        }
-        if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
-          process.exit(1);
-        }
-        break;
-      }
+      const commentBody = printComment({
+        orgName,
+        projectName,
+        branch,
+        commitMessage,
+        commitMessages: multipleCommitMessages ? commitMessages : void 0,
+        hasAiCommitMessageMap: shouldGenerateAiCommitMessages ? hasAiCommitMessageMap : void 0,
+        outcomes,
+        baseOutcomes
+      });
+      await upsert({ body: commentBody, force: run.done });
     }
-  } catch (error) {
-    logger.fatal("Error in preview action:", error);
-    process.exit(1);
+    if (run.done) {
+      if (!latestRun) {
+        throw new Error("No latest run found after build finish");
+      }
+      const { outcomes, baseOutcomes, documentedSpec } = latestRun;
+      setOutput("outcomes", outcomes);
+      setOutput("base_outcomes", baseOutcomes);
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs4.mkdirSync(outputDir, { recursive: true });
+        fs4.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
+      if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
+        process.exit(1);
+      }
+      break;
+    }
   }
-}
+});
 async function computeBranchFrom({
   stainless,
   projectName,

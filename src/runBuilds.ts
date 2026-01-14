@@ -1,6 +1,7 @@
 import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
 import type { Outcomes } from "./outcomes";
+import { addBuildIdForTelemetry } from "./wrapAction";
 
 type Build = Stainless.Builds.Build;
 
@@ -283,6 +284,7 @@ async function* pollBuild({
     log.info(
       `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
+    addBuildIdForTelemetry(buildId);
   } else {
     logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };

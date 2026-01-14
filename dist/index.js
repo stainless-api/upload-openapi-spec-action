@@ -18485,7 +18485,7 @@ async function getStainlessAuthToken() {
 // src/stainless.ts
 function getStainlessClient(action, opts) {
   const headers = {
-    "User-Agent": `Stainless/Action ${package_default}`
+    "User-Agent": `Stainless/Action ${package_default.version}`
   };
   if (action) {
     const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
