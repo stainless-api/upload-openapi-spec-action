@@ -40901,12 +40901,12 @@ function getStainlessClient(action, opts) {
   });
 }
 
-// src/telemetry.ts
-var accumulatedBuildIds = [];
-function addBuildId(buildId) {
-  accumulatedBuildIds.push(buildId);
+// src/wrapAction.ts
+var accumulatedBuildIds = /* @__PURE__ */ new Set();
+function addBuildIdForTelemetry(buildId) {
+  accumulatedBuildIds.add(buildId);
 }
-function withResultReporting(actionType, fn) {
+function wrapAction(actionType, fn) {
   return async () => {
     let stainless;
     let projectName;
@@ -40960,7 +40960,7 @@ async function maybeReportResult({
   try {
     const body = {
       project: projectName,
-      build_ids: accumulatedBuildIds,
+      build_ids: [...accumulatedBuildIds],
       action_type: actionType,
       ...successOrError
     };
@@ -41188,7 +41188,7 @@ async function* pollBuild({
     log.info(
       `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
-    addBuildId(buildId);
+    addBuildIdForTelemetry(buildId);
   } else {
     logger.info("No new build was created; exiting.");
     yield { outcomes, documentedSpec };
@@ -41273,7 +41273,7 @@ async function* pollBuild({
 }
 
 // src/preview.ts
-var main = withResultReporting("preview", async (stainless) => {
+var main = wrapAction("preview", async (stainless) => {
   const orgName = getInput("org", { required: true });
   const projectName = getInput("project", { required: true });
   const oasPath = getInput("oas_path", { required: false });

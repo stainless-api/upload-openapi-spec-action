@@ -8,9 +8,9 @@ import { logger } from "./logger";
 import { readConfig } from "./config";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
-import { withResultReporting } from "./telemetry";
+import { wrapAction } from "./wrapAction";
 
-const main = withResultReporting("build", async (stainless) => {
+const main = wrapAction("build", async (stainless) => {
   try {
     const oasPath = getInput("oas_path", { required: false }) || undefined;
     const configPath =

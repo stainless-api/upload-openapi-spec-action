@@ -13,9 +13,9 @@ import { isConfigChanged, readConfig } from "./config";
 import { shouldFailRun, FailRunOn } from "./outcomes";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
-import { withResultReporting } from "./telemetry";
+import { wrapAction } from "./wrapAction";
 
-const main = withResultReporting("merge", async (stainless) => {
+const main = wrapAction("merge", async (stainless) => {
   const orgName = getInput("org", { required: false });
   const projectName = getInput("project", { required: true });
   const oasPath = getInput("oas_path", { required: false });

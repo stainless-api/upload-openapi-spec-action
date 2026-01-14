@@ -30,9 +30,9 @@ import { logger } from "./logger";
 import { FailRunOn, shouldFailRun } from "./outcomes";
 import type { RunResult } from "./runBuilds";
 import { runBuilds } from "./runBuilds";
-import { withResultReporting } from "./telemetry";
+import { wrapAction } from "./wrapAction";
 
-const main = withResultReporting("preview", async (stainless) => {
+const main = wrapAction("preview", async (stainless) => {
   const orgName = getInput("org", { required: true });
   const projectName = getInput("project", { required: true });
   const oasPath = getInput("oas_path", { required: false });
