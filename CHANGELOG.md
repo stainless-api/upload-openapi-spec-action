@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.10.0...v1.11.0) (2026-01-14)
+
+
+### Features
+
+* add action to combine multiple OpenAPI specs ([#158](https://github.com/stainless-api/upload-openapi-spec-action/issues/158)) ([a5690fa](https://github.com/stainless-api/upload-openapi-spec-action/commit/a5690fa951806486720f35328b5b7555ec2836f1))
+
 ## [1.9.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.8.1...v1.9.0) (2025-12-20)
 
 
