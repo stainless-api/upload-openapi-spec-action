@@ -39691,7 +39691,7 @@ var package_default = {
 // src/stainless.ts
 function getStainlessClient(action, opts) {
   const headers = {
-    "User-Agent": `Stainless/Action ${package_default}`
+    "User-Agent": `Stainless/Action ${package_default.version}`
   };
   if (action) {
     const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
@@ -41080,149 +41080,212 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/merge.ts
-async function main() {
-  try {
-    const apiKey = await getStainlessAuthToken();
-    const orgName = getInput("org", { required: false });
-    const projectName = getInput("project", { required: true });
-    const oasPath = getInput("oas_path", { required: false });
-    const configPath = getInput("config_path", { required: false }) || void 0;
-    const defaultCommitMessage = getInput("commit_message", { required: true });
-    const failRunOn = getInput("fail_on", {
-      choices: FailRunOn,
-      required: true
-    });
-    const makeComment = getBooleanInput("make_comment", { required: true });
-    let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
-      required: false
-    });
-    const gitHostToken = getGitHostToken();
-    const baseSha = getInput("base_sha", { required: true });
-    const baseRef = getInput("base_ref", { required: true });
-    const defaultBranch = getInput("default_branch", { required: true });
-    const headSha = getInput("head_sha", { required: true });
-    const mergeBranch = getInput("merge_branch", { required: true });
-    const outputDir = getInput("output_dir", { required: false }) || void 0;
-    const prNumber = getPRNumber();
-    if (baseRef !== defaultBranch) {
-      logger.info("Not merging to default branch, skipping merge");
-      return;
-    }
-    if (makeComment && !getPRNumber()) {
-      throw new Error(
-        "This action requires a pull request number to make a comment."
-      );
-    }
-    if (makeComment && !orgName) {
-      throw new Error(
-        "This action requires an organization name to make a comment."
-      );
-    }
-    const stainless = getStainlessClient("merge", {
-      project: projectName,
-      apiKey,
-      logLevel: "warn"
-    });
-    let org = null;
-    if (orgName) {
-      try {
-        org = await stainless.get(`/v0/orgs/${orgName}`);
-      } catch (error) {
-        logger.warn(
-          `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-          error
-        );
-      }
-    }
-    if (org?.enable_ai_commit_messages) {
-      multipleCommitMessages = true;
-    }
-    const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
-    const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
-    const configChanged = await isConfigChanged({
-      before: baseConfig,
-      after: headConfig
-    });
-    if (!configChanged) {
-      logger.info("No config files changed, skipping merge");
-      return;
-    }
-    let commitMessage = defaultCommitMessage;
-    const commitMessages = {};
-    if (makeComment && gitHostToken) {
-      const comment = await retrieveComment({ token: gitHostToken, prNumber });
-      if (multipleCommitMessages && comment.commitMessages) {
-        for (const [lang, commentCommitMessage] of Object.entries(
-          comment.commitMessages
-        )) {
-          commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-        }
-      } else if (comment.commitMessage) {
-        commitMessage = comment.commitMessage;
-      }
-    }
-    commitMessage = makeCommitMessageConventional(commitMessage);
-    logger.info("Using commit message:", commitMessage);
-    const generator = runBuilds({
-      stainless,
-      projectName,
-      commitMessage,
-      commitMessages,
-      // This action always merges to the Stainless `main` branch:
-      branch: "main",
-      mergeBranch,
-      guessConfig: false
-    });
-    let latestRun = null;
-    const upsert = commentThrottler(gitHostToken, prNumber);
-    while (true) {
-      const run = await generator.next();
-      if (run.value) {
-        latestRun = run.value;
-      }
-      if (makeComment && latestRun) {
-        const { outcomes } = latestRun;
-        if (multipleCommitMessages) {
-          for (const lang of Object.keys(outcomes)) {
-            if (!commitMessages[lang]) {
-              commitMessages[lang] = commitMessage;
-            }
-          }
-        }
-        const commentBody = printComment({
-          orgName,
+// src/telemetry.ts
+var accumulatedBuildIds = [];
+function withResultReporting(actionType, fn) {
+  return async () => {
+    let stainless;
+    let projectName;
+    try {
+      projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
+      stainless = getStainlessClient(actionType, {
+        project: projectName,
+        apiKey,
+        logLevel: "warn"
+      });
+      await fn(stainless);
+      await maybeReportResult({
+        stainless,
+        projectName,
+        actionType,
+        successOrError: { result: "success" }
+      });
+    } catch (error) {
+      logger.fatal("Error in action:", error);
+      if (stainless) {
+        await maybeReportResult({
+          stainless,
           projectName,
-          branch: "main",
-          commitMessage,
-          commitMessages: multipleCommitMessages ? commitMessages : void 0,
-          outcomes
+          actionType,
+          successOrError: serializeError(error)
         });
-        await upsert({ body: commentBody, force: run.done });
       }
-      if (run.done) {
-        if (!latestRun) {
-          throw new Error("No latest run found after build finish");
-        }
-        const { outcomes, documentedSpec } = latestRun;
-        setOutput("outcomes", outcomes);
-        if (documentedSpec && outputDir) {
-          const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-          fs4.mkdirSync(outputDir, { recursive: true });
-          fs4.writeFileSync(documentedSpecPath, documentedSpec);
-          setOutput("documented_spec_path", documentedSpecPath);
-        }
-        if (!shouldFailRun({ failRunOn, outcomes })) {
-          process.exit(1);
-        }
-        break;
-      }
+      process.exit(1);
     }
+  };
+}
+function serializeError(error) {
+  const maybeTypedError = error instanceof Error ? error : void 0;
+  return {
+    result: "error",
+    error_message: maybeTypedError?.message ?? String(error),
+    error_name: maybeTypedError?.name,
+    error_stack: maybeTypedError?.stack
+  };
+}
+async function maybeReportResult({
+  stainless,
+  projectName,
+  actionType,
+  successOrError
+}) {
+  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
+    return;
+  }
+  try {
+    const body = {
+      project: projectName,
+      build_ids: accumulatedBuildIds,
+      action_type: actionType,
+      ...successOrError
+    };
+    await stainless.post("/api/reports/action-result", {
+      body
+    });
   } catch (error) {
-    logger.fatal("Error in merge action:", error);
-    process.exit(1);
+    logger.error("Error reporting result to Stainless", error);
   }
 }
+
+// src/merge.ts
+var main = withResultReporting("merge", async () => {
+  const apiKey = await getStainlessAuthToken();
+  const orgName = getInput("org", { required: false });
+  const projectName = getInput("project", { required: true });
+  const oasPath = getInput("oas_path", { required: false });
+  const configPath = getInput("config_path", { required: false }) || void 0;
+  const defaultCommitMessage = getInput("commit_message", { required: true });
+  const failRunOn = getInput("fail_on", {
+    choices: FailRunOn,
+    required: true
+  });
+  const makeComment = getBooleanInput("make_comment", { required: true });
+  let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
+    required: false
+  });
+  const gitHostToken = getGitHostToken();
+  const baseSha = getInput("base_sha", { required: true });
+  const baseRef = getInput("base_ref", { required: true });
+  const defaultBranch = getInput("default_branch", { required: true });
+  const headSha = getInput("head_sha", { required: true });
+  const mergeBranch = getInput("merge_branch", { required: true });
+  const outputDir = getInput("output_dir", { required: false }) || void 0;
+  const prNumber = getPRNumber();
+  if (baseRef !== defaultBranch) {
+    logger.info("Not merging to default branch, skipping merge");
+    return;
+  }
+  if (makeComment && !getPRNumber()) {
+    throw new Error(
+      "This action requires a pull request number to make a comment."
+    );
+  }
+  if (makeComment && !orgName) {
+    throw new Error(
+      "This action requires an organization name to make a comment."
+    );
+  }
+  const stainless = getStainlessClient("merge", {
+    project: projectName,
+    apiKey,
+    logLevel: "warn"
+  });
+  let org = null;
+  if (orgName) {
+    try {
+      org = await stainless.get(`/v0/orgs/${orgName}`);
+    } catch (error) {
+      logger.warn(
+        `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
+        error
+      );
+    }
+  }
+  if (org?.enable_ai_commit_messages) {
+    multipleCommitMessages = true;
+  }
+  const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
+  const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
+  const configChanged = await isConfigChanged({
+    before: baseConfig,
+    after: headConfig
+  });
+  if (!configChanged) {
+    logger.info("No config files changed, skipping merge");
+    return;
+  }
+  let commitMessage = defaultCommitMessage;
+  const commitMessages = {};
+  if (makeComment && gitHostToken) {
+    const comment = await retrieveComment({ token: gitHostToken, prNumber });
+    if (multipleCommitMessages && comment.commitMessages) {
+      for (const [lang, commentCommitMessage] of Object.entries(
+        comment.commitMessages
+      )) {
+        commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
+      }
+    } else if (comment.commitMessage) {
+      commitMessage = comment.commitMessage;
+    }
+  }
+  commitMessage = makeCommitMessageConventional(commitMessage);
+  logger.info("Using commit message:", commitMessage);
+  const generator = runBuilds({
+    stainless,
+    projectName,
+    commitMessage,
+    commitMessages,
+    // This action always merges to the Stainless `main` branch:
+    branch: "main",
+    mergeBranch,
+    guessConfig: false
+  });
+  let latestRun = null;
+  const upsert = commentThrottler(gitHostToken, prNumber);
+  while (true) {
+    const run = await generator.next();
+    if (run.value) {
+      latestRun = run.value;
+    }
+    if (makeComment && latestRun) {
+      const { outcomes } = latestRun;
+      if (multipleCommitMessages) {
+        for (const lang of Object.keys(outcomes)) {
+          if (!commitMessages[lang]) {
+            commitMessages[lang] = commitMessage;
+          }
+        }
+      }
+      const commentBody = printComment({
+        orgName,
+        projectName,
+        branch: "main",
+        commitMessage,
+        commitMessages: multipleCommitMessages ? commitMessages : void 0,
+        outcomes
+      });
+      await upsert({ body: commentBody, force: run.done });
+    }
+    if (run.done) {
+      if (!latestRun) {
+        throw new Error("No latest run found after build finish");
+      }
+      const { outcomes, documentedSpec } = latestRun;
+      setOutput("outcomes", outcomes);
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs4.mkdirSync(outputDir, { recursive: true });
+        fs4.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
+      if (!shouldFailRun({ failRunOn, outcomes })) {
+        process.exit(1);
+      }
+      break;
+    }
+  }
+});
 main();
 /*! Bundled license information:
 

@@ -18496,7 +18496,7 @@ async function getStainlessAuthToken() {
 // src/stainless.ts
 function getStainlessClient(action, opts) {
   const headers = {
-    "User-Agent": `Stainless/Action ${package_default}`
+    "User-Agent": `Stainless/Action ${package_default.version}`
   };
   if (action) {
     const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
@@ -19181,8 +19181,76 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
+// src/telemetry.ts
+var accumulatedBuildIds = [];
+function withResultReporting(actionType, fn) {
+  return async () => {
+    let stainless;
+    let projectName;
+    try {
+      projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
+      stainless = getStainlessClient(actionType, {
+        project: projectName,
+        apiKey,
+        logLevel: "warn"
+      });
+      await fn(stainless);
+      await maybeReportResult({
+        stainless,
+        projectName,
+        actionType,
+        successOrError: { result: "success" }
+      });
+    } catch (error) {
+      logger.fatal("Error in action:", error);
+      if (stainless) {
+        await maybeReportResult({
+          stainless,
+          projectName,
+          actionType,
+          successOrError: serializeError(error)
+        });
+      }
+      process.exit(1);
+    }
+  };
+}
+function serializeError(error) {
+  const maybeTypedError = error instanceof Error ? error : void 0;
+  return {
+    result: "error",
+    error_message: maybeTypedError?.message ?? String(error),
+    error_name: maybeTypedError?.name,
+    error_stack: maybeTypedError?.stack
+  };
+}
+async function maybeReportResult({
+  stainless,
+  projectName,
+  actionType,
+  successOrError
+}) {
+  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
+    return;
+  }
+  try {
+    const body = {
+      project: projectName,
+      build_ids: accumulatedBuildIds,
+      action_type: actionType,
+      ...successOrError
+    };
+    await stainless.post("/api/reports/action-result", {
+      body
+    });
+  } catch (error) {
+    logger.error("Error reporting result to Stainless", error);
+  }
+}
+
 // src/build.ts
-async function main() {
+var main = withResultReporting("build", async () => {
   try {
     const apiKey = await getStainlessAuthToken();
     const oasPath = getInput("oas_path", { required: false }) || void 0;
@@ -19240,11 +19308,10 @@ async function main() {
       logger.info("No changes to commit, skipping build.");
       process.exit(0);
     } else {
-      logger.error("Error interacting with API:", error);
-      process.exit(1);
+      throw error;
     }
   }
-}
+});
 main();
 /*! Bundled license information:
 
