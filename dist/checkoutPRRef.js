@@ -9568,6 +9568,7 @@ async function saveConfig({
     fs2.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
     fs2.copyFileSync(oasPath, savedFilePath);
     fs2.rmSync(oasPath);
+    logger.info(`Saved OAS file to ${savedFilePath}`);
   }
   if (configPath && fs2.existsSync(configPath)) {
     hasConfig = true;
@@ -9579,6 +9580,7 @@ async function saveConfig({
     fs2.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
     fs2.copyFileSync(configPath, savedFilePath);
     fs2.rmSync(configPath);
+    logger.info(`Saved config file to ${savedFilePath}`);
   }
   return { hasOAS, hasConfig, savedSha };
 }
