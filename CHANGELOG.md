@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.0...v1.11.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* save config in merge action (and add more logging) ([#163](https://github.com/stainless-api/upload-openapi-spec-action/issues/163)) ([9f0a042](https://github.com/stainless-api/upload-openapi-spec-action/commit/9f0a0426cc59606833d37c1f50f6029ec1991837))
+
 ## [1.11.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.10.0...v1.11.0) (2026-01-14)
 
 
