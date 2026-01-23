@@ -9,7 +9,7 @@ import { logger } from "./logger";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
-import { isConfigChanged, readConfig } from "./config";
+import { isConfigChanged, readConfig, saveConfig } from "./config";
 import { shouldFailRun, FailRunOn } from "./outcomes";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
@@ -52,6 +52,18 @@ const main = wrapAction("merge", async (stainless) => {
   if (makeComment && !orgName) {
     throw new Error(
       "This action requires an organization name to make a comment.",
+    );
+  }
+
+  // If we came from the checkout-pr-ref action, we might need to save the
+  // generated config files.
+  const { savedSha } = await saveConfig({
+    oasPath,
+    configPath,
+  });
+  if (savedSha !== null && savedSha !== headSha) {
+    logger.warn(
+      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`,
     );
   }
 
