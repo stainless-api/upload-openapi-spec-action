@@ -38806,6 +38806,43 @@ function getSavedFilePath(file, sha, extension) {
     `${file}-${sha}${extension}`
   );
 }
+async function saveConfig({
+  oasPath,
+  configPath
+}) {
+  let hasOAS = false;
+  let hasConfig = false;
+  const savedSha = (await spawn2("git", ["rev-parse", "HEAD"])).stdout.trim();
+  if (!savedSha) {
+    throw new Error("Unable to determine current SHA; is there a git repo?");
+  }
+  logger.info("Saving generated config for", savedSha);
+  if (oasPath && fs4.existsSync(oasPath)) {
+    hasOAS = true;
+    const savedFilePath = getSavedFilePath(
+      "oas",
+      savedSha,
+      path4.extname(oasPath)
+    );
+    fs4.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
+    fs4.copyFileSync(oasPath, savedFilePath);
+    fs4.rmSync(oasPath);
+    logger.info(`Saved OAS file to ${savedFilePath}`);
+  }
+  if (configPath && fs4.existsSync(configPath)) {
+    hasConfig = true;
+    const savedFilePath = getSavedFilePath(
+      "config",
+      savedSha,
+      path4.extname(configPath)
+    );
+    fs4.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
+    fs4.copyFileSync(configPath, savedFilePath);
+    fs4.rmSync(configPath);
+    logger.info(`Saved config file to ${savedFilePath}`);
+  }
+  return { hasOAS, hasConfig, savedSha };
+}
 async function readConfig({
   oasPath,
   configPath,
@@ -38851,7 +38888,8 @@ async function readConfig({
       getSavedFilePath("config", sha, path4.extname(configPath ?? "")),
       `saved ${sha}`
     );
-  } catch {
+  } catch (e) {
+    logger.info(`Could not get config from saved file path: ${e}`);
     logger.debug("Could not get config from saved file path");
   }
   if (required) {
@@ -41193,6 +41231,15 @@ var main = wrapAction("merge", async (stainless) => {
   if (makeComment && !orgName) {
     throw new Error(
       "This action requires an organization name to make a comment."
+    );
+  }
+  const { savedSha } = await saveConfig({
+    oasPath,
+    configPath
+  });
+  if (savedSha !== null && savedSha !== headSha) {
+    logger.warn(
+      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
     );
   }
   let org = null;

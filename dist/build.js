@@ -18808,7 +18808,8 @@ async function readConfig({
       getSavedFilePath("config", sha, path5.extname(configPath ?? "")),
       `saved ${sha}`
     );
-  } catch {
+  } catch (e) {
+    logger.info(`Could not get config from saved file path: ${e}`);
     logger.debug("Could not get config from saved file path");
   }
   if (required) {

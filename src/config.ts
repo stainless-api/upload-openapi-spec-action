@@ -50,6 +50,7 @@ export async function saveConfig({
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(oasPath, savedFilePath);
     fs.rmSync(oasPath);
+    logger.info(`Saved OAS file to ${savedFilePath}`);
   }
 
   if (configPath && fs.existsSync(configPath)) {
@@ -62,6 +63,7 @@ export async function saveConfig({
     fs.mkdirSync(path.dirname(savedFilePath), { recursive: true });
     fs.copyFileSync(configPath, savedFilePath);
     fs.rmSync(configPath);
+    logger.info(`Saved config file to ${savedFilePath}`);
   }
 
   return { hasOAS, hasConfig, savedSha };
@@ -130,7 +132,8 @@ export async function readConfig({
       getSavedFilePath("config", sha, path.extname(configPath ?? "")),
       `saved ${sha}`,
     );
-  } catch {
+  } catch (e) {
+    logger.info(`Could not get config from saved file path: ${e}`);
     logger.debug("Could not get config from saved file path");
   }
 
