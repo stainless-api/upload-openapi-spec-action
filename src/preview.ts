@@ -319,6 +319,9 @@ const main = wrapAction("preview", async (stainless) => {
 
       break;
     }
+
+    // sleep for five minutes
+    await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
   }
 });
 
