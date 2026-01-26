@@ -18456,7 +18456,7 @@ async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return apiKey;
+    return { key: apiKey, expiresInSeconds: null };
   }
   logger.debug("Authenticating with GitHub OIDC");
   const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
@@ -18480,13 +18480,26 @@ async function getStainlessAuthToken() {
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return data.value;
+    return { key: data.value, expiresInSeconds: 300 };
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
     );
   }
 }
+var setApiKey = async (stainless) => {
+  const { key: apiKey, expiresInSeconds } = await getStainlessAuthToken();
+  stainless.apiKey = apiKey;
+  if (expiresInSeconds !== null) {
+    setTimeout(
+      () => {
+        logger.info("Stainless auth token expired, setting new key");
+        setApiKey(stainless);
+      },
+      (expiresInSeconds - 30) * 1e3
+    );
+  }
+};
 
 // src/stainless.ts
 function getStainlessClient(action, opts) {
@@ -18520,7 +18533,6 @@ var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
 async function main() {
-  const stainless_api_key = await getStainlessAuthToken();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });
@@ -18539,9 +18551,8 @@ async function main() {
     throw Error(errorMsg);
   }
   if (!projectName) {
-    const stainless = getStainlessClient("index", {
-      apiKey: stainless_api_key
-    });
+    const stainless = getStainlessClient("index", {});
+    await setApiKey(stainless);
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
@@ -18561,7 +18572,6 @@ async function main() {
   const response = await uploadSpecAndConfig(
     inputPath,
     configPath,
-    stainless_api_key,
     projectName,
     commitMessage,
     guessConfig,
@@ -18592,11 +18602,11 @@ async function main() {
     logger.info(`Wrote decorated spec to ${outputPath}`);
   }
 }
-async function uploadSpecAndConfig(specPath, configPath, token, projectName, commitMessage, guessConfig, branch) {
+async function uploadSpecAndConfig(specPath, configPath, projectName, commitMessage, guessConfig, branch) {
   const stainless = getStainlessClient("index", {
-    apiKey: token,
     project: projectName
   });
+  await setApiKey(stainless);
   const specContent = (0, import_node_fs.readFileSync)(specPath, "utf8");
   let configContent;
   if (guessConfig) {

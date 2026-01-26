@@ -1,6 +1,6 @@
 import Stainless from "@stainless-api/sdk";
 import { getInput } from "./compat/input";
-import { getStainlessAuthToken } from "./compat";
+import { setApiKey } from "./compat";
 import { getStainlessClient } from "./stainless";
 import { logger } from "./logger";
 
@@ -27,12 +27,13 @@ export function wrapAction(
 
     try {
       projectName = getInput("project", { required: true });
-      const apiKey = await getStainlessAuthToken();
       stainless = getStainlessClient(actionType, {
         project: projectName,
-        apiKey,
         logLevel: "warn",
       });
+
+      await setApiKey(stainless);
+
       await fn(stainless);
       await maybeReportResult({
         stainless,
