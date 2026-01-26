@@ -18456,9 +18456,12 @@ async function getStainlessAuthToken() {
     );
   }
   try {
-    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
-      headers: { Authorization: `Bearer ${requestToken}` }
-    });
+    const response = await fetch(
+      `${requestUrl}&audience=api.stainless.com&expiration=900`,
+      {
+        headers: { Authorization: `Bearer ${requestToken}` }
+      }
+    );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
