@@ -134,7 +134,7 @@ export async function getStainlessAuthToken(): Promise<string> {
   }
 
   try {
-    const response = await fetch(`${requestUrl}&audience=api.stainless.com`, {
+    const response = await fetch(`${requestUrl}&audience=api.stainless.com&expiration=900`, {
       headers: { Authorization: `Bearer ${requestToken}` },
     });
     if (!response.ok) {
