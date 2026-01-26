@@ -18468,7 +18468,7 @@ async function getStainlessAuthToken() {
   }
   try {
     const response = await fetch(
-      `${requestUrl}&audience=api.stainless.com&expiration=900`,
+      `${requestUrl}&audience=api.stainless.com&expires_in=900`,
       {
         headers: { Authorization: `Bearer ${requestToken}` }
       }
