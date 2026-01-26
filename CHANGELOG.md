@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.1...v1.11.2) (2026-01-26)
+
+
+### Bug Fixes
+
+* add refresh for OIDC token ([#165](https://github.com/stainless-api/upload-openapi-spec-action/issues/165)) ([9b04055](https://github.com/stainless-api/upload-openapi-spec-action/commit/9b04055f28435f279a9ea7a7070dcbeabb56ff2a))
+
 ## [1.11.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.0...v1.11.1) (2026-01-23)
 
 
