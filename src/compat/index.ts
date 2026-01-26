@@ -116,7 +116,7 @@ export function getRunUrl() {
     : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 }
 
-export async function getStainlessAuthToken(): Promise<{
+async function getStainlessAuthToken(): Promise<{
   key: string;
   expiresInSeconds: number | null;
 }> {
