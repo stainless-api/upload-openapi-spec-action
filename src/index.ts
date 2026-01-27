@@ -2,7 +2,7 @@ import Stainless from "@stainless-api/sdk";
 import { getStainlessClient } from "./stainless";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
-import { getBooleanInput, getInput, getStainlessAuthToken } from "./compat";
+import { getBooleanInput, getInput, getStainlessAuth } from "./compat";
 import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
@@ -16,7 +16,7 @@ export const isValidConventionalCommitMessage = (message: string) => {
 
 export async function main() {
   // inputs
-  const stainless_api_key = await getStainlessAuthToken();
+  const { key: stainless_api_key } = await getStainlessAuth();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });

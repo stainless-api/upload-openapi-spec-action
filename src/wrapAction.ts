@@ -1,7 +1,7 @@
 import Stainless from "@stainless-api/sdk";
 import { getInput } from "./compat/input";
-import { getStainlessAuthToken } from "./compat";
-import { getStainlessClient } from "./stainless";
+import { getStainlessAuth } from "./compat";
+import { createAutoRefreshFetch, getStainlessClient } from "./stainless";
 import { logger } from "./logger";
 
 const accumulatedBuildIds = new Set<string>();
@@ -27,11 +27,12 @@ export function wrapAction(
 
     try {
       projectName = getInput("project", { required: true });
-      const apiKey = await getStainlessAuthToken();
+      const auth = await getStainlessAuth();
       stainless = getStainlessClient(actionType, {
         project: projectName,
-        apiKey,
+        apiKey: auth.key,
         logLevel: "warn",
+        fetch: createAutoRefreshFetch(auth, getStainlessAuth),
       });
       await fn(stainless);
       await maybeReportResult({
