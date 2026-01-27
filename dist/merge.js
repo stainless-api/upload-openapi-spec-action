@@ -37701,11 +37701,14 @@ function getGitHostToken() {
 function getRunUrl() {
   return isGitLabCI() ? `${process.env.CI_PROJECT_URL}/-/pipelines/${process.env.CI_PIPELINE_ID}` : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 }
-async function getStainlessAuthToken() {
+async function getStainlessAuth() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return apiKey;
+    return {
+      key: apiKey,
+      expiresAt: null
+    };
   }
   logger.debug("Authenticating with GitHub OIDC");
   const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
@@ -37726,7 +37729,10 @@ async function getStainlessAuthToken() {
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return data.value;
+    return {
+      key: data.value,
+      expiresAt: Date.now() + 300 * 1e3
+    };
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
@@ -40804,6 +40810,21 @@ var package_default = {
 };
 
 // src/stainless.ts
+function createAutoRefreshFetch(initialAuth, refreshAuth) {
+  let currentApiKey = initialAuth.key;
+  let expiresAt = initialAuth.expiresAt;
+  return async (input, init) => {
+    if (expiresAt != null && expiresAt - Date.now() < 30 * 1e3) {
+      logger.info("Auth token expiring soon, refreshing...");
+      const newAuth = await refreshAuth();
+      currentApiKey = newAuth.key;
+      expiresAt = newAuth.expiresAt;
+    }
+    const headers = new Headers(init?.headers);
+    headers.set("Authorization", `Bearer ${currentApiKey}`);
+    return fetch(input, { ...init, headers });
+  };
+}
 function getStainlessClient(action, opts) {
   const headers = {
     "User-Agent": `Stainless/Action ${package_default.version}`
@@ -40836,11 +40857,12 @@ function wrapAction(actionType, fn) {
     let projectName;
     try {
       projectName = getInput("project", { required: true });
-      const apiKey = await getStainlessAuthToken();
+      const auth = await getStainlessAuth();
       stainless = getStainlessClient(actionType, {
         project: projectName,
-        apiKey,
-        logLevel: "warn"
+        apiKey: auth.key,
+        logLevel: "warn",
+        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
       });
       await fn(stainless);
       await maybeReportResult({

@@ -115,11 +115,17 @@ export function getRunUrl() {
     : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 }
 
-export async function getStainlessAuthToken(): Promise<string> {
+export async function getStainlessAuth(): Promise<{
+  key: string;
+  expiresAt: number | null;
+}> {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return apiKey;
+    return {
+      key: apiKey,
+      expiresAt: null,
+    };
   }
 
   logger.debug("Authenticating with GitHub OIDC");
@@ -144,7 +150,10 @@ export async function getStainlessAuthToken(): Promise<string> {
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return data.value;
+    return {
+      key: data.value,
+      expiresAt: Date.now() + 300 * 1000,
+    };
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +

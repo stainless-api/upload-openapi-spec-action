@@ -18452,11 +18452,14 @@ function createLogger(options) {
 var logger = createLogger({ platform: detectPlatform() });
 
 // src/compat/index.ts
-async function getStainlessAuthToken() {
+async function getStainlessAuth() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return apiKey;
+    return {
+      key: apiKey,
+      expiresAt: null
+    };
   }
   logger.debug("Authenticating with GitHub OIDC");
   const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
@@ -18477,7 +18480,10 @@ async function getStainlessAuthToken() {
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return data.value;
+    return {
+      key: data.value,
+      expiresAt: Date.now() + 300 * 1e3
+    };
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
@@ -18517,7 +18523,7 @@ var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
 };
 async function main() {
-  const stainless_api_key = await getStainlessAuthToken();
+  const { key: stainless_api_key } = await getStainlessAuth();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });
