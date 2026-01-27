@@ -41512,6 +41512,7 @@ var main = wrapAction("preview", async (stainless) => {
       }
       break;
     }
+    await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1e3));
   }
 });
 async function computeBranchFrom({
