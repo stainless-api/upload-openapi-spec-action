@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.4](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.3...v1.11.4) (2026-01-27)
+
+
+### Bug Fixes
+
+* refresh token in fetch if needed ([#169](https://github.com/stainless-api/upload-openapi-spec-action/issues/169)) ([62540f2](https://github.com/stainless-api/upload-openapi-spec-action/commit/62540f26f52c69d8e82f6ce4366e05544f3d13ab))
+
 ## [1.11.3](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.2...v1.11.3) (2026-01-27)
 
 
