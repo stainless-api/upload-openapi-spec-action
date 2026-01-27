@@ -2,7 +2,7 @@ import Stainless from "@stainless-api/sdk";
 import { getStainlessClient } from "./stainless";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
-import { getBooleanInput, getInput, setApiKey } from "./compat";
+import { getBooleanInput, getInput, getStainlessAuthToken } from "./compat";
 import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
@@ -16,6 +16,7 @@ export const isValidConventionalCommitMessage = (message: string) => {
 
 export async function main() {
   // inputs
+  const stainless_api_key = await getStainlessAuthToken();
   const inputPath = getInput("input_path", { required: true });
   const configPath = getInput("config_path", { required: false });
   let projectName = getInput("project_name", { required: false });
@@ -39,8 +40,9 @@ export async function main() {
   }
 
   if (!projectName) {
-    const stainless = getStainlessClient("index", {});
-    await setApiKey(stainless);
+    const stainless = getStainlessClient("index", {
+      apiKey: stainless_api_key,
+    });
     const projects = await stainless.projects.list({ limit: 2 });
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
@@ -63,6 +65,7 @@ export async function main() {
   const response = await uploadSpecAndConfig(
     inputPath,
     configPath,
+    stainless_api_key,
     projectName,
     commitMessage,
     guessConfig,
@@ -99,6 +102,7 @@ export async function main() {
 async function uploadSpecAndConfig(
   specPath: string,
   configPath: string | undefined,
+  token: string,
   projectName: string,
   commitMessage: string | undefined,
   guessConfig: boolean,
@@ -112,9 +116,9 @@ async function uploadSpecAndConfig(
   decoratedSpec: string | null;
 }> {
   const stainless = getStainlessClient("index", {
+    apiKey: token,
     project: projectName,
   });
-  await setApiKey(stainless);
   const specContent = readFileSync(specPath, "utf8");
 
   let configContent;

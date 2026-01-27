@@ -18445,7 +18445,7 @@ async function getStainlessAuthToken() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return { key: apiKey, expiresInSeconds: null };
+    return apiKey;
   }
   logger.debug("Authenticating with GitHub OIDC");
   const requestUrl = process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
@@ -18466,26 +18466,13 @@ async function getStainlessAuthToken() {
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    return { key: data.value, expiresInSeconds: 300 };
+    return data.value;
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission and that you have the Stainless GitHub App installed: https://www.stainless.com/docs/guides/publish/#install-the-stainless-github-app. Error: ${error}`
     );
   }
 }
-var setApiKey = async (stainless) => {
-  const { key: apiKey, expiresInSeconds } = await getStainlessAuthToken();
-  stainless.apiKey = apiKey;
-  if (expiresInSeconds !== null) {
-    setTimeout(
-      () => {
-        logger.info("Stainless auth token expired, setting new key");
-        setApiKey(stainless);
-      },
-      (expiresInSeconds - 30) * 1e3
-    );
-  }
-};
 
 // node_modules/nano-spawn/source/context.js
 var import_node_process = __toESM(require("node:process"), 1);
@@ -18910,11 +18897,12 @@ function wrapAction(actionType, fn) {
     let projectName;
     try {
       projectName = getInput("project", { required: true });
+      const apiKey = await getStainlessAuthToken();
       stainless = getStainlessClient(actionType, {
         project: projectName,
+        apiKey,
         logLevel: "warn"
       });
-      await setApiKey(stainless);
       await fn(stainless);
       await maybeReportResult({
         stainless,

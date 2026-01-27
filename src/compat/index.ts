@@ -19,7 +19,6 @@ import {
 import { getInput, getBooleanInput } from "./input";
 import { setOutput } from "./output";
 import { logger } from "../logger";
-import Stainless from "@stainless-api/sdk";
 
 export {
   isGitLabCI,
@@ -116,14 +115,11 @@ export function getRunUrl() {
     : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 }
 
-async function getStainlessAuthToken(): Promise<{
-  key: string;
-  expiresInSeconds: number | null;
-}> {
+export async function getStainlessAuthToken(): Promise<string> {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
   if (apiKey) {
     logger.debug("Authenticating with provided Stainless API key");
-    return { key: apiKey, expiresInSeconds: null };
+    return apiKey;
   }
 
   logger.debug("Authenticating with GitHub OIDC");
@@ -148,8 +144,7 @@ async function getStainlessAuthToken(): Promise<{
     if (!data.value) {
       throw new Error("No token in OIDC response");
     }
-    // GitHub OIDC tokens expire after 5 minutes (this is not configurable as far as we can tell)
-    return { key: data.value, expiresInSeconds: 300 };
+    return data.value;
   } catch (error) {
     throw new Error(
       `Failed to authenticate with GitHub OIDC. Make sure your workflow has 'id-token: write' permission ` +
@@ -252,18 +247,3 @@ class GitLabCommentClient implements CommentClient {
     });
   }
 }
-
-export const setApiKey = async (stainless: Stainless) => {
-  const { key: apiKey, expiresInSeconds } = await getStainlessAuthToken();
-  stainless.apiKey = apiKey;
-
-  if (expiresInSeconds !== null) {
-    setTimeout(
-      () => {
-        logger.info("Stainless auth token expired, setting new key");
-        setApiKey(stainless);
-      },
-      (expiresInSeconds - 30) * 1000,
-    ); // Refresh 30 seconds before expiry
-  }
-};
