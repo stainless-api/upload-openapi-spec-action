@@ -37969,7 +37969,7 @@ function categorizeOutcome({
       reason: "Code was not generated because the build was cancelled."
     };
   }
-  if (!commitConclusion || netNewCommitConclusion === "fatal") {
+  if (!commitConclusion || commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
