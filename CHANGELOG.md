@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.5](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.4...v1.11.5) (2026-01-30)
+
+
+### Bug Fixes
+
+* **comment:** add install instructions for java, cli ([#171](https://github.com/stainless-api/upload-openapi-spec-action/issues/171)) ([9f22f23](https://github.com/stainless-api/upload-openapi-spec-action/commit/9f22f23be86aa881a863eea93a699871f39df0e8))
+* save and reapply config patch instead of whole config ([#172](https://github.com/stainless-api/upload-openapi-spec-action/issues/172)) ([15947cf](https://github.com/stainless-api/upload-openapi-spec-action/commit/15947cf20f36b6b7024ee059d587951eda7091c9))
+
 ## [1.11.4](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.3...v1.11.4) (2026-01-27)
 
 
