@@ -1,3 +1,4 @@
+import { createPatch, applyPatch } from "diff";
 import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
 import type { Outcomes } from "./outcomes";
@@ -103,10 +104,18 @@ export async function* runBuilds({
     return;
   }
 
+  let configPatch: string | undefined;
+
   if (!configContent) {
     const hasBranch =
       !!branch &&
       !!(await stainless.projects.branches.retrieve(branch).catch(() => null));
+
+    const hasBaseBranch =
+      !!baseBranch &&
+      !!(await stainless.projects.branches
+        .retrieve(baseBranch)
+        .catch(() => null));
 
     if (guessConfig) {
       logger.debug("Guessing config before branch reset");
@@ -127,13 +136,31 @@ export async function* runBuilds({
           }),
         )[0]?.content;
       }
+    } else if (hasBranch && hasBaseBranch) {
+      logger.debug("Computing config patch before branch reset");
+      const oldBaseConfig =
+        Object.values(
+          await stainless.projects.configs.retrieve({
+            branch: baseBranch,
+          }),
+        )[0]?.content ?? "";
+      const customizedConfig =
+        Object.values(
+          await stainless.projects.configs.retrieve({
+            branch,
+          }),
+        )[0]?.content ?? "";
+
+      if (oldBaseConfig !== customizedConfig) {
+        configPatch = createPatch(
+          "openapi.stainless.yml",
+          oldBaseConfig,
+          customizedConfig,
+        );
+        logger.debug("Created config patch");
+      }
     } else if (hasBranch) {
-      logger.debug("Saving config before branch reset");
-      configContent = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch,
-        }),
-      )[0]?.content;
+      logger.debug("No base branch found, skipping config patch");
     } else {
       logger.debug("No existing branch found");
     }
@@ -156,6 +183,25 @@ export async function* runBuilds({
     });
 
   logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
+
+  // Apply config patch if we computed one earlier
+  if (configPatch && !configContent) {
+    logger.debug("Applying config patch to new base");
+    const newBaseConfig =
+      Object.values(
+        await stainless.projects.configs.retrieve({
+          branch,
+        }),
+      )[0]?.content ?? "";
+
+    const patchedConfig = applyPatch(newBaseConfig, configPatch);
+    if (patchedConfig === false) {
+      logger.warn("Config patch failed to apply, dropping customizations");
+    } else {
+      logger.debug("Config patch applied successfully");
+      configContent = patchedConfig;
+    }
+  }
 
   const { base, head } = await stainless.builds.compare(
     {
