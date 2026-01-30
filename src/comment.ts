@@ -522,6 +522,18 @@ function InstallationDetails(
       }
       break;
     }
+    case "java": {
+      if (head.install_url) {
+        installation = `Add the following URL as a Maven source: '${head.install_url}'`;
+      }
+      break;
+    }
+    case "cli": {
+      if (head.install_url) {
+        installation = `Download and unzip: '${head.install_url}'. On macOS, run \`xattr -d com.apple.quarantine {executable name}\`.`;
+      }
+      break;
+    }
     default: {
       return null;
     }
