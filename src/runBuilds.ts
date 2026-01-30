@@ -144,18 +144,18 @@ export async function* runBuilds({
             branch: baseBranch,
           }),
         )[0]?.content ?? "";
-      const customizedConfig =
+      const oldHeadConfig =
         Object.values(
           await stainless.projects.configs.retrieve({
             branch,
           }),
         )[0]?.content ?? "";
 
-      if (oldBaseConfig !== customizedConfig) {
+      if (oldBaseConfig !== oldHeadConfig) {
         configPatch = createPatch(
           "openapi.stainless.yml",
           oldBaseConfig,
-          customizedConfig,
+          oldHeadConfig,
         );
         logger.debug("Created config patch");
       }
