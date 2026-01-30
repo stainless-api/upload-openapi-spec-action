@@ -18234,6 +18234,7 @@ var package_default = {
   license: "ISC",
   devDependencies: {
     "@eslint/js": "^9.35.0",
+    "@types/diff": "^7.0.2",
     "@types/node": "^22.18.3",
     esbuild: "^0.25.9",
     eslint: "^9.35.0",
@@ -18247,6 +18248,7 @@ var package_default = {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.15.0",
     "@stainless-api/sdk": "^0.1.0-alpha.19",
+    diff: "^8.0.3",
     glob: "^11.0.0",
     "nano-spawn": "^1.0.3",
     "ts-dedent": "^2.2.0",
