@@ -18499,12 +18499,8 @@ function getStainlessClient(action, opts) {
     "User-Agent": `Stainless/Action ${package_default.version}`
   };
   if (action) {
-    const actionPath = `stainless-api/upload-openapi-spec-action/${action}`;
-    if (isGitLabCI()) {
-      headers["X-GitLab-CI"] = actionPath;
-    } else {
-      headers["X-GitHub-Action"] = actionPath;
-    }
+    headers["X-Stainless-Platform"] = isGitLabCI() ? "gitlab-ci" : "github-actions";
+    headers["X-Stainless-Action"] = `stainless-api/upload-openapi-spec-action/${action}`;
   }
   return new Stainless({
     ...opts,
