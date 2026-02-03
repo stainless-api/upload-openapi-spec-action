@@ -1,0 +1,79 @@
+name: Combine OpenAPI Specs and Build SDKs
+
+# This workflow demonstrates how to use the prepare/combine action to combine
+# multiple OpenAPI spec files into a single file, then use it with the Stainless
+# SDK build action.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "specs/**/*.yaml"
+      - "specs/**/*.json"
+  pull_request:
+    paths:
+      - "specs/**/*.yaml"
+      - "specs/**/*.json"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Stainless project name.
+  STAINLESS_PROJECT: YOUR_PROJECT
+
+  # Glob patterns for spec files to combine.
+  SPEC_PATTERNS: "specs/**/*.yaml, specs/**/*.json"
+
+  # Path where the combined spec will be written.
+  COMBINED_SPEC_PATH: ./combined-openapi.yaml
+
+  # Path to your Stainless config. Optional; only provide this if you prefer
+  # to maintain the ground truth Stainless config in your own repo.
+  CONFIG_PATH: YOUR_CONFIG_PATH
+
+  # The commit message to use for the SDK builds.
+  COMMIT_MESSAGE: "feat(api): update api"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # IMPORTANT: Always checkout the repository first!
+      # Without this step, the action cannot access your spec files.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Combine OpenAPI specs
+        id: combine
+        uses: stainless-api/upload-openapi-spec-action/prepare/combine@v1
+        with:
+          # Glob patterns or comma-separated file paths to combine.
+          input_files: ${{ env.SPEC_PATTERNS }}
+
+          # Path where the combined spec will be written.
+          output_path: ${{ env.COMBINED_SPEC_PATH }}
+
+          # Optional: Configure how server URLs are handled during combine.
+          # - global: URL to use as the top-level server in the combined spec.
+          # - preserve: URLs to keep at the operation level (for multi-service APIs).
+          # Uncomment and customize if your specs have different server URLs:
+          #
+          # server_url_strategy: |
+          #   global: https://api.example.com
+          #   preserve:
+          #     - https://users.api.example.com
+          #     - https://billing.api.example.com
+
+      - name: Build SDKs
+        uses: stainless-api/upload-openapi-spec-action/build@v1
+        with:
+          project: ${{ env.STAINLESS_PROJECT }}
+          oas_path: ${{ steps.combine.outputs.combined_file }}
+          config_path: ${{ env.CONFIG_PATH }}
+          commit_message: ${{ env.COMMIT_MESSAGE }}
