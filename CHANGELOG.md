@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.6](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.5...v1.11.6) (2026-02-03)
+
+
+### Bug Fixes
+
+* yaml formatting ([c9df677](https://github.com/stainless-api/upload-openapi-spec-action/commit/c9df67766188af19676071bb5d44b6ef7da26cfd))
+
 ## [1.11.5](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.4...v1.11.5) (2026-01-30)
 
 
