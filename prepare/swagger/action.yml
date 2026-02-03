@@ -22,7 +22,7 @@ inputs:
       Fix up small errors in the source definition (default: false).
       Equivalent to swagger2openapi --patch flag.
     required: false
-    default: 'false'
+    default: "false"
   output_format:
     description: >-
       Output format: 'json' or 'yaml' (default: 'json').
@@ -33,24 +33,24 @@ inputs:
       Resolve external references (default: true).
       Equivalent to swagger2openapi --resolve flag.
     required: false
-    default: 'true'
+    default: "true"
   target_version:
     description: >-
       Target OpenAPI version: '3.0' or '3.1' (default: '3.0').
     required: false
-    default: '3.0'
+    default: "3.0"
   commit:
     description: >-
       Whether to commit the converted file to the repository (default: false).
       Requires 'contents: write' permission.
     required: false
-    default: 'false'
+    default: "false"
   commit_message:
     description: >-
       Commit message to use when committing the converted file.
       Only used if commit is true.
     required: false
-    default: 'chore: convert Swagger 2.0 to OpenAPI 3.x'
+    default: "chore: convert Swagger 2.0 to OpenAPI 3.x"
   github_token:
     description: >-
       GitHub token for committing changes.

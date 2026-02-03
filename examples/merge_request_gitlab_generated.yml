@@ -37,7 +37,7 @@ preview:
     - REF="base" node checkoutPRRef.js
     # generate oas and save to OAS_PATH
     # { insert your code here }
-    
+
     - REF="head" node checkoutPRRef.js
     # generate oas and save to OAS_PATH
     # { insert your code here }
