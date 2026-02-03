@@ -7,14 +7,14 @@ name: Convert Swagger to OpenAPI
 on:
   pull_request:
     paths:
-      - 'swagger.json'
-      - 'swagger.yaml'
+      - "swagger.json"
+      - "swagger.yaml"
   push:
     branches:
       - main
     paths:
-      - 'swagger.json'
-      - 'swagger.yaml'
+      - "swagger.json"
+      - "swagger.yaml"
 
 permissions:
   contents: write
@@ -51,13 +51,13 @@ jobs:
           resolve: true
 
           # Target OpenAPI version: '3.0' or '3.1'
-          target_version: '3.0'
+          target_version: "3.0"
 
           # Whether to commit the converted file
           commit: true
 
           # Commit message (only used if commit is true)
-          commit_message: 'chore: convert Swagger 2.0 to OpenAPI 3.x'
+          commit_message: "chore: convert Swagger 2.0 to OpenAPI 3.x"
 
           # GitHub token for committing (defaults to GITHUB_TOKEN)
           github_token: ${{ secrets.GITHUB_TOKEN }}

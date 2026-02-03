@@ -43,3 +43,17 @@ If your Stainless config has code samples configured, the `preview`, `merge`, an
 If you sync your OpenAPI spec with a [ReadMe API Reference](https://readme.com/), you can use the [Sync to ReadMe](https://github.com/marketplace/actions/rdme-sync-to-readme) GitHub action to upload the documented spec to ReadMe. You can see examples of this in the [pull_request_readme.yml](./pull_request_readme.yml) and [push_readme.yml](./push_readme.yml) files.
 
 If you use [Mintlify's OpenAPI support](https://mintlify.com/docs/api-playground/openapi-setup#in-the-repo) for your API reference documentation, you can copy the documented spec to your Mintlify docs repo to update it. You can see examples of this in the [pull_request_mintlify.yml](./pull_request_mintlify.yml) and [push_mintlify.yml](./push_mintlify.yml) files.
+
+## Spec preparation
+
+If your OpenAPI spec needs transformation before building SDKs, you can use the preparation actions.
+
+### Combining multiple specs
+
+If your API is split across multiple OpenAPI spec files, use the `prepare/combine` action to merge them into a single file before building SDKs. See [prepare_combine.yml](./prepare_combine.yml) for an example.
+
+The action uses [Redocly CLI](https://redocly.com/docs/cli/) to combine specs, handling reference resolution and path merging. You can also configure how server URLs are handled when combining specs from different services.
+
+### Converting Swagger 2.0 specs
+
+If you have a Swagger 2.0 spec, use the `prepare/swagger` action to convert it to OpenAPI 3.x format. See [prepare_swagger.yml](./prepare_swagger.yml) for an example.
