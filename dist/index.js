@@ -18515,7 +18515,7 @@ function getStainlessClient(action, opts) {
 var import_node_fs = require("node:fs");
 var import_yaml = __toESM(require_dist());
 var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-.]+\))?(!)?: ([\w ])+([\s\S]*)/
 );
 var isValidConventionalCommitMessage = (message) => {
   return CONVENTIONAL_COMMIT_REGEX.test(message);
