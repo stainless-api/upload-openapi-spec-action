@@ -6,8 +6,9 @@ import { getBooleanInput, getInput, getStainlessAuth } from "./compat";
 import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
+// taken from https://gist.github.com/marcojahn/482410b728c31b221b70ea6d2c433f0c
 const CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/,
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\([\w\-.]+\))?(!)?: ([\w ])+([\s\S]*)/,
 );
 
 export const isValidConventionalCommitMessage = (message: string) => {
