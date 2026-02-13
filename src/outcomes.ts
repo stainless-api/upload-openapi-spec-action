@@ -35,9 +35,10 @@ export function shouldFailRun({
       outcome,
       baseOutcome: baseOutcomes?.[language],
     });
-    const didFail = conclusion && 
+    const didFail =
+      conclusion &&
       OutcomeConclusion.indexOf(conclusion) <=
-      OutcomeConclusion.indexOf(failRunOn);
+        OutcomeConclusion.indexOf(failRunOn);
     return didFail ? [{ language, reason }] : [];
   });
 
@@ -103,14 +104,11 @@ export function categorizeOutcome({
     return {
       reason: "Build is still in progress.",
       isPending: true,
-    }
+    };
   }
 
   // Fatal reasons
-  if (
-    commitConclusion === "fatal" ||
-    netNewCommitConclusion === "fatal"
-  ) {
+  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
