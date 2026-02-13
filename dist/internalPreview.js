@@ -38329,6 +38329,34 @@ var INTERNAL_COMMENT_TITLE = Heading(
 var INTERNAL_COMMENT_FOOTER_DIVIDER = Comment(
   "stainless-internal-preview-footer"
 );
+var ConclusionSeverity = [
+  "fatal",
+  "error",
+  "warning",
+  "note",
+  "success"
+];
+function toConclusionLevel(conclusion) {
+  if (ConclusionSeverity.includes(conclusion)) {
+    return conclusion;
+  }
+  return "fatal";
+}
+function worstConclusion(a, b) {
+  return ConclusionSeverity.indexOf(a) <= ConclusionSeverity.indexOf(b) ? a : b;
+}
+function conclusionEmoji(conclusion) {
+  switch (conclusion) {
+    case "fatal":
+    case "error":
+      return Symbol2.Exclamation;
+    case "warning":
+      return Symbol2.Warning;
+    case "note":
+    case "success":
+      return Symbol2.WhiteCheckMark;
+  }
+}
 function printInternalComment(projects) {
   const blocks = [];
   for (const {
@@ -38340,9 +38368,15 @@ function printInternalComment(projects) {
   } of projects) {
     const projectResults = [];
     let hasPending = false;
+    let worst = "success";
     for (const [lang, head] of Object.entries(outcomes)) {
       const base = baseOutcomes?.[lang];
-      hasPending ||= categorizeOutcome({ outcome: head, baseOutcome: base }).isPending ?? false;
+      const categorized = categorizeOutcome({
+        outcome: head,
+        baseOutcome: base
+      });
+      hasPending ||= categorized.isPending ?? false;
+      worst = worstConclusion(worst, toConclusionLevel(categorized.conclusion));
       const result = Result({ orgName, projectName, branch, lang, head, base });
       if (result) {
         projectResults.push(result);
@@ -38355,8 +38389,14 @@ function printInternalComment(projects) {
         `
       );
     }
+    const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worst);
     blocks.push(
-      [Bold(`${orgName}/${projectName}`), ...projectResults].join("\n\n")
+      Details({
+        summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}`,
+        body: projectResults.join("\n\n"),
+        indent: false,
+        open: worst !== "success" && worst !== "note" && !hasPending
+      })
     );
   }
   const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");

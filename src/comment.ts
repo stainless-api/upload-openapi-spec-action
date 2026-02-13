@@ -637,6 +637,45 @@ const INTERNAL_COMMENT_FOOTER_DIVIDER = MD.Comment(
   "stainless-internal-preview-footer",
 );
 
+type ConclusionLevel = "fatal" | "error" | "warning" | "note" | "success";
+
+// Severity ordering for outcome conclusions (lower index = worse)
+const ConclusionSeverity: ConclusionLevel[] = [
+  "fatal",
+  "error",
+  "warning",
+  "note",
+  "success",
+];
+
+function toConclusionLevel(conclusion: string): ConclusionLevel {
+  if (ConclusionSeverity.includes(conclusion as ConclusionLevel)) {
+    return conclusion as ConclusionLevel;
+  }
+  // "never" and any other unknown values map to fatal
+  return "fatal";
+}
+
+function worstConclusion(
+  a: ConclusionLevel,
+  b: ConclusionLevel,
+): ConclusionLevel {
+  return ConclusionSeverity.indexOf(a) <= ConclusionSeverity.indexOf(b) ? a : b;
+}
+
+function conclusionEmoji(conclusion: ConclusionLevel): string {
+  switch (conclusion) {
+    case "fatal":
+    case "error":
+      return MD.Symbol.Exclamation;
+    case "warning":
+      return MD.Symbol.Warning;
+    case "note":
+    case "success":
+      return MD.Symbol.WhiteCheckMark;
+  }
+}
+
 export function printInternalComment(
   projects: {
     orgName: string;
@@ -657,13 +696,17 @@ export function printInternalComment(
   } of projects) {
     const projectResults: string[] = [];
     let hasPending = false;
+    let worst: ConclusionLevel = "success";
 
     for (const [lang, head] of Object.entries(outcomes)) {
       const base = baseOutcomes?.[lang];
 
-      hasPending ||=
-        categorizeOutcome({ outcome: head, baseOutcome: base }).isPending ??
-        false;
+      const categorized = categorizeOutcome({
+        outcome: head,
+        baseOutcome: base,
+      });
+      hasPending ||= categorized.isPending ?? false;
+      worst = worstConclusion(worst, toConclusionLevel(categorized.conclusion));
 
       const result = Result({ orgName, projectName, branch, lang, head, base });
       if (result) {
@@ -679,8 +722,17 @@ export function printInternalComment(
       );
     }
 
+    const statusEmoji = hasPending
+      ? MD.Symbol.HourglassFlowingSand
+      : conclusionEmoji(worst);
+
     blocks.push(
-      [MD.Bold(`${orgName}/${projectName}`), ...projectResults].join("\n\n"),
+      MD.Details({
+        summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}`,
+        body: projectResults.join("\n\n"),
+        indent: false,
+        open: worst !== "success" && worst !== "note" && !hasPending,
+      }),
     );
   }
 
