@@ -12,7 +12,10 @@ type TargetGroup = {
   languages: string[];
 };
 
-function parseTargets(input: string): TargetGroup[] {
+function parseTargets(
+  input: string,
+  knownLanguages: Set<string>,
+): TargetGroup[] {
   const lines = input
     .split("\n")
     .map((l) => l.trim())
@@ -21,19 +24,38 @@ function parseTargets(input: string): TargetGroup[] {
   const grouped = new Map<string, { org: string; languages: string[] }>();
 
   for (const line of lines) {
-    const match = line.match(/^([^/]+)\/(.+)-([a-z_]+)$/);
-    if (!match) {
+    const slashIdx = line.indexOf("/");
+    if (slashIdx === -1) {
       throw new Error(
-        `Invalid project tuple: "${line}". Expected format: {org}/{project}-{language}`,
+        `Invalid target: "${line}". Expected format: {org}/{project} or {org}/{project}-{language}`,
       );
     }
-    const [, org, project, language] = match;
+
+    const org = line.slice(0, slashIdx);
+    const rest = line.slice(slashIdx + 1);
+
+    // Try to split off a known language suffix (e.g. "openai-typescript" → project="openai", lang="typescript")
+    const lastHyphen = rest.lastIndexOf("-");
+    let project: string;
+    let language: string | null = null;
+    if (lastHyphen !== -1) {
+      const suffix = rest.slice(lastHyphen + 1);
+      if (knownLanguages.has(suffix)) {
+        project = rest.slice(0, lastHyphen);
+        language = suffix;
+      } else {
+        project = rest;
+      }
+    } else {
+      project = rest;
+    }
+
     const key = `${org}/${project}`;
     const existing = grouped.get(key);
     if (existing) {
-      existing.languages.push(language);
+      if (language) existing.languages.push(language);
     } else {
-      grouped.set(key, { org, languages: [language] });
+      grouped.set(key, { org, languages: language ? [language] : [] });
     }
   }
 
@@ -47,6 +69,7 @@ function parseTargets(input: string): TargetGroup[] {
 async function main() {
   try {
     const targetsInput = getInput("targets", { required: true });
+    const languagesInput = getInput("languages", { required: true });
     const failRunOn = getInput("fail_on", {
       choices: FailRunOn,
       required: true,
@@ -58,13 +81,14 @@ async function main() {
     const gitHostToken = getInput("github_token");
     const prNumber = getPRNumber();
 
-    const targetGroups = parseTargets(targetsInput);
+    const knownLanguages = new Set<string>(JSON.parse(languagesInput));
+    const targetGroups = parseTargets(targetsInput, knownLanguages);
     if (targetGroups.length === 0) {
       throw new Error("No valid project tuples found in 'targets' input");
     }
 
     logger.info(
-      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project} [${g.languages.join(", ")}]`).join("; ")}`,
+      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project}${g.languages.length > 0 ? ` [${g.languages.join(", ")}]` : " [all targets]"}`).join("; ")}`,
     );
 
     // Auth via OIDC (no API key input for this action)
@@ -97,7 +121,9 @@ async function main() {
         stainless.builds.compare(
           {
             project: group.project,
-            targets: group.languages as Target[],
+            ...(group.languages.length > 0 && {
+              targets: group.languages as Target[],
+            }),
             base: {
               branch: baseBranch,
               revision: "main",

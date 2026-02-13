@@ -40441,23 +40441,38 @@ async function* pollBuild({
 }
 
 // src/internalPreview.ts
-function parseTargets(input) {
+function parseTargets(input, knownLanguages) {
   const lines = input.split("\n").map((l) => l.trim()).filter(Boolean);
   const grouped = /* @__PURE__ */ new Map();
   for (const line of lines) {
-    const match = line.match(/^([^/]+)\/(.+)-([a-z_]+)$/);
-    if (!match) {
+    const slashIdx = line.indexOf("/");
+    if (slashIdx === -1) {
       throw new Error(
-        `Invalid project tuple: "${line}". Expected format: {org}/{project}-{language}`
+        `Invalid target: "${line}". Expected format: {org}/{project} or {org}/{project}-{language}`
       );
     }
-    const [, org, project, language] = match;
+    const org = line.slice(0, slashIdx);
+    const rest = line.slice(slashIdx + 1);
+    const lastHyphen = rest.lastIndexOf("-");
+    let project;
+    let language = null;
+    if (lastHyphen !== -1) {
+      const suffix = rest.slice(lastHyphen + 1);
+      if (knownLanguages.has(suffix)) {
+        project = rest.slice(0, lastHyphen);
+        language = suffix;
+      } else {
+        project = rest;
+      }
+    } else {
+      project = rest;
+    }
     const key = `${org}/${project}`;
     const existing = grouped.get(key);
     if (existing) {
-      existing.languages.push(language);
+      if (language) existing.languages.push(language);
     } else {
-      grouped.set(key, { org, languages: [language] });
+      grouped.set(key, { org, languages: language ? [language] : [] });
     }
   }
   return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({
@@ -40469,6 +40484,7 @@ function parseTargets(input) {
 async function main() {
   try {
     const targetsInput = getInput("targets", { required: true });
+    const languagesInput = getInput("languages", { required: true });
     const failRunOn = getInput("fail_on", {
       choices: FailRunOn,
       required: true
@@ -40479,12 +40495,13 @@ async function main() {
     const branch = getInput("branch", { required: true });
     const gitHostToken = getInput("github_token");
     const prNumber = getPRNumber();
-    const targetGroups = parseTargets(targetsInput);
+    const knownLanguages = new Set(JSON.parse(languagesInput));
+    const targetGroups = parseTargets(targetsInput, knownLanguages);
     if (targetGroups.length === 0) {
       throw new Error("No valid project tuples found in 'targets' input");
     }
     logger.info(
-      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project} [${g.languages.join(", ")}]`).join("; ")}`
+      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project}${g.languages.length > 0 ? ` [${g.languages.join(", ")}]` : " [all targets]"}`).join("; ")}`
     );
     const auth = await getStainlessAuth();
     const stainless = getStainlessClient("internal-preview", {
@@ -40503,7 +40520,9 @@ async function main() {
         (group) => stainless.builds.compare(
           {
             project: group.project,
-            targets: group.languages,
+            ...group.languages.length > 0 && {
+              targets: group.languages
+            },
             base: {
               branch: baseBranch,
               revision: "main",

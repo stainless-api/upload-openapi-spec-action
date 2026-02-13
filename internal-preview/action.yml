@@ -9,10 +9,19 @@ inputs:
   targets:
     description: >-
       Newline-separated list of `{org}/{project}-{language}` tuples to build.
+      Targets without a recognized language suffix (e.g. `org/project-v0`) are
+      treated as project-only and will build all configured targets.
       Example:
         stainlessapi/my-project-typescript
         stainlessapi/my-project-python
         other-org/other-project-go
+    required: true
+  languages:
+    description: >-
+      JSON array of known SDK language suffixes, used to distinguish language
+      suffixes from project name parts (e.g. to tell that `v0` in
+      `stainless/stainless-v0` is not a language). Must match the LANGUAGES
+      env var in run_codegen.yml.
     required: true
   fail_on:
     description: >-
