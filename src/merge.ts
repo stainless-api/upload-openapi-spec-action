@@ -11,13 +11,13 @@ import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
 import { isConfigChanged, readConfig, saveConfig } from "./config";
 import { shouldFailRun, FailRunOn } from "./outcomes";
+import { resolveOrg } from "./resolve";
 import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 import { wrapAction } from "./wrapAction";
 
-const main = wrapAction("merge", async (stainless) => {
-  const orgName = getInput("org", { required: false });
-  const projectName = getInput("project", { required: true });
+const main = wrapAction("merge", async (ctx) => {
+  const { stainless, projectName } = ctx;
   const oasPath = getInput("oas_path", { required: false });
   const configPath = getInput("config_path", { required: false }) || undefined;
   const defaultCommitMessage = getInput("commit_message", { required: true });
@@ -49,11 +49,9 @@ const main = wrapAction("merge", async (stainless) => {
     );
   }
 
-  if (makeComment && !orgName) {
-    throw new Error(
-      "This action requires an organization name to make a comment.",
-    );
-  }
+  const orgName = makeComment
+    ? await resolveOrg(stainless, ctx.orgName)
+    : ctx.orgName;
 
   // If we came from the checkout-pr-ref action, we might need to save the
   // generated config files.

@@ -10,11 +10,15 @@ inputs:
       if not provided, requires 'id-token: write' permission). Required for GitLab CI.
     required: false
   org:
-    description: Stainless organization name.
-    required: true
+    description: >-
+      Stainless organization name. If omitted, will be auto-detected from the
+      project.
+    required: false
   project:
-    description: Stainless project name.
-    required: true
+    description: >-
+      Stainless project name. If omitted, will be auto-detected when the API key
+      has access to exactly one project.
+    required: false
   oas_path:
     description: Path to your OpenAPI spec.
     required: false
