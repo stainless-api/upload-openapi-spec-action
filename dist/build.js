@@ -19591,10 +19591,11 @@ var package_default = {
   version: "1.11.6",
   main: "dist/index.js",
   scripts: {
-    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
     "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
     "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
     "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:internal-preview": "esbuild --bundle src/internalPreview.ts --outdir=dist --platform=node --target=node20",
     "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
     "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
     "build:prepare-combine": "esbuild --bundle src/combine/index.ts --outfile=dist/prepareCombine.js --platform=node --target=node20 --external:@redocly/cli",
@@ -19942,7 +19943,7 @@ async function* runBuilds({
   }
   return;
 }
-var combineAsyncIterators2 = async function* (...args) {
+async function* combineAsyncIterators2(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;
   const never = new Promise(() => {
@@ -19959,7 +19960,7 @@ var combineAsyncIterators2 = async function* (...args) {
       yield { index, value: result.value };
     }
   }
-};
+}
 async function* pollBuild({
   stainless,
   build,

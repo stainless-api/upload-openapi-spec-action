@@ -8778,7 +8778,7 @@ var require_lodash7 = __commonJS({
         return result;
       };
     }
-    function once3(func) {
+    function once(func) {
       return before(2, func);
     }
     function isObject(value) {
@@ -8824,7 +8824,7 @@ var require_lodash7 = __commonJS({
       var isBinary = reIsBinary.test(value);
       return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
     }
-    module2.exports = once3;
+    module2.exports = once;
   }
 });
 
@@ -8841,7 +8841,7 @@ var require_sign = __commonJS({
     var isNumber = require_lodash4();
     var isPlainObject = require_lodash5();
     var isString = require_lodash6();
-    var once3 = require_lodash7();
+    var once = require_lodash7();
     var { KeyObject, createSecretKey, createPrivateKey } = require("crypto");
     var SUPPORTED_ALGS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "HS256", "HS384", "HS512", "none"];
     if (PS_SUPPORTED) {
@@ -9030,7 +9030,7 @@ var require_sign = __commonJS({
       });
       const encoding = options.encoding || "utf8";
       if (typeof callback === "function") {
-        callback = callback && once3(callback);
+        callback = callback && once(callback);
         jws.createSign({
           header,
           privateKey: secretOrPrivateKey,
@@ -9115,9 +9115,6 @@ var require_dist = __commonJS({
     exports2.default = dedent;
   }
 });
-
-// src/preview.ts
-var fs5 = __toESM(require("node:fs"));
 
 // src/compat/index.ts
 var fs2 = __toESM(require("node:fs"));
@@ -9670,12 +9667,12 @@ function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
 var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction = (pathEncoder = encodeURIPath) => function path6(statics, ...params) {
+var createPathTagFunction = (pathEncoder = encodeURIPath) => function path3(statics, ...params) {
   if (statics.length === 1)
     return statics[0];
   let postPath = false;
   const invalidSegments = [];
-  const path7 = statics.reduce((previousValue, currentValue, index) => {
+  const path4 = statics.reduce((previousValue, currentValue, index) => {
     if (/[?#]/.test(currentValue)) {
       postPath = true;
     }
@@ -9692,7 +9689,7 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path6(stat
     }
     return previousValue + currentValue + (index === params.length ? "" : encoded);
   }, "");
-  const pathOnly = path7.split(/[?#]/, 1)[0];
+  const pathOnly = path4.split(/[?#]/, 1)[0];
   const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
   let match;
   while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
@@ -9713,10 +9710,10 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path6(stat
     }, "");
     throw new GitHubError(`Path parameters result in path with invalid segments:
 ${invalidSegments.map((e) => e.error).join("\n")}
-${path7}
+${path4}
 ${underline}`);
   }
-  return path7;
+  return path4;
 };
 var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
@@ -10560,8 +10557,8 @@ function stringify(object, opts = {}) {
 // node_modules/@stainless-api/github-internal/internal/uploads.mjs
 var checkFileSupport = () => {
   if (typeof File === "undefined") {
-    const { process: process7 } = globalThis;
-    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    const { process: process2 } = globalThis;
+    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
     throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
   }
 };
@@ -37021,9 +37018,9 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     makeStatusError(status, error, message, headers) {
       return APIError.generate(status, error, message, headers);
     }
-    buildURL(path6, query, defaultBaseURL) {
+    buildURL(path3, query, defaultBaseURL) {
       const baseURL = !__classPrivateFieldGet(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-      const url = isAbsoluteURL(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
+      const url = isAbsoluteURL(path3) ? new URL(path3) : new URL(baseURL + (baseURL.endsWith("/") && path3.startsWith("/") ? path3.slice(1) : path3));
       const defaultQuery = this.defaultQuery();
       if (!isEmptyObj(defaultQuery)) {
         query = { ...defaultQuery, ...query };
@@ -37046,24 +37043,24 @@ var BaseGitHub = /* @__PURE__ */ (() => {
      */
     async prepareRequest(request, { url, options }) {
     }
-    get(path6, opts) {
-      return this.methodRequest("get", path6, opts);
+    get(path3, opts) {
+      return this.methodRequest("get", path3, opts);
     }
-    post(path6, opts) {
-      return this.methodRequest("post", path6, opts);
+    post(path3, opts) {
+      return this.methodRequest("post", path3, opts);
     }
-    patch(path6, opts) {
-      return this.methodRequest("patch", path6, opts);
+    patch(path3, opts) {
+      return this.methodRequest("patch", path3, opts);
     }
-    put(path6, opts) {
-      return this.methodRequest("put", path6, opts);
+    put(path3, opts) {
+      return this.methodRequest("put", path3, opts);
     }
-    delete(path6, opts) {
-      return this.methodRequest("delete", path6, opts);
+    delete(path3, opts) {
+      return this.methodRequest("delete", path3, opts);
     }
-    methodRequest(method, path6, opts) {
+    methodRequest(method, path3, opts) {
       return this.request(Promise.resolve(opts).then((opts2) => {
-        return { method, path: path6, ...opts2 };
+        return { method, path: path3, ...opts2 };
       }));
     }
     request(options, remainingRetries = null) {
@@ -37166,8 +37163,8 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       }));
       return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
     }
-    getAPIList(path6, Page2, opts) {
-      return this.requestAPIList(Page2, { method: "get", path: path6, ...opts });
+    getAPIList(path3, Page2, opts) {
+      return this.requestAPIList(Page2, { method: "get", path: path3, ...opts });
     }
     requestAPIList(Page2, options) {
       const request = this.makeRequest(options, null, void 0);
@@ -37245,8 +37242,8 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     }
     async buildRequest(inputOptions, { retryCount = 0 } = {}) {
       const options = { ...inputOptions };
-      const { method, path: path6, query, defaultBaseURL } = options;
-      const url = this.buildURL(path6, query, defaultBaseURL);
+      const { method, path: path3, query, defaultBaseURL } = options;
+      const url = this.buildURL(path3, query, defaultBaseURL);
       if ("timeout" in options)
         validatePositiveInteger("timeout", options.timeout);
       options.timeout = options.timeout ?? this.timeout;
@@ -37492,12 +37489,6 @@ function getInput(name, options) {
   }
   return value || void 0;
 }
-function getBooleanInput(name, options) {
-  const value = getInput(name, options)?.toLowerCase();
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return void 0;
-}
 
 // src/compat/output.ts
 var crypto = __toESM(require("node:crypto"));
@@ -37682,30 +37673,12 @@ function getPRNumber() {
     getGitHubContext().payload.pull_request?.number ?? process.env["PR_NUMBER"]
   );
 }
-function isPullRequestOpenedEvent() {
-  return isGitLabCI() ? process.env["CI_MERGE_REQUEST_EVENT_TYPE"] === "opened" : getGitHubContext().payload.action === "opened";
-}
 function getPRTerm() {
   return isGitLabCI() ? "MR" : "PR";
-}
-function getCITerm() {
-  return isGitLabCI() ? "GitLab CI" : "GitHub Actions";
 }
 var gitlabBaseUrl = () => process.env.GITLAB_BASE_URL ?? "https://gitlab.com";
 function getRepoPath(owner, repo) {
   return process.env.GITLAB_STAGING_REPO_PATH ? `${gitlabBaseUrl()}/${process.env.GITLAB_STAGING_REPO_PATH}` : `https://github.com/${owner}/${repo}`;
-}
-function getGitHostToken() {
-  const inputName = isGitLabCI() ? "GITLAB_TOKEN" : "github_token";
-  const token = getInput(inputName);
-  const isRequired = getBooleanInput("make_comment", { required: true });
-  if (isRequired && !token) {
-    throw new Error(`Input ${inputName} is required to make a comment`);
-  }
-  return token;
-}
-function getRunUrl() {
-  return isGitLabCI() ? `${process.env.CI_PROJECT_URL}/-/pipelines/${process.env.CI_PIPELINE_ID}` : `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
 }
 async function getStainlessAuth() {
   const apiKey = getInput("stainless_api_key", { required: isGitLabCI() });
@@ -37900,7 +37873,7 @@ function shouldFailRun({
       outcome,
       baseOutcome: baseOutcomes?.[language]
     });
-    const didFail = conclusion && OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
+    const didFail = OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
     return didFail ? [{ language, reason }] : [];
   });
   if (failures.length > 0) {
@@ -37940,13 +37913,7 @@ function categorizeOutcome({
       reason: "Code was not generated because the build was cancelled."
     };
   }
-  if (!commitConclusion) {
-    return {
-      reason: "Build is still in progress.",
-      isPending: true
-    };
-  }
-  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
+  if (!commitConclusion || commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
@@ -38097,135 +38064,12 @@ var COMMENT_TITLE = Heading(
   `${Symbol2.HeavyAsterisk} Stainless preview builds`
 );
 var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
-function printComment({
-  noChanges,
-  orgName,
-  projectName,
-  branch,
-  commitMessage,
-  commitMessages,
-  hasAiCommitMessageMap,
-  baseOutcomes,
-  outcomes
-}) {
-  const Blocks3 = (() => {
-    if (noChanges) {
-      return "No changes were made to the SDKs.";
-    }
-    const canEdit = !!baseOutcomes;
-    const hasMultipleCommitMessages = commitMessages && Object.keys(commitMessages).length > 0;
-    if (hasMultipleCommitMessages) {
-      return [
-        Dedent`
-          This ${getPRTerm()} will update the ${CodeInline(
-          projectName
-        )} SDKs with the following commit messages.
-        `,
-        CommitMessagesSection({
-          commitMessages,
-          hasAiCommitMessageMap,
-          outcomes
-        }),
-        canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
-        Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-      ].filter((f) => f !== null).join(`
-
-`);
-    }
-    return [
-      Dedent`
-        This ${getPRTerm()} will update the ${CodeInline(
-        projectName
-      )} SDKs with the following commit message.
-
-        ${CodeBlock(commitMessage)}
-
-        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
-      `,
-      Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-    ].filter((f) => f !== null).join(`
-
-`);
-  })();
-  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
-  const fullComment = Dedent`
-    ${COMMENT_TITLE}
-
-    ${Blocks3}
-
-    ${Rule()}
-
-    ${COMMENT_FOOTER_DIVIDER}
-
-    ${Italic(
-    `This comment is auto-generated by ${getCITerm()} and is automatically kept up to date as you push.<br/>If you push custom code to the preview branch, ${Link({
-      text: `re-run this workflow`,
-      href: getRunUrl()
-    })} to update the comment.<br/>Last updated: ${dateString}`
-  )}
-  `;
-  return fullComment;
-}
-function CommitMessagesSection({
-  commitMessages,
-  hasAiCommitMessageMap,
-  outcomes
-}) {
-  const languages = Object.keys(outcomes).sort();
-  const messageBlocks = languages.map((lang) => {
-    const message = commitMessages[lang] || "No changes detected";
-    const isGeneratingAiCommitMessage = hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
-    const statusText = isGeneratingAiCommitMessage ? `${Symbol2.HourglassFlowingSand} (generating...)
-` : "";
-    return Dedent`
-      **${lang}**
-      ${statusText}${CodeBlock(message)}
-    `;
-  });
-  return messageBlocks.join("\n");
-}
 var DiagnosticIcon = {
   fatal: Symbol2.Exclamation,
   error: Symbol2.Exclamation,
   warning: Symbol2.Warning,
   note: Symbol2.Bulb
 };
-function Results({
-  orgName,
-  projectName,
-  branch,
-  outcomes,
-  baseOutcomes
-}) {
-  const results = [];
-  let hasPending = false;
-  Object.entries(outcomes).forEach(([lang, head]) => {
-    const base = baseOutcomes?.[lang];
-    hasPending ||= categorizeOutcome({
-      outcome: head,
-      baseOutcome: base
-    }).isPending ?? false;
-    const result = Result({
-      orgName,
-      projectName,
-      branch,
-      lang,
-      head,
-      base
-    });
-    if (result) {
-      results.push(result);
-    }
-  });
-  if (hasPending) {
-    results.push(
-      Dedent`
-        ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
-      `
-    );
-  }
-  return results.join("\n\n");
-}
 function Result({
   orgName,
   projectName,
@@ -38239,12 +38083,6 @@ function Result({
     baseOutcome: base
   });
   const { ResultIcon, Description } = (() => {
-    if (isPending) {
-      return {
-        ResultIcon: Symbol2.HourglassFlowingSand,
-        Description: ""
-      };
-    }
     if (conclusion === "fatal") {
       return {
         ResultIcon: Symbol2.Exclamation,
@@ -38271,9 +38109,15 @@ function Result({
         Description: Italic("There was a regression in your SDK.")
       };
     }
+    if (!isPending) {
+      return {
+        ResultIcon: Symbol2.WhiteCheckMark,
+        Description: Italic("Your SDK built successfully.")
+      };
+    }
     return {
-      ResultIcon: Symbol2.WhiteCheckMark,
-      Description: Italic("Your SDK built successfully.")
+      ResultIcon: Symbol2.HourglassFlowingSand,
+      Description: ""
     };
   })();
   return Details({
@@ -38458,42 +38302,6 @@ function InstallationDetails(head, lang) {
   if (!installation) return null;
   return CodeBlock({ content: installation, language: "bash" });
 }
-function parseCommitMessage(body) {
-  return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
-}
-function parseCommitMessages(body) {
-  if (!body) {
-    return null;
-  }
-  const commitMessages = {};
-  const languageBlocks = body.matchAll(
-    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
-  );
-  for (const match of languageBlocks) {
-    const language = match[1];
-    const message = match[2].trim();
-    if (message && message !== "No changes detected") {
-      commitMessages[language] = message;
-    }
-  }
-  if (Object.keys(commitMessages).length === 0) {
-    return null;
-  }
-  return commitMessages;
-}
-async function retrieveComment({
-  token,
-  prNumber
-}) {
-  const client = createCommentClient(token, prNumber);
-  const comments = await client.listComments();
-  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
-  return {
-    id: existingComment?.id,
-    commitMessages: parseCommitMessages(existingComment?.body),
-    commitMessage: parseCommitMessage(existingComment?.body)
-  };
-}
 async function upsertComment({
   body,
   token,
@@ -38521,6 +38329,49 @@ var INTERNAL_COMMENT_TITLE = Heading(
 var INTERNAL_COMMENT_FOOTER_DIVIDER = Comment(
   "stainless-internal-preview-footer"
 );
+function printInternalComment(projects) {
+  const blocks = [];
+  for (const {
+    orgName,
+    projectName,
+    branch,
+    outcomes,
+    baseOutcomes
+  } of projects) {
+    const projectResults = [];
+    let hasPending = false;
+    for (const [lang, head] of Object.entries(outcomes)) {
+      const base = baseOutcomes?.[lang];
+      hasPending ||= categorizeOutcome({ outcome: head, baseOutcome: base }).isPending ?? false;
+      const result = Result({ orgName, projectName, branch, lang, head, base });
+      if (result) {
+        projectResults.push(result);
+      }
+    }
+    if (hasPending) {
+      projectResults.push(
+        Dedent`
+          ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
+        `
+      );
+    }
+    blocks.push(
+      [Bold(`${orgName}/${projectName}`), ...projectResults].join("\n\n")
+    );
+  }
+  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+  return Dedent`
+    ${INTERNAL_COMMENT_TITLE}
+
+    ${blocks.join("\n\n")}
+
+    ${Rule()}
+
+    ${INTERNAL_COMMENT_FOOTER_DIVIDER}
+
+    ${Italic(`Last updated: ${dateString}`)}
+  `;
+}
 function areCommentsEqual(a, b) {
   return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
 }
@@ -38534,1259 +38385,6 @@ function commentThrottler(token, prNumber) {
       lastCommentTime = /* @__PURE__ */ new Date();
     }
   };
-}
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
-async function generateAICommitMessage(stainless, params) {
-  const result = await stainless.post(
-    `/v0/projects/${params.projectName}/generate_commit_message`,
-    {
-      query: {
-        target: params.target
-      },
-      body: {
-        base_ref: params.baseRef,
-        head_ref: params.headRef
-      }
-    }
-  );
-  return result.ai_commit_message;
-}
-
-// node_modules/nano-spawn/source/context.js
-var import_node_process = __toESM(require("node:process"), 1);
-var import_node_util = require("node:util");
-var getContext = (raw) => ({
-  start: import_node_process.default.hrtime.bigint(),
-  command: raw.map((part) => getCommandPart((0, import_node_util.stripVTControlCharacters)(part))).join(" "),
-  state: { stdout: "", stderr: "", output: "" }
-});
-var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
-
-// node_modules/nano-spawn/source/options.js
-var import_node_path = __toESM(require("node:path"), 1);
-var import_node_url = require("node:url");
-var import_node_process2 = __toESM(require("node:process"), 1);
-var getOptions = ({
-  stdin,
-  stdout,
-  stderr,
-  stdio = [stdin, stdout, stderr],
-  env: envOption,
-  preferLocal,
-  cwd: cwdOption = ".",
-  ...options
-}) => {
-  const cwd = cwdOption instanceof URL ? (0, import_node_url.fileURLToPath)(cwdOption) : import_node_path.default.resolve(cwdOption);
-  const env = envOption ? { ...import_node_process2.default.env, ...envOption } : void 0;
-  const input = stdio[0]?.string;
-  return {
-    ...options,
-    input,
-    stdio: input === void 0 ? stdio : ["pipe", ...stdio.slice(1)],
-    env: preferLocal ? addLocalPath(env ?? import_node_process2.default.env, cwd) : env,
-    cwd
-  };
-};
-var addLocalPath = ({ Path = "", PATH = Path, ...env }, cwd) => {
-  const pathParts = PATH.split(import_node_path.default.delimiter);
-  const localPaths = getLocalPaths([], import_node_path.default.resolve(cwd)).map((localPath) => import_node_path.default.join(localPath, "node_modules/.bin")).filter((localPath) => !pathParts.includes(localPath));
-  return { ...env, PATH: [...localPaths, PATH].filter(Boolean).join(import_node_path.default.delimiter) };
-};
-var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
-
-// node_modules/nano-spawn/source/spawn.js
-var import_node_child_process = require("node:child_process");
-var import_node_events2 = require("node:events");
-var import_node_process5 = __toESM(require("node:process"), 1);
-
-// node_modules/nano-spawn/source/windows.js
-var import_promises = __toESM(require("node:fs/promises"), 1);
-var import_node_path2 = __toESM(require("node:path"), 1);
-var import_node_process3 = __toESM(require("node:process"), 1);
-var applyForceShell = async (file, commandArguments, options) => await shouldForceShell(file, options) ? [escapeFile(file), commandArguments.map((argument) => escapeArgument(argument)), { ...options, shell: true }] : [file, commandArguments, options];
-var shouldForceShell = async (file, { shell, cwd, env = import_node_process3.default.env }) => import_node_process3.default.platform === "win32" && !shell && !await isExe(file, cwd, env);
-var isExe = (file, cwd, { Path = "", PATH = Path }) => (
-  // If the *.exe or *.com file extension was not omitted.
-  // Windows common file systems are case-insensitive.
-  exeExtensions.some((extension) => file.toLowerCase().endsWith(extension)) || mIsExe(file, cwd, PATH)
-);
-var EXE_MEMO = {};
-var memoize = (function_) => (...arguments_) => (
-  // Use returned assignment to keep code small
-  EXE_MEMO[arguments_.join("\0")] ??= function_(...arguments_)
-);
-var access = memoize(import_promises.default.access);
-var mIsExe = memoize(async (file, cwd, PATH) => {
-  const parts = PATH.split(import_node_path2.default.delimiter).filter(Boolean).map((part) => part.replace(/^"(.*)"$/, "$1"));
-  try {
-    await Promise.any(
-      [cwd, ...parts].flatMap(
-        (part) => exeExtensions.map((extension) => access(`${import_node_path2.default.resolve(part, file)}${extension}`))
-      )
-    );
-  } catch {
-    return false;
-  }
-  return true;
-});
-var exeExtensions = [".exe", ".com"];
-var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
-var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
-
-// node_modules/nano-spawn/source/result.js
-var import_node_events = require("node:events");
-var import_node_process4 = __toESM(require("node:process"), 1);
-var getResult = async (nodeChildProcess, { input }, context) => {
-  const instance = await nodeChildProcess;
-  if (input !== void 0) {
-    instance.stdin.end(input);
-  }
-  const onClose = (0, import_node_events.once)(instance, "close");
-  try {
-    await Promise.race([
-      onClose,
-      ...instance.stdio.filter(Boolean).map((stream) => onStreamError(stream))
-    ]);
-    checkFailure(context, getErrorOutput(instance));
-    return getOutputs(context);
-  } catch (error) {
-    await Promise.allSettled([onClose]);
-    throw getResultError(error, instance, context);
-  }
-};
-var onStreamError = async (stream) => {
-  for await (const [error] of (0, import_node_events.on)(stream, "error")) {
-    if (!["ERR_STREAM_PREMATURE_CLOSE", "EPIPE"].includes(error?.code)) {
-      throw error;
-    }
-  }
-};
-var checkFailure = ({ command }, { exitCode, signalName }) => {
-  if (signalName !== void 0) {
-    throw new SubprocessError(`Command was terminated with ${signalName}: ${command}`);
-  }
-  if (exitCode !== void 0) {
-    throw new SubprocessError(`Command failed with exit code ${exitCode}: ${command}`);
-  }
-};
-var getResultError = (error, instance, context) => Object.assign(
-  getErrorInstance(error, context),
-  getErrorOutput(instance),
-  getOutputs(context)
-);
-var getErrorInstance = (error, { command }) => error instanceof SubprocessError ? error : new SubprocessError(`Command failed: ${command}`, { cause: error });
-var SubprocessError = class extends Error {
-  name = "SubprocessError";
-};
-var getErrorOutput = ({ exitCode, signalCode }) => ({
-  // `exitCode` can be a negative number (`errno`) when the `error` event is emitted on the `instance`
-  ...exitCode < 1 ? {} : { exitCode },
-  ...signalCode === null ? {} : { signalName: signalCode }
-});
-var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
-  stdout: getOutput(stdout),
-  stderr: getOutput(stderr),
-  output: getOutput(output),
-  command,
-  durationMs: Number(import_node_process4.default.hrtime.bigint() - start) / 1e6
-});
-var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
-
-// node_modules/nano-spawn/source/spawn.js
-var spawnSubprocess = async (file, commandArguments, options, context) => {
-  try {
-    if (["node", "node.exe"].includes(file.toLowerCase())) {
-      file = import_node_process5.default.execPath;
-      commandArguments = [...import_node_process5.default.execArgv.filter((flag) => !flag.startsWith("--inspect")), ...commandArguments];
-    }
-    [file, commandArguments, options] = await applyForceShell(file, commandArguments, options);
-    [file, commandArguments, options] = concatenateShell(file, commandArguments, options);
-    const instance = (0, import_node_child_process.spawn)(file, commandArguments, options);
-    bufferOutput(instance.stdout, context, "stdout");
-    bufferOutput(instance.stderr, context, "stderr");
-    instance.once("error", () => {
-    });
-    await (0, import_node_events2.once)(instance, "spawn");
-    return instance;
-  } catch (error) {
-    throw getResultError(error, {}, context);
-  }
-};
-var concatenateShell = (file, commandArguments, options) => options.shell && commandArguments.length > 0 ? [[file, ...commandArguments].join(" "), [], options] : [file, commandArguments, options];
-var bufferOutput = (stream, { state }, streamName) => {
-  if (stream) {
-    stream.setEncoding("utf8");
-    if (!state.isIterating) {
-      state.isIterating = false;
-      stream.on("data", (chunk) => {
-        state[streamName] += chunk;
-        state.output += chunk;
-      });
-    }
-  }
-};
-
-// node_modules/nano-spawn/source/pipe.js
-var import_promises2 = require("node:stream/promises");
-var handlePipe = async (subprocesses) => {
-  const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
-  if (to.reason) {
-    to.reason.pipedFrom = from.reason ?? from.value;
-    throw to.reason;
-  }
-  if (from.reason) {
-    throw from.reason;
-  }
-  return { ...to.value, pipedFrom: from.value };
-};
-var pipeStreams = async (subprocesses) => {
-  try {
-    const [{ stdout }, { stdin }] = await Promise.all(subprocesses.map(({ nodeChildProcess }) => nodeChildProcess));
-    if (stdin === null) {
-      throw new Error('The "stdin" option must be set on the first "spawn()" call in the pipeline.');
-    }
-    if (stdout === null) {
-      throw new Error('The "stdout" option must be set on the last "spawn()" call in the pipeline.');
-    }
-    (0, import_promises2.pipeline)(stdout, stdin).catch(() => {
-    });
-  } catch (error) {
-    await Promise.allSettled(subprocesses.map(({ nodeChildProcess }) => closeStdin(nodeChildProcess)));
-    throw error;
-  }
-};
-var closeStdin = async (nodeChildProcess) => {
-  const { stdin } = await nodeChildProcess;
-  stdin.end();
-};
-
-// node_modules/nano-spawn/source/iterable.js
-var readline = __toESM(require("node:readline/promises"), 1);
-var lineIterator = async function* (subprocess, { state }, streamName) {
-  if (state.isIterating === false) {
-    throw new Error(`The subprocess must be iterated right away, for example:
-	for await (const line of spawn(...)) { ... }`);
-  }
-  state.isIterating = true;
-  try {
-    const { [streamName]: stream } = await subprocess.nodeChildProcess;
-    if (!stream) {
-      return;
-    }
-    handleErrors(subprocess);
-    yield* readline.createInterface({ input: stream });
-  } finally {
-    await subprocess;
-  }
-};
-var handleErrors = async (subprocess) => {
-  try {
-    await subprocess;
-  } catch {
-  }
-};
-var combineAsyncIterators = async function* (...iterators) {
-  try {
-    let promises = [];
-    while (iterators.length > 0) {
-      promises = iterators.map((iterator2, index2) => promises[index2] ?? getNext(iterator2));
-      const [{ value, done }, index] = await Promise.race(promises.map((promise, index2) => Promise.all([promise, index2])));
-      const [iterator] = iterators.splice(index, 1);
-      promises.splice(index, 1);
-      if (!done) {
-        iterators.push(iterator);
-        yield value;
-      }
-    }
-  } finally {
-    await Promise.all(iterators.map((iterator) => iterator.return()));
-  }
-};
-var getNext = async (iterator) => {
-  try {
-    return await iterator.next();
-  } catch (error) {
-    await iterator.throw(error);
-  }
-};
-
-// node_modules/nano-spawn/source/index.js
-function spawn2(file, second, third, previous) {
-  const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
-  const context = getContext([file, ...commandArguments]);
-  const spawnOptions = getOptions(options);
-  const nodeChildProcess = spawnSubprocess(file, commandArguments, spawnOptions, context);
-  let subprocess = getResult(nodeChildProcess, spawnOptions, context);
-  Object.assign(subprocess, { nodeChildProcess });
-  subprocess = previous ? handlePipe([previous, subprocess]) : subprocess;
-  const stdout = lineIterator(subprocess, context, "stdout");
-  const stderr = lineIterator(subprocess, context, "stderr");
-  return Object.assign(subprocess, {
-    nodeChildProcess,
-    stdout,
-    stderr,
-    [Symbol.asyncIterator]: () => combineAsyncIterators(stdout, stderr),
-    pipe: (file2, second2, third2) => spawn2(file2, second2, third2, subprocess)
-  });
-}
-
-// src/config.ts
-var fs4 = __toESM(require("node:fs"));
-var import_node_os = require("node:os");
-var path4 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha, extension) {
-  return path4.join(
-    (0, import_node_os.tmpdir)(),
-    "stainless-generated-config",
-    `${file}-${sha}${extension}`
-  );
-}
-async function saveConfig({
-  oasPath,
-  configPath
-}) {
-  let hasOAS = false;
-  let hasConfig = false;
-  const savedSha = (await spawn2("git", ["rev-parse", "HEAD"])).stdout.trim();
-  if (!savedSha) {
-    throw new Error("Unable to determine current SHA; is there a git repo?");
-  }
-  logger.info("Saving generated config for", savedSha);
-  if (oasPath && fs4.existsSync(oasPath)) {
-    hasOAS = true;
-    const savedFilePath = getSavedFilePath(
-      "oas",
-      savedSha,
-      path4.extname(oasPath)
-    );
-    fs4.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
-    fs4.copyFileSync(oasPath, savedFilePath);
-    fs4.rmSync(oasPath);
-    logger.info(`Saved OAS file to ${savedFilePath}`);
-  }
-  if (configPath && fs4.existsSync(configPath)) {
-    hasConfig = true;
-    const savedFilePath = getSavedFilePath(
-      "config",
-      savedSha,
-      path4.extname(configPath)
-    );
-    fs4.mkdirSync(path4.dirname(savedFilePath), { recursive: true });
-    fs4.copyFileSync(configPath, savedFilePath);
-    fs4.rmSync(configPath);
-    logger.info(`Saved config file to ${savedFilePath}`);
-  }
-  return { hasOAS, hasConfig, savedSha };
-}
-async function readConfig({
-  oasPath,
-  configPath,
-  sha,
-  required = false
-}) {
-  sha ??= (await spawn2("git", ["rev-parse", "HEAD"])).stdout;
-  if (!sha) {
-    throw new Error("Unable to determine current SHA; is there a git repo?");
-  }
-  logger.info("Reading config at SHA", sha);
-  const results = {};
-  const addToResults = async (file, filePath, via) => {
-    if (results[file]) {
-      return;
-    }
-    if (!filePath || !fs4.existsSync(filePath)) {
-      logger.debug(`Skipping missing ${file} at ${filePath}`);
-      return;
-    }
-    results[file] = fs4.readFileSync(filePath, "utf-8");
-    results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
-      " "
-    )[0];
-    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
-  };
-  try {
-    await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
-    await spawn2("git", ["checkout", sha, "--", "."]);
-  } catch {
-    logger.debug("Could not checkout", sha);
-  }
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
-  try {
-    await addToResults(
-      "oas",
-      getSavedFilePath("oas", sha, path4.extname(oasPath ?? "")),
-      `saved ${sha}`
-    );
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha, path4.extname(configPath ?? "")),
-      `saved ${sha}`
-    );
-  } catch (e) {
-    logger.info(`Could not get config from saved file path: ${e}`);
-    logger.debug("Could not get config from saved file path");
-  }
-  if (required) {
-    if (oasPath && !results.oas) {
-      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
-    }
-    if (configPath && !results.config) {
-      throw new Error(`Missing config at ${configPath} for ${sha}`);
-    }
-  }
-  return results;
-}
-async function getMergeBase({
-  baseSha,
-  headSha
-}) {
-  try {
-    await spawn2("git", ["fetch", "--depth=1", "origin", baseSha, headSha]);
-  } catch {
-    throw new Error(
-      `Cannot fetch ${baseSha} or ${headSha} from origin. Is there a git repo?`
-    );
-  }
-  let mergeBaseSha;
-  try {
-    const output = await spawn2("git", ["merge-base", headSha, baseSha]);
-    mergeBaseSha = output.stdout.trim();
-  } catch {
-  }
-  const deepenAmounts = [50, 100, 200, 400];
-  for (const deepenAmount of deepenAmounts) {
-    if (mergeBaseSha) break;
-    try {
-      await spawn2("git", [
-        "fetch",
-        "--quiet",
-        `--deepen=${deepenAmount}`,
-        "origin"
-      ]);
-    } catch {
-    }
-    try {
-      const output = await spawn2("git", ["merge-base", headSha, baseSha]);
-      mergeBaseSha = output.stdout.trim();
-      if (mergeBaseSha) break;
-    } catch {
-    }
-  }
-  if (!mergeBaseSha) {
-    console.log("Deepening did not find merge base, trying unshallow fetch...");
-    try {
-      await spawn2("git", ["fetch", "--quiet", "--unshallow", "origin"]);
-    } catch {
-    }
-    try {
-      const output = await spawn2("git", ["merge-base", headSha, baseSha]);
-      mergeBaseSha = output.stdout.trim();
-    } catch {
-    }
-  }
-  if (!mergeBaseSha) {
-    throw new Error(
-      `Could not determine merge base SHA between ${headSha} and ${baseSha}. This may happen if the branches have completely diverged or if there is insufficient git history. Try using 'fetch-depth: 0' in your checkout step.`
-    );
-  }
-  logger.debug(`Merge base: ${mergeBaseSha}`);
-  return { mergeBaseSha };
-}
-async function getNonMainBaseRef({
-  baseRef,
-  defaultBranch
-}) {
-  let nonMainBaseRef;
-  if (baseRef !== defaultBranch) {
-    nonMainBaseRef = `preview/${baseRef}`;
-    logger.debug(`Non-main base ref: ${nonMainBaseRef}`);
-  }
-  return { nonMainBaseRef };
-}
-async function isConfigChanged({
-  before,
-  after
-}) {
-  let changed = false;
-  if (before.oasHash !== after.oasHash) {
-    logger.debug("OAS file changed");
-    changed = true;
-  }
-  if (before.configHash !== after.configHash) {
-    logger.debug("Config file changed");
-    changed = true;
-  }
-  return changed;
-}
-
-// node_modules/diff/libesm/diff/base.js
-var Diff = class {
-  diff(oldStr, newStr, options = {}) {
-    let callback;
-    if (typeof options === "function") {
-      callback = options;
-      options = {};
-    } else if ("callback" in options) {
-      callback = options.callback;
-    }
-    const oldString = this.castInput(oldStr, options);
-    const newString = this.castInput(newStr, options);
-    const oldTokens = this.removeEmpty(this.tokenize(oldString, options));
-    const newTokens = this.removeEmpty(this.tokenize(newString, options));
-    return this.diffWithOptionsObj(oldTokens, newTokens, options, callback);
-  }
-  diffWithOptionsObj(oldTokens, newTokens, options, callback) {
-    var _a3;
-    const done = (value) => {
-      value = this.postProcess(value, options);
-      if (callback) {
-        setTimeout(function() {
-          callback(value);
-        }, 0);
-        return void 0;
-      } else {
-        return value;
-      }
-    };
-    const newLen = newTokens.length, oldLen = oldTokens.length;
-    let editLength = 1;
-    let maxEditLength = newLen + oldLen;
-    if (options.maxEditLength != null) {
-      maxEditLength = Math.min(maxEditLength, options.maxEditLength);
-    }
-    const maxExecutionTime = (_a3 = options.timeout) !== null && _a3 !== void 0 ? _a3 : Infinity;
-    const abortAfterTimestamp = Date.now() + maxExecutionTime;
-    const bestPath = [{ oldPos: -1, lastComponent: void 0 }];
-    let newPos = this.extractCommon(bestPath[0], newTokens, oldTokens, 0, options);
-    if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-      return done(this.buildValues(bestPath[0].lastComponent, newTokens, oldTokens));
-    }
-    let minDiagonalToConsider = -Infinity, maxDiagonalToConsider = Infinity;
-    const execEditLength = () => {
-      for (let diagonalPath = Math.max(minDiagonalToConsider, -editLength); diagonalPath <= Math.min(maxDiagonalToConsider, editLength); diagonalPath += 2) {
-        let basePath;
-        const removePath = bestPath[diagonalPath - 1], addPath = bestPath[diagonalPath + 1];
-        if (removePath) {
-          bestPath[diagonalPath - 1] = void 0;
-        }
-        let canAdd = false;
-        if (addPath) {
-          const addPathNewPos = addPath.oldPos - diagonalPath;
-          canAdd = addPath && 0 <= addPathNewPos && addPathNewPos < newLen;
-        }
-        const canRemove = removePath && removePath.oldPos + 1 < oldLen;
-        if (!canAdd && !canRemove) {
-          bestPath[diagonalPath] = void 0;
-          continue;
-        }
-        if (!canRemove || canAdd && removePath.oldPos < addPath.oldPos) {
-          basePath = this.addToPath(addPath, true, false, 0, options);
-        } else {
-          basePath = this.addToPath(removePath, false, true, 1, options);
-        }
-        newPos = this.extractCommon(basePath, newTokens, oldTokens, diagonalPath, options);
-        if (basePath.oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-          return done(this.buildValues(basePath.lastComponent, newTokens, oldTokens)) || true;
-        } else {
-          bestPath[diagonalPath] = basePath;
-          if (basePath.oldPos + 1 >= oldLen) {
-            maxDiagonalToConsider = Math.min(maxDiagonalToConsider, diagonalPath - 1);
-          }
-          if (newPos + 1 >= newLen) {
-            minDiagonalToConsider = Math.max(minDiagonalToConsider, diagonalPath + 1);
-          }
-        }
-      }
-      editLength++;
-    };
-    if (callback) {
-      (function exec() {
-        setTimeout(function() {
-          if (editLength > maxEditLength || Date.now() > abortAfterTimestamp) {
-            return callback(void 0);
-          }
-          if (!execEditLength()) {
-            exec();
-          }
-        }, 0);
-      })();
-    } else {
-      while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
-        const ret = execEditLength();
-        if (ret) {
-          return ret;
-        }
-      }
-    }
-  }
-  addToPath(path6, added, removed, oldPosInc, options) {
-    const last = path6.lastComponent;
-    if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
-      return {
-        oldPos: path6.oldPos + oldPosInc,
-        lastComponent: { count: last.count + 1, added, removed, previousComponent: last.previousComponent }
-      };
-    } else {
-      return {
-        oldPos: path6.oldPos + oldPosInc,
-        lastComponent: { count: 1, added, removed, previousComponent: last }
-      };
-    }
-  }
-  extractCommon(basePath, newTokens, oldTokens, diagonalPath, options) {
-    const newLen = newTokens.length, oldLen = oldTokens.length;
-    let oldPos = basePath.oldPos, newPos = oldPos - diagonalPath, commonCount = 0;
-    while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldTokens[oldPos + 1], newTokens[newPos + 1], options)) {
-      newPos++;
-      oldPos++;
-      commonCount++;
-      if (options.oneChangePerToken) {
-        basePath.lastComponent = { count: 1, previousComponent: basePath.lastComponent, added: false, removed: false };
-      }
-    }
-    if (commonCount && !options.oneChangePerToken) {
-      basePath.lastComponent = { count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false };
-    }
-    basePath.oldPos = oldPos;
-    return newPos;
-  }
-  equals(left, right, options) {
-    if (options.comparator) {
-      return options.comparator(left, right);
-    } else {
-      return left === right || !!options.ignoreCase && left.toLowerCase() === right.toLowerCase();
-    }
-  }
-  removeEmpty(array) {
-    const ret = [];
-    for (let i = 0; i < array.length; i++) {
-      if (array[i]) {
-        ret.push(array[i]);
-      }
-    }
-    return ret;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  castInput(value, options) {
-    return value;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  tokenize(value, options) {
-    return Array.from(value);
-  }
-  join(chars) {
-    return chars.join("");
-  }
-  postProcess(changeObjects, options) {
-    return changeObjects;
-  }
-  get useLongestToken() {
-    return false;
-  }
-  buildValues(lastComponent, newTokens, oldTokens) {
-    const components = [];
-    let nextComponent;
-    while (lastComponent) {
-      components.push(lastComponent);
-      nextComponent = lastComponent.previousComponent;
-      delete lastComponent.previousComponent;
-      lastComponent = nextComponent;
-    }
-    components.reverse();
-    const componentLen = components.length;
-    let componentPos = 0, newPos = 0, oldPos = 0;
-    for (; componentPos < componentLen; componentPos++) {
-      const component = components[componentPos];
-      if (!component.removed) {
-        if (!component.added && this.useLongestToken) {
-          let value = newTokens.slice(newPos, newPos + component.count);
-          value = value.map(function(value2, i) {
-            const oldValue = oldTokens[oldPos + i];
-            return oldValue.length > value2.length ? oldValue : value2;
-          });
-          component.value = this.join(value);
-        } else {
-          component.value = this.join(newTokens.slice(newPos, newPos + component.count));
-        }
-        newPos += component.count;
-        if (!component.added) {
-          oldPos += component.count;
-        }
-      } else {
-        component.value = this.join(oldTokens.slice(oldPos, oldPos + component.count));
-        oldPos += component.count;
-      }
-    }
-    return components;
-  }
-};
-
-// node_modules/diff/libesm/util/string.js
-function hasOnlyWinLineEndings(string) {
-  return string.includes("\r\n") && !string.startsWith("\n") && !string.match(/[^\r]\n/);
-}
-function hasOnlyUnixLineEndings(string) {
-  return !string.includes("\r\n") && string.includes("\n");
-}
-
-// node_modules/diff/libesm/diff/line.js
-var LineDiff = class extends Diff {
-  constructor() {
-    super(...arguments);
-    this.tokenize = tokenize;
-  }
-  equals(left, right, options) {
-    if (options.ignoreWhitespace) {
-      if (!options.newlineIsToken || !left.includes("\n")) {
-        left = left.trim();
-      }
-      if (!options.newlineIsToken || !right.includes("\n")) {
-        right = right.trim();
-      }
-    } else if (options.ignoreNewlineAtEof && !options.newlineIsToken) {
-      if (left.endsWith("\n")) {
-        left = left.slice(0, -1);
-      }
-      if (right.endsWith("\n")) {
-        right = right.slice(0, -1);
-      }
-    }
-    return super.equals(left, right, options);
-  }
-};
-var lineDiff = new LineDiff();
-function diffLines(oldStr, newStr, options) {
-  return lineDiff.diff(oldStr, newStr, options);
-}
-function tokenize(value, options) {
-  if (options.stripTrailingCr) {
-    value = value.replace(/\r\n/g, "\n");
-  }
-  const retLines = [], linesAndNewlines = value.split(/(\n|\r\n)/);
-  if (!linesAndNewlines[linesAndNewlines.length - 1]) {
-    linesAndNewlines.pop();
-  }
-  for (let i = 0; i < linesAndNewlines.length; i++) {
-    const line = linesAndNewlines[i];
-    if (i % 2 && !options.newlineIsToken) {
-      retLines[retLines.length - 1] += line;
-    } else {
-      retLines.push(line);
-    }
-  }
-  return retLines;
-}
-
-// node_modules/diff/libesm/patch/line-endings.js
-function unixToWin(patch) {
-  if (Array.isArray(patch)) {
-    return patch.map((p) => unixToWin(p));
-  }
-  return Object.assign(Object.assign({}, patch), { hunks: patch.hunks.map((hunk) => Object.assign(Object.assign({}, hunk), { lines: hunk.lines.map((line, i) => {
-    var _a3;
-    return line.startsWith("\\") || line.endsWith("\r") || ((_a3 = hunk.lines[i + 1]) === null || _a3 === void 0 ? void 0 : _a3.startsWith("\\")) ? line : line + "\r";
-  }) })) });
-}
-function winToUnix(patch) {
-  if (Array.isArray(patch)) {
-    return patch.map((p) => winToUnix(p));
-  }
-  return Object.assign(Object.assign({}, patch), { hunks: patch.hunks.map((hunk) => Object.assign(Object.assign({}, hunk), { lines: hunk.lines.map((line) => line.endsWith("\r") ? line.substring(0, line.length - 1) : line) })) });
-}
-function isUnix(patch) {
-  if (!Array.isArray(patch)) {
-    patch = [patch];
-  }
-  return !patch.some((index) => index.hunks.some((hunk) => hunk.lines.some((line) => !line.startsWith("\\") && line.endsWith("\r"))));
-}
-function isWin(patch) {
-  if (!Array.isArray(patch)) {
-    patch = [patch];
-  }
-  return patch.some((index) => index.hunks.some((hunk) => hunk.lines.some((line) => line.endsWith("\r")))) && patch.every((index) => index.hunks.every((hunk) => hunk.lines.every((line, i) => {
-    var _a3;
-    return line.startsWith("\\") || line.endsWith("\r") || ((_a3 = hunk.lines[i + 1]) === null || _a3 === void 0 ? void 0 : _a3.startsWith("\\"));
-  })));
-}
-
-// node_modules/diff/libesm/patch/parse.js
-function parsePatch(uniDiff) {
-  const diffstr = uniDiff.split(/\n/), list = [];
-  let i = 0;
-  function parseIndex() {
-    const index = {};
-    list.push(index);
-    while (i < diffstr.length) {
-      const line = diffstr[i];
-      if (/^(---|\+\+\+|@@)\s/.test(line)) {
-        break;
-      }
-      const headerMatch = /^(?:Index:|diff(?: -r \w+)+)\s+/.exec(line);
-      if (headerMatch) {
-        index.index = line.substring(headerMatch[0].length).trim();
-      }
-      i++;
-    }
-    parseFileHeader(index);
-    parseFileHeader(index);
-    index.hunks = [];
-    while (i < diffstr.length) {
-      const line = diffstr[i];
-      if (/^(Index:\s|diff\s|---\s|\+\+\+\s|===================================================================)/.test(line)) {
-        break;
-      } else if (/^@@/.test(line)) {
-        index.hunks.push(parseHunk());
-      } else if (line) {
-        throw new Error("Unknown line " + (i + 1) + " " + JSON.stringify(line));
-      } else {
-        i++;
-      }
-    }
-  }
-  function parseFileHeader(index) {
-    const fileHeaderMatch = /^(---|\+\+\+)\s+/.exec(diffstr[i]);
-    if (fileHeaderMatch) {
-      const prefix = fileHeaderMatch[1], data = diffstr[i].substring(3).trim().split("	", 2), header = (data[1] || "").trim();
-      let fileName = data[0].replace(/\\\\/g, "\\");
-      if (fileName.startsWith('"') && fileName.endsWith('"')) {
-        fileName = fileName.substr(1, fileName.length - 2);
-      }
-      if (prefix === "---") {
-        index.oldFileName = fileName;
-        index.oldHeader = header;
-      } else {
-        index.newFileName = fileName;
-        index.newHeader = header;
-      }
-      i++;
-    }
-  }
-  function parseHunk() {
-    var _a3;
-    const chunkHeaderIndex = i, chunkHeaderLine = diffstr[i++], chunkHeader = chunkHeaderLine.split(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-    const hunk = {
-      oldStart: +chunkHeader[1],
-      oldLines: typeof chunkHeader[2] === "undefined" ? 1 : +chunkHeader[2],
-      newStart: +chunkHeader[3],
-      newLines: typeof chunkHeader[4] === "undefined" ? 1 : +chunkHeader[4],
-      lines: []
-    };
-    if (hunk.oldLines === 0) {
-      hunk.oldStart += 1;
-    }
-    if (hunk.newLines === 0) {
-      hunk.newStart += 1;
-    }
-    let addCount = 0, removeCount = 0;
-    for (; i < diffstr.length && (removeCount < hunk.oldLines || addCount < hunk.newLines || ((_a3 = diffstr[i]) === null || _a3 === void 0 ? void 0 : _a3.startsWith("\\"))); i++) {
-      const operation = diffstr[i].length == 0 && i != diffstr.length - 1 ? " " : diffstr[i][0];
-      if (operation === "+" || operation === "-" || operation === " " || operation === "\\") {
-        hunk.lines.push(diffstr[i]);
-        if (operation === "+") {
-          addCount++;
-        } else if (operation === "-") {
-          removeCount++;
-        } else if (operation === " ") {
-          addCount++;
-          removeCount++;
-        }
-      } else {
-        throw new Error(`Hunk at line ${chunkHeaderIndex + 1} contained invalid line ${diffstr[i]}`);
-      }
-    }
-    if (!addCount && hunk.newLines === 1) {
-      hunk.newLines = 0;
-    }
-    if (!removeCount && hunk.oldLines === 1) {
-      hunk.oldLines = 0;
-    }
-    if (addCount !== hunk.newLines) {
-      throw new Error("Added line count did not match for hunk at line " + (chunkHeaderIndex + 1));
-    }
-    if (removeCount !== hunk.oldLines) {
-      throw new Error("Removed line count did not match for hunk at line " + (chunkHeaderIndex + 1));
-    }
-    return hunk;
-  }
-  while (i < diffstr.length) {
-    parseIndex();
-  }
-  return list;
-}
-
-// node_modules/diff/libesm/util/distance-iterator.js
-function distance_iterator_default(start, minLine, maxLine) {
-  let wantForward = true, backwardExhausted = false, forwardExhausted = false, localOffset = 1;
-  return function iterator() {
-    if (wantForward && !forwardExhausted) {
-      if (backwardExhausted) {
-        localOffset++;
-      } else {
-        wantForward = false;
-      }
-      if (start + localOffset <= maxLine) {
-        return start + localOffset;
-      }
-      forwardExhausted = true;
-    }
-    if (!backwardExhausted) {
-      if (!forwardExhausted) {
-        wantForward = true;
-      }
-      if (minLine <= start - localOffset) {
-        return start - localOffset++;
-      }
-      backwardExhausted = true;
-      return iterator();
-    }
-    return void 0;
-  };
-}
-
-// node_modules/diff/libesm/patch/apply.js
-function applyPatch(source, patch, options = {}) {
-  let patches;
-  if (typeof patch === "string") {
-    patches = parsePatch(patch);
-  } else if (Array.isArray(patch)) {
-    patches = patch;
-  } else {
-    patches = [patch];
-  }
-  if (patches.length > 1) {
-    throw new Error("applyPatch only works with a single input.");
-  }
-  return applyStructuredPatch(source, patches[0], options);
-}
-function applyStructuredPatch(source, patch, options = {}) {
-  if (options.autoConvertLineEndings || options.autoConvertLineEndings == null) {
-    if (hasOnlyWinLineEndings(source) && isUnix(patch)) {
-      patch = unixToWin(patch);
-    } else if (hasOnlyUnixLineEndings(source) && isWin(patch)) {
-      patch = winToUnix(patch);
-    }
-  }
-  const lines = source.split("\n"), hunks = patch.hunks, compareLine = options.compareLine || ((lineNumber, line, operation, patchContent) => line === patchContent), fuzzFactor = options.fuzzFactor || 0;
-  let minLine = 0;
-  if (fuzzFactor < 0 || !Number.isInteger(fuzzFactor)) {
-    throw new Error("fuzzFactor must be a non-negative integer");
-  }
-  if (!hunks.length) {
-    return source;
-  }
-  let prevLine = "", removeEOFNL = false, addEOFNL = false;
-  for (let i = 0; i < hunks[hunks.length - 1].lines.length; i++) {
-    const line = hunks[hunks.length - 1].lines[i];
-    if (line[0] == "\\") {
-      if (prevLine[0] == "+") {
-        removeEOFNL = true;
-      } else if (prevLine[0] == "-") {
-        addEOFNL = true;
-      }
-    }
-    prevLine = line;
-  }
-  if (removeEOFNL) {
-    if (addEOFNL) {
-      if (!fuzzFactor && lines[lines.length - 1] == "") {
-        return false;
-      }
-    } else if (lines[lines.length - 1] == "") {
-      lines.pop();
-    } else if (!fuzzFactor) {
-      return false;
-    }
-  } else if (addEOFNL) {
-    if (lines[lines.length - 1] != "") {
-      lines.push("");
-    } else if (!fuzzFactor) {
-      return false;
-    }
-  }
-  function applyHunk(hunkLines, toPos, maxErrors, hunkLinesI = 0, lastContextLineMatched = true, patchedLines = [], patchedLinesLength = 0) {
-    let nConsecutiveOldContextLines = 0;
-    let nextContextLineMustMatch = false;
-    for (; hunkLinesI < hunkLines.length; hunkLinesI++) {
-      const hunkLine = hunkLines[hunkLinesI], operation = hunkLine.length > 0 ? hunkLine[0] : " ", content = hunkLine.length > 0 ? hunkLine.substr(1) : hunkLine;
-      if (operation === "-") {
-        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
-          toPos++;
-          nConsecutiveOldContextLines = 0;
-        } else {
-          if (!maxErrors || lines[toPos] == null) {
-            return null;
-          }
-          patchedLines[patchedLinesLength] = lines[toPos];
-          return applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1);
-        }
-      }
-      if (operation === "+") {
-        if (!lastContextLineMatched) {
-          return null;
-        }
-        patchedLines[patchedLinesLength] = content;
-        patchedLinesLength++;
-        nConsecutiveOldContextLines = 0;
-        nextContextLineMustMatch = true;
-      }
-      if (operation === " ") {
-        nConsecutiveOldContextLines++;
-        patchedLines[patchedLinesLength] = lines[toPos];
-        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
-          patchedLinesLength++;
-          lastContextLineMatched = true;
-          nextContextLineMustMatch = false;
-          toPos++;
-        } else {
-          if (nextContextLineMustMatch || !maxErrors) {
-            return null;
-          }
-          return lines[toPos] && (applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength + 1) || applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1)) || applyHunk(hunkLines, toPos, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength);
-        }
-      }
-    }
-    patchedLinesLength -= nConsecutiveOldContextLines;
-    toPos -= nConsecutiveOldContextLines;
-    patchedLines.length = patchedLinesLength;
-    return {
-      patchedLines,
-      oldLineLastI: toPos - 1
-    };
-  }
-  const resultLines = [];
-  let prevHunkOffset = 0;
-  for (let i = 0; i < hunks.length; i++) {
-    const hunk = hunks[i];
-    let hunkResult;
-    const maxLine = lines.length - hunk.oldLines + fuzzFactor;
-    let toPos;
-    for (let maxErrors = 0; maxErrors <= fuzzFactor; maxErrors++) {
-      toPos = hunk.oldStart + prevHunkOffset - 1;
-      const iterator = distance_iterator_default(toPos, minLine, maxLine);
-      for (; toPos !== void 0; toPos = iterator()) {
-        hunkResult = applyHunk(hunk.lines, toPos, maxErrors);
-        if (hunkResult) {
-          break;
-        }
-      }
-      if (hunkResult) {
-        break;
-      }
-    }
-    if (!hunkResult) {
-      return false;
-    }
-    for (let i2 = minLine; i2 < toPos; i2++) {
-      resultLines.push(lines[i2]);
-    }
-    for (let i2 = 0; i2 < hunkResult.patchedLines.length; i2++) {
-      const line = hunkResult.patchedLines[i2];
-      resultLines.push(line);
-    }
-    minLine = hunkResult.oldLineLastI + 1;
-    prevHunkOffset = toPos + 1 - hunk.oldStart;
-  }
-  for (let i = minLine; i < lines.length; i++) {
-    resultLines.push(lines[i]);
-  }
-  return resultLines.join("\n");
-}
-
-// node_modules/diff/libesm/patch/create.js
-var INCLUDE_HEADERS = {
-  includeIndex: true,
-  includeUnderline: true,
-  includeFileHeaders: true
-};
-function structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
-  let optionsObj;
-  if (!options) {
-    optionsObj = {};
-  } else if (typeof options === "function") {
-    optionsObj = { callback: options };
-  } else {
-    optionsObj = options;
-  }
-  if (typeof optionsObj.context === "undefined") {
-    optionsObj.context = 4;
-  }
-  const context = optionsObj.context;
-  if (optionsObj.newlineIsToken) {
-    throw new Error("newlineIsToken may not be used with patch-generation functions, only with diffing functions");
-  }
-  if (!optionsObj.callback) {
-    return diffLinesResultToPatch(diffLines(oldStr, newStr, optionsObj));
-  } else {
-    const { callback } = optionsObj;
-    diffLines(oldStr, newStr, Object.assign(Object.assign({}, optionsObj), { callback: (diff) => {
-      const patch = diffLinesResultToPatch(diff);
-      callback(patch);
-    } }));
-  }
-  function diffLinesResultToPatch(diff) {
-    if (!diff) {
-      return;
-    }
-    diff.push({ value: "", lines: [] });
-    function contextLines(lines) {
-      return lines.map(function(entry) {
-        return " " + entry;
-      });
-    }
-    const hunks = [];
-    let oldRangeStart = 0, newRangeStart = 0, curRange = [], oldLine = 1, newLine = 1;
-    for (let i = 0; i < diff.length; i++) {
-      const current = diff[i], lines = current.lines || splitLines(current.value);
-      current.lines = lines;
-      if (current.added || current.removed) {
-        if (!oldRangeStart) {
-          const prev = diff[i - 1];
-          oldRangeStart = oldLine;
-          newRangeStart = newLine;
-          if (prev) {
-            curRange = context > 0 ? contextLines(prev.lines.slice(-context)) : [];
-            oldRangeStart -= curRange.length;
-            newRangeStart -= curRange.length;
-          }
-        }
-        for (const line of lines) {
-          curRange.push((current.added ? "+" : "-") + line);
-        }
-        if (current.added) {
-          newLine += lines.length;
-        } else {
-          oldLine += lines.length;
-        }
-      } else {
-        if (oldRangeStart) {
-          if (lines.length <= context * 2 && i < diff.length - 2) {
-            for (const line of contextLines(lines)) {
-              curRange.push(line);
-            }
-          } else {
-            const contextSize = Math.min(lines.length, context);
-            for (const line of contextLines(lines.slice(0, contextSize))) {
-              curRange.push(line);
-            }
-            const hunk = {
-              oldStart: oldRangeStart,
-              oldLines: oldLine - oldRangeStart + contextSize,
-              newStart: newRangeStart,
-              newLines: newLine - newRangeStart + contextSize,
-              lines: curRange
-            };
-            hunks.push(hunk);
-            oldRangeStart = 0;
-            newRangeStart = 0;
-            curRange = [];
-          }
-        }
-        oldLine += lines.length;
-        newLine += lines.length;
-      }
-    }
-    for (const hunk of hunks) {
-      for (let i = 0; i < hunk.lines.length; i++) {
-        if (hunk.lines[i].endsWith("\n")) {
-          hunk.lines[i] = hunk.lines[i].slice(0, -1);
-        } else {
-          hunk.lines.splice(i + 1, 0, "\\ No newline at end of file");
-          i++;
-        }
-      }
-    }
-    return {
-      oldFileName,
-      newFileName,
-      oldHeader,
-      newHeader,
-      hunks
-    };
-  }
-}
-function formatPatch(patch, headerOptions) {
-  if (!headerOptions) {
-    headerOptions = INCLUDE_HEADERS;
-  }
-  if (Array.isArray(patch)) {
-    if (patch.length > 1 && !headerOptions.includeFileHeaders) {
-      throw new Error("Cannot omit file headers on a multi-file patch. (The result would be unparseable; how would a tool trying to apply the patch know which changes are to which file?)");
-    }
-    return patch.map((p) => formatPatch(p, headerOptions)).join("\n");
-  }
-  const ret = [];
-  if (headerOptions.includeIndex && patch.oldFileName == patch.newFileName) {
-    ret.push("Index: " + patch.oldFileName);
-  }
-  if (headerOptions.includeUnderline) {
-    ret.push("===================================================================");
-  }
-  if (headerOptions.includeFileHeaders) {
-    ret.push("--- " + patch.oldFileName + (typeof patch.oldHeader === "undefined" ? "" : "	" + patch.oldHeader));
-    ret.push("+++ " + patch.newFileName + (typeof patch.newHeader === "undefined" ? "" : "	" + patch.newHeader));
-  }
-  for (let i = 0; i < patch.hunks.length; i++) {
-    const hunk = patch.hunks[i];
-    if (hunk.oldLines === 0) {
-      hunk.oldStart -= 1;
-    }
-    if (hunk.newLines === 0) {
-      hunk.newStart -= 1;
-    }
-    ret.push("@@ -" + hunk.oldStart + "," + hunk.oldLines + " +" + hunk.newStart + "," + hunk.newLines + " @@");
-    for (const line of hunk.lines) {
-      ret.push(line);
-    }
-  }
-  return ret.join("\n") + "\n";
-}
-function createTwoFilesPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
-  if (typeof options === "function") {
-    options = { callback: options };
-  }
-  if (!(options === null || options === void 0 ? void 0 : options.callback)) {
-    const patchObj = structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options);
-    if (!patchObj) {
-      return;
-    }
-    return formatPatch(patchObj, options === null || options === void 0 ? void 0 : options.headerOptions);
-  } else {
-    const { callback } = options;
-    structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, Object.assign(Object.assign({}, options), { callback: (patchObj) => {
-      if (!patchObj) {
-        callback(void 0);
-      } else {
-        callback(formatPatch(patchObj, options.headerOptions));
-      }
-    } }));
-  }
-}
-function createPatch(fileName, oldStr, newStr, oldHeader, newHeader, options) {
-  return createTwoFilesPatch(fileName, fileName, oldStr, newStr, oldHeader, newHeader, options);
-}
-function splitLines(text) {
-  const hasTrailingNl = text.endsWith("\n");
-  const result = text.split("\n").map((line) => line + "\n");
-  if (hasTrailingNl) {
-    result.pop();
-  } else {
-    result.push(result.pop().slice(0, -1));
-  }
-  return result;
 }
 
 // node_modules/@stainless-api/sdk/internal/tslib.mjs
@@ -40780,8 +39378,8 @@ var Page = class extends AbstractPage2 {
 // node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport2 = () => {
   if (typeof File === "undefined") {
-    const { process: process7 } = globalThis;
-    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    const { process: process2 } = globalThis;
+    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
     throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
   }
 };
@@ -40858,12 +39456,12 @@ function encodeURIPath2(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
 var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path6(statics, ...params) {
+var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path3(statics, ...params) {
   if (statics.length === 1)
     return statics[0];
   let postPath = false;
   const invalidSegments = [];
-  const path7 = statics.reduce((previousValue, currentValue, index) => {
+  const path4 = statics.reduce((previousValue, currentValue, index) => {
     if (/[?#]/.test(currentValue)) {
       postPath = true;
     }
@@ -40880,7 +39478,7 @@ var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path6(st
     }
     return previousValue + currentValue + (index === params.length ? "" : encoded);
   }, "");
-  const pathOnly = path7.split(/[?#]/, 1)[0];
+  const pathOnly = path4.split(/[?#]/, 1)[0];
   const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
   let match;
   while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
@@ -40901,12 +39499,12 @@ var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path6(st
     }, "");
     throw new StainlessError(`Path parameters result in path with invalid segments:
 ${invalidSegments.map((e) => e.error).join("\n")}
-${path7}
+${path4}
 ${underline}`);
   }
-  return path7;
+  return path4;
 };
-var path5 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
+var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
 // node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource2 {
@@ -40917,7 +39515,7 @@ var Diagnostics = class extends APIResource2 {
    * returned.
    */
   list(buildID, query = {}, options) {
-    return this._client.getAPIList(path5`/v0/builds/${buildID}/diagnostics`, Page, {
+    return this._client.getAPIList(path2`/v0/builds/${buildID}/diagnostics`, Page, {
       query,
       ...options
     });
@@ -40964,7 +39562,7 @@ var Builds2 = class extends APIResource2 {
    * Retrieve a build by its ID.
    */
   retrieve(buildID, options) {
-    return this._client.get(path5`/v0/builds/${buildID}`, options);
+    return this._client.get(path2`/v0/builds/${buildID}`, options);
   }
   /**
    * List user-triggered builds for a given project.
@@ -41001,7 +39599,7 @@ var Orgs3 = class extends APIResource2 {
    * Retrieve an organization by name.
    */
   retrieve(org, options) {
-    return this._client.get(path5`/v0/orgs/${org}`, options);
+    return this._client.get(path2`/v0/orgs/${org}`, options);
   }
   /**
    * List organizations accessible to the current authentication method.
@@ -41022,21 +39620,21 @@ var Branches2 = class extends APIResource2 {
    */
   create(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path5`/v0/projects/${project}/branches`, { body, ...options });
+    return this._client.post(path2`/v0/projects/${project}/branches`, { body, ...options });
   }
   /**
    * Retrieve a project branch by name.
    */
   retrieve(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path5`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.get(path2`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Retrieve a project branch by name.
    */
   list(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList(path5`/v0/projects/${project}/branches`, Page, {
+    return this._client.getAPIList(path2`/v0/projects/${project}/branches`, Page, {
       query,
       ...options
     });
@@ -41046,7 +39644,7 @@ var Branches2 = class extends APIResource2 {
    */
   delete(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.delete(path5`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.delete(path2`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Rebase a project branch.
@@ -41056,7 +39654,7 @@ var Branches2 = class extends APIResource2 {
    */
   rebase(branch, params = {}, options) {
     const { project = this._client.project, base } = params ?? {};
-    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/rebase`, {
+    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/rebase`, {
       query: { base },
       ...options
     });
@@ -41069,7 +39667,7 @@ var Branches2 = class extends APIResource2 {
    */
   reset(branch, params = {}, options) {
     const { project = this._client.project, target_config_sha } = params ?? {};
-    return this._client.put(path5`/v0/projects/${project}/branches/${branch}/reset`, {
+    return this._client.put(path2`/v0/projects/${project}/branches/${branch}/reset`, {
       query: { target_config_sha },
       ...options
     });
@@ -41083,14 +39681,14 @@ var Configs = class extends APIResource2 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path5`/v0/projects/${project}/configs`, { query, ...options });
+    return this._client.get(path2`/v0/projects/${project}/configs`, { query, ...options });
   }
   /**
    * Generate suggestions for changes to config files based on an OpenAPI spec.
    */
   guess(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path5`/v0/projects/${project}/configs/guess`, { body, ...options });
+    return this._client.post(path2`/v0/projects/${project}/configs/guess`, { body, ...options });
   }
 };
 
@@ -41112,14 +39710,14 @@ var Projects = class extends APIResource2 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path5`/v0/projects/${project}`, options);
+    return this._client.get(path2`/v0/projects/${project}`, options);
   }
   /**
    * Update a project's properties.
    */
   update(params = {}, options) {
     const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path5`/v0/projects/${project}`, { body, ...options });
+    return this._client.patch(path2`/v0/projects/${project}`, { body, ...options });
   }
   /**
    * List projects in an organization, from oldest to newest.
@@ -41321,9 +39919,9 @@ var Stainless = class {
   makeStatusError(status, error, message, headers) {
     return APIError2.generate(status, error, message, headers);
   }
-  buildURL(path6, query, defaultBaseURL) {
+  buildURL(path3, query, defaultBaseURL) {
     const baseURL = !__classPrivateFieldGet2(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-    const url = isAbsoluteURL2(path6) ? new URL(path6) : new URL(baseURL + (baseURL.endsWith("/") && path6.startsWith("/") ? path6.slice(1) : path6));
+    const url = isAbsoluteURL2(path3) ? new URL(path3) : new URL(baseURL + (baseURL.endsWith("/") && path3.startsWith("/") ? path3.slice(1) : path3));
     const defaultQuery = this.defaultQuery();
     if (!isEmptyObj2(defaultQuery)) {
       query = { ...defaultQuery, ...query };
@@ -41346,24 +39944,24 @@ var Stainless = class {
    */
   async prepareRequest(request, { url, options }) {
   }
-  get(path6, opts) {
-    return this.methodRequest("get", path6, opts);
+  get(path3, opts) {
+    return this.methodRequest("get", path3, opts);
   }
-  post(path6, opts) {
-    return this.methodRequest("post", path6, opts);
+  post(path3, opts) {
+    return this.methodRequest("post", path3, opts);
   }
-  patch(path6, opts) {
-    return this.methodRequest("patch", path6, opts);
+  patch(path3, opts) {
+    return this.methodRequest("patch", path3, opts);
   }
-  put(path6, opts) {
-    return this.methodRequest("put", path6, opts);
+  put(path3, opts) {
+    return this.methodRequest("put", path3, opts);
   }
-  delete(path6, opts) {
-    return this.methodRequest("delete", path6, opts);
+  delete(path3, opts) {
+    return this.methodRequest("delete", path3, opts);
   }
-  methodRequest(method, path6, opts) {
+  methodRequest(method, path3, opts) {
     return this.request(Promise.resolve(opts).then((opts2) => {
-      return { method, path: path6, ...opts2 };
+      return { method, path: path3, ...opts2 };
     }));
   }
   request(options, remainingRetries = null) {
@@ -41466,8 +40064,8 @@ var Stainless = class {
     }));
     return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
   }
-  getAPIList(path6, Page2, opts) {
-    return this.requestAPIList(Page2, { method: "get", path: path6, ...opts });
+  getAPIList(path3, Page2, opts) {
+    return this.requestAPIList(Page2, { method: "get", path: path3, ...opts });
   }
   requestAPIList(Page2, options) {
     const request = this.makeRequest(options, null, void 0);
@@ -41545,8 +40143,8 @@ var Stainless = class {
   }
   async buildRequest(inputOptions, { retryCount = 0 } = {}) {
     const options = { ...inputOptions };
-    const { method, path: path6, query, defaultBaseURL } = options;
-    const url = this.buildURL(path6, query, defaultBaseURL);
+    const { method, path: path3, query, defaultBaseURL } = options;
+    const url = this.buildURL(path3, query, defaultBaseURL);
     if ("timeout" in options)
       validatePositiveInteger2("timeout", options.timeout);
     options.timeout = options.timeout ?? this.timeout;
@@ -41715,283 +40313,11 @@ var accumulatedBuildIds = /* @__PURE__ */ new Set();
 function addBuildIdForTelemetry(buildId) {
   accumulatedBuildIds.add(buildId);
 }
-function wrapAction(actionType, fn) {
-  return async () => {
-    let stainless;
-    let projectName;
-    try {
-      projectName = getInput("project", { required: true });
-      const auth = await getStainlessAuth();
-      stainless = getStainlessClient(actionType, {
-        project: projectName,
-        apiKey: auth.key,
-        logLevel: "warn",
-        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
-      });
-      await fn(stainless);
-      await maybeReportResult({
-        stainless,
-        projectName,
-        actionType,
-        successOrError: { result: "success" }
-      });
-    } catch (error) {
-      logger.fatal("Error in action:", error);
-      if (stainless) {
-        await maybeReportResult({
-          stainless,
-          projectName,
-          actionType,
-          successOrError: serializeError(error)
-        });
-      }
-      process.exit(1);
-    }
-  };
-}
-function serializeError(error) {
-  const maybeTypedError = error instanceof Error ? error : void 0;
-  return {
-    result: "error",
-    error_message: maybeTypedError?.message ?? String(error),
-    error_name: maybeTypedError?.name,
-    error_stack: maybeTypedError?.stack
-  };
-}
-async function maybeReportResult({
-  stainless,
-  projectName,
-  actionType,
-  successOrError
-}) {
-  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
-    return;
-  }
-  try {
-    const body = {
-      project: projectName,
-      build_ids: [...accumulatedBuildIds],
-      action_type: actionType,
-      ...successOrError
-    };
-    await stainless.post("/api/reports/action-result", {
-      body
-    });
-  } catch (error) {
-    logger.error("Error reporting result to Stainless", error);
-  }
-}
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 10 * 60;
-async function* runBuilds({
-  stainless,
-  projectName,
-  baseBranch,
-  mergeBranch,
-  branch,
-  branchFrom,
-  oasContent,
-  configContent,
-  baseOasContent,
-  baseConfigContent,
-  guessConfig = false,
-  commitMessage,
-  commitMessages,
-  allowEmpty = true
-}) {
-  if (mergeBranch && (oasContent || configContent)) {
-    throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path"
-    );
-  }
-  if (guessConfig && (configContent || !oasContent)) {
-    throw new Error(
-      "If guess_config is true, must have oas_path and no config_path"
-    );
-  }
-  if (branchFrom && mergeBranch) {
-    throw new Error("Cannot specify both branch_from and merge_branch");
-  }
-  if (!branchFrom) {
-    const build = await stainless.builds.create(
-      {
-        project: projectName,
-        revision: mergeBranch ? `${branch}..${mergeBranch}` : {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage,
-        target_commit_messages: commitMessages,
-        allow_empty: allowEmpty
-      },
-      {
-        // For very large specs, writing the config files can take a while.
-        timeout: 3 * 60 * 1e3
-      }
-    );
-    for await (const { outcomes, documentedSpec } of pollBuild({
-      stainless,
-      build,
-      label: "head"
-    })) {
-      yield {
-        baseOutcomes: null,
-        outcomes,
-        documentedSpec
-      };
-    }
-    return;
-  }
-  let configPatch;
-  if (!configContent) {
-    const hasBranch = !!branch && !!await stainless.projects.branches.retrieve(branch).catch(() => null);
-    const hasBaseBranch = !!baseBranch && !!await stainless.projects.branches.retrieve(baseBranch).catch(() => null);
-    if (guessConfig) {
-      logger.debug("Guessing config before branch reset");
-      if (hasBranch) {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch,
-            spec: oasContent
-          })
-        )[0]?.content;
-      } else {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch: branchFrom,
-            spec: oasContent
-          })
-        )[0]?.content;
-      }
-    } else if (hasBranch && hasBaseBranch) {
-      logger.debug("Computing config patch before branch reset");
-      const oldBaseConfig = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch: baseBranch
-        })
-      )[0]?.content ?? "";
-      const oldHeadConfig = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch
-        })
-      )[0]?.content ?? "";
-      if (oldBaseConfig !== oldHeadConfig) {
-        configPatch = createPatch(
-          "openapi.stainless.yml",
-          oldBaseConfig,
-          oldHeadConfig
-        );
-        logger.debug("Created config patch");
-      }
-    } else if (hasBranch) {
-      logger.debug("No base branch found, skipping config patch");
-    } else {
-      logger.debug("No existing branch found");
-    }
-  }
-  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
-  const { config_commit } = await stainless.projects.branches.create({
-    branch_from: branchFrom,
-    branch,
-    force: true
-  });
-  logger.debug(`Hard reset ${branch}, now at ${config_commit.sha}`);
-  const { config_commit: base_config_commit } = await stainless.projects.branches.create({
-    branch_from: branchFrom,
-    branch: baseBranch,
-    force: true
-  });
-  logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
-  if (configPatch && !configContent) {
-    logger.debug("Applying config patch to new base");
-    const newBaseConfig = Object.values(
-      await stainless.projects.configs.retrieve({
-        branch
-      })
-    )[0]?.content ?? "";
-    const patchedConfig = applyPatch(newBaseConfig, configPatch);
-    if (patchedConfig === false) {
-      logger.warn("Config patch failed to apply, dropping customizations");
-    } else {
-      logger.debug("Config patch applied successfully");
-      configContent = patchedConfig;
-    }
-  }
-  const { base, head } = await stainless.builds.compare(
-    {
-      base: {
-        revision: {
-          ...baseOasContent && {
-            "openapi.yml": {
-              content: baseOasContent
-            }
-          },
-          ...baseConfigContent && {
-            "openapi.stainless.yml": {
-              content: baseConfigContent
-            }
-          }
-        },
-        branch: baseBranch,
-        commit_message: commitMessage
-      },
-      head: {
-        revision: {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage
-      }
-    },
-    {
-      // For very large specs, writing the config files can take a while.
-      timeout: 3 * 60 * 1e3
-    }
-  );
-  let lastBaseOutcome = null;
-  let lastOutcome = null;
-  let lastDocumentedSpec = null;
-  for await (const { index, value } of combineAsyncIterators2(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" })
-  )) {
-    if (index === 0) {
-      lastBaseOutcome = value.outcomes;
-    } else {
-      lastOutcome = value.outcomes;
-      lastDocumentedSpec = value.documentedSpec;
-    }
-    if (lastOutcome) {
-      yield {
-        baseOutcomes: lastBaseOutcome,
-        outcomes: lastOutcome,
-        documentedSpec: lastDocumentedSpec
-      };
-    }
-  }
-  return;
-}
-async function* combineAsyncIterators2(...args) {
+async function* combineAsyncIterators(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;
   const never = new Promise(() => {
@@ -42114,266 +40440,153 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/preview.ts
-var main = wrapAction("preview", async (stainless) => {
-  const orgName = getInput("org", { required: true });
-  const projectName = getInput("project", { required: true });
-  const oasPath = getInput("oas_path", { required: false });
-  const configPath = getInput("config_path", { required: false });
-  const defaultCommitMessage = getInput("commit_message", { required: true });
-  const guessConfig = getBooleanInput("guess_config", { required: false });
-  const failRunOn = getInput("fail_on", {
-    choices: FailRunOn,
-    required: true
-  });
-  const makeComment = getBooleanInput("make_comment", { required: true });
-  let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
-    required: false
-  });
-  const gitHostToken = getGitHostToken();
-  const baseSha = getInput("base_sha", { required: true });
-  const baseRef = getInput("base_ref", { required: true });
-  const baseBranch = getInput("base_branch", { required: true });
-  const defaultBranch = getInput("default_branch", { required: true });
-  const headSha = getInput("head_sha", { required: true });
-  const branch = getInput("branch", { required: true });
-  const outputDir = getInput("output_dir", { required: false }) || void 0;
-  const prNumber = getPRNumber();
-  const hasAiCommitMessageMap = {};
-  const { savedSha } = await saveConfig({
-    oasPath,
-    configPath
-  });
-  if (savedSha !== null && savedSha !== headSha) {
-    logger.warn(
-      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
-    );
+// src/internalPreview.ts
+function parseTargets(input) {
+  const lines = input.split("\n").map((l) => l.trim()).filter(Boolean);
+  const grouped = /* @__PURE__ */ new Map();
+  for (const line of lines) {
+    const match = line.match(/^([^/]+)\/(.+)-([a-z_]+)$/);
+    if (!match) {
+      throw new Error(
+        `Invalid project tuple: "${line}". Expected format: {org}/{project}-{language}`
+      );
+    }
+    const [, org, project, language] = match;
+    const key = `${org}/${project}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      existing.languages.push(language);
+    } else {
+      grouped.set(key, { org, languages: [language] });
+    }
   }
-  let org = null;
+  return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({
+    org,
+    project: key.split("/")[1],
+    languages
+  }));
+}
+async function main() {
   try {
-    org = await stainless.get(`/v0/orgs/${orgName}`);
-  } catch (error) {
-    logger.warn(
-      `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-      error
+    const targetsInput = getInput("targets", { required: true });
+    const failRunOn = getInput("fail_on", {
+      choices: FailRunOn,
+      required: true
+    });
+    const baseSha = getInput("base_sha", { required: true });
+    const headSha = getInput("head_sha", { required: true });
+    const baseBranch = getInput("base_branch", { required: true });
+    const branch = getInput("branch", { required: true });
+    const gitHostToken = getInput("github_token");
+    const prNumber = getPRNumber();
+    const targetGroups = parseTargets(targetsInput);
+    if (targetGroups.length === 0) {
+      throw new Error("No valid project tuples found in 'targets' input");
+    }
+    logger.info(
+      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project} [${g.languages.join(", ")}]`).join("; ")}`
     );
-  }
-  if (org?.enable_ai_commit_messages) {
-    multipleCommitMessages = true;
-  }
-  logger.group("Getting parent revision");
-  const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
-  const { nonMainBaseRef } = await getNonMainBaseRef({
-    baseRef,
-    defaultBranch
-  });
-  const mergeBaseConfig = await readConfig({
-    oasPath,
-    configPath,
-    sha: mergeBaseSha
-  });
-  const headConfig = await readConfig({
-    oasPath,
-    configPath,
-    sha: headSha,
-    required: true
-  });
-  const configChanged = await isConfigChanged({
-    before: mergeBaseConfig,
-    after: headConfig
-  });
-  if (!configChanged) {
-    logger.info("No config files changed, skipping preview");
-    if (isPullRequestOpenedEvent() && makeComment) {
-      logger.group("Updating comment");
-      const commentBody = printComment({ noChanges: true });
-      await upsertComment({
-        body: commentBody,
-        token: gitHostToken,
-        skipCreate: true,
-        prNumber
-      });
-      logger.groupEnd();
-    }
-    return;
-  }
-  const branchFrom = await computeBranchFrom({
-    stainless,
-    projectName,
-    mergeBaseConfig,
-    nonMainBaseRef,
-    oasPath,
-    configPath
-  });
-  logger.groupEnd();
-  let commitMessage = defaultCommitMessage;
-  const commitMessages = {};
-  let shouldGenerateAiCommitMessages = false;
-  if (makeComment) {
-    const comment = await retrieveComment({ token: gitHostToken, prNumber });
-    if (multipleCommitMessages && org?.enable_ai_commit_messages && comment.commitMessage == null && comment.commitMessages == null) {
-      shouldGenerateAiCommitMessages = true;
-    }
-    if (multipleCommitMessages && comment.commitMessages) {
-      for (const [lang, commentCommitMessage] of Object.entries(
-        comment.commitMessages
-      )) {
-        commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-      }
-    } else if (comment.commitMessage) {
-      commitMessage = comment.commitMessage;
-    }
-  }
-  commitMessage = makeCommitMessageConventional(commitMessage);
-  logger.info("Using commit message:", commitMessage);
-  const generator = runBuilds({
-    stainless,
-    oasContent: headConfig.oas,
-    configContent: headConfig.config,
-    baseOasContent: mergeBaseConfig.oas,
-    baseConfigContent: mergeBaseConfig.config,
-    projectName,
-    branchFrom,
-    baseBranch,
-    branch,
-    guessConfig: guessConfig ?? (!configPath && !!oasPath),
-    commitMessage,
-    commitMessages
-  });
-  let latestRun = null;
-  const upsert = commentThrottler(gitHostToken, prNumber);
-  while (true) {
-    const run = await generator.next();
-    if (run.value) {
-      latestRun = run.value;
-    }
-    if (makeComment && latestRun) {
-      const { outcomes, baseOutcomes } = latestRun;
-      const comment = await retrieveComment({
-        token: gitHostToken,
-        prNumber
-      });
-      if (comment.commitMessage) {
-        commitMessage = makeCommitMessageConventional(comment.commitMessage);
-      }
-      if (multipleCommitMessages) {
-        if (comment.commitMessages) {
-          for (const [lang, commentCommitMessage] of Object.entries(
-            comment.commitMessages
-          )) {
-            commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-          }
-        }
-      }
-      if (multipleCommitMessages) {
-        for (const lang of Object.keys(outcomes)) {
-          const commit = outcomes[lang].commit?.completed?.commit;
-          const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
-          if (commit && baseCommit && shouldGenerateAiCommitMessages && !hasAiCommitMessageMap[lang]) {
-            const baseRef2 = baseCommit.sha;
-            const headRef = commit.sha;
-            try {
-              const message = await generateAICommitMessage(stainless, {
-                projectName,
-                target: lang,
-                baseRef: baseRef2,
-                headRef
-              });
-              commitMessages[lang] = message;
-            } catch (e) {
-              logger.error("Error in AI commit message generation:", e);
-              commitMessages[lang] = commitMessage;
+    const auth = await getStainlessAuth();
+    const stainless = getStainlessClient("internal-preview", {
+      apiKey: auth.key,
+      logLevel: "warn",
+      fetch: createAutoRefreshFetch(auth, getStainlessAuth)
+    });
+    const projectStates = targetGroups.map((group) => ({
+      group,
+      outcomes: null,
+      baseOutcomes: null
+    }));
+    const pollIterators = [];
+    const compareResults = await Promise.all(
+      targetGroups.map(
+        (group) => stainless.builds.compare(
+          {
+            project: group.project,
+            targets: group.languages,
+            base: {
+              branch: baseBranch,
+              revision: "main",
+              codegen_version: baseSha
+            },
+            head: {
+              branch,
+              revision: "main",
+              codegen_version: headSha
             }
-            hasAiCommitMessageMap[lang] = true;
-          }
-        }
-        for (const lang of Object.keys(outcomes)) {
-          if (!commitMessages[lang]) {
-            commitMessages[lang] = commitMessage;
-          }
-        }
-      }
-      const commentBody = printComment({
-        orgName,
-        projectName,
-        branch,
-        commitMessage,
-        commitMessages: multipleCommitMessages ? commitMessages : void 0,
-        hasAiCommitMessageMap: shouldGenerateAiCommitMessages ? hasAiCommitMessageMap : void 0,
-        outcomes,
-        baseOutcomes
+          },
+          { timeout: 3 * 60 * 1e3 }
+        )
+      )
+    );
+    for (let i = 0; i < compareResults.length; i++) {
+      const { base, head } = compareResults[i];
+      pollIterators.push({
+        iterator: pollBuild({ stainless, build: base, label: "base" }),
+        projectIndex: i,
+        isBase: true
       });
-      await upsert({ body: commentBody, force: run.done });
+      pollIterators.push({
+        iterator: pollBuild({ stainless, build: head, label: "head" }),
+        projectIndex: i,
+        isBase: false
+      });
     }
-    if (run.done) {
-      if (!latestRun) {
-        throw new Error("No latest run found after build finish");
+    const indexedIterators = pollIterators.map((p) => p.iterator);
+    const upsert = gitHostToken ? commentThrottler(gitHostToken, prNumber) : null;
+    const updateComment = async (force) => {
+      if (!upsert) return;
+      const commentProjects = projectStates.filter((s) => s.outcomes).map((s) => ({
+        orgName: s.group.org,
+        projectName: s.group.project,
+        branch,
+        outcomes: s.outcomes,
+        baseOutcomes: s.baseOutcomes
+      }));
+      if (commentProjects.length === 0) return;
+      const body = printInternalComment(commentProjects);
+      await upsert({ body, force });
+    };
+    for await (const { index, value } of combineAsyncIterators(
+      ...indexedIterators
+    )) {
+      const { projectIndex, isBase } = pollIterators[index];
+      const state = projectStates[projectIndex];
+      if (isBase) {
+        state.baseOutcomes = value.outcomes;
+      } else {
+        state.outcomes = value.outcomes;
       }
-      const { outcomes, baseOutcomes, documentedSpec } = latestRun;
-      setOutput("outcomes", outcomes);
-      setOutput("base_outcomes", baseOutcomes);
-      if (documentedSpec && outputDir) {
-        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs5.mkdirSync(outputDir, { recursive: true });
-        fs5.writeFileSync(documentedSpecPath, documentedSpec);
-        setOutput("documented_spec_path", documentedSpecPath);
+      if (state.outcomes) {
+        await updateComment(false);
       }
-      if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
-        process.exit(1);
+    }
+    await updateComment(true);
+    const allOutcomes = {};
+    for (const state of projectStates) {
+      const key = `${state.group.org}/${state.group.project}`;
+      if (state.outcomes) {
+        allOutcomes[key] = state.outcomes;
       }
-      break;
     }
-  }
-});
-async function computeBranchFrom({
-  stainless,
-  projectName,
-  mergeBaseConfig,
-  nonMainBaseRef,
-  oasPath,
-  configPath
-}) {
-  const hashes = {};
-  if (mergeBaseConfig.oasHash) {
-    hashes["openapi.yml"] = { hash: mergeBaseConfig.oasHash };
-  }
-  if (mergeBaseConfig.configHash) {
-    hashes["stainless.yml"] = { hash: mergeBaseConfig.configHash };
-  }
-  if (oasPath && !mergeBaseConfig.oasHash || configPath && !mergeBaseConfig.configHash) {
-  } else {
-    const configCommit2 = (await stainless.builds.list({
-      project: projectName,
-      branch: nonMainBaseRef ?? "main",
-      revision: hashes,
-      limit: 1
-    })).data[0]?.config_commit;
-    if (configCommit2) {
-      logger.debug(`Found base via merge base SHA: ${configCommit2}`);
-      return configCommit2;
+    setOutput("outcomes", allOutcomes);
+    let shouldFail = false;
+    for (const state of projectStates) {
+      if (state.outcomes && !shouldFailRun({
+        failRunOn,
+        outcomes: state.outcomes,
+        baseOutcomes: state.baseOutcomes
+      })) {
+        shouldFail = true;
+      }
     }
-  }
-  if (nonMainBaseRef) {
-    const configCommit2 = (await stainless.builds.list({
-      project: projectName,
-      branch: nonMainBaseRef,
-      limit: 1
-    })).data[0]?.config_commit;
-    if (configCommit2) {
-      logger.debug(`Found base via non-main base ref: ${configCommit2}`);
-      return configCommit2;
+    if (shouldFail) {
+      process.exit(1);
     }
+  } catch (error) {
+    logger.fatal("Error in internal-preview action:", error);
+    process.exit(1);
   }
-  const configCommit = (await stainless.builds.list({
-    project: projectName,
-    branch: "main",
-    limit: 1
-  })).data[0]?.config_commit;
-  if (!configCommit) {
-    throw new Error("Could not determine base revision");
-  }
-  logger.debug(`Found base via main branch: ${configCommit}`);
-  return configCommit;
 }
 main();
 /*! Bundled license information:

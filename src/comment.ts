@@ -220,7 +220,7 @@ function Results({
   return results.join("\n\n");
 }
 
-function Result({
+export function Result({
   orgName,
   projectName,
   branch,
@@ -627,6 +627,79 @@ export async function upsertComment({
     logger.debug("Creating new comment");
     await client.createComment(body);
   }
+}
+
+const INTERNAL_COMMENT_TITLE = MD.Heading(
+  `${MD.Symbol.HeavyAsterisk} Stainless internal preview builds`,
+);
+
+const INTERNAL_COMMENT_FOOTER_DIVIDER = MD.Comment(
+  "stainless-internal-preview-footer",
+);
+
+export function printInternalComment(
+  projects: {
+    orgName: string;
+    projectName: string;
+    branch: string;
+    outcomes: Outcomes;
+    baseOutcomes: Outcomes | null;
+  }[],
+) {
+  const blocks: string[] = [];
+
+  for (const {
+    orgName,
+    projectName,
+    branch,
+    outcomes,
+    baseOutcomes,
+  } of projects) {
+    const projectResults: string[] = [];
+    let hasPending = false;
+
+    for (const [lang, head] of Object.entries(outcomes)) {
+      const base = baseOutcomes?.[lang];
+
+      hasPending ||=
+        categorizeOutcome({ outcome: head, baseOutcome: base }).isPending ??
+        false;
+
+      const result = Result({ orgName, projectName, branch, lang, head, base });
+      if (result) {
+        projectResults.push(result);
+      }
+    }
+
+    if (hasPending) {
+      projectResults.push(
+        MD.Dedent`
+          ${MD.Symbol.HourglassFlowingSand} These are partial results; builds are still running.
+        `,
+      );
+    }
+
+    blocks.push(
+      [MD.Bold(`${orgName}/${projectName}`), ...projectResults].join("\n\n"),
+    );
+  }
+
+  const dateString = new Date()
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, " UTC");
+
+  return MD.Dedent`
+    ${INTERNAL_COMMENT_TITLE}
+
+    ${blocks.join("\n\n")}
+
+    ${MD.Rule()}
+
+    ${INTERNAL_COMMENT_FOOTER_DIVIDER}
+
+    ${MD.Italic(`Last updated: ${dateString}`)}
+  `;
 }
 
 function areCommentsEqual(a: string, b: string) {
