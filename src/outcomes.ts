@@ -35,7 +35,7 @@ export function shouldFailRun({
       outcome,
       baseOutcome: baseOutcomes?.[language],
     });
-    const didFail =
+    const didFail = conclusion && 
       OutcomeConclusion.indexOf(conclusion) <=
       OutcomeConclusion.indexOf(failRunOn);
     return didFail ? [{ language, reason }] : [];
@@ -59,7 +59,7 @@ export function categorizeOutcome({
   outcome: Outcomes[string];
   baseOutcome?: Outcomes[string];
 }): {
-  conclusion: OutcomeConclusion;
+  conclusion?: OutcomeConclusion;
   reason: string;
   isMergeConflict?: boolean;
   isPending?: boolean;
@@ -97,6 +97,13 @@ export function categorizeOutcome({
       conclusion: "success",
       reason: "Code was not generated because the build was cancelled.",
     };
+  }
+
+  if (!commitConclusion) {
+    return {
+      reason: "Build is still in progress.",
+      isPending: true,
+    }
   }
 
   // Fatal reasons
