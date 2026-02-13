@@ -729,7 +729,7 @@ export function printInternalComment(
     blocks.push(
       MD.Details({
         summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}`,
-        body: projectResults.join("\n"),
+        body: projectResults.join("\n\n"),
         indent: false,
         open: worst !== "success" && worst !== "note" && !hasPending,
       }),

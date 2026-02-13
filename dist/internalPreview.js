@@ -38399,7 +38399,7 @@ function printInternalComment(projects) {
     blocks.push(
       Details({
         summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}`,
-        body: projectResults.join("\n"),
+        body: projectResults.join("\n\n"),
         indent: false,
         open: worst !== "success" && worst !== "note" && !hasPending
       })
