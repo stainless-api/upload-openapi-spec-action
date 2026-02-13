@@ -241,6 +241,12 @@ function Result({
   });
 
   const { ResultIcon, Description } = (() => {
+    if (isPending) {
+      return {
+        ResultIcon: MD.Symbol.HourglassFlowingSand,
+        Description: "",
+      };
+    }
     if (conclusion === "fatal") {
       return {
         ResultIcon: MD.Symbol.Exclamation,
@@ -268,15 +274,9 @@ function Result({
         Description: MD.Italic("There was a regression in your SDK."),
       };
     }
-    if (!isPending) {
-      return {
-        ResultIcon: MD.Symbol.WhiteCheckMark,
-        Description: MD.Italic("Your SDK built successfully."),
-      };
-    }
     return {
-      ResultIcon: MD.Symbol.HourglassFlowingSand,
-      Description: "",
+      ResultIcon: MD.Symbol.WhiteCheckMark,
+      Description: MD.Italic("Your SDK built successfully."),
     };
   })();
 

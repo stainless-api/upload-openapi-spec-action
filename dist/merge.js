@@ -37897,7 +37897,7 @@ function shouldFailRun({
       outcome,
       baseOutcome: baseOutcomes?.[language]
     });
-    const didFail = OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
+    const didFail = conclusion && OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
     return didFail ? [{ language, reason }] : [];
   });
   if (failures.length > 0) {
@@ -37935,6 +37935,12 @@ function categorizeOutcome({
     return {
       conclusion: "success",
       reason: "Code was not generated because the build was cancelled."
+    };
+  }
+  if (!commitConclusion) {
+    return {
+      reason: "Build is still in progress.",
+      isPending: true
     };
   }
   if (!commitConclusion || commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
@@ -38230,6 +38236,12 @@ function Result({
     baseOutcome: base
   });
   const { ResultIcon, Description } = (() => {
+    if (isPending) {
+      return {
+        ResultIcon: Symbol2.HourglassFlowingSand,
+        Description: ""
+      };
+    }
     if (conclusion === "fatal") {
       return {
         ResultIcon: Symbol2.Exclamation,
@@ -38256,15 +38268,9 @@ function Result({
         Description: Italic("There was a regression in your SDK.")
       };
     }
-    if (!isPending) {
-      return {
-        ResultIcon: Symbol2.WhiteCheckMark,
-        Description: Italic("Your SDK built successfully.")
-      };
-    }
     return {
-      ResultIcon: Symbol2.HourglassFlowingSand,
-      Description: ""
+      ResultIcon: Symbol2.WhiteCheckMark,
+      Description: Italic("Your SDK built successfully.")
     };
   })();
   return Details({
