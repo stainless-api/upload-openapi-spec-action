@@ -108,7 +108,6 @@ export function categorizeOutcome({
 
   // Fatal reasons
   if (
-    !commitConclusion ||
     commitConclusion === "fatal" ||
     netNewCommitConclusion === "fatal"
   ) {
