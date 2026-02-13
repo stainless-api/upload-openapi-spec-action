@@ -37943,7 +37943,7 @@ function categorizeOutcome({
       isPending: true
     };
   }
-  if (!commitConclusion || commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
+  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
