@@ -1,8 +1,15 @@
 import Stainless from "@stainless-api/sdk";
 import { getInput } from "./compat/input";
 import { getStainlessAuth } from "./compat";
+import { resolveProject } from "./resolve";
 import { createAutoRefreshFetch, getStainlessClient } from "./stainless";
 import { logger } from "./logger";
+
+export type ActionContext = {
+  stainless: Stainless;
+  projectName: string;
+  orgName: string | undefined;
+};
 
 const accumulatedBuildIds = new Set<string>();
 
@@ -14,29 +21,38 @@ export function addBuildIdForTelemetry(buildId: string) {
  * Wrap the body of an action, providing the Stainless client and additionally reporting
  * success/error results if telemetry is enabled.
  *
- * **Important:** The action must have a `project` input and a Stainless auth token
- * for this to work.
+ * **Important:** The action must have a Stainless auth token for this to work.
+ * The `project` and `org` inputs are optional and will be auto-detected when not provided.
  */
 export function wrapAction(
   actionType: string,
-  fn: (stainless: Stainless) => Promise<void>,
+  fn: (context: ActionContext) => Promise<void>,
 ): () => Promise<void> {
   return async () => {
     let stainless: Stainless | undefined;
     let projectName: string | undefined;
+    let orgName: string | undefined;
 
     try {
-      projectName = getInput("project", { required: true });
+      const projectInput =
+        getInput("project", { required: false }) || undefined;
       const auth = await getStainlessAuth();
-      stainless = getStainlessClient(actionType, {
-        project: projectName,
+
+      const client = getStainlessClient(actionType, {
         apiKey: auth.key,
         logLevel: "warn",
         fetch: createAutoRefreshFetch(auth, getStainlessAuth),
       });
-      await fn(stainless);
+
+      const resolved = await resolveProject(client, projectInput);
+      projectName = resolved.projectName;
+      stainless = client.withOptions({ project: projectName });
+      orgName = getInput("org", { required: false }) || resolved.orgName;
+
+      await fn({ stainless, projectName, orgName });
       await maybeReportResult({
         stainless,
+        orgName,
         projectName,
         actionType,
         successOrError: { result: "success" },
@@ -46,6 +62,7 @@ export function wrapAction(
       if (stainless) {
         await maybeReportResult({
           stainless,
+          orgName,
           projectName,
           actionType,
           successOrError: serializeError(error),
@@ -78,6 +95,7 @@ function serializeError(
 }
 
 type ReportResultBody = {
+  org?: string;
   project?: string;
   build_ids?: string[];
   action_type: string;
@@ -85,11 +103,13 @@ type ReportResultBody = {
 
 async function maybeReportResult({
   stainless,
+  orgName,
   projectName,
   actionType,
   successOrError,
 }: {
   stainless: Stainless;
+  orgName?: string;
   projectName?: string;
   actionType: string;
   successOrError: ReportResultSuccessOrError;
@@ -100,6 +120,7 @@ async function maybeReportResult({
 
   try {
     const body: ReportResultBody = {
+      org: orgName,
       project: projectName,
       build_ids: [...accumulatedBuildIds],
       action_type: actionType,

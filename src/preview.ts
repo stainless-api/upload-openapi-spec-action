@@ -28,13 +28,14 @@ import {
 } from "./config";
 import { logger } from "./logger";
 import { FailRunOn, shouldFailRun } from "./outcomes";
+import { resolveOrg } from "./resolve";
 import type { RunResult } from "./runBuilds";
 import { runBuilds } from "./runBuilds";
 import { wrapAction } from "./wrapAction";
 
-const main = wrapAction("preview", async (stainless) => {
-  const orgName = getInput("org", { required: true });
-  const projectName = getInput("project", { required: true });
+const main = wrapAction("preview", async (ctx) => {
+  const { stainless, projectName } = ctx;
+  const orgName = await resolveOrg(stainless, ctx.orgName);
   const oasPath = getInput("oas_path", { required: false });
   const configPath = getInput("config_path", { required: false });
   const defaultCommitMessage = getInput("commit_message", { required: true });

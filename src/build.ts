@@ -10,12 +10,12 @@ import { runBuilds } from "./runBuilds";
 import type { RunResult } from "./runBuilds";
 import { wrapAction } from "./wrapAction";
 
-const main = wrapAction("build", async (stainless) => {
+const main = wrapAction("build", async (ctx) => {
+  const { stainless, projectName } = ctx;
   try {
     const oasPath = getInput("oas_path", { required: false }) || undefined;
     const configPath =
       getInput("config_path", { required: false }) || undefined;
-    const projectName = getInput("project", { required: true });
     const commitMessage = makeCommitMessageConventional(
       getInput("commit_message", { required: false }) || undefined,
     );
