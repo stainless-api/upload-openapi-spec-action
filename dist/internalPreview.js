@@ -40500,10 +40500,10 @@ async function fetchRepoDiffs(token, entries) {
   const fragments = entries.map(
     (entry, i) => `repo${i}: repository(owner: ${JSON.stringify(entry.owner)}, name: ${JSON.stringify(entry.name)}) {
       base: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.baseBranch}`)}) {
-        target { oid }
+        target { ... on Commit { tree { oid } } }
       }
       head: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.headBranch}`)}) {
-        target { oid }
+        target { ... on Commit { tree { oid } } }
       }
     }`
   );
@@ -40525,9 +40525,9 @@ async function fetchRepoDiffs(token, entries) {
     const hasDiff = /* @__PURE__ */ new Set();
     for (let i = 0; i < entries.length; i++) {
       const data = result.data?.[`repo${i}`];
-      const baseOid = data?.base?.target?.oid;
-      const headOid = data?.head?.target?.oid;
-      if (baseOid && headOid && baseOid !== headOid) {
+      const baseTreeOid = data?.base?.target?.tree?.oid;
+      const headTreeOid = data?.head?.target?.tree?.oid;
+      if (baseTreeOid && headTreeOid && baseTreeOid !== headTreeOid) {
         hasDiff.add(entries[i].key);
       }
     }
