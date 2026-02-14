@@ -754,7 +754,7 @@ export function printInternalComment(
   return MD.Dedent`
     ${INTERNAL_COMMENT_TITLE}
 
-    ${blocks.join("\n\n")}
+    ${blocks.join(`\n\n${MD.Rule()}\n\n`)}
 
     ${MD.Rule()}
 

@@ -38417,7 +38417,11 @@ function printInternalComment(projects, sdkDiffs) {
   return Dedent`
     ${INTERNAL_COMMENT_TITLE}
 
-    ${blocks.join("\n\n")}
+    ${blocks.join(`
+
+${Rule()}
+
+`)}
 
     ${Rule()}
 
