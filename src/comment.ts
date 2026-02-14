@@ -227,6 +227,7 @@ export function Result({
   lang,
   head,
   base,
+  hasDiff,
 }: {
   orgName: string;
   projectName: string;
@@ -234,6 +235,7 @@ export function Result({
   lang: string;
   head: Outcomes[string];
   base?: Outcomes[string];
+  hasDiff?: boolean;
 }): string | null {
   const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
     outcome: head,
@@ -280,10 +282,11 @@ export function Result({
     };
   })();
 
+  const diffIndicator = hasDiff ? ` ${MD.Symbol.Pencil}` : "";
   return MD.Details({
     summary: [
       ResultIcon,
-      MD.Bold(`${projectName}-${lang}`),
+      MD.Bold(`${projectName}-${lang}`) + diffIndicator,
 
       [
         MD.Link({
@@ -684,6 +687,7 @@ export function printInternalComment(
     outcomes: Outcomes;
     baseOutcomes: Outcomes | null;
   }[],
+  sdkDiffs?: Set<string>,
 ) {
   const blocks: string[] = [];
 
@@ -697,6 +701,7 @@ export function printInternalComment(
     const projectResults: string[] = [];
     let hasPending = false;
     let worst: ConclusionLevel = "success";
+    let projectHasDiff = false;
 
     for (const [lang, head] of Object.entries(outcomes)) {
       const base = baseOutcomes?.[lang];
@@ -708,7 +713,11 @@ export function printInternalComment(
       hasPending ||= categorized.isPending ?? false;
       worst = worstConclusion(worst, toConclusionLevel(categorized.conclusion));
 
-      const result = Result({ orgName, projectName, branch, lang, head, base });
+      const langKey = `${orgName}/${projectName}-${lang}`;
+      const hasDiff = sdkDiffs?.has(langKey) ?? false;
+      projectHasDiff ||= hasDiff;
+
+      const result = Result({ orgName, projectName, branch, lang, head, base, hasDiff });
       if (result) {
         projectResults.push(result);
       }
@@ -726,9 +735,10 @@ export function printInternalComment(
       ? MD.Symbol.HourglassFlowingSand
       : conclusionEmoji(worst);
 
+    const diffIndicator = projectHasDiff ? ` ${MD.Symbol.Pencil}` : "";
     blocks.push(
       MD.Details({
-        summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}`,
+        summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
         open: worst !== "success" && worst !== "note" && !hasPending,

@@ -37803,6 +37803,7 @@ var Symbol2 = {
   HeavyAsterisk: "\u2731",
   HourglassFlowingSand: "\u23F3",
   MiddleDot: "\xB7",
+  Pencil: "\u270F\uFE0F",
   RedSquare: "\u{1F7E5}",
   RightwardsArrow: "\u2192",
   SpeechBalloon: "\u{1F4AC}",
@@ -38082,7 +38083,8 @@ function Result({
   branch,
   lang,
   head,
-  base
+  base,
+  hasDiff
 }) {
   const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
     outcome: head,
@@ -38126,10 +38128,11 @@ function Result({
       Description: Italic("Your SDK built successfully.")
     };
   })();
+  const diffIndicator = hasDiff ? ` ${Symbol2.Pencil}` : "";
   return Details({
     summary: [
       ResultIcon,
-      Bold(`${projectName}-${lang}`),
+      Bold(`${projectName}-${lang}`) + diffIndicator,
       [
         Link({
           text: "studio",
@@ -38363,7 +38366,7 @@ function conclusionEmoji(conclusion) {
       return Symbol2.WhiteCheckMark;
   }
 }
-function printInternalComment(projects) {
+function printInternalComment(projects, sdkDiffs) {
   const blocks = [];
   for (const {
     orgName,
@@ -38375,6 +38378,7 @@ function printInternalComment(projects) {
     const projectResults = [];
     let hasPending = false;
     let worst = "success";
+    let projectHasDiff = false;
     for (const [lang, head] of Object.entries(outcomes)) {
       const base = baseOutcomes?.[lang];
       const categorized = categorizeOutcome({
@@ -38383,7 +38387,10 @@ function printInternalComment(projects) {
       });
       hasPending ||= categorized.isPending ?? false;
       worst = worstConclusion(worst, toConclusionLevel(categorized.conclusion));
-      const result = Result({ orgName, projectName, branch, lang, head, base });
+      const langKey = `${orgName}/${projectName}-${lang}`;
+      const hasDiff = sdkDiffs?.has(langKey) ?? false;
+      projectHasDiff ||= hasDiff;
+      const result = Result({ orgName, projectName, branch, lang, head, base, hasDiff });
       if (result) {
         projectResults.push(result);
       }
@@ -38396,9 +38403,10 @@ function printInternalComment(projects) {
       );
     }
     const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worst);
+    const diffIndicator = projectHasDiff ? ` ${Symbol2.Pencil}` : "";
     blocks.push(
       Details({
-        summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}`,
+        summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
         open: worst !== "success" && worst !== "note" && !hasPending
@@ -40487,6 +40495,48 @@ async function* pollBuild({
 }
 
 // src/internalPreview.ts
+async function fetchRepoDiffs(token, entries) {
+  if (entries.length === 0) return /* @__PURE__ */ new Set();
+  const fragments = entries.map(
+    (entry, i) => `repo${i}: repository(owner: ${JSON.stringify(entry.owner)}, name: ${JSON.stringify(entry.name)}) {
+      base: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.baseBranch}`)}) {
+        target { oid }
+      }
+      head: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.headBranch}`)}) {
+        target { oid }
+      }
+    }`
+  );
+  const query = `{ ${fragments.join("\n")} }`;
+  try {
+    const response = await fetch("https://api.github.com/graphql", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ query })
+    });
+    if (!response.ok) {
+      logger.warn(`GraphQL diff check failed: ${response.status}`);
+      return /* @__PURE__ */ new Set();
+    }
+    const result = await response.json();
+    const hasDiff = /* @__PURE__ */ new Set();
+    for (let i = 0; i < entries.length; i++) {
+      const data = result.data?.[`repo${i}`];
+      const baseOid = data?.base?.target?.oid;
+      const headOid = data?.head?.target?.oid;
+      if (baseOid && headOid && baseOid !== headOid) {
+        hasDiff.add(entries[i].key);
+      }
+    }
+    return hasDiff;
+  } catch (error) {
+    logger.warn("Failed to fetch repo diffs:", error);
+    return /* @__PURE__ */ new Set();
+  }
+}
 function parseTargets(input, knownLanguages) {
   const lines = input.split("\n").map((l) => l.trim()).filter(Boolean);
   const grouped = /* @__PURE__ */ new Map();
@@ -40599,6 +40649,7 @@ async function main() {
     }
     const indexedIterators = pollIterators.map((p) => p.iterator);
     const upsert = gitHostToken ? commentThrottler(gitHostToken, prNumber) : null;
+    let sdkDiffs = /* @__PURE__ */ new Set();
     const updateComment = async (force) => {
       if (!upsert) return;
       const commentProjects = projectStates.filter((s) => s.outcomes).map((s) => ({
@@ -40609,7 +40660,7 @@ async function main() {
         baseOutcomes: s.baseOutcomes
       }));
       if (commentProjects.length === 0) return;
-      const body = printInternalComment(commentProjects);
+      const body = printInternalComment(commentProjects, sdkDiffs);
       await upsert({ body, force });
     };
     for await (const { index, value } of combineAsyncIterators(
@@ -40625,6 +40676,25 @@ async function main() {
       if (state.outcomes) {
         await updateComment(false);
       }
+    }
+    if (gitHostToken) {
+      const diffEntries = [];
+      for (const state of projectStates) {
+        if (!state.outcomes || !state.baseOutcomes) continue;
+        for (const [lang, head] of Object.entries(state.outcomes)) {
+          const base = state.baseOutcomes[lang];
+          if (!head.commit?.completed?.commit || !base?.commit?.completed?.commit)
+            continue;
+          diffEntries.push({
+            owner: head.commit.completed.commit.repo.owner,
+            name: head.commit.completed.commit.repo.name,
+            baseBranch: base.commit.completed.commit.repo.branch,
+            headBranch: head.commit.completed.commit.repo.branch,
+            key: `${state.group.org}/${state.group.project}-${lang}`
+          });
+        }
+      }
+      sdkDiffs = await fetchRepoDiffs(gitHostToken, diffEntries);
     }
     await updateComment(true);
     const allOutcomes = {};

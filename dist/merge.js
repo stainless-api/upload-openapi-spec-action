@@ -37827,6 +37827,7 @@ var Symbol2 = {
   HeavyAsterisk: "\u2731",
   HourglassFlowingSand: "\u23F3",
   MiddleDot: "\xB7",
+  Pencil: "\u270F\uFE0F",
   RedSquare: "\u{1F7E5}",
   RightwardsArrow: "\u2192",
   SpeechBalloon: "\u{1F4AC}",
@@ -38229,7 +38230,8 @@ function Result({
   branch,
   lang,
   head,
-  base
+  base,
+  hasDiff
 }) {
   const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
     outcome: head,
@@ -38273,10 +38275,11 @@ function Result({
       Description: Italic("Your SDK built successfully.")
     };
   })();
+  const diffIndicator = hasDiff ? ` ${Symbol2.Pencil}` : "";
   return Details({
     summary: [
       ResultIcon,
-      Bold(`${projectName}-${lang}`),
+      Bold(`${projectName}-${lang}`) + diffIndicator,
       [
         Link({
           text: "studio",

@@ -6,6 +6,76 @@ import { type Outcomes, FailRunOn, shouldFailRun } from "./outcomes";
 import { combineAsyncIterators, pollBuild } from "./runBuilds";
 import { createAutoRefreshFetch, getStainlessClient } from "./stainless";
 
+type RepoDiffEntry = {
+  owner: string;
+  name: string;
+  baseBranch: string;
+  headBranch: string;
+  key: string;
+};
+
+async function fetchRepoDiffs(
+  token: string,
+  entries: RepoDiffEntry[],
+): Promise<Set<string>> {
+  if (entries.length === 0) return new Set();
+
+  const fragments = entries.map(
+    (entry, i) =>
+      `repo${i}: repository(owner: ${JSON.stringify(entry.owner)}, name: ${JSON.stringify(entry.name)}) {
+      base: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.baseBranch}`)}) {
+        target { oid }
+      }
+      head: ref(qualifiedName: ${JSON.stringify(`refs/heads/${entry.headBranch}`)}) {
+        target { oid }
+      }
+    }`,
+  );
+  const query = `{ ${fragments.join("\n")} }`;
+
+  try {
+    const response = await fetch("https://api.github.com/graphql", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    if (!response.ok) {
+      logger.warn(`GraphQL diff check failed: ${response.status}`);
+      return new Set();
+    }
+
+    const result = (await response.json()) as {
+      data?: Record<
+        string,
+        {
+          base?: { target?: { oid?: string } };
+          head?: { target?: { oid?: string } };
+        }
+      >;
+    };
+    const hasDiff = new Set<string>();
+
+    for (let i = 0; i < entries.length; i++) {
+      const data = result.data?.[`repo${i}`];
+      const baseOid = data?.base?.target?.oid;
+      const headOid = data?.head?.target?.oid;
+
+      if (baseOid && headOid && baseOid !== headOid) {
+        hasDiff.add(entries[i].key);
+      }
+    }
+
+    return hasDiff;
+  } catch (error) {
+    logger.warn("Failed to fetch repo diffs:", error);
+    return new Set();
+  }
+}
+
 type TargetGroup = {
   org: string;
   project: string;
@@ -161,6 +231,8 @@ async function main() {
       ? commentThrottler(gitHostToken, prNumber)
       : null;
 
+    let sdkDiffs = new Set<string>();
+
     const updateComment = async (force: boolean) => {
       if (!upsert) return;
 
@@ -176,7 +248,7 @@ async function main() {
 
       if (commentProjects.length === 0) return;
 
-      const body = printInternalComment(commentProjects);
+      const body = printInternalComment(commentProjects, sdkDiffs);
       await upsert({ body, force });
     };
 
@@ -197,7 +269,31 @@ async function main() {
       }
     }
 
-    // Final forced comment update
+    // Fetch diffs for all completed repos in a single GraphQL query
+    if (gitHostToken) {
+      const diffEntries: RepoDiffEntry[] = [];
+      for (const state of projectStates) {
+        if (!state.outcomes || !state.baseOutcomes) continue;
+        for (const [lang, head] of Object.entries(state.outcomes)) {
+          const base = state.baseOutcomes[lang];
+          if (
+            !head.commit?.completed?.commit ||
+            !base?.commit?.completed?.commit
+          )
+            continue;
+          diffEntries.push({
+            owner: head.commit.completed.commit.repo.owner,
+            name: head.commit.completed.commit.repo.name,
+            baseBranch: base.commit.completed.commit.repo.branch,
+            headBranch: head.commit.completed.commit.repo.branch,
+            key: `${state.group.org}/${state.group.project}-${lang}`,
+          });
+        }
+      }
+      sdkDiffs = await fetchRepoDiffs(gitHostToken, diffEntries);
+    }
+
+    // Final forced comment update (now includes diff indicators)
     await updateComment(true);
 
     // Set outputs
