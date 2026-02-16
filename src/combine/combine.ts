@@ -112,13 +112,108 @@ export function countPaths(spec: OpenAPISpec): number {
 /**
  * Add a base query parameter to a path to disambiguate collisions.
  */
-function addBaseToPath(pathKey: string, baseUrl: string): string {
+export function addBaseToPath(pathKey: string, baseUrl: string): string {
   const url = new URL(baseUrl);
-  const domain = url.hostname;
+  const urlPath = url.pathname.replace(/\/+$/, "");
+  const base = urlPath ? `${url.hostname}${urlPath}` : url.hostname;
   const [pathname, queryString] = pathKey.split("?");
   const params = new URLSearchParams(queryString || "");
-  params.set("base", domain);
+  params.set("base", base);
   return `${pathname}?${params.toString()}`;
+}
+
+/**
+ * Convert text to a URL-friendly slug.
+ */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export interface SpecEntry {
+  file: string;
+  spec: OpenAPISpec;
+}
+
+/**
+ * Derive unique slugs from spec titles, appending counters for duplicates.
+ */
+export function deriveSlugs(entries: SpecEntry[]): string[] {
+  const rawSlugs = entries.map((entry, i) => {
+    const info = entry.spec.info as Record<string, unknown> | undefined;
+    const title = info?.title;
+    return typeof title === "string" && title ? slugify(title) : `spec-${i}`;
+  });
+
+  const counts = new Map<string, number>();
+  const result: string[] = [];
+  for (const slug of rawSlugs) {
+    const count = counts.get(slug) ?? 0;
+    counts.set(slug, count + 1);
+    result.push(count === 0 ? slug : `${slug}-${count}`);
+  }
+
+  // If any slug had duplicates, retroactively suffix the first occurrence
+  for (let i = 0; i < result.length; i++) {
+    const slug = rawSlugs[i];
+    if ((counts.get(slug) ?? 0) > 1 && result[i] === slug) {
+      result[i] = `${slug}-0`;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Find operationIds that appear in more than one spec.
+ */
+export function findConflictingOperationIds(entries: SpecEntry[]): Set<string> {
+  const seen = new Map<string, number>();
+
+  for (const { spec } of entries) {
+    for (const pathItem of Object.values(spec.paths || {})) {
+      for (const method of HTTP_METHODS) {
+        const op = pathItem[method] as Record<string, unknown> | undefined;
+        if (op?.operationId && typeof op.operationId === "string") {
+          seen.set(op.operationId, (seen.get(op.operationId) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const conflicting = new Set<string>();
+  for (const [id, count] of seen) {
+    if (count > 1) conflicting.add(id);
+  }
+  return conflicting;
+}
+
+/**
+ * Deep-clone a spec and prefix conflicting operationIds with a slug.
+ */
+export function deduplicateOperationIds(
+  spec: OpenAPISpec,
+  slug: string,
+  conflicting: Set<string>,
+): OpenAPISpec {
+  const cloned: OpenAPISpec = JSON.parse(JSON.stringify(spec));
+
+  for (const pathItem of Object.values(cloned.paths || {})) {
+    for (const method of HTTP_METHODS) {
+      const op = pathItem[method] as Record<string, unknown> | undefined;
+      if (
+        op?.operationId &&
+        typeof op.operationId === "string" &&
+        conflicting.has(op.operationId)
+      ) {
+        op.operationId = `${slug}_${op.operationId}`;
+      }
+    }
+  }
+
+  return cloned;
 }
 
 /**
@@ -193,6 +288,7 @@ async function combineSpecs(
   files: string[],
   outputPath: string,
   serverStrategy?: ServerUrlStrategy,
+  prefixWithInfo?: boolean,
 ): Promise<void> {
   if (files.length === 0) {
     throw new Error("No files to combine");
@@ -244,12 +340,22 @@ async function combineSpecs(
     // Redocly CLI outputs to stderr instead of files when NODE_ENV=test
     const env = { ...process.env, NODE_ENV: "production" };
 
-    try {
-      await spawn(
-        "npx",
-        ["@redocly/cli", "join", ...filesToCombine, "-o", jsonPath],
-        { env },
+    const joinArgs = [
+      "@redocly/cli",
+      "join",
+      ...filesToCombine,
+      "-o",
+      jsonPath,
+    ];
+    if (prefixWithInfo) {
+      joinArgs.push(
+        "--prefix-tags-with-info-prop=title",
+        "--prefix-components-with-info-prop=title",
       );
+    }
+
+    try {
+      await spawn("npx", joinArgs, { env });
     } catch (error: unknown) {
       const stderr =
         error && typeof error === "object" && "stderr" in error
@@ -285,6 +391,7 @@ export async function combineOpenAPISpecs(
   inputPatterns: string,
   outputPath: string,
   serverStrategy?: ServerUrlStrategy,
+  prefixWithInfo?: boolean,
 ): Promise<CombineResult> {
   const { files, emptyPatterns } = await findFiles(inputPatterns);
 
@@ -311,27 +418,69 @@ export async function combineOpenAPISpecs(
     logger.debug(`  - ${file}`);
   }
 
-  // Count paths before combine
+  // Load all specs to count paths and detect operationId conflicts
+  const entries: SpecEntry[] = [];
   let pathCountBefore = 0;
   for (const file of files) {
     const spec = await loadSpec(file);
     pathCountBefore += countPaths(spec);
+    entries.push({ file, spec });
   }
 
-  // Ensure output directory exists
-  const outputDir = path.dirname(outputPath);
-  await fs.mkdir(outputDir, { recursive: true });
+  // Deduplicate conflicting operationIds across specs
+  const conflicting = findConflictingOperationIds(entries);
+  let filesToCombine = files;
+  let dedupTempDir: string | null = null;
 
-  // Combine specs
-  await combineSpecs(files, outputPath, serverStrategy);
+  if (conflicting.size > 0) {
+    logger.info(
+      `Found ${conflicting.size} conflicting operationId(s): ${[...conflicting].join(", ")}`,
+    );
+    const slugs = deriveSlugs(entries);
+    dedupTempDir = path.join(path.dirname(outputPath), ".temp-dedup");
+    await fs.mkdir(dedupTempDir, { recursive: true });
+    filesToCombine = [];
 
-  // Load combined spec to count paths
-  const combinedSpec = await loadSpec(outputPath);
-  const pathCountAfter = countPaths(combinedSpec);
+    for (let i = 0; i < entries.length; i++) {
+      const deduped = deduplicateOperationIds(
+        entries[i].spec,
+        slugs[i],
+        conflicting,
+      );
+      const ext = entries[i].file.endsWith(".json") ? ".json" : ".yaml";
+      const tempFile = path.join(dedupTempDir, `dedup-${i}${ext}`);
+      await saveSpec(deduped, tempFile);
+      filesToCombine.push(tempFile);
+    }
+  }
 
-  return {
-    spec: combinedSpec,
-    pathCountBefore,
-    pathCountAfter,
-  };
+  try {
+    // Ensure output directory exists
+    const outputDir = path.dirname(outputPath);
+    await fs.mkdir(outputDir, { recursive: true });
+
+    // Combine specs
+    await combineSpecs(
+      filesToCombine,
+      outputPath,
+      serverStrategy,
+      prefixWithInfo,
+    );
+
+    // Load combined spec to count paths
+    const combinedSpec = await loadSpec(outputPath);
+    const pathCountAfter = countPaths(combinedSpec);
+
+    return {
+      spec: combinedSpec,
+      pathCountBefore,
+      pathCountAfter,
+    };
+  } finally {
+    if (dedupTempDir) {
+      await fs
+        .rm(dedupTempDir, { recursive: true, force: true })
+        .catch(() => {});
+    }
+  }
 }

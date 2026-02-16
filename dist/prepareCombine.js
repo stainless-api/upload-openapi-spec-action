@@ -7327,6 +7327,12 @@ function getInput(name, options) {
   }
   return value || void 0;
 }
+function getBooleanInput(name, options) {
+  const value = getInput(name, options)?.toLowerCase();
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return void 0;
+}
 
 // src/compat/output.ts
 var crypto = __toESM(require("node:crypto"));
@@ -14505,11 +14511,66 @@ function countPaths(spec) {
 }
 function addBaseToPath(pathKey, baseUrl) {
   const url = new URL(baseUrl);
-  const domain = url.hostname;
+  const urlPath = url.pathname.replace(/\/+$/, "");
+  const base = urlPath ? `${url.hostname}${urlPath}` : url.hostname;
   const [pathname, queryString] = pathKey.split("?");
   const params = new URLSearchParams(queryString || "");
-  params.set("base", domain);
+  params.set("base", base);
   return `${pathname}?${params.toString()}`;
+}
+function slugify(text) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+function deriveSlugs(entries) {
+  const rawSlugs = entries.map((entry, i) => {
+    const info = entry.spec.info;
+    const title = info?.title;
+    return typeof title === "string" && title ? slugify(title) : `spec-${i}`;
+  });
+  const counts = /* @__PURE__ */ new Map();
+  const result = [];
+  for (const slug of rawSlugs) {
+    const count = counts.get(slug) ?? 0;
+    counts.set(slug, count + 1);
+    result.push(count === 0 ? slug : `${slug}-${count}`);
+  }
+  for (let i = 0; i < result.length; i++) {
+    const slug = rawSlugs[i];
+    if ((counts.get(slug) ?? 0) > 1 && result[i] === slug) {
+      result[i] = `${slug}-0`;
+    }
+  }
+  return result;
+}
+function findConflictingOperationIds(entries) {
+  const seen = /* @__PURE__ */ new Map();
+  for (const { spec } of entries) {
+    for (const pathItem of Object.values(spec.paths || {})) {
+      for (const method of HTTP_METHODS) {
+        const op = pathItem[method];
+        if (op?.operationId && typeof op.operationId === "string") {
+          seen.set(op.operationId, (seen.get(op.operationId) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  const conflicting = /* @__PURE__ */ new Set();
+  for (const [id, count] of seen) {
+    if (count > 1) conflicting.add(id);
+  }
+  return conflicting;
+}
+function deduplicateOperationIds(spec, slug, conflicting) {
+  const cloned = JSON.parse(JSON.stringify(spec));
+  for (const pathItem of Object.values(cloned.paths || {})) {
+    for (const method of HTTP_METHODS) {
+      const op = pathItem[method];
+      if (op?.operationId && typeof op.operationId === "string" && conflicting.has(op.operationId)) {
+        op.operationId = `${slug}_${op.operationId}`;
+      }
+    }
+  }
+  return cloned;
 }
 function processSpecForServers(spec, strategy) {
   const processed = {
@@ -14554,7 +14615,7 @@ function processSpecForServers(spec, strategy) {
   }
   return processed;
 }
-async function combineSpecs(files, outputPath, serverStrategy) {
+async function combineSpecs(files, outputPath, serverStrategy, prefixWithInfo) {
   if (files.length === 0) {
     throw new Error("No files to combine");
   }
@@ -14588,12 +14649,21 @@ async function combineSpecs(files, outputPath, serverStrategy) {
     await fs3.mkdir(jsonDir, { recursive: true });
     logger.debug(`Running: npx @redocly/cli join ... -o "${jsonPath}"`);
     const env = { ...process.env, NODE_ENV: "production" };
-    try {
-      await spawn2(
-        "npx",
-        ["@redocly/cli", "join", ...filesToCombine, "-o", jsonPath],
-        { env }
+    const joinArgs = [
+      "@redocly/cli",
+      "join",
+      ...filesToCombine,
+      "-o",
+      jsonPath
+    ];
+    if (prefixWithInfo) {
+      joinArgs.push(
+        "--prefix-tags-with-info-prop=title",
+        "--prefix-components-with-info-prop=title"
       );
+    }
+    try {
+      await spawn2("npx", joinArgs, { env });
     } catch (error) {
       const stderr = error && typeof error === "object" && "stderr" in error ? error.stderr : "";
       throw new Error(`Redocly join failed: ${stderr || String(error)}`);
@@ -14612,7 +14682,7 @@ async function combineSpecs(files, outputPath, serverStrategy) {
     }
   }
 }
-async function combineOpenAPISpecs(inputPatterns, outputPath, serverStrategy) {
+async function combineOpenAPISpecs(inputPatterns, outputPath, serverStrategy, prefixWithInfo) {
   const { files, emptyPatterns } = await findFiles(inputPatterns);
   if (emptyPatterns.length > 0) {
     for (const pattern of emptyPatterns) {
@@ -14636,21 +14706,58 @@ Make sure:
   for (const file of files) {
     logger.debug(`  - ${file}`);
   }
+  const entries = [];
   let pathCountBefore = 0;
   for (const file of files) {
     const spec = await loadSpec(file);
     pathCountBefore += countPaths(spec);
+    entries.push({ file, spec });
   }
-  const outputDir = path4.dirname(outputPath);
-  await fs3.mkdir(outputDir, { recursive: true });
-  await combineSpecs(files, outputPath, serverStrategy);
-  const combinedSpec = await loadSpec(outputPath);
-  const pathCountAfter = countPaths(combinedSpec);
-  return {
-    spec: combinedSpec,
-    pathCountBefore,
-    pathCountAfter
-  };
+  const conflicting = findConflictingOperationIds(entries);
+  let filesToCombine = files;
+  let dedupTempDir = null;
+  if (conflicting.size > 0) {
+    logger.info(
+      `Found ${conflicting.size} conflicting operationId(s): ${[...conflicting].join(", ")}`
+    );
+    const slugs = deriveSlugs(entries);
+    dedupTempDir = path4.join(path4.dirname(outputPath), ".temp-dedup");
+    await fs3.mkdir(dedupTempDir, { recursive: true });
+    filesToCombine = [];
+    for (let i = 0; i < entries.length; i++) {
+      const deduped = deduplicateOperationIds(
+        entries[i].spec,
+        slugs[i],
+        conflicting
+      );
+      const ext2 = entries[i].file.endsWith(".json") ? ".json" : ".yaml";
+      const tempFile = path4.join(dedupTempDir, `dedup-${i}${ext2}`);
+      await saveSpec(deduped, tempFile);
+      filesToCombine.push(tempFile);
+    }
+  }
+  try {
+    const outputDir = path4.dirname(outputPath);
+    await fs3.mkdir(outputDir, { recursive: true });
+    await combineSpecs(
+      filesToCombine,
+      outputPath,
+      serverStrategy,
+      prefixWithInfo
+    );
+    const combinedSpec = await loadSpec(outputPath);
+    const pathCountAfter = countPaths(combinedSpec);
+    return {
+      spec: combinedSpec,
+      pathCountBefore,
+      pathCountAfter
+    };
+  } finally {
+    if (dedupTempDir) {
+      await fs3.rm(dedupTempDir, { recursive: true, force: true }).catch(() => {
+      });
+    }
+  }
 }
 
 // src/combine/index.ts
@@ -14660,6 +14767,7 @@ async function main() {
     const inputFiles = getInput("input_files", { required: true });
     const outputPath = getInput("output_path") || "./combined-openapi.yaml";
     const serverStrategyInput = getInput("server_url_strategy");
+    const prefixWithInfo = getBooleanInput("prefix_with_info", { required: false }) ?? false;
     logger.info(`Input patterns: ${inputFiles}`);
     logger.info(`Output path: ${outputPath}`);
     let serverStrategy;
@@ -14674,7 +14782,8 @@ async function main() {
     const result = await combineOpenAPISpecs(
       inputFiles,
       outputPath,
-      serverStrategy
+      serverStrategy,
+      prefixWithInfo
     );
     logger.info(`Total paths before combine: ${result.pathCountBefore}`);
     logger.info(`Total paths after combine: ${result.pathCountAfter}`);
