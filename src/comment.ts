@@ -685,7 +685,9 @@ export function printInternalComment(
     let projectHasDiff = false;
 
     // show languagues with diffs first
-    for (const [lang, head] of Object.entries(outcomes).sort((a, b) => a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1)) {
+    for (const [lang, head] of Object.entries(outcomes).sort((a, b) =>
+      a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1,
+    )) {
       const base = baseOutcomes?.[lang];
 
       const categorized = categorizeOutcome({
@@ -701,7 +703,15 @@ export function printInternalComment(
       const hasDiff = head.hasDiff ?? false;
       projectHasDiff ||= hasDiff;
 
-      const result = Result({ orgName, projectName, branch, lang, head, base, hasDiff });
+      const result = Result({
+        orgName,
+        projectName,
+        branch,
+        lang,
+        head,
+        base,
+        hasDiff,
+      });
       if (result) {
         projectResults.push(result);
       }

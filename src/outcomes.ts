@@ -20,7 +20,10 @@ export const FailRunOn = [
 export type FailRunOn = (typeof FailRunOn)[number];
 
 const OutcomeConclusion = [...FailRunOn, "success"] as const;
-export type OutcomeConclusion = Exclude<(typeof OutcomeConclusion)[number], "never">;
+export type OutcomeConclusion = Exclude<
+  (typeof OutcomeConclusion)[number],
+  "never"
+>;
 
 export function shouldFailRun({
   failRunOn,
