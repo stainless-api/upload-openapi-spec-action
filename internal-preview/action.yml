@@ -49,12 +49,12 @@ inputs:
     description: >-
       The Stainless branch name for base builds.
     required: false
-    default: ${{ format('internal-preview/base/{0}', github.event.pull_request.head.ref) }}
+    default: ${{ format('stl/preview/base/{0}', github.event.pull_request.head.ref) }}
   branch:
     description: >-
       The Stainless branch name for head builds.
     required: false
-    default: ${{ format('internal-preview/{0}', github.event.pull_request.head.ref) }}
+    default: ${{ format('stl/preview/{0}', github.event.pull_request.head.ref) }}
   log_level:
     description: >-
       Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
