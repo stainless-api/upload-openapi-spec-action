@@ -1,0 +1,68 @@
+name: Stainless — Internal preview builds
+description: >-
+  Run internal preview builds for multiple projects to compare codegen changes.
+  Intended for Stainless monorepo CI.
+runs:
+  using: node20
+  main: ../dist/internalPreview.js
+inputs:
+  targets:
+    description: >-
+      Newline-separated list of `{org}/{project}-{language}` tuples to build.
+      Targets without a recognized language suffix (e.g. `org/project-v0`) are
+      treated as project-only and will build all configured targets.
+      Example:
+        stainlessapi/my-project-typescript
+        stainlessapi/my-project-python
+        other-org/other-project-go
+    required: true
+  languages:
+    description: >-
+      JSON array of known SDK language suffixes, used to distinguish language
+      suffixes from project name parts (e.g. to tell that `v0` in
+      `stainless/stainless-v0` is not a language). Must match the LANGUAGES
+      env var in run_codegen.yml.
+    required: true
+  fail_on:
+    description: >-
+      When to fail the run based on build conclusion. Options: 'note',
+      'warning', 'error', 'fatal', 'never'.
+    required: false
+    default: "error"
+  github_token:
+    description: >-
+      A GitHub token used for making comments on pull requests. The token must
+      have the `pull-requests: write` permission.
+    required: false
+    default: ${{ github.token }}
+  base_sha:
+    description: >-
+      The base SHA (codegen version) for the comparison builds.
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  head_sha:
+    description: >-
+      The head SHA (codegen version) for the comparison builds.
+    required: false
+    default: ${{ github.event.pull_request.head.sha }}
+  base_branch:
+    description: >-
+      The Stainless branch name for base builds.
+    required: false
+    default: ${{ format('internal-preview/base/{0}', github.event.pull_request.head.ref) }}
+  branch:
+    description: >-
+      The Stainless branch name for head builds.
+    required: false
+    default: ${{ format('internal-preview/{0}', github.event.pull_request.head.ref) }}
+  log_level:
+    description: >-
+      Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
+    required: false
+    default: "info"
+
+outputs:
+  outcomes:
+    description: >-
+      JSON object keyed by `{org}/{project}`, where values are per-language
+      outcome objects.
