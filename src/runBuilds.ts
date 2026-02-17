@@ -271,7 +271,7 @@ export async function* runBuilds({
   return;
 }
 
-const combineAsyncIterators = async function* <T>(
+export async function* combineAsyncIterators<T>(
   ...args: AsyncIterable<T>[]
 ): AsyncGenerator<{ index: number; value: T }> {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
@@ -294,9 +294,9 @@ const combineAsyncIterators = async function* <T>(
       yield { index, value: result.value };
     }
   }
-};
+}
 
-async function* pollBuild({
+export async function* pollBuild({
   stainless,
   build,
   label,

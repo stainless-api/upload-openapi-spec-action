@@ -7,6 +7,7 @@ export const Symbol = {
   HeavyAsterisk: "✱",
   HourglassFlowingSand: "⏳",
   MiddleDot: "·",
+  Eyes: "👀",
   RedSquare: "🟥",
   RightwardsArrow: "→",
   SpeechBalloon: "💬",
