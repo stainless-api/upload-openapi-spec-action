@@ -7,7 +7,7 @@ import {
 } from "./compat";
 import { logger } from "./logger";
 import * as MD from "./markdown";
-import type { DiagnosticLevel, Outcomes } from "./outcomes";
+import type { DiagnosticLevel, OutcomeConclusion, Outcomes } from "./outcomes";
 import {
   categorizeOutcome,
   countDiagnosticLevels,
@@ -220,13 +220,14 @@ function Results({
   return results.join("\n\n");
 }
 
-function Result({
+export function Result({
   orgName,
   projectName,
   branch,
   lang,
   head,
   base,
+  hasDiff,
 }: {
   orgName: string;
   projectName: string;
@@ -234,6 +235,7 @@ function Result({
   lang: string;
   head: Outcomes[string];
   base?: Outcomes[string];
+  hasDiff?: boolean;
 }): string | null {
   const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
     outcome: head,
@@ -280,10 +282,11 @@ function Result({
     };
   })();
 
+  const diffIndicator = hasDiff ? ` ${MD.Symbol.Eyes}` : "";
   return MD.Details({
     summary: [
       ResultIcon,
-      MD.Bold(`${projectName}-${lang}`),
+      MD.Bold(`${projectName}-${lang}`) + diffIndicator,
 
       [
         MD.Link({
@@ -627,6 +630,132 @@ export async function upsertComment({
     logger.debug("Creating new comment");
     await client.createComment(body);
   }
+}
+
+// Severity ordering for outcome conclusions (lower index = worse)
+const ConclusionSeverity: OutcomeConclusion[] = [
+  "fatal",
+  "error",
+  "warning",
+  "note",
+  "success",
+];
+
+function worstConclusion(
+  a: OutcomeConclusion,
+  b: OutcomeConclusion,
+): OutcomeConclusion {
+  return ConclusionSeverity.indexOf(a) <= ConclusionSeverity.indexOf(b) ? a : b;
+}
+
+function conclusionEmoji(conclusion: OutcomeConclusion): string {
+  switch (conclusion) {
+    case "fatal":
+    case "error":
+      return MD.Symbol.Exclamation;
+    case "warning":
+      return MD.Symbol.Warning;
+    case "note":
+    case "success":
+      return MD.Symbol.WhiteCheckMark;
+  }
+}
+
+export function printInternalComment(
+  projects: {
+    orgName: string;
+    projectName: string;
+    branch: string;
+    outcomes: Outcomes;
+    baseOutcomes: Outcomes | null;
+  }[],
+) {
+  const blocks: string[] = [];
+
+  for (const {
+    orgName,
+    projectName,
+    branch,
+    outcomes,
+    baseOutcomes,
+  } of projects) {
+    const projectResults: string[] = [];
+    let hasPending = false;
+    let worst: OutcomeConclusion = "success";
+    let projectHasDiff = false;
+
+    // show languagues with diffs first
+    for (const [lang, head] of Object.entries(outcomes).sort((a, b) =>
+      a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1,
+    )) {
+      const base = baseOutcomes?.[lang];
+
+      const categorized = categorizeOutcome({
+        outcome: head,
+        baseOutcome: base,
+      });
+      hasPending ||= categorized.isPending ?? false;
+
+      if (categorized.conclusion) {
+        worst = worstConclusion(worst, categorized.conclusion);
+      }
+
+      const hasDiff = head.hasDiff ?? false;
+      projectHasDiff ||= hasDiff;
+
+      const result = Result({
+        orgName,
+        projectName,
+        branch,
+        lang,
+        head,
+        base,
+        hasDiff,
+      });
+      if (result) {
+        projectResults.push(result);
+      }
+    }
+
+    if (hasPending) {
+      projectResults.push(
+        MD.Dedent`
+          ${MD.Symbol.HourglassFlowingSand} These are partial results; builds are still running.
+        `,
+      );
+    }
+
+    const statusEmoji = hasPending
+      ? MD.Symbol.HourglassFlowingSand
+      : conclusionEmoji(worst);
+
+    const diffIndicator = projectHasDiff ? ` ${MD.Symbol.Eyes}` : "";
+    blocks.push(
+      MD.Details({
+        summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
+        body: projectResults.join("\n\n"),
+        indent: false,
+        open: worst !== "success" && worst !== "note" && !hasPending,
+      }),
+    );
+  }
+
+  const dateString = new Date()
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, " UTC");
+
+  return MD.Dedent`
+    ${COMMENT_TITLE}
+
+    ${blocks.join(`\n\n${MD.Rule()}\n\n`)}
+
+    ${MD.Rule()}
+
+    ${COMMENT_FOOTER_DIVIDER}
+
+    ${MD.Italic(`Last updated: ${dateString}`)}
+  `;
 }
 
 function areCommentsEqual(a: string, b: string) {

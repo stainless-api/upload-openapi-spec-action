@@ -6,6 +6,7 @@ export type Outcomes = Record<
   Omit<Stainless.Builds.BuildTarget, "commit"> & {
     commit: Stainless.Builds.BuildTarget.Completed | null;
     diagnostics: Stainless.Builds.Diagnostics.BuildDiagnostic[];
+    hasDiff?: boolean;
   }
 >;
 
@@ -19,7 +20,10 @@ export const FailRunOn = [
 export type FailRunOn = (typeof FailRunOn)[number];
 
 const OutcomeConclusion = [...FailRunOn, "success"] as const;
-type OutcomeConclusion = (typeof OutcomeConclusion)[number];
+export type OutcomeConclusion = Exclude<
+  (typeof OutcomeConclusion)[number],
+  "never"
+>;
 
 export function shouldFailRun({
   failRunOn,
