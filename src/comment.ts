@@ -1,5 +1,5 @@
 import {
-  createCommentClient,
+  createVCSClient,
   getCITerm,
   getPRTerm,
   getRepoPath,
@@ -585,7 +585,7 @@ export async function retrieveComment({
   token: string;
   prNumber: number;
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
   const comments = await client.listComments();
 
   const existingComment =
@@ -609,7 +609,7 @@ export async function upsertComment({
   prNumber: number;
   skipCreate?: boolean;
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
 
   logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
 

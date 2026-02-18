@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fs from "node:fs";
 import { Comments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
+import { Commits as GitHubCommits } from "@stainless-api/github-internal/resources/repos/commits";
 import {
   createClient as createGitHubClient,
   type PartialGitHub,
@@ -36,10 +37,21 @@ interface Comment {
   body: string;
 }
 
-export interface CommentClient {
+interface PullRequest {
+  number: number;
+  state: "open" | "closed" | "merged";
+  base_sha: string;
+  base_ref: string;
+  head_sha: string;
+  head_ref: string;
+}
+
+export interface VCSClient {
   listComments(): Promise<Comment[]>;
   createComment(body: string): Promise<void>;
   updateComment(id: string | number, body: string): Promise<void>;
+
+  getPullRequestForCommit(sha: string): Promise<PullRequest | null>;
 }
 
 let cachedContext:
@@ -106,6 +118,11 @@ export function getGitHostToken() {
   if (isRequired && !token) {
     throw new Error(`Input ${inputName} is required to make a comment`);
   }
+  if (isGitLabCI() && token?.startsWith("$")) {
+    throw new Error(
+      `Input ${inputName} starts with '$'; expected token to start with 'gl'. Does the CI have access to the variable?`,
+    );
+  }
   return token;
 }
 
@@ -163,18 +180,18 @@ export async function getStainlessAuth(): Promise<{
   }
 }
 
-export function createCommentClient(
-  token: string,
-  prNumber: number,
-): CommentClient {
+export function createVCSClient(token: string, prNumber: number): VCSClient {
   return isGitLabCI()
-    ? new GitLabCommentClient(token, prNumber)
-    : new GitHubCommentClient(token, prNumber);
+    ? new GitLabClient(token, prNumber)
+    : new GitHubClient(token, prNumber);
 }
 
-class GitHubCommentClient implements CommentClient {
+class GitHubClient implements VCSClient {
   private client: PartialGitHub<{
-    repos: { issues: { comments: GitHubComments } };
+    repos: {
+      commits: GitHubCommits;
+      issues: { comments: GitHubComments };
+    };
   }>;
   private prNumber: number;
 
@@ -183,7 +200,7 @@ class GitHubCommentClient implements CommentClient {
       authToken: token,
       owner: getGitHubContext().repo.owner,
       repo: getGitHubContext().repo.repo,
-      resources: [GitHubComments],
+      resources: [GitHubComments, GitHubCommits],
     });
     this.prNumber = prNumber;
   }
@@ -202,9 +219,31 @@ class GitHubCommentClient implements CommentClient {
   async updateComment(id: number, body: string): Promise<void> {
     await this.client.repos.issues.comments.update(id, { body });
   }
+
+  async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
+    const { data } = await this.client.repos.commits.listPullRequests(sha);
+    if (data.length === 0) {
+      return null;
+    }
+    if (data.length > 1) {
+      logger.warn(
+        `Multiple pull requests found for commit; only using first.`,
+        { commit: sha, pulls: data.map((c) => c.number) },
+      );
+    }
+    const pull = data[0]!;
+    return {
+      number: pull.number,
+      state: pull.merged_at ? "merged" : (pull.state as "open" | "closed"),
+      base_sha: pull.base.sha,
+      base_ref: pull.base.ref,
+      head_ref: pull.head.ref,
+      head_sha: pull.head.sha,
+    };
+  }
 }
 
-class GitLabCommentClient implements CommentClient {
+class GitLabClient implements VCSClient {
   private token: string;
   private baseUrl: string;
   private prNumber: number;
@@ -215,8 +254,15 @@ class GitLabCommentClient implements CommentClient {
     this.prNumber = prNumber;
   }
 
+  private requestId = 0;
   private async request(method: string, endpoint: string, body?: unknown) {
+    const id = this.requestId++;
     const url = `${this.baseUrl}/projects/${process.env.CI_PROJECT_ID}${endpoint}`;
+    logger.debug(`[${id}] sending request`, {
+      body: body ? JSON.stringify(body) : undefined,
+      method,
+      url,
+    });
     const response = await fetch(url, {
       method,
       headers: {
@@ -226,6 +272,11 @@ class GitLabCommentClient implements CommentClient {
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!response.ok) {
+      logger.debug(`[${id}] request failed`, {
+        status: response.status,
+        statusText: response.statusText,
+        body: await response.text().catch(() => "[failed to read body]"),
+      });
       throw new Error(
         `GitLab API error: ${response.status} ${response.statusText}`,
       );
@@ -254,5 +305,81 @@ class GitLabCommentClient implements CommentClient {
     await this.request("PUT", `/merge_requests/${this.prNumber}/notes/${id}`, {
       body,
     });
+  }
+
+  async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
+    const mergeRequests = (await this.request(
+      "GET",
+      `/repository/commits/${sha}/merge_requests`,
+    )) as { iid: number }[];
+    if (mergeRequests.length === 0) {
+      return null;
+    }
+    if (mergeRequests.length > 1) {
+      logger.warn(
+        `Multiple merge requests found for commit; only using first.`,
+        { commit: sha, mergeRequests: mergeRequests.map((c) => c.iid) },
+      );
+    }
+
+    const mergeRequestIID = mergeRequests[0]!.iid;
+    let attempts = 0;
+    let mergeRequest: {
+      iid: number;
+      state: "opened" | "closed" | "merged" | "locked";
+      /**
+       * Per GitLab docs:
+       * > Empty when the merge request is created, and populates asynchronously.
+       * So we poll until it's populated.
+       */
+      diff_refs: {
+        /**
+         * GitLab docs say:
+         * > SHA of the target branch commit. The starting point for the diff.
+         * > Usually the same as base_sha.
+         * So this is what corresponds with our `base_sha`; their `base_sha`
+         * is what we call the merge base SHA.
+         */
+        start_sha: string;
+        head_sha: string;
+      } | null;
+      source_branch: string;
+      target_branch: string;
+    } | null = null;
+
+    while (attempts < 3) {
+      attempts++;
+      mergeRequest = await this.request(
+        "GET",
+        `/merge_requests/${mergeRequestIID}`,
+      );
+
+      if (mergeRequest?.diff_refs) {
+        return {
+          number: mergeRequest.iid,
+          state:
+            mergeRequest.state === "opened"
+              ? "open"
+              : mergeRequest.state === "locked"
+                ? "closed"
+                : mergeRequest.state,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch,
+        };
+      }
+
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 1000 * (2 ** attempts + Math.random()));
+      });
+    }
+
+    logger.warn(
+      `Failed to find merge request for commit after ${attempts} attempts`,
+      { commit: sha, mergeRequestIID },
+    );
+
+    return null;
   }
 }
