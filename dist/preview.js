@@ -9992,6 +9992,388 @@ var Comments = /* @__PURE__ */ (() => {
   return Comments7;
 })();
 
+// node_modules/@stainless-api/github-internal/resources/repos/commits/comments.mjs
+var BaseComments2 = /* @__PURE__ */ (() => {
+  class BaseComments7 extends APIResource {
+    /**
+     * Create a comment for a commit using its `:commit_sha`.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * const comment = await client.repos.commits.comments.create(
+     *   'commit_sha',
+     *   {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Great stuff',
+     *     line: 1,
+     *     path: 'file1.txt',
+     *     position: 4,
+     *   },
+     * );
+     * ```
+     */
+    create(commitSha, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Lists the comments for a specified commit.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commentListResponse of client.repos.commits.comments.list(
+     *   'commit_sha',
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(commitSha, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, NumberedPage, { query, ...options });
+    }
+  }
+  BaseComments7._key = Object.freeze([
+    "repos",
+    "commits",
+    "comments"
+  ]);
+  return BaseComments7;
+})();
+var Comments2 = class extends BaseComments2 {
+};
+
+// node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
+var BaseCommits = /* @__PURE__ */ (() => {
+  class BaseCommits3 extends APIResource {
+    /**
+     * Returns the contents of a single commit reference. You must have `read` access
+     * for the repository to use this endpoint.
+     *
+     * > [!NOTE] If there are more than 300 files in the commit diff and the default
+     * > JSON media type is requested, the response will include pagination link
+     * > headers for the remaining files, up to a limit of 3000 files. Each page
+     * > contains the static commit information, and the only changes are to the file
+     * > listing.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     * Pagination query parameters are not supported for these media types.
+     *
+     * - **`application/vnd.github.diff`**: Returns the diff of the commit. Larger
+     *   diffs may time out and return a 5xx status code.
+     * - **`application/vnd.github.patch`**: Returns the patch of the commit. Diffs
+     *   with binary data will have no `patch` property. Larger diffs may time out and
+     *   return a 5xx status code.
+     * - **`application/vnd.github.sha`**: Returns the commit's SHA-1 hash. You can use
+     *   this endpoint to check if a remote reference's SHA-1 hash is the same as your
+     *   local reference's SHA-1 hash by providing the local SHA-1 reference as the
+     *   ETag.
+     *
+     * **Signature verification object**
+     *
+     * The response will include a `verification` object that describes the result of
+     * verifying the commit's signature. The following fields are included in the
+     * `verification` object:
+     *
+     * | Name          | Type      | Description                                                                                      |
+     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
+     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
+     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
+     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
+     * | `payload`     | `string`  | The value that was signed.                                                                       |
+     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
+     *
+     * These are the possible values for `reason` in the `verification` object:
+     *
+     * | Value                    | Description                                                                                                                     |
+     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
+     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
+     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
+     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
+     * | `unsigned`               | The object does not include a signature.                                                                                        |
+     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
+     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
+     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
+     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
+     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
+     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
+     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
+     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
+     *
+     * @example
+     * ```ts
+     * const commit = await client.repos.commits.retrieve('ref', {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    retrieve(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}`, { query, ...options });
+    }
+    /**
+     * **Signature verification object**
+     *
+     * The response will include a `verification` object that describes the result of
+     * verifying the commit's signature. The following fields are included in the
+     * `verification` object:
+     *
+     * | Name          | Type      | Description                                                                                      |
+     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
+     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
+     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
+     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
+     * | `payload`     | `string`  | The value that was signed.                                                                       |
+     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
+     *
+     * These are the possible values for `reason` in the `verification` object:
+     *
+     * | Value                    | Description                                                                                                                     |
+     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
+     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
+     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
+     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
+     * | `unsigned`               | The object does not include a signature.                                                                                        |
+     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
+     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
+     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
+     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
+     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
+     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
+     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
+     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commit of client.repos.commits.list({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * })) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Protected branches are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, and in public and private repositories with
+     * GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise Server.
+     * For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * Returns all branches where the given commit SHA is the HEAD, or latest commit
+     * for the branch.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.repos.commits.listBranchesWhereHead(
+     *     'commit_sha',
+     *     { owner: 'owner', repo: 'repo' },
+     *   );
+     * ```
+     */
+    listBranchesWhereHead(commitSha, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${commitSha}/branches-where-head`, options);
+    }
+    /**
+     * Lists check runs for a commit ref. The `ref` can be a SHA, branch name, or a tag
+     * name.
+     *
+     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
+     * > where the check suite or check run were created. Pushes to a branch in a
+     * > forked repository are not detected and return an empty `pull_requests` array.
+     *
+     * If there are more than 1000 check suites on a single git reference, this
+     * endpoint will limit check runs to the 1000 most recent check suites. To iterate
+     * over all possible check runs, use the
+     * [List check suites for a Git reference](https://docs.github.com/rest/reference/checks#list-check-suites-for-a-git-reference)
+     * endpoint and provide the `check_suite_id` parameter to the
+     * [List check runs in a check suite](https://docs.github.com/rest/reference/checks#list-check-runs-in-a-check-suite)
+     * endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint on a private repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.listCheckRuns(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    listCheckRuns(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-runs`, { query, ...options });
+    }
+    /**
+     * Lists check suites for a commit `ref`. The `ref` can be a SHA, branch name, or a
+     * tag name.
+     *
+     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
+     * > where the check suite or check run were created. Pushes to a branch in a
+     * > forked repository are not detected and return an empty `pull_requests` array
+     * > and a `null` value for `head_branch`.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint on a private repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.listCheckSuites(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    listCheckSuites(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-suites`, { query, ...options });
+    }
+    /**
+     * Lists the merged pull request that introduced the commit to the repository. If
+     * the commit is not present in the default branch, it will return merged and open
+     * pull requests associated with the commit.
+     *
+     * To list the open or merged pull requests associated with a branch, you can set
+     * the `commit_sha` parameter to the branch name.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullRequestSimple of client.repos.commits.listPullRequests(
+     *   'commit_sha',
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listPullRequests(commitSha, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/pulls`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Users with pull access in a repository can view commit statuses for a given ref.
+     * The ref can be a SHA, a branch name, or a tag name. Statuses are returned in
+     * reverse chronological order. The first status in the list will be the latest
+     * one.
+     *
+     * This resource is also available via a legacy route:
+     * `GET /repos/:owner/:repo/statuses/:ref`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commitListStatusesResponse of client.repos.commits.listStatuses(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listStatuses(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${ref}/statuses`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Users with pull access in a repository can access a combined view of commit
+     * statuses for a given ref. The ref can be a SHA, a branch name, or a tag name.
+     *
+     * Additionally, a combined `state` is returned. The `state` is one of:
+     *
+     * - **failure** if any of the contexts report as `error` or `failure`
+     * - **pending** if there are no statuses or a context is `pending`
+     * - **success** if the latest status for all contexts is `success`
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.retrieveStatus(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    retrieveStatus(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/status`, { query, ...options });
+    }
+  }
+  BaseCommits3._key = Object.freeze(["repos", "commits"]);
+  return BaseCommits3;
+})();
+var Commits = /* @__PURE__ */ (() => {
+  class Commits3 extends BaseCommits {
+    constructor() {
+      super(...arguments);
+      this.comments = new Comments2(this._client);
+    }
+  }
+  Commits3.Comments = Comments2;
+  Commits3.BaseComments = BaseComments2;
+  return Commits3;
+})();
+
 // node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
 var uuid4 = function() {
   const { crypto: crypto2 } = globalThis;
@@ -11761,7 +12143,7 @@ var Feeds = class extends BaseFeeds {
 };
 
 // node_modules/@stainless-api/github-internal/resources/gists/comments.mjs
-var BaseComments2 = /* @__PURE__ */ (() => {
+var BaseComments3 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
      * Creates a comment on a gist.
@@ -11885,7 +12267,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
   ]);
   return BaseComments7;
 })();
-var Comments2 = class extends BaseComments2 {
+var Comments3 = class extends BaseComments3 {
 };
 
 // node_modules/@stainless-api/github-internal/resources/gists/forks.mjs
@@ -12170,13 +12552,13 @@ var Gists = /* @__PURE__ */ (() => {
   class Gists2 extends BaseGists {
     constructor() {
       super(...arguments);
-      this.comments = new Comments2(this._client);
+      this.comments = new Comments3(this._client);
       this.forks = new Forks(this._client);
       this.star = new Star(this._client);
     }
   }
-  Gists2.Comments = Comments2;
-  Gists2.BaseComments = BaseComments2;
+  Gists2.Comments = Comments3;
+  Gists2.BaseComments = BaseComments3;
   Gists2.Forks = Forks;
   Gists2.BaseForks = BaseForks;
   Gists2.Star = Star;
@@ -19492,7 +19874,7 @@ var Reactions3 = class extends BaseReactions3 {
 };
 
 // node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/comments.mjs
-var BaseComments3 = /* @__PURE__ */ (() => {
+var BaseComments4 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
      * Creates a new comment on a team discussion.
@@ -19630,8 +20012,8 @@ var BaseComments3 = /* @__PURE__ */ (() => {
   ]);
   return BaseComments7;
 })();
-var Comments3 = /* @__PURE__ */ (() => {
-  class Comments7 extends BaseComments3 {
+var Comments4 = /* @__PURE__ */ (() => {
+  class Comments7 extends BaseComments4 {
     constructor() {
       super(...arguments);
       this.reactions = new Reactions3(this._client);
@@ -19785,12 +20167,12 @@ var Discussions = /* @__PURE__ */ (() => {
   class Discussions2 extends BaseDiscussions {
     constructor() {
       super(...arguments);
-      this.comments = new Comments3(this._client);
+      this.comments = new Comments4(this._client);
       this.reactions = new Reactions2(this._client);
     }
   }
-  Discussions2.Comments = Comments3;
-  Discussions2.BaseComments = BaseComments3;
+  Discussions2.Comments = Comments4;
+  Discussions2.BaseComments = BaseComments4;
   Discussions2.Reactions = Reactions2;
   Discussions2.BaseReactions = BaseReactions2;
   return Discussions2;
@@ -27520,7 +27902,7 @@ var Reactions4 = class extends BaseReactions4 {
 };
 
 // node_modules/@stainless-api/github-internal/resources/repos/comments/comments.mjs
-var BaseComments4 = /* @__PURE__ */ (() => {
+var BaseComments5 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
      * Gets a specified commit comment.
@@ -27641,8 +28023,8 @@ var BaseComments4 = /* @__PURE__ */ (() => {
   ]);
   return BaseComments7;
 })();
-var Comments4 = /* @__PURE__ */ (() => {
-  class Comments7 extends BaseComments4 {
+var Comments5 = /* @__PURE__ */ (() => {
+  class Comments7 extends BaseComments5 {
     constructor() {
       super(...arguments);
       this.reactions = new Reactions4(this._client);
@@ -27651,388 +28033,6 @@ var Comments4 = /* @__PURE__ */ (() => {
   Comments7.Reactions = Reactions4;
   Comments7.BaseReactions = BaseReactions4;
   return Comments7;
-})();
-
-// node_modules/@stainless-api/github-internal/resources/repos/commits/comments.mjs
-var BaseComments5 = /* @__PURE__ */ (() => {
-  class BaseComments7 extends APIResource {
-    /**
-     * Create a comment for a commit using its `:commit_sha`.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
-     *   body. Response will include `body`. This is the default if you do not pass any
-     *   specific media type.
-     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
-     *   representation of the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
-     *   from the body's markdown. Response will include `body_html`.
-     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
-     *   HTML representations. Response will include `body`, `body_text`, and
-     *   `body_html`.
-     *
-     * @example
-     * ```ts
-     * const comment = await client.repos.commits.comments.create(
-     *   'commit_sha',
-     *   {
-     *     owner: 'owner',
-     *     repo: 'repo',
-     *     body: 'Great stuff',
-     *     line: 1,
-     *     path: 'file1.txt',
-     *     position: 4,
-     *   },
-     * );
-     * ```
-     */
-    create(commitSha, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * Lists the comments for a specified commit.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
-     *   body. Response will include `body`. This is the default if you do not pass any
-     *   specific media type.
-     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
-     *   representation of the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
-     *   from the body's markdown. Response will include `body_html`.
-     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
-     *   HTML representations. Response will include `body`, `body_text`, and
-     *   `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const commentListResponse of client.repos.commits.comments.list(
-     *   'commit_sha',
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(commitSha, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/comments`, NumberedPage, { query, ...options });
-    }
-  }
-  BaseComments7._key = Object.freeze([
-    "repos",
-    "commits",
-    "comments"
-  ]);
-  return BaseComments7;
-})();
-var Comments5 = class extends BaseComments5 {
-};
-
-// node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
-var BaseCommits = /* @__PURE__ */ (() => {
-  class BaseCommits3 extends APIResource {
-    /**
-     * Returns the contents of a single commit reference. You must have `read` access
-     * for the repository to use this endpoint.
-     *
-     * > [!NOTE] If there are more than 300 files in the commit diff and the default
-     * > JSON media type is requested, the response will include pagination link
-     * > headers for the remaining files, up to a limit of 3000 files. Each page
-     * > contains the static commit information, and the only changes are to the file
-     * > listing.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     * Pagination query parameters are not supported for these media types.
-     *
-     * - **`application/vnd.github.diff`**: Returns the diff of the commit. Larger
-     *   diffs may time out and return a 5xx status code.
-     * - **`application/vnd.github.patch`**: Returns the patch of the commit. Diffs
-     *   with binary data will have no `patch` property. Larger diffs may time out and
-     *   return a 5xx status code.
-     * - **`application/vnd.github.sha`**: Returns the commit's SHA-1 hash. You can use
-     *   this endpoint to check if a remote reference's SHA-1 hash is the same as your
-     *   local reference's SHA-1 hash by providing the local SHA-1 reference as the
-     *   ETag.
-     *
-     * **Signature verification object**
-     *
-     * The response will include a `verification` object that describes the result of
-     * verifying the commit's signature. The following fields are included in the
-     * `verification` object:
-     *
-     * | Name          | Type      | Description                                                                                      |
-     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
-     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
-     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
-     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
-     * | `payload`     | `string`  | The value that was signed.                                                                       |
-     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
-     *
-     * These are the possible values for `reason` in the `verification` object:
-     *
-     * | Value                    | Description                                                                                                                     |
-     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
-     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
-     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
-     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
-     * | `unsigned`               | The object does not include a signature.                                                                                        |
-     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
-     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
-     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
-     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
-     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
-     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
-     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
-     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
-     *
-     * @example
-     * ```ts
-     * const commit = await client.repos.commits.retrieve('ref', {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * });
-     * ```
-     */
-    retrieve(ref, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}`, { query, ...options });
-    }
-    /**
-     * **Signature verification object**
-     *
-     * The response will include a `verification` object that describes the result of
-     * verifying the commit's signature. The following fields are included in the
-     * `verification` object:
-     *
-     * | Name          | Type      | Description                                                                                      |
-     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
-     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
-     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
-     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
-     * | `payload`     | `string`  | The value that was signed.                                                                       |
-     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
-     *
-     * These are the possible values for `reason` in the `verification` object:
-     *
-     * | Value                    | Description                                                                                                                     |
-     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
-     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
-     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
-     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
-     * | `unsigned`               | The object does not include a signature.                                                                                        |
-     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
-     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
-     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
-     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
-     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
-     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
-     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
-     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const commit of client.repos.commits.list({
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * })) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits`, NumberedPage, {
-        query,
-        ...options
-      });
-    }
-    /**
-     * Protected branches are available in public repositories with GitHub Free and
-     * GitHub Free for organizations, and in public and private repositories with
-     * GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise Server.
-     * For more information, see
-     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
-     * in the GitHub Help documentation.
-     *
-     * Returns all branches where the given commit SHA is the HEAD, or latest commit
-     * for the branch.
-     *
-     * @example
-     * ```ts
-     * const response =
-     *   await client.repos.commits.listBranchesWhereHead(
-     *     'commit_sha',
-     *     { owner: 'owner', repo: 'repo' },
-     *   );
-     * ```
-     */
-    listBranchesWhereHead(commitSha, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/commits/${commitSha}/branches-where-head`, options);
-    }
-    /**
-     * Lists check runs for a commit ref. The `ref` can be a SHA, branch name, or a tag
-     * name.
-     *
-     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
-     * > where the check suite or check run were created. Pushes to a branch in a
-     * > forked repository are not detected and return an empty `pull_requests` array.
-     *
-     * If there are more than 1000 check suites on a single git reference, this
-     * endpoint will limit check runs to the 1000 most recent check suites. To iterate
-     * over all possible check runs, use the
-     * [List check suites for a Git reference](https://docs.github.com/rest/reference/checks#list-check-suites-for-a-git-reference)
-     * endpoint and provide the `check_suite_id` parameter to the
-     * [List check runs in a check suite](https://docs.github.com/rest/reference/checks#list-check-runs-in-a-check-suite)
-     * endpoint.
-     *
-     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
-     * use this endpoint on a private repository.
-     *
-     * @example
-     * ```ts
-     * const response = await client.repos.commits.listCheckRuns(
-     *   'ref',
-     *   { owner: 'owner', repo: 'repo' },
-     * );
-     * ```
-     */
-    listCheckRuns(ref, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-runs`, { query, ...options });
-    }
-    /**
-     * Lists check suites for a commit `ref`. The `ref` can be a SHA, branch name, or a
-     * tag name.
-     *
-     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
-     * > where the check suite or check run were created. Pushes to a branch in a
-     * > forked repository are not detected and return an empty `pull_requests` array
-     * > and a `null` value for `head_branch`.
-     *
-     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
-     * use this endpoint on a private repository.
-     *
-     * @example
-     * ```ts
-     * const response = await client.repos.commits.listCheckSuites(
-     *   'ref',
-     *   { owner: 'owner', repo: 'repo' },
-     * );
-     * ```
-     */
-    listCheckSuites(ref, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/check-suites`, { query, ...options });
-    }
-    /**
-     * Lists the merged pull request that introduced the commit to the repository. If
-     * the commit is not present in the default branch, it will return merged and open
-     * pull requests associated with the commit.
-     *
-     * To list the open or merged pull requests associated with a branch, you can set
-     * the `commit_sha` parameter to the branch name.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const pullRequestSimple of client.repos.commits.listPullRequests(
-     *   'commit_sha',
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    listPullRequests(commitSha, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${commitSha}/pulls`, NumberedPage, { query, ...options });
-    }
-    /**
-     * Users with pull access in a repository can view commit statuses for a given ref.
-     * The ref can be a SHA, a branch name, or a tag name. Statuses are returned in
-     * reverse chronological order. The first status in the list will be the latest
-     * one.
-     *
-     * This resource is also available via a legacy route:
-     * `GET /repos/:owner/:repo/statuses/:ref`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const commitListStatusesResponse of client.repos.commits.listStatuses(
-     *   'ref',
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    listStatuses(ref, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/commits/${ref}/statuses`, NumberedPage, { query, ...options });
-    }
-    /**
-     * Users with pull access in a repository can access a combined view of commit
-     * statuses for a given ref. The ref can be a SHA, a branch name, or a tag name.
-     *
-     * Additionally, a combined `state` is returned. The `state` is one of:
-     *
-     * - **failure** if any of the contexts report as `error` or `failure`
-     * - **pending** if there are no statuses or a context is `pending`
-     * - **success** if the latest status for all contexts is `success`
-     *
-     * @example
-     * ```ts
-     * const response = await client.repos.commits.retrieveStatus(
-     *   'ref',
-     *   { owner: 'owner', repo: 'repo' },
-     * );
-     * ```
-     */
-    retrieveStatus(ref, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/commits/${ref}/status`, { query, ...options });
-    }
-  }
-  BaseCommits3._key = Object.freeze(["repos", "commits"]);
-  return BaseCommits3;
-})();
-var Commits = /* @__PURE__ */ (() => {
-  class Commits3 extends BaseCommits {
-    constructor() {
-      super(...arguments);
-      this.comments = new Comments5(this._client);
-    }
-  }
-  Commits3.Comments = Comments5;
-  Commits3.BaseComments = BaseComments5;
-  return Commits3;
 })();
 
 // node_modules/@stainless-api/github-internal/resources/repos/dependabot/alerts.mjs
@@ -34052,7 +34052,7 @@ var Repos3 = /* @__PURE__ */ (() => {
       this.codeScanning = new CodeScanning2(this._client);
       this.codespaces = new Codespaces3(this._client);
       this.collaborators = new Collaborators(this._client);
-      this.comments = new Comments4(this._client);
+      this.comments = new Comments5(this._client);
       this.community = new Community(this._client);
       this.contents = new Contents(this._client);
       this.dependabot = new Dependabot3(this._client);
@@ -34125,8 +34125,8 @@ var Repos3 = /* @__PURE__ */ (() => {
   Repos6.BaseCodespaces = BaseCodespaces3;
   Repos6.Collaborators = Collaborators;
   Repos6.BaseCollaborators = BaseCollaborators;
-  Repos6.Comments = Comments4;
-  Repos6.BaseComments = BaseComments4;
+  Repos6.Comments = Comments5;
+  Repos6.BaseComments = BaseComments5;
   Repos6.Community = Community;
   Repos6.BaseCommunity = BaseCommunity;
   Repos6.Contents = Contents;
@@ -37702,6 +37702,11 @@ function getGitHostToken() {
   if (isRequired && !token) {
     throw new Error(`Input ${inputName} is required to make a comment`);
   }
+  if (isGitLabCI() && token?.startsWith("$")) {
+    throw new Error(
+      `Input ${inputName} starts with '$'; expected token to start with 'gl'. Does the CI have access to the variable?`
+    );
+  }
   return token;
 }
 function getRunUrl() {
@@ -37745,10 +37750,10 @@ async function getStainlessAuth() {
     );
   }
 }
-function createCommentClient(token, prNumber) {
-  return isGitLabCI() ? new GitLabCommentClient(token, prNumber) : new GitHubCommentClient(token, prNumber);
+function createVCSClient(token, prNumber) {
+  return isGitLabCI() ? new GitLabClient(token, prNumber) : new GitHubClient(token, prNumber);
 }
-var GitHubCommentClient = class {
+var GitHubClient = class {
   client;
   prNumber;
   constructor(token, prNumber) {
@@ -37756,7 +37761,7 @@ var GitHubCommentClient = class {
       authToken: token,
       owner: getGitHubContext().repo.owner,
       repo: getGitHubContext().repo.repo,
-      resources: [Comments]
+      resources: [Comments, Commits]
     });
     this.prNumber = prNumber;
   }
@@ -37772,8 +37777,29 @@ var GitHubCommentClient = class {
   async updateComment(id, body) {
     await this.client.repos.issues.comments.update(id, { body });
   }
+  async getPullRequestForCommit(sha) {
+    const { data } = await this.client.repos.commits.listPullRequests(sha);
+    if (data.length === 0) {
+      return null;
+    }
+    if (data.length > 1) {
+      logger.warn(
+        `Multiple pull requests found for commit; only using first.`,
+        { commit: sha, pulls: data.map((c) => c.number) }
+      );
+    }
+    const pull = data[0];
+    return {
+      number: pull.number,
+      state: pull.merged_at ? "merged" : pull.state,
+      base_sha: pull.base.sha,
+      base_ref: pull.base.ref,
+      head_ref: pull.head.ref,
+      head_sha: pull.head.sha
+    };
+  }
 };
-var GitLabCommentClient = class {
+var GitLabClient = class {
   token;
   baseUrl;
   prNumber;
@@ -37782,8 +37808,15 @@ var GitLabCommentClient = class {
     this.baseUrl = `${gitlabBaseUrl()}/api/v4`;
     this.prNumber = prNumber;
   }
+  requestId = 0;
   async request(method, endpoint, body) {
+    const id = this.requestId++;
     const url = `${this.baseUrl}/projects/${process.env.CI_PROJECT_ID}${endpoint}`;
+    logger.debug(`[${id}] sending request`, {
+      body: body ? JSON.stringify(body) : void 0,
+      method,
+      url
+    });
     const response = await fetch(url, {
       method,
       headers: {
@@ -37793,6 +37826,11 @@ var GitLabCommentClient = class {
       body: body ? JSON.stringify(body) : void 0
     });
     if (!response.ok) {
+      logger.debug(`[${id}] request failed`, {
+        status: response.status,
+        statusText: response.statusText,
+        body: await response.text().catch(() => "[failed to read body]")
+      });
       throw new Error(
         `GitLab API error: ${response.status} ${response.statusText}`
       );
@@ -37818,6 +37856,49 @@ var GitLabCommentClient = class {
     await this.request("PUT", `/merge_requests/${this.prNumber}/notes/${id}`, {
       body
     });
+  }
+  async getPullRequestForCommit(sha) {
+    const mergeRequests = await this.request(
+      "GET",
+      `/repository/commits/${sha}/merge_requests`
+    );
+    if (mergeRequests.length === 0) {
+      return null;
+    }
+    if (mergeRequests.length > 1) {
+      logger.warn(
+        `Multiple merge requests found for commit; only using first.`,
+        { commit: sha, mergeRequests: mergeRequests.map((c) => c.iid) }
+      );
+    }
+    const mergeRequestIID = mergeRequests[0].iid;
+    let attempts = 0;
+    let mergeRequest = null;
+    while (attempts < 3) {
+      attempts++;
+      mergeRequest = await this.request(
+        "GET",
+        `/merge_requests/${mergeRequestIID}`
+      );
+      if (mergeRequest?.diff_refs) {
+        return {
+          number: mergeRequest.iid,
+          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch
+        };
+      }
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
+      });
+    }
+    logger.warn(
+      `Failed to find merge request for commit after ${attempts} attempts`,
+      { commit: sha, mergeRequestIID }
+    );
+    return null;
   }
 };
 
@@ -38485,7 +38566,7 @@ async function retrieveComment({
   token,
   prNumber
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
   const comments = await client.listComments();
   const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
   return {
@@ -38500,7 +38581,7 @@ async function upsertComment({
   prNumber,
   skipCreate = false
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
   logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
   const comments = await client.listComments();
   const firstLine = body.trim().split("\n")[0];
