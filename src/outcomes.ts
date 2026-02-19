@@ -27,7 +27,7 @@ export type OutcomeConclusion = Exclude<
 
 export function getDiffLanguages(outcomes: Outcomes): string[] {
   return Object.entries(outcomes)
-    .filter(([, outcome]) => outcome.commit?.commit !== null)
+    .filter(([, outcome]) => outcome.hasDiff === true)
     .map(([lang]) => lang);
 }
 

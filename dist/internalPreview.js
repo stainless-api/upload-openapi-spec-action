@@ -37941,7 +37941,7 @@ var FailRunOn = [
 ];
 var OutcomeConclusion = [...FailRunOn, "success"];
 function getDiffLanguages(outcomes) {
-  return Object.entries(outcomes).filter(([, outcome]) => outcome.commit?.commit !== null).map(([lang]) => lang);
+  return Object.entries(outcomes).filter(([, outcome]) => outcome.hasDiff === true).map(([lang]) => lang);
 }
 function shouldFailRun({
   failRunOn,
