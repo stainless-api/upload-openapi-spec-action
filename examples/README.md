@@ -54,6 +54,8 @@ If your API is split across multiple OpenAPI spec files, use the `prepare/combin
 
 The action uses [Redocly CLI](https://redocly.com/docs/cli/) to combine specs, handling reference resolution and path merging. You can also configure how server URLs are handled when combining specs from different services.
 
+When specs share `operationId` values, the action automatically prefixes conflicting IDs with a slug derived from each spec's `info.title` to avoid collisions during the combine. You can also set `prefix_with_info: true` to prefix tags and component names with each spec's title, which helps avoid collisions when multiple specs define tags or components with the same names.
+
 ### Converting Swagger 2.0 specs
 
 If you have a Swagger 2.0 spec, use the `prepare/swagger` action to convert it to OpenAPI 3.x format. See [prepare_swagger.yml](./prepare_swagger.yml) for an example.
