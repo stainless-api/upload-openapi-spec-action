@@ -41816,7 +41816,7 @@ async function maybeReportResult({
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 10 * 60;
+var MAX_POLLING_SECONDS = 15 * 60;
 async function* runBuilds({
   stainless,
   projectName,
@@ -41875,6 +41875,7 @@ async function* runBuilds({
     for await (const { outcomes, documentedSpec } of pollBuild({
       stainless,
       build,
+      projectName,
       label: "head"
     })) {
       yield {
@@ -42004,8 +42005,8 @@ async function* runBuilds({
   let lastOutcome = null;
   let lastDocumentedSpec = null;
   for await (const { index, value } of combineAsyncIterators2(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" })
+    pollBuild({ stainless, build: base, projectName, label: "base" }),
+    pollBuild({ stainless, build: head, projectName, label: "head" })
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -42044,6 +42045,7 @@ async function* combineAsyncIterators2(...args) {
 async function* pollBuild({
   stainless,
   build,
+  projectName,
   label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
@@ -42060,11 +42062,11 @@ async function* pollBuild({
   );
   if (buildId) {
     log.info(
-      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
+      `[${projectName}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
     addBuildIdForTelemetry(buildId);
   } else {
-    logger.info("No new build was created; exiting.");
+    logger.info(`[${projectName}] No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -42082,7 +42084,9 @@ async function* pollBuild({
       };
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        log.info(`Build for ${language} has status ${buildOutput.status}`);
+        log.info(
+          `[${projectName}/${buildId}] Build for ${language} has status ${buildOutput.status}`
+        );
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {
