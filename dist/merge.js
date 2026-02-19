@@ -25,9 +25,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/libsodium/dist/modules/libsodium.js
+// node_modules/.pnpm/libsodium@0.7.15/node_modules/libsodium/dist/modules/libsodium.js
 var require_libsodium = __commonJS({
-  "node_modules/libsodium/dist/modules/libsodium.js"(exports2, module2) {
+  "node_modules/.pnpm/libsodium@0.7.15/node_modules/libsodium/dist/modules/libsodium.js"(exports2, module2) {
     !(function(A) {
       function I(A2) {
         "use strict";
@@ -2631,9 +2631,9 @@ var require_libsodium = __commonJS({
   }
 });
 
-// node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js
+// node_modules/.pnpm/libsodium-wrappers@0.7.15/node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js
 var require_libsodium_wrappers = __commonJS({
-  "node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js"(exports2) {
+  "node_modules/.pnpm/libsodium-wrappers@0.7.15/node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js"(exports2) {
     !(function(e) {
       function a(e2, a2) {
         "use strict";
@@ -5234,9 +5234,9 @@ var require_libsodium_wrappers = __commonJS({
   }
 });
 
-// node_modules/safe-buffer/index.js
+// node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
-  "node_modules/safe-buffer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js"(exports2, module2) {
     var buffer = require("buffer");
     var Buffer2 = buffer.Buffer;
     function copyProps(src, dst) {
@@ -5292,9 +5292,9 @@ var require_safe_buffer = __commonJS({
   }
 });
 
-// node_modules/jws/lib/data-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/data-stream.js
 var require_data_stream = __commonJS({
-  "node_modules/jws/lib/data-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/data-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var Stream = require("stream");
     var util = require("util");
@@ -5340,9 +5340,9 @@ var require_data_stream = __commonJS({
   }
 });
 
-// node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js
+// node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js
 var require_param_bytes_for_alg = __commonJS({
-  "node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js"(exports2, module2) {
+  "node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js"(exports2, module2) {
     "use strict";
     function getParamSize(keySize) {
       var result = (keySize / 8 | 0) + (keySize % 8 === 0 ? 0 : 1);
@@ -5364,9 +5364,9 @@ var require_param_bytes_for_alg = __commonJS({
   }
 });
 
-// node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js
+// node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js
 var require_ecdsa_sig_formatter = __commonJS({
-  "node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js"(exports2, module2) {
+  "node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js"(exports2, module2) {
     "use strict";
     var Buffer2 = require_safe_buffer().Buffer;
     var getParamBytesForAlg = require_param_bytes_for_alg();
@@ -5504,9 +5504,9 @@ var require_ecdsa_sig_formatter = __commonJS({
   }
 });
 
-// node_modules/buffer-equal-constant-time/index.js
+// node_modules/.pnpm/buffer-equal-constant-time@1.0.1/node_modules/buffer-equal-constant-time/index.js
 var require_buffer_equal_constant_time = __commonJS({
-  "node_modules/buffer-equal-constant-time/index.js"(exports2, module2) {
+  "node_modules/.pnpm/buffer-equal-constant-time@1.0.1/node_modules/buffer-equal-constant-time/index.js"(exports2, module2) {
     "use strict";
     var Buffer2 = require("buffer").Buffer;
     var SlowBuffer = require("buffer").SlowBuffer;
@@ -5538,9 +5538,9 @@ var require_buffer_equal_constant_time = __commonJS({
   }
 });
 
-// node_modules/jwa/index.js
+// node_modules/.pnpm/jwa@2.0.1/node_modules/jwa/index.js
 var require_jwa = __commonJS({
-  "node_modules/jwa/index.js"(exports2, module2) {
+  "node_modules/.pnpm/jwa@2.0.1/node_modules/jwa/index.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var crypto2 = require("crypto");
     var formatEcdsa = require_ecdsa_sig_formatter();
@@ -5749,7 +5749,7 @@ var require_jwa = __commonJS({
         es: createECDSAVerifer,
         none: createNoneVerifier
       };
-      var match = algorithm.match(/^(RS|PS|ES|HS)(256|384|512)$|^(none)$/i);
+      var match = algorithm.match(/^(RS|PS|ES|HS)(256|384|512)$|^(none)$/);
       if (!match)
         throw typeError(MSG_INVALID_ALGORITHM, algorithm);
       var algo = (match[1] || match[3]).toLowerCase();
@@ -5762,9 +5762,9 @@ var require_jwa = __commonJS({
   }
 });
 
-// node_modules/jws/lib/tostring.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/tostring.js
 var require_tostring = __commonJS({
-  "node_modules/jws/lib/tostring.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/tostring.js"(exports2, module2) {
     var Buffer2 = require("buffer").Buffer;
     module2.exports = function toString(obj) {
       if (typeof obj === "string")
@@ -5776,9 +5776,9 @@ var require_tostring = __commonJS({
   }
 });
 
-// node_modules/jws/lib/sign-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/sign-stream.js
 var require_sign_stream = __commonJS({
-  "node_modules/jws/lib/sign-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/sign-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var DataStream = require_data_stream();
     var jwa = require_jwa();
@@ -5805,7 +5805,12 @@ var require_sign_stream = __commonJS({
       return util.format("%s.%s", securedInput, signature);
     }
     function SignStream(opts) {
-      var secret = opts.secret || opts.privateKey || opts.key;
+      var secret = opts.secret;
+      secret = secret == null ? opts.privateKey : secret;
+      secret = secret == null ? opts.key : secret;
+      if (/^hs/i.test(opts.header.alg) === true && secret == null) {
+        throw new TypeError("secret must be a string or buffer or a KeyObject");
+      }
       var secretStream = new DataStream(secret);
       this.readable = true;
       this.header = opts.header;
@@ -5846,9 +5851,9 @@ var require_sign_stream = __commonJS({
   }
 });
 
-// node_modules/jws/lib/verify-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/verify-stream.js
 var require_verify_stream = __commonJS({
-  "node_modules/jws/lib/verify-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/verify-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var DataStream = require_data_stream();
     var jwa = require_jwa();
@@ -5917,7 +5922,12 @@ var require_verify_stream = __commonJS({
     }
     function VerifyStream(opts) {
       opts = opts || {};
-      var secretOrKey = opts.secret || opts.publicKey || opts.key;
+      var secretOrKey = opts.secret;
+      secretOrKey = secretOrKey == null ? opts.publicKey : secretOrKey;
+      secretOrKey = secretOrKey == null ? opts.key : secretOrKey;
+      if (/^hs/i.test(opts.algorithm) === true && secretOrKey == null) {
+        throw new TypeError("secret must be a string or buffer or a KeyObject");
+      }
       var secretStream = new DataStream(secretOrKey);
       this.readable = true;
       this.algorithm = opts.algorithm;
@@ -5956,9 +5966,9 @@ var require_verify_stream = __commonJS({
   }
 });
 
-// node_modules/jws/index.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/index.js
 var require_jws = __commonJS({
-  "node_modules/jws/index.js"(exports2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/index.js"(exports2) {
     var SignStream = require_sign_stream();
     var VerifyStream = require_verify_stream();
     var ALGORITHMS = [
@@ -5989,9 +5999,9 @@ var require_jws = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/decode.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/decode.js
 var require_decode = __commonJS({
-  "node_modules/jsonwebtoken/decode.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/decode.js"(exports2, module2) {
     var jws = require_jws();
     module2.exports = function(jwt, options) {
       options = options || {};
@@ -6021,9 +6031,9 @@ var require_decode = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/JsonWebTokenError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/JsonWebTokenError.js
 var require_JsonWebTokenError = __commonJS({
-  "node_modules/jsonwebtoken/lib/JsonWebTokenError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/JsonWebTokenError.js"(exports2, module2) {
     var JsonWebTokenError = function(message, error) {
       Error.call(this, message);
       if (Error.captureStackTrace) {
@@ -6039,9 +6049,9 @@ var require_JsonWebTokenError = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/NotBeforeError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/NotBeforeError.js
 var require_NotBeforeError = __commonJS({
-  "node_modules/jsonwebtoken/lib/NotBeforeError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/NotBeforeError.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var NotBeforeError = function(message, date) {
       JsonWebTokenError.call(this, message);
@@ -6054,9 +6064,9 @@ var require_NotBeforeError = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/TokenExpiredError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/TokenExpiredError.js
 var require_TokenExpiredError = __commonJS({
-  "node_modules/jsonwebtoken/lib/TokenExpiredError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/TokenExpiredError.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var TokenExpiredError = function(message, expiredAt) {
       JsonWebTokenError.call(this, message);
@@ -6069,9 +6079,9 @@ var require_TokenExpiredError = __commonJS({
   }
 });
 
-// node_modules/ms/index.js
+// node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js
 var require_ms = __commonJS({
-  "node_modules/ms/index.js"(exports2, module2) {
+  "node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js"(exports2, module2) {
     var s = 1e3;
     var m = s * 60;
     var h = m * 60;
@@ -6185,9 +6195,9 @@ var require_ms = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/timespan.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/timespan.js
 var require_timespan = __commonJS({
-  "node_modules/jsonwebtoken/lib/timespan.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/timespan.js"(exports2, module2) {
     var ms = require_ms();
     module2.exports = function(time, iat) {
       var timestamp = iat || Math.floor(Date.now() / 1e3);
@@ -6206,9 +6216,9 @@ var require_timespan = __commonJS({
   }
 });
 
-// node_modules/semver/internal/constants.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/constants.js
 var require_constants = __commonJS({
-  "node_modules/semver/internal/constants.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/constants.js"(exports2, module2) {
     "use strict";
     var SEMVER_SPEC_VERSION = "2.0.0";
     var MAX_LENGTH = 256;
@@ -6238,9 +6248,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/semver/internal/debug.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/debug.js
 var require_debug = __commonJS({
-  "node_modules/semver/internal/debug.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/debug.js"(exports2, module2) {
     "use strict";
     var debug = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
@@ -6248,9 +6258,9 @@ var require_debug = __commonJS({
   }
 });
 
-// node_modules/semver/internal/re.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/re.js
 var require_re = __commonJS({
-  "node_modules/semver/internal/re.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/re.js"(exports2, module2) {
     "use strict";
     var {
       MAX_SAFE_COMPONENT_LENGTH,
@@ -6336,9 +6346,9 @@ var require_re = __commonJS({
   }
 });
 
-// node_modules/semver/internal/parse-options.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/parse-options.js
 var require_parse_options = __commonJS({
-  "node_modules/semver/internal/parse-options.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/parse-options.js"(exports2, module2) {
     "use strict";
     var looseOption = Object.freeze({ loose: true });
     var emptyOpts = Object.freeze({});
@@ -6355,12 +6365,15 @@ var require_parse_options = __commonJS({
   }
 });
 
-// node_modules/semver/internal/identifiers.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/identifiers.js
 var require_identifiers = __commonJS({
-  "node_modules/semver/internal/identifiers.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/identifiers.js"(exports2, module2) {
     "use strict";
     var numeric = /^[0-9]+$/;
     var compareIdentifiers = (a, b) => {
+      if (typeof a === "number" && typeof b === "number") {
+        return a === b ? 0 : a < b ? -1 : 1;
+      }
       const anum = numeric.test(a);
       const bnum = numeric.test(b);
       if (anum && bnum) {
@@ -6377,9 +6390,9 @@ var require_identifiers = __commonJS({
   }
 });
 
-// node_modules/semver/classes/semver.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/semver.js
 var require_semver = __commonJS({
-  "node_modules/semver/classes/semver.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/semver.js"(exports2, module2) {
     "use strict";
     var debug = require_debug();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants();
@@ -6467,7 +6480,25 @@ var require_semver = __commonJS({
         if (!(other instanceof _SemVer)) {
           other = new _SemVer(other, this.options);
         }
-        return compareIdentifiers(this.major, other.major) || compareIdentifiers(this.minor, other.minor) || compareIdentifiers(this.patch, other.patch);
+        if (this.major < other.major) {
+          return -1;
+        }
+        if (this.major > other.major) {
+          return 1;
+        }
+        if (this.minor < other.minor) {
+          return -1;
+        }
+        if (this.minor > other.minor) {
+          return 1;
+        }
+        if (this.patch < other.patch) {
+          return -1;
+        }
+        if (this.patch > other.patch) {
+          return 1;
+        }
+        return 0;
       }
       comparePre(other) {
         if (!(other instanceof _SemVer)) {
@@ -6638,9 +6669,9 @@ var require_semver = __commonJS({
   }
 });
 
-// node_modules/semver/functions/parse.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/parse.js
 var require_parse = __commonJS({
-  "node_modules/semver/functions/parse.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/parse.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var parse = (version, options, throwErrors = false) => {
@@ -6660,9 +6691,9 @@ var require_parse = __commonJS({
   }
 });
 
-// node_modules/semver/functions/valid.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/valid.js
 var require_valid = __commonJS({
-  "node_modules/semver/functions/valid.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/valid.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var valid = (version, options) => {
@@ -6673,9 +6704,9 @@ var require_valid = __commonJS({
   }
 });
 
-// node_modules/semver/functions/clean.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/clean.js
 var require_clean = __commonJS({
-  "node_modules/semver/functions/clean.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/clean.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var clean = (version, options) => {
@@ -6686,9 +6717,9 @@ var require_clean = __commonJS({
   }
 });
 
-// node_modules/semver/functions/inc.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/inc.js
 var require_inc = __commonJS({
-  "node_modules/semver/functions/inc.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/inc.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var inc = (version, release, options, identifier, identifierBase) => {
@@ -6710,9 +6741,9 @@ var require_inc = __commonJS({
   }
 });
 
-// node_modules/semver/functions/diff.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/diff.js
 var require_diff = __commonJS({
-  "node_modules/semver/functions/diff.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/diff.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var diff = (version1, version2) => {
@@ -6754,9 +6785,9 @@ var require_diff = __commonJS({
   }
 });
 
-// node_modules/semver/functions/major.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/major.js
 var require_major = __commonJS({
-  "node_modules/semver/functions/major.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/major.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var major = (a, loose) => new SemVer(a, loose).major;
@@ -6764,9 +6795,9 @@ var require_major = __commonJS({
   }
 });
 
-// node_modules/semver/functions/minor.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/minor.js
 var require_minor = __commonJS({
-  "node_modules/semver/functions/minor.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/minor.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var minor = (a, loose) => new SemVer(a, loose).minor;
@@ -6774,9 +6805,9 @@ var require_minor = __commonJS({
   }
 });
 
-// node_modules/semver/functions/patch.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/patch.js
 var require_patch = __commonJS({
-  "node_modules/semver/functions/patch.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/patch.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var patch = (a, loose) => new SemVer(a, loose).patch;
@@ -6784,9 +6815,9 @@ var require_patch = __commonJS({
   }
 });
 
-// node_modules/semver/functions/prerelease.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/prerelease.js
 var require_prerelease = __commonJS({
-  "node_modules/semver/functions/prerelease.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/prerelease.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var prerelease = (version, options) => {
@@ -6797,9 +6828,9 @@ var require_prerelease = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare.js
 var require_compare = __commonJS({
-  "node_modules/semver/functions/compare.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
@@ -6807,9 +6838,9 @@ var require_compare = __commonJS({
   }
 });
 
-// node_modules/semver/functions/rcompare.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rcompare.js
 var require_rcompare = __commonJS({
-  "node_modules/semver/functions/rcompare.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rcompare.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var rcompare = (a, b, loose) => compare(b, a, loose);
@@ -6817,9 +6848,9 @@ var require_rcompare = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare-loose.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-loose.js
 var require_compare_loose = __commonJS({
-  "node_modules/semver/functions/compare-loose.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-loose.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var compareLoose = (a, b) => compare(a, b, true);
@@ -6827,9 +6858,9 @@ var require_compare_loose = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare-build.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-build.js
 var require_compare_build = __commonJS({
-  "node_modules/semver/functions/compare-build.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-build.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var compareBuild = (a, b, loose) => {
@@ -6841,9 +6872,9 @@ var require_compare_build = __commonJS({
   }
 });
 
-// node_modules/semver/functions/sort.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/sort.js
 var require_sort = __commonJS({
-  "node_modules/semver/functions/sort.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/sort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
     var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
@@ -6851,9 +6882,9 @@ var require_sort = __commonJS({
   }
 });
 
-// node_modules/semver/functions/rsort.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rsort.js
 var require_rsort = __commonJS({
-  "node_modules/semver/functions/rsort.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rsort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
     var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
@@ -6861,9 +6892,9 @@ var require_rsort = __commonJS({
   }
 });
 
-// node_modules/semver/functions/gt.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gt.js
 var require_gt = __commonJS({
-  "node_modules/semver/functions/gt.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var gt = (a, b, loose) => compare(a, b, loose) > 0;
@@ -6871,9 +6902,9 @@ var require_gt = __commonJS({
   }
 });
 
-// node_modules/semver/functions/lt.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lt.js
 var require_lt = __commonJS({
-  "node_modules/semver/functions/lt.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var lt = (a, b, loose) => compare(a, b, loose) < 0;
@@ -6881,9 +6912,9 @@ var require_lt = __commonJS({
   }
 });
 
-// node_modules/semver/functions/eq.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/eq.js
 var require_eq = __commonJS({
-  "node_modules/semver/functions/eq.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/eq.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var eq = (a, b, loose) => compare(a, b, loose) === 0;
@@ -6891,9 +6922,9 @@ var require_eq = __commonJS({
   }
 });
 
-// node_modules/semver/functions/neq.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/neq.js
 var require_neq = __commonJS({
-  "node_modules/semver/functions/neq.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/neq.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var neq = (a, b, loose) => compare(a, b, loose) !== 0;
@@ -6901,9 +6932,9 @@ var require_neq = __commonJS({
   }
 });
 
-// node_modules/semver/functions/gte.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gte.js
 var require_gte = __commonJS({
-  "node_modules/semver/functions/gte.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gte.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var gte = (a, b, loose) => compare(a, b, loose) >= 0;
@@ -6911,9 +6942,9 @@ var require_gte = __commonJS({
   }
 });
 
-// node_modules/semver/functions/lte.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lte.js
 var require_lte = __commonJS({
-  "node_modules/semver/functions/lte.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lte.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var lte = (a, b, loose) => compare(a, b, loose) <= 0;
@@ -6921,9 +6952,9 @@ var require_lte = __commonJS({
   }
 });
 
-// node_modules/semver/functions/cmp.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/cmp.js
 var require_cmp = __commonJS({
-  "node_modules/semver/functions/cmp.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/cmp.js"(exports2, module2) {
     "use strict";
     var eq = require_eq();
     var neq = require_neq();
@@ -6971,9 +7002,9 @@ var require_cmp = __commonJS({
   }
 });
 
-// node_modules/semver/functions/coerce.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/coerce.js
 var require_coerce = __commonJS({
-  "node_modules/semver/functions/coerce.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/coerce.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var parse = require_parse();
@@ -7017,9 +7048,9 @@ var require_coerce = __commonJS({
   }
 });
 
-// node_modules/semver/internal/lrucache.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/lrucache.js
 var require_lrucache = __commonJS({
-  "node_modules/semver/internal/lrucache.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/lrucache.js"(exports2, module2) {
     "use strict";
     var LRUCache = class {
       constructor() {
@@ -7055,9 +7086,9 @@ var require_lrucache = __commonJS({
   }
 });
 
-// node_modules/semver/classes/range.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/range.js
 var require_range = __commonJS({
-  "node_modules/semver/classes/range.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/range.js"(exports2, module2) {
     "use strict";
     var SPACE_CHARACTERS = /\s+/g;
     var Range = class _Range {
@@ -7228,6 +7259,7 @@ var require_range = __commonJS({
       return result;
     };
     var parseComparator = (comp, options) => {
+      comp = comp.replace(re[t.BUILD], "");
       debug("comp", comp, options);
       comp = replaceCarets(comp, options);
       debug("caret", comp);
@@ -7431,9 +7463,9 @@ var require_range = __commonJS({
   }
 });
 
-// node_modules/semver/classes/comparator.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/comparator.js
 var require_comparator = __commonJS({
-  "node_modules/semver/classes/comparator.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/comparator.js"(exports2, module2) {
     "use strict";
     var ANY = Symbol("SemVer ANY");
     var Comparator = class _Comparator {
@@ -7544,9 +7576,9 @@ var require_comparator = __commonJS({
   }
 });
 
-// node_modules/semver/functions/satisfies.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/satisfies.js
 var require_satisfies = __commonJS({
-  "node_modules/semver/functions/satisfies.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var satisfies = (version, range, options) => {
@@ -7561,9 +7593,9 @@ var require_satisfies = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/to-comparators.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/to-comparators.js
 var require_to_comparators = __commonJS({
-  "node_modules/semver/ranges/to-comparators.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/to-comparators.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
@@ -7571,9 +7603,9 @@ var require_to_comparators = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/max-satisfying.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/max-satisfying.js
 var require_max_satisfying = __commonJS({
-  "node_modules/semver/ranges/max-satisfying.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/max-satisfying.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7600,9 +7632,9 @@ var require_max_satisfying = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/min-satisfying.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-satisfying.js
 var require_min_satisfying = __commonJS({
-  "node_modules/semver/ranges/min-satisfying.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-satisfying.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7629,9 +7661,9 @@ var require_min_satisfying = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/min-version.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-version.js
 var require_min_version = __commonJS({
-  "node_modules/semver/ranges/min-version.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-version.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7688,9 +7720,9 @@ var require_min_version = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/valid.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/valid.js
 var require_valid2 = __commonJS({
-  "node_modules/semver/ranges/valid.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/valid.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var validRange = (range, options) => {
@@ -7704,9 +7736,9 @@ var require_valid2 = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/outside.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/outside.js
 var require_outside = __commonJS({
-  "node_modules/semver/ranges/outside.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/outside.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Comparator = require_comparator();
@@ -7773,9 +7805,9 @@ var require_outside = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/gtr.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/gtr.js
 var require_gtr = __commonJS({
-  "node_modules/semver/ranges/gtr.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/gtr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
     var gtr = (version, range, options) => outside(version, range, ">", options);
@@ -7783,9 +7815,9 @@ var require_gtr = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/ltr.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/ltr.js
 var require_ltr = __commonJS({
-  "node_modules/semver/ranges/ltr.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/ltr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
     var ltr = (version, range, options) => outside(version, range, "<", options);
@@ -7793,9 +7825,9 @@ var require_ltr = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/intersects.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/intersects.js
 var require_intersects = __commonJS({
-  "node_modules/semver/ranges/intersects.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/intersects.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var intersects = (r1, r2, options) => {
@@ -7807,9 +7839,9 @@ var require_intersects = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/simplify.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/simplify.js
 var require_simplify = __commonJS({
-  "node_modules/semver/ranges/simplify.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/simplify.js"(exports2, module2) {
     "use strict";
     var satisfies = require_satisfies();
     var compare = require_compare();
@@ -7857,9 +7889,9 @@ var require_simplify = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/subset.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/subset.js
 var require_subset = __commonJS({
-  "node_modules/semver/ranges/subset.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/subset.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var Comparator = require_comparator();
@@ -8019,9 +8051,9 @@ var require_subset = __commonJS({
   }
 });
 
-// node_modules/semver/index.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/index.js
 var require_semver2 = __commonJS({
-  "node_modules/semver/index.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/index.js"(exports2, module2) {
     "use strict";
     var internalRe = require_re();
     var constants = require_constants();
@@ -8114,25 +8146,25 @@ var require_semver2 = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js
 var require_asymmetricKeyDetailsSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, ">=15.7.0");
   }
 });
 
-// node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js
 var require_rsaPssKeyDetailsSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, ">=16.9.0");
   }
 });
 
-// node_modules/jsonwebtoken/lib/validateAsymmetricKey.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/validateAsymmetricKey.js
 var require_validateAsymmetricKey = __commonJS({
-  "node_modules/jsonwebtoken/lib/validateAsymmetricKey.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/validateAsymmetricKey.js"(exports2, module2) {
     var ASYMMETRIC_KEY_DETAILS_SUPPORTED = require_asymmetricKeyDetailsSupported();
     var RSA_PSS_KEY_DETAILS_SUPPORTED = require_rsaPssKeyDetailsSupported();
     var allowedAlgorithmsForKeys = {
@@ -8183,17 +8215,17 @@ var require_validateAsymmetricKey = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/psSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/psSupported.js
 var require_psSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/psSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/psSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, "^6.12.0 || >=8.0.0");
   }
 });
 
-// node_modules/jsonwebtoken/verify.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/verify.js
 var require_verify = __commonJS({
-  "node_modules/jsonwebtoken/verify.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/verify.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var NotBeforeError = require_NotBeforeError();
     var TokenExpiredError = require_TokenExpiredError();
@@ -8406,9 +8438,9 @@ var require_verify = __commonJS({
   }
 });
 
-// node_modules/lodash.includes/index.js
+// node_modules/.pnpm/lodash.includes@4.3.0/node_modules/lodash.includes/index.js
 var require_lodash = __commonJS({
-  "node_modules/lodash.includes/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.includes@4.3.0/node_modules/lodash.includes/index.js"(exports2, module2) {
     var INFINITY = 1 / 0;
     var MAX_SAFE_INTEGER = 9007199254740991;
     var MAX_INTEGER = 17976931348623157e292;
@@ -8590,9 +8622,9 @@ var require_lodash = __commonJS({
   }
 });
 
-// node_modules/lodash.isboolean/index.js
+// node_modules/.pnpm/lodash.isboolean@3.0.3/node_modules/lodash.isboolean/index.js
 var require_lodash2 = __commonJS({
-  "node_modules/lodash.isboolean/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isboolean@3.0.3/node_modules/lodash.isboolean/index.js"(exports2, module2) {
     var boolTag = "[object Boolean]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8606,9 +8638,9 @@ var require_lodash2 = __commonJS({
   }
 });
 
-// node_modules/lodash.isinteger/index.js
+// node_modules/.pnpm/lodash.isinteger@4.0.4/node_modules/lodash.isinteger/index.js
 var require_lodash3 = __commonJS({
-  "node_modules/lodash.isinteger/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isinteger@4.0.4/node_modules/lodash.isinteger/index.js"(exports2, module2) {
     var INFINITY = 1 / 0;
     var MAX_INTEGER = 17976931348623157e292;
     var NAN = 0 / 0;
@@ -8670,9 +8702,9 @@ var require_lodash3 = __commonJS({
   }
 });
 
-// node_modules/lodash.isnumber/index.js
+// node_modules/.pnpm/lodash.isnumber@3.0.3/node_modules/lodash.isnumber/index.js
 var require_lodash4 = __commonJS({
-  "node_modules/lodash.isnumber/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isnumber@3.0.3/node_modules/lodash.isnumber/index.js"(exports2, module2) {
     var numberTag = "[object Number]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8686,9 +8718,9 @@ var require_lodash4 = __commonJS({
   }
 });
 
-// node_modules/lodash.isplainobject/index.js
+// node_modules/.pnpm/lodash.isplainobject@4.0.6/node_modules/lodash.isplainobject/index.js
 var require_lodash5 = __commonJS({
-  "node_modules/lodash.isplainobject/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isplainobject@4.0.6/node_modules/lodash.isplainobject/index.js"(exports2, module2) {
     var objectTag = "[object Object]";
     function isHostObject(value) {
       var result = false;
@@ -8730,9 +8762,9 @@ var require_lodash5 = __commonJS({
   }
 });
 
-// node_modules/lodash.isstring/index.js
+// node_modules/.pnpm/lodash.isstring@4.0.1/node_modules/lodash.isstring/index.js
 var require_lodash6 = __commonJS({
-  "node_modules/lodash.isstring/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isstring@4.0.1/node_modules/lodash.isstring/index.js"(exports2, module2) {
     var stringTag = "[object String]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8747,9 +8779,9 @@ var require_lodash6 = __commonJS({
   }
 });
 
-// node_modules/lodash.once/index.js
+// node_modules/.pnpm/lodash.once@4.1.1/node_modules/lodash.once/index.js
 var require_lodash7 = __commonJS({
-  "node_modules/lodash.once/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.once@4.1.1/node_modules/lodash.once/index.js"(exports2, module2) {
     var FUNC_ERROR_TEXT = "Expected a function";
     var INFINITY = 1 / 0;
     var MAX_INTEGER = 17976931348623157e292;
@@ -8828,9 +8860,9 @@ var require_lodash7 = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/sign.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/sign.js
 var require_sign = __commonJS({
-  "node_modules/jsonwebtoken/sign.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/sign.js"(exports2, module2) {
     var timespan = require_timespan();
     var PS_SUPPORTED = require_psSupported();
     var validateAsymmetricKey = require_validateAsymmetricKey();
@@ -9053,9 +9085,9 @@ var require_sign = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/index.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/index.js
 var require_jsonwebtoken = __commonJS({
-  "node_modules/jsonwebtoken/index.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/index.js"(exports2, module2) {
     module2.exports = {
       decode: require_decode(),
       verify: require_verify(),
@@ -9067,9 +9099,9 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
-// node_modules/ts-dedent/dist/index.js
+// node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js
 var require_dist = __commonJS({
-  "node_modules/ts-dedent/dist/index.js"(exports2) {
+  "node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.dedent = void 0;
@@ -9119,7 +9151,7 @@ var require_dist = __commonJS({
 // src/compat/index.ts
 var fs2 = __toESM(require("node:fs"));
 
-// node_modules/@stainless-api/github-internal/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
   class APIResource3 {
     constructor(client) {
@@ -9130,7 +9162,7 @@ var APIResource = /* @__PURE__ */ (() => {
   return APIResource3;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -9148,7 +9180,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/github-internal/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -9179,7 +9211,7 @@ var castToError = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/github-internal/core/error.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/core/error.mjs
 var GitHubError = /* @__PURE__ */ (() => {
   class GitHubError2 extends Error {
   }
@@ -9271,7 +9303,7 @@ var RateLimitError = class extends APIError {
 var InternalServerError = class extends APIError {
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
   return startsWithSchemeRegexp.test(url);
@@ -9311,7 +9343,7 @@ var safeJSON = (text) => {
   }
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/log.mjs
 var levelNumbers = {
   off: 0,
   error: 200,
@@ -9384,7 +9416,7 @@ var formatRequestDetails = (details) => {
   return details;
 };
 
-// node_modules/@stainless-api/github-internal/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/parse.mjs
 async function defaultParseResponse(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -9414,7 +9446,7 @@ async function defaultParseResponse(client, props) {
   return body;
 }
 
-// node_modules/@stainless-api/github-internal/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/core/api-promise.mjs
 var _APIPromise_client;
 var APIPromise = /* @__PURE__ */ (() => {
   class APIPromise3 extends Promise {
@@ -9478,7 +9510,7 @@ var APIPromise = /* @__PURE__ */ (() => {
   return APIPromise3;
 })();
 
-// node_modules/@stainless-api/github-internal/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/core/pagination.mjs
 var _AbstractPage_client;
 var AbstractPage = /* @__PURE__ */ (() => {
   class AbstractPage3 {
@@ -9599,7 +9631,7 @@ var HypermediaPage = class extends AbstractPage {
   }
 };
 
-// node_modules/@stainless-api/github-internal/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/headers.mjs
 var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders(headers) {
   if (!headers)
@@ -9662,7 +9694,7 @@ var buildHeaders = (newHeaders) => {
   return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/path.mjs
 function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -9717,7 +9749,7 @@ ${underline}`);
 };
 var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/comments/reactions.mjs
 var BaseReactions = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -9794,7 +9826,7 @@ var BaseReactions = /* @__PURE__ */ (() => {
 var Reactions = class extends BaseReactions {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
 var BaseComments = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -9989,7 +10021,7 @@ var Comments = /* @__PURE__ */ (() => {
   return Comments7;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/commits/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/commits/comments.mjs
 var BaseComments2 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -10084,7 +10116,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
 var Comments2 = class extends BaseComments2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
 var BaseCommits = /* @__PURE__ */ (() => {
   class BaseCommits3 extends APIResource {
     /**
@@ -10371,7 +10403,7 @@ var Commits = /* @__PURE__ */ (() => {
   return Commits3;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
 var uuid4 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -10383,13 +10415,13 @@ var uuid4 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/github-internal/version.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/version.mjs
 var VERSION = "0.15.0";
 
-// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
 function getDetectedPlatform() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -10515,7 +10547,7 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// node_modules/@stainless-api/github-internal/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -10560,7 +10592,7 @@ async function CancelReadableStream(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/github-internal/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -10570,7 +10602,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -10579,7 +10611,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -10658,7 +10690,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -10936,7 +10968,7 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/github-internal/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/uploads.mjs
 var checkFileSupport = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -10953,7 +10985,7 @@ function getName(value) {
 }
 var isAsyncIterable = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/@stainless-api/github-internal/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -11005,7 +11037,7 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/@stainless-api/github-internal/resources/advisories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/advisories.mjs
 var BaseAdvisories = /* @__PURE__ */ (() => {
   class BaseAdvisories2 extends APIResource {
     /**
@@ -11036,7 +11068,7 @@ var BaseAdvisories = /* @__PURE__ */ (() => {
 var Advisories = class extends BaseAdvisories {
 };
 
-// node_modules/@stainless-api/github-internal/resources/app-manifests.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/app-manifests.mjs
 var BaseAppManifests = /* @__PURE__ */ (() => {
   class BaseAppManifests2 extends APIResource {
     /**
@@ -11056,7 +11088,7 @@ var BaseAppManifests = /* @__PURE__ */ (() => {
 var AppManifests = class extends BaseAppManifests {
 };
 
-// node_modules/@stainless-api/github-internal/resources/applications/token.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/applications/token.mjs
 var BaseToken = /* @__PURE__ */ (() => {
   class BaseToken2 extends APIResource {
     /**
@@ -11155,7 +11187,7 @@ var BaseToken = /* @__PURE__ */ (() => {
 var Token = class extends BaseToken {
 };
 
-// node_modules/@stainless-api/github-internal/resources/applications/applications.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/applications/applications.mjs
 var BaseApplications = /* @__PURE__ */ (() => {
   class BaseApplications2 extends APIResource {
     /**
@@ -11197,7 +11229,7 @@ var Applications = /* @__PURE__ */ (() => {
   return Applications2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/apps/hook/config.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/hook/config.mjs
 var BaseConfig = /* @__PURE__ */ (() => {
   class BaseConfig4 extends APIResource {
     /**
@@ -11251,7 +11283,7 @@ var BaseConfig = /* @__PURE__ */ (() => {
 var Config = class extends BaseConfig {
 };
 
-// node_modules/@stainless-api/github-internal/resources/apps/hook/deliveries.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/hook/deliveries.mjs
 var BaseDeliveries = /* @__PURE__ */ (() => {
   class BaseDeliveries4 extends APIResource {
     /**
@@ -11320,7 +11352,7 @@ var BaseDeliveries = /* @__PURE__ */ (() => {
 var Deliveries = class extends BaseDeliveries {
 };
 
-// node_modules/@stainless-api/github-internal/resources/apps/hook/hook.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/hook/hook.mjs
 var BaseHook = /* @__PURE__ */ (() => {
   class BaseHook2 extends APIResource {
   }
@@ -11342,7 +11374,7 @@ var Hook = /* @__PURE__ */ (() => {
   return Hook2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/apps/installations/suspended.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/installations/suspended.mjs
 var BaseSuspended = /* @__PURE__ */ (() => {
   class BaseSuspended2 extends APIResource {
     /**
@@ -11395,7 +11427,7 @@ var BaseSuspended = /* @__PURE__ */ (() => {
 var Suspended = class extends BaseSuspended {
 };
 
-// node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
 var BaseInstallations = /* @__PURE__ */ (() => {
   class BaseInstallations3 extends APIResource {
     /**
@@ -11515,7 +11547,7 @@ var Installations = /* @__PURE__ */ (() => {
   return Installations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/apps/apps.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/apps/apps.mjs
 var BaseApps = /* @__PURE__ */ (() => {
   class BaseApps3 extends APIResource {
     /**
@@ -11584,7 +11616,7 @@ var Apps = /* @__PURE__ */ (() => {
   return Apps3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/assignments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/assignments.mjs
 var BaseAssignments = /* @__PURE__ */ (() => {
   class BaseAssignments2 extends APIResource {
     /**
@@ -11616,7 +11648,7 @@ var BaseAssignments = /* @__PURE__ */ (() => {
 var Assignments = class extends BaseAssignments {
 };
 
-// node_modules/@stainless-api/github-internal/resources/classrooms.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/classrooms.mjs
 var BaseClassrooms = /* @__PURE__ */ (() => {
   class BaseClassrooms2 extends APIResource {
     /**
@@ -11648,7 +11680,7 @@ var BaseClassrooms = /* @__PURE__ */ (() => {
 var Classrooms = class extends BaseClassrooms {
 };
 
-// node_modules/@stainless-api/github-internal/resources/codes-of-conduct.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/codes-of-conduct.mjs
 var BaseCodesOfConduct = /* @__PURE__ */ (() => {
   class BaseCodesOfConduct2 extends APIResource {
     /**
@@ -11670,7 +11702,7 @@ var BaseCodesOfConduct = /* @__PURE__ */ (() => {
 var CodesOfConduct = class extends BaseCodesOfConduct {
 };
 
-// node_modules/@stainless-api/github-internal/resources/emojis.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/emojis.mjs
 var BaseEmojis = /* @__PURE__ */ (() => {
   class BaseEmojis2 extends APIResource {
     /**
@@ -11686,7 +11718,7 @@ var BaseEmojis = /* @__PURE__ */ (() => {
 var Emojis = class extends BaseEmojis {
 };
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/dependabot.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/dependabot.mjs
 var BaseDependabot = /* @__PURE__ */ (() => {
   class BaseDependabot4 extends APIResource {
     /**
@@ -11724,7 +11756,7 @@ var BaseDependabot = /* @__PURE__ */ (() => {
 var Dependabot = class extends BaseDependabot {
 };
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/secret-scanning.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/secret-scanning.mjs
 var BaseSecretScanning = /* @__PURE__ */ (() => {
   class BaseSecretScanning4 extends APIResource {
     /**
@@ -11762,7 +11794,7 @@ var BaseSecretScanning = /* @__PURE__ */ (() => {
 var SecretScanning = class extends BaseSecretScanning {
 };
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/defaults.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/defaults.mjs
 var BaseDefaults = /* @__PURE__ */ (() => {
   class BaseDefaults3 extends APIResource {
     /**
@@ -11822,7 +11854,7 @@ var BaseDefaults = /* @__PURE__ */ (() => {
 var Defaults = class extends BaseDefaults {
 };
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/repositories.mjs
 var BaseRepositories = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -11855,7 +11887,7 @@ var BaseRepositories = /* @__PURE__ */ (() => {
 var Repositories = class extends BaseRepositories {
 };
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/configurations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/code-security/configurations/configurations.mjs
 var BaseConfigurations = /* @__PURE__ */ (() => {
   class BaseConfigurations3 extends APIResource {
     /**
@@ -12035,7 +12067,7 @@ var Configurations = /* @__PURE__ */ (() => {
   return Configurations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/code-security/code-security.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/code-security/code-security.mjs
 var BaseCodeSecurity = /* @__PURE__ */ (() => {
   class BaseCodeSecurity3 extends APIResource {
   }
@@ -12057,7 +12089,7 @@ var CodeSecurity = /* @__PURE__ */ (() => {
   return CodeSecurity3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/enterprises/enterprises.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/enterprises/enterprises.mjs
 var BaseEnterprises = /* @__PURE__ */ (() => {
   class BaseEnterprises2 extends APIResource {
   }
@@ -12082,7 +12114,7 @@ var Enterprises = /* @__PURE__ */ (() => {
   return Enterprises2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/events.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/events.mjs
 var BaseEvents = /* @__PURE__ */ (() => {
   class BaseEvents4 extends APIResource {
     /**
@@ -12099,7 +12131,7 @@ var BaseEvents = /* @__PURE__ */ (() => {
 var Events = class extends BaseEvents {
 };
 
-// node_modules/@stainless-api/github-internal/resources/feeds.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/feeds.mjs
 var BaseFeeds = /* @__PURE__ */ (() => {
   class BaseFeeds2 extends APIResource {
     /**
@@ -12139,7 +12171,7 @@ var BaseFeeds = /* @__PURE__ */ (() => {
 var Feeds = class extends BaseFeeds {
 };
 
-// node_modules/@stainless-api/github-internal/resources/gists/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gists/comments.mjs
 var BaseComments3 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -12267,7 +12299,7 @@ var BaseComments3 = /* @__PURE__ */ (() => {
 var Comments3 = class extends BaseComments3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/gists/forks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gists/forks.mjs
 var BaseForks = /* @__PURE__ */ (() => {
   class BaseForks3 extends APIResource {
     /**
@@ -12307,7 +12339,7 @@ var BaseForks = /* @__PURE__ */ (() => {
 var Forks = class extends BaseForks {
 };
 
-// node_modules/@stainless-api/github-internal/resources/gists/star.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gists/star.mjs
 var BaseStar = /* @__PURE__ */ (() => {
   class BaseStar2 extends APIResource {
     /**
@@ -12361,7 +12393,7 @@ var BaseStar = /* @__PURE__ */ (() => {
 var Star = class extends BaseStar {
 };
 
-// node_modules/@stainless-api/github-internal/resources/gists/gists.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gists/gists.mjs
 var BaseGists = /* @__PURE__ */ (() => {
   class BaseGists2 extends APIResource {
     /**
@@ -12563,7 +12595,7 @@ var Gists = /* @__PURE__ */ (() => {
   return Gists2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/gitignore/templates.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gitignore/templates.mjs
 var BaseTemplates = /* @__PURE__ */ (() => {
   class BaseTemplates2 extends APIResource {
     /**
@@ -12595,7 +12627,7 @@ var BaseTemplates = /* @__PURE__ */ (() => {
 var Templates = class extends BaseTemplates {
 };
 
-// node_modules/@stainless-api/github-internal/resources/gitignore/gitignore.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/gitignore/gitignore.mjs
 var BaseGitignore = /* @__PURE__ */ (() => {
   class BaseGitignore2 extends APIResource {
   }
@@ -12614,7 +12646,7 @@ var Gitignore = /* @__PURE__ */ (() => {
   return Gitignore2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/installation.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/installation.mjs
 var BaseInstallation = /* @__PURE__ */ (() => {
   class BaseInstallation2 extends APIResource {
     /**
@@ -12646,7 +12678,7 @@ var BaseInstallation = /* @__PURE__ */ (() => {
 var Installation = class extends BaseInstallation {
 };
 
-// node_modules/@stainless-api/github-internal/resources/issues.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/issues.mjs
 var BaseIssues = /* @__PURE__ */ (() => {
   class BaseIssues3 extends APIResource {
     /**
@@ -12688,7 +12720,7 @@ var BaseIssues = /* @__PURE__ */ (() => {
 var Issues = class extends BaseIssues {
 };
 
-// node_modules/@stainless-api/github-internal/resources/licenses.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/licenses.mjs
 var BaseLicenses = /* @__PURE__ */ (() => {
   class BaseLicenses2 extends APIResource {
     /**
@@ -12712,7 +12744,7 @@ var BaseLicenses = /* @__PURE__ */ (() => {
 var Licenses = class extends BaseLicenses {
 };
 
-// node_modules/@stainless-api/github-internal/resources/markdown.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/markdown.mjs
 var BaseMarkdown = /* @__PURE__ */ (() => {
   class BaseMarkdown2 extends APIResource {
     /**
@@ -12761,7 +12793,7 @@ var BaseMarkdown = /* @__PURE__ */ (() => {
 var Markdown = class extends BaseMarkdown {
 };
 
-// node_modules/@stainless-api/github-internal/resources/marketplace-listing/stubbed.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/marketplace-listing/stubbed.mjs
 var BaseStubbed = /* @__PURE__ */ (() => {
   class BaseStubbed2 extends APIResource {
     /**
@@ -12817,7 +12849,7 @@ var BaseStubbed = /* @__PURE__ */ (() => {
 var Stubbed = class extends BaseStubbed {
 };
 
-// node_modules/@stainless-api/github-internal/resources/marketplace-listing/marketplace-listing.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/marketplace-listing/marketplace-listing.mjs
 var BaseMarketplaceListing = /* @__PURE__ */ (() => {
   class BaseMarketplaceListing2 extends APIResource {
     /**
@@ -12884,7 +12916,7 @@ var MarketplaceListing = /* @__PURE__ */ (() => {
   return MarketplaceListing2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/meta.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/meta.mjs
 var BaseMeta = /* @__PURE__ */ (() => {
   class BaseMeta2 extends APIResource {
     /**
@@ -12911,7 +12943,7 @@ var BaseMeta = /* @__PURE__ */ (() => {
 var Meta = class extends BaseMeta {
 };
 
-// node_modules/@stainless-api/github-internal/resources/networks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/networks.mjs
 var BaseNetworks = /* @__PURE__ */ (() => {
   class BaseNetworks2 extends APIResource {
     /**
@@ -12929,7 +12961,7 @@ var BaseNetworks = /* @__PURE__ */ (() => {
 var Networks = class extends BaseNetworks {
 };
 
-// node_modules/@stainless-api/github-internal/resources/notifications/threads/subscription.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/notifications/threads/subscription.mjs
 var BaseSubscription = /* @__PURE__ */ (() => {
   class BaseSubscription3 extends APIResource {
     /**
@@ -13004,7 +13036,7 @@ var BaseSubscription = /* @__PURE__ */ (() => {
 var Subscription = class extends BaseSubscription {
 };
 
-// node_modules/@stainless-api/github-internal/resources/notifications/threads/threads.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/notifications/threads/threads.mjs
 var BaseThreads = /* @__PURE__ */ (() => {
   class BaseThreads2 extends APIResource {
     /**
@@ -13071,7 +13103,7 @@ var Threads = /* @__PURE__ */ (() => {
   return Threads2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/notifications/notifications.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/notifications/notifications.mjs
 var BaseNotifications = /* @__PURE__ */ (() => {
   class BaseNotifications3 extends APIResource {
     /**
@@ -13127,7 +13159,7 @@ var Notifications = /* @__PURE__ */ (() => {
   return Notifications3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/octocat.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/octocat.mjs
 var BaseOctocat = /* @__PURE__ */ (() => {
   class BaseOctocat2 extends APIResource {
     /**
@@ -13148,7 +13180,7 @@ var BaseOctocat = /* @__PURE__ */ (() => {
 var Octocat = class extends BaseOctocat {
 };
 
-// node_modules/@stainless-api/github-internal/resources/organizations/settings/billing.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/organizations/settings/billing.mjs
 var BaseBilling = /* @__PURE__ */ (() => {
   class BaseBilling5 extends APIResource {
     /**
@@ -13174,7 +13206,7 @@ var BaseBilling = /* @__PURE__ */ (() => {
 var Billing = class extends BaseBilling {
 };
 
-// node_modules/@stainless-api/github-internal/resources/organizations/settings/settings.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/organizations/settings/settings.mjs
 var BaseSettings = /* @__PURE__ */ (() => {
   class BaseSettings4 extends APIResource {
   }
@@ -13196,7 +13228,7 @@ var Settings = /* @__PURE__ */ (() => {
   return Settings4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/organizations/organizations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/organizations/organizations.mjs
 var BaseOrganizations = /* @__PURE__ */ (() => {
   class BaseOrganizations2 extends APIResource {
     /**
@@ -13225,7 +13257,7 @@ var Organizations = /* @__PURE__ */ (() => {
   return Organizations2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/blocks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/blocks.mjs
 var BaseBlocks = /* @__PURE__ */ (() => {
   class BaseBlocks3 extends APIResource {
     /**
@@ -13304,7 +13336,7 @@ var BaseBlocks = /* @__PURE__ */ (() => {
 var Blocks = class extends BaseBlocks {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/code-scanning.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/code-scanning.mjs
 var BaseCodeScanning = /* @__PURE__ */ (() => {
   class BaseCodeScanning3 extends APIResource {
     /**
@@ -13344,7 +13376,7 @@ var BaseCodeScanning = /* @__PURE__ */ (() => {
 var CodeScanning = class extends BaseCodeScanning {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/docker.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/docker.mjs
 var BaseDocker = /* @__PURE__ */ (() => {
   class BaseDocker3 extends APIResource {
     /**
@@ -13370,7 +13402,7 @@ var BaseDocker = /* @__PURE__ */ (() => {
 var Docker = class extends BaseDocker {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/interaction-limits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/interaction-limits.mjs
 var BaseInteractionLimits = /* @__PURE__ */ (() => {
   class BaseInteractionLimits4 extends APIResource {
     /**
@@ -13435,7 +13467,7 @@ var BaseInteractionLimits = /* @__PURE__ */ (() => {
 var InteractionLimits = class extends BaseInteractionLimits {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/invitations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/invitations.mjs
 var BaseInvitations = /* @__PURE__ */ (() => {
   class BaseInvitations3 extends APIResource {
     /**
@@ -13533,7 +13565,7 @@ var BaseInvitations = /* @__PURE__ */ (() => {
 var Invitations = class extends BaseInvitations {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/memberships.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/memberships.mjs
 var BaseMemberships = /* @__PURE__ */ (() => {
   class BaseMemberships4 extends APIResource {
     /**
@@ -13625,7 +13657,7 @@ var BaseMemberships = /* @__PURE__ */ (() => {
 var Memberships = class extends BaseMemberships {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/outside-collaborators.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/outside-collaborators.mjs
 var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
   class BaseOutsideCollaborators2 extends APIResource {
     /**
@@ -13695,7 +13727,7 @@ var BaseOutsideCollaborators = /* @__PURE__ */ (() => {
 var OutsideCollaborators = class extends BaseOutsideCollaborators {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/personal-access-token-requests.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/personal-access-token-requests.mjs
 var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
   class BasePersonalAccessTokenRequests2 extends APIResource {
     /**
@@ -13797,7 +13829,7 @@ var BasePersonalAccessTokenRequests = /* @__PURE__ */ (() => {
 var PersonalAccessTokenRequests = class extends BasePersonalAccessTokenRequests {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/personal-access-tokens.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/personal-access-tokens.mjs
 var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
   class BasePersonalAccessTokens2 extends APIResource {
     /**
@@ -13891,7 +13923,7 @@ var BasePersonalAccessTokens = /* @__PURE__ */ (() => {
 var PersonalAccessTokens = class extends BasePersonalAccessTokens {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/private-registries.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/private-registries.mjs
 var BasePrivateRegistries = /* @__PURE__ */ (() => {
   class BasePrivateRegistries2 extends APIResource {
     /**
@@ -14030,7 +14062,7 @@ var BasePrivateRegistries = /* @__PURE__ */ (() => {
 var PrivateRegistries = class extends BasePrivateRegistries {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/public-members.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/public-members.mjs
 var BasePublicMembers = /* @__PURE__ */ (() => {
   class BasePublicMembers2 extends APIResource {
     /**
@@ -14120,7 +14152,7 @@ var BasePublicMembers = /* @__PURE__ */ (() => {
 var PublicMembers = class extends BasePublicMembers {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/secret-scanning.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/secret-scanning.mjs
 var BaseSecretScanning2 = /* @__PURE__ */ (() => {
   class BaseSecretScanning4 extends APIResource {
     /**
@@ -14157,7 +14189,7 @@ var BaseSecretScanning2 = /* @__PURE__ */ (() => {
 var SecretScanning2 = class extends BaseSecretScanning2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/cache.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/cache.mjs
 var BaseCache = /* @__PURE__ */ (() => {
   class BaseCache3 extends APIResource {
     /**
@@ -14207,7 +14239,7 @@ var BaseCache = /* @__PURE__ */ (() => {
 var Cache = class extends BaseCache {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/images.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/images.mjs
 var BaseImages = /* @__PURE__ */ (() => {
   class BaseImages2 extends APIResource {
     /**
@@ -14252,7 +14284,7 @@ var BaseImages = /* @__PURE__ */ (() => {
 var Images = class extends BaseImages {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/hosted-runners.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/hosted-runners/hosted-runners.mjs
 var BaseHostedRunners = /* @__PURE__ */ (() => {
   class BaseHostedRunners2 extends APIResource {
     /**
@@ -14410,7 +14442,7 @@ var HostedRunners = /* @__PURE__ */ (() => {
   return HostedRunners2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/sub.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/sub.mjs
 var BaseSub = /* @__PURE__ */ (() => {
   class BaseSub3 extends APIResource {
     /**
@@ -14456,7 +14488,7 @@ var BaseSub = /* @__PURE__ */ (() => {
 var Sub = class extends BaseSub {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/customization.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/customization/customization.mjs
 var BaseCustomization = /* @__PURE__ */ (() => {
   class BaseCustomization3 extends APIResource {
   }
@@ -14480,7 +14512,7 @@ var Customization = /* @__PURE__ */ (() => {
   return Customization3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/oidc.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/oidc/oidc.mjs
 var BaseOidc = /* @__PURE__ */ (() => {
   class BaseOidc3 extends APIResource {
   }
@@ -14503,7 +14535,7 @@ var Oidc = /* @__PURE__ */ (() => {
   return Oidc3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/repositories.mjs
 var BaseRepositories2 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -14614,7 +14646,7 @@ var BaseRepositories2 = /* @__PURE__ */ (() => {
 var Repositories2 = class extends BaseRepositories2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/selected-actions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/selected-actions.mjs
 var BaseSelectedActions = /* @__PURE__ */ (() => {
   class BaseSelectedActions3 extends APIResource {
     /**
@@ -14671,7 +14703,7 @@ var BaseSelectedActions = /* @__PURE__ */ (() => {
 var SelectedActions = class extends BaseSelectedActions {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/workflow.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/workflow.mjs
 var BaseWorkflow = /* @__PURE__ */ (() => {
   class BaseWorkflow3 extends APIResource {
     /**
@@ -14733,7 +14765,7 @@ var BaseWorkflow = /* @__PURE__ */ (() => {
 var Workflow = class extends BaseWorkflow {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/permissions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/permissions/permissions.mjs
 var BasePermissions = /* @__PURE__ */ (() => {
   class BasePermissions3 extends APIResource {
     /**
@@ -14800,7 +14832,7 @@ var Permissions = /* @__PURE__ */ (() => {
   return Permissions3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/repositories.mjs
 var BaseRepositories3 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -14898,7 +14930,7 @@ var BaseRepositories3 = /* @__PURE__ */ (() => {
 var Repositories3 = class extends BaseRepositories3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runners.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runners.mjs
 var BaseRunners = /* @__PURE__ */ (() => {
   class BaseRunners4 extends APIResource {
     /**
@@ -14997,7 +15029,7 @@ var BaseRunners = /* @__PURE__ */ (() => {
 var Runners = class extends BaseRunners {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runner-groups.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/runner-groups/runner-groups.mjs
 var BaseRunnerGroups = /* @__PURE__ */ (() => {
   class BaseRunnerGroups2 extends APIResource {
     /**
@@ -15143,7 +15175,7 @@ var RunnerGroups = /* @__PURE__ */ (() => {
   return RunnerGroups2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/labels.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/labels.mjs
 var BaseLabels = /* @__PURE__ */ (() => {
   class BaseLabels5 extends APIResource {
     /**
@@ -15276,7 +15308,7 @@ var BaseLabels = /* @__PURE__ */ (() => {
 var Labels = class extends BaseLabels {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/runners.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/runners/runners.mjs
 var BaseRunners2 = /* @__PURE__ */ (() => {
   class BaseRunners4 extends APIResource {
     /**
@@ -15471,7 +15503,7 @@ var Runners2 = /* @__PURE__ */ (() => {
   return Runners4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/repositories.mjs
 var BaseRepositories4 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -15593,7 +15625,7 @@ var BaseRepositories4 = /* @__PURE__ */ (() => {
 var Repositories4 = class extends BaseRepositories4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/secrets/secrets.mjs
 var BaseSecrets = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -15738,7 +15770,7 @@ var Secrets = /* @__PURE__ */ (() => {
   return Secrets9;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/repositories.mjs
 var BaseRepositories5 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -15859,7 +15891,7 @@ var BaseRepositories5 = /* @__PURE__ */ (() => {
 var Repositories5 = class extends BaseRepositories5 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/variables.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/variables/variables.mjs
 var BaseVariables = /* @__PURE__ */ (() => {
   class BaseVariables4 extends APIResource {
     /**
@@ -16005,7 +16037,7 @@ var Variables = /* @__PURE__ */ (() => {
   return Variables4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/actions/actions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/actions/actions.mjs
 var BaseActions = /* @__PURE__ */ (() => {
   class BaseActions3 extends APIResource {
   }
@@ -16045,7 +16077,7 @@ var Actions = /* @__PURE__ */ (() => {
   return Actions3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/defaults.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/defaults.mjs
 var BaseDefaults2 = /* @__PURE__ */ (() => {
   class BaseDefaults3 extends APIResource {
     /**
@@ -16104,7 +16136,7 @@ var BaseDefaults2 = /* @__PURE__ */ (() => {
 var Defaults2 = class extends BaseDefaults2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/configurations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/code-security/configurations/configurations.mjs
 var BaseConfigurations2 = /* @__PURE__ */ (() => {
   class BaseConfigurations3 extends APIResource {
     /**
@@ -16331,7 +16363,7 @@ var Configurations2 = /* @__PURE__ */ (() => {
   return Configurations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/code-security/code-security.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/code-security/code-security.mjs
 var BaseCodeSecurity2 = /* @__PURE__ */ (() => {
   class BaseCodeSecurity3 extends APIResource {
   }
@@ -16353,7 +16385,7 @@ var CodeSecurity2 = /* @__PURE__ */ (() => {
   return CodeSecurity3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/repositories.mjs
 var BaseRepositories6 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -16457,7 +16489,7 @@ var BaseRepositories6 = /* @__PURE__ */ (() => {
 var Repositories6 = class extends BaseRepositories6 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/codespaces/secrets/secrets.mjs
 var BaseSecrets2 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -16580,7 +16612,7 @@ var Secrets2 = /* @__PURE__ */ (() => {
   return Secrets9;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/codespaces/codespaces.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/codespaces/codespaces.mjs
 var BaseCodespaces = /* @__PURE__ */ (() => {
   class BaseCodespaces5 extends APIResource {
     /**
@@ -16616,7 +16648,7 @@ var Codespaces = /* @__PURE__ */ (() => {
   return Codespaces5;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-teams.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-teams.mjs
 var BaseSelectedTeams = /* @__PURE__ */ (() => {
   class BaseSelectedTeams2 extends APIResource {
     /**
@@ -16699,7 +16731,7 @@ var BaseSelectedTeams = /* @__PURE__ */ (() => {
 var SelectedTeams = class extends BaseSelectedTeams {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-users.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/selected-users.mjs
 var BaseSelectedUsers = /* @__PURE__ */ (() => {
   class BaseSelectedUsers2 extends APIResource {
     /**
@@ -16789,7 +16821,7 @@ var BaseSelectedUsers = /* @__PURE__ */ (() => {
 var SelectedUsers = class extends BaseSelectedUsers {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/billing.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/copilot/billing/billing.mjs
 var BaseBilling2 = /* @__PURE__ */ (() => {
   class BaseBilling5 extends APIResource {
     /**
@@ -16864,7 +16896,7 @@ var Billing2 = /* @__PURE__ */ (() => {
   return Billing5;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/copilot/copilot.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/copilot/copilot.mjs
 var BaseCopilot = /* @__PURE__ */ (() => {
   class BaseCopilot3 extends APIResource {
     /**
@@ -16914,7 +16946,7 @@ var Copilot = /* @__PURE__ */ (() => {
   return Copilot3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/repositories.mjs
 var BaseRepositories7 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -17016,7 +17048,7 @@ var BaseRepositories7 = /* @__PURE__ */ (() => {
 var Repositories7 = class extends BaseRepositories7 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/dependabot/secrets/secrets.mjs
 var BaseSecrets3 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -17140,7 +17172,7 @@ var Secrets3 = /* @__PURE__ */ (() => {
   return Secrets9;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/dependabot/dependabot.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/dependabot/dependabot.mjs
 var BaseDependabot2 = /* @__PURE__ */ (() => {
   class BaseDependabot4 extends APIResource {
     /**
@@ -17182,7 +17214,7 @@ var Dependabot2 = /* @__PURE__ */ (() => {
   return Dependabot4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/hooks/config.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/hooks/config.mjs
 var BaseConfig2 = /* @__PURE__ */ (() => {
   class BaseConfig4 extends APIResource {
     /**
@@ -17246,7 +17278,7 @@ var BaseConfig2 = /* @__PURE__ */ (() => {
 var Config2 = class extends BaseConfig2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/hooks/deliveries.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/hooks/deliveries.mjs
 var BaseDeliveries2 = /* @__PURE__ */ (() => {
   class BaseDeliveries4 extends APIResource {
     /**
@@ -17329,7 +17361,7 @@ var BaseDeliveries2 = /* @__PURE__ */ (() => {
 var Deliveries2 = class extends BaseDeliveries2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/hooks/hooks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/hooks/hooks.mjs
 var BaseHooks = /* @__PURE__ */ (() => {
   class BaseHooks3 extends APIResource {
     /**
@@ -17496,7 +17528,7 @@ var Hooks = /* @__PURE__ */ (() => {
   return Hooks3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/insights/api/summary-stats.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/insights/api/summary-stats.mjs
 var BaseSummaryStats = /* @__PURE__ */ (() => {
   class BaseSummaryStats2 extends APIResource {
     /**
@@ -17571,7 +17603,7 @@ var BaseSummaryStats = /* @__PURE__ */ (() => {
 var SummaryStats = class extends BaseSummaryStats {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/insights/api/time-stats.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/insights/api/time-stats.mjs
 var BaseTimeStats = /* @__PURE__ */ (() => {
   class BaseTimeStats2 extends APIResource {
     /**
@@ -17654,7 +17686,7 @@ var BaseTimeStats = /* @__PURE__ */ (() => {
 var TimeStats = class extends BaseTimeStats {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/insights/api/api.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/insights/api/api.mjs
 var BaseAPI = /* @__PURE__ */ (() => {
   class BaseAPI2 extends APIResource {
     /**
@@ -17733,7 +17765,7 @@ var API = /* @__PURE__ */ (() => {
   return API2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/insights/insights.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/insights/insights.mjs
 var BaseInsights = /* @__PURE__ */ (() => {
   class BaseInsights2 extends APIResource {
   }
@@ -17752,7 +17784,7 @@ var Insights = /* @__PURE__ */ (() => {
   return Insights2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/members/codespaces.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/members/codespaces.mjs
 var BaseCodespaces2 = /* @__PURE__ */ (() => {
   class BaseCodespaces5 extends APIResource {
     /**
@@ -17822,7 +17854,7 @@ var BaseCodespaces2 = /* @__PURE__ */ (() => {
 var Codespaces2 = class extends BaseCodespaces2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/members/members.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/members/members.mjs
 var BaseMembers = /* @__PURE__ */ (() => {
   class BaseMembers2 extends APIResource {
     /**
@@ -17932,7 +17964,7 @@ var Members = /* @__PURE__ */ (() => {
   return Members2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/migrations/archive.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/migrations/archive.mjs
 var BaseArchive = /* @__PURE__ */ (() => {
   class BaseArchive3 extends APIResource {
     /**
@@ -17981,7 +18013,7 @@ var BaseArchive = /* @__PURE__ */ (() => {
 var Archive = class extends BaseArchive {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/migrations/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/migrations/repos.mjs
 var BaseRepos = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     /**
@@ -18016,7 +18048,7 @@ var BaseRepos = /* @__PURE__ */ (() => {
 var Repos = class extends BaseRepos {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/migrations/migrations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/migrations/migrations.mjs
 var BaseMigrations = /* @__PURE__ */ (() => {
   class BaseMigrations3 extends APIResource {
     /**
@@ -18119,7 +18151,7 @@ var Migrations = /* @__PURE__ */ (() => {
   return Migrations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/teams.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/teams.mjs
 var BaseTeams = /* @__PURE__ */ (() => {
   class BaseTeams5 extends APIResource {
     /**
@@ -18236,7 +18268,7 @@ var BaseTeams = /* @__PURE__ */ (() => {
 var Teams = class extends BaseTeams {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/users.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/users.mjs
 var BaseUsers = /* @__PURE__ */ (() => {
   class BaseUsers4 extends APIResource {
     /**
@@ -18353,7 +18385,7 @@ var BaseUsers = /* @__PURE__ */ (() => {
 var Users = class extends BaseUsers {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/organization-roles.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/organization-roles/organization-roles.mjs
 var BaseOrganizationRoles = /* @__PURE__ */ (() => {
   class BaseOrganizationRoles2 extends APIResource {
     /**
@@ -18427,7 +18459,7 @@ var OrganizationRoles = /* @__PURE__ */ (() => {
   return OrganizationRoles2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/packages/versions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/packages/versions.mjs
 var BaseVersions = /* @__PURE__ */ (() => {
   class BaseVersions4 extends APIResource {
     /**
@@ -18548,7 +18580,7 @@ var BaseVersions = /* @__PURE__ */ (() => {
 var Versions = class extends BaseVersions {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/packages/packages.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/packages/packages.mjs
 var BasePackages = /* @__PURE__ */ (() => {
   class BasePackages3 extends APIResource {
     /**
@@ -18678,7 +18710,7 @@ var Packages = /* @__PURE__ */ (() => {
   return Packages3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/properties/schema.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/properties/schema.mjs
 var BaseSchema = /* @__PURE__ */ (() => {
   class BaseSchema2 extends APIResource {
     /**
@@ -18821,7 +18853,7 @@ var BaseSchema = /* @__PURE__ */ (() => {
 var Schema = class extends BaseSchema {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/properties/values.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/properties/values.mjs
 var BaseValues = /* @__PURE__ */ (() => {
   class BaseValues3 extends APIResource {
     /**
@@ -18890,7 +18922,7 @@ var BaseValues = /* @__PURE__ */ (() => {
 var Values = class extends BaseValues {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/properties/properties.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/properties/properties.mjs
 var BaseProperties = /* @__PURE__ */ (() => {
   class BaseProperties3 extends APIResource {
   }
@@ -18915,7 +18947,7 @@ var Properties = /* @__PURE__ */ (() => {
   return Properties3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/rulesets/history.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/rulesets/history.mjs
 var BaseHistory = /* @__PURE__ */ (() => {
   class BaseHistory3 extends APIResource {
     /**
@@ -18962,7 +18994,7 @@ var BaseHistory = /* @__PURE__ */ (() => {
 var History = class extends BaseHistory {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rule-suites.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rule-suites.mjs
 var BaseRuleSuites = /* @__PURE__ */ (() => {
   class BaseRuleSuites3 extends APIResource {
     /**
@@ -19011,7 +19043,7 @@ var BaseRuleSuites = /* @__PURE__ */ (() => {
 var RuleSuites = class extends BaseRuleSuites {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rulesets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/rulesets/rulesets.mjs
 var BaseRulesets = /* @__PURE__ */ (() => {
   class BaseRulesets3 extends APIResource {
     /**
@@ -19139,7 +19171,7 @@ var Rulesets = /* @__PURE__ */ (() => {
   return Rulesets3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/settings/billing.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/settings/billing.mjs
 var BaseBilling3 = /* @__PURE__ */ (() => {
   class BaseBilling5 extends APIResource {
     /**
@@ -19216,7 +19248,7 @@ var BaseBilling3 = /* @__PURE__ */ (() => {
 var Billing3 = class extends BaseBilling3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/settings/network-configurations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/settings/network-configurations.mjs
 var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
   class BaseNetworkConfigurations2 extends APIResource {
     /**
@@ -19336,7 +19368,7 @@ var BaseNetworkConfigurations = /* @__PURE__ */ (() => {
 var NetworkConfigurations = class extends BaseNetworkConfigurations {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/settings/settings.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/settings/settings.mjs
 var BaseSettings2 = /* @__PURE__ */ (() => {
   class BaseSettings4 extends APIResource {
     /**
@@ -19377,7 +19409,7 @@ var Settings2 = /* @__PURE__ */ (() => {
   return Settings4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/copilot.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/copilot.mjs
 var BaseCopilot2 = /* @__PURE__ */ (() => {
   class BaseCopilot3 extends APIResource {
     /**
@@ -19425,7 +19457,7 @@ var BaseCopilot2 = /* @__PURE__ */ (() => {
 var Copilot2 = class extends BaseCopilot2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/memberships.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/memberships.mjs
 var BaseMemberships2 = /* @__PURE__ */ (() => {
   class BaseMemberships4 extends APIResource {
     /**
@@ -19553,7 +19585,7 @@ var BaseMemberships2 = /* @__PURE__ */ (() => {
 var Memberships2 = class extends BaseMemberships2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/repos.mjs
 var BaseRepos2 = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     /**
@@ -19681,7 +19713,7 @@ var BaseRepos2 = /* @__PURE__ */ (() => {
 var Repos2 = class extends BaseRepos2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/reactions.mjs
 var BaseReactions2 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -19772,7 +19804,7 @@ var BaseReactions2 = /* @__PURE__ */ (() => {
 var Reactions2 = class extends BaseReactions2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/reactions.mjs
 var BaseReactions3 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -19870,7 +19902,7 @@ var BaseReactions3 = /* @__PURE__ */ (() => {
 var Reactions3 = class extends BaseReactions3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/comments/comments.mjs
 var BaseComments4 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -20021,7 +20053,7 @@ var Comments4 = /* @__PURE__ */ (() => {
   return Comments7;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/discussions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/discussions/discussions.mjs
 var BaseDiscussions = /* @__PURE__ */ (() => {
   class BaseDiscussions2 extends APIResource {
     /**
@@ -20175,7 +20207,7 @@ var Discussions = /* @__PURE__ */ (() => {
   return Discussions2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/teams/teams.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/teams/teams.mjs
 var BaseTeams2 = /* @__PURE__ */ (() => {
   class BaseTeams5 extends APIResource {
     /**
@@ -20377,7 +20409,7 @@ var Teams2 = /* @__PURE__ */ (() => {
   return Teams5;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
 var BaseOrgs = /* @__PURE__ */ (() => {
   class BaseOrgs3 extends APIResource {
     /**
@@ -20723,7 +20755,7 @@ var Orgs = /* @__PURE__ */ (() => {
   return Orgs4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/rate-limit.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/rate-limit.mjs
 var BaseRateLimitResource = /* @__PURE__ */ (() => {
   class BaseRateLimitResource2 extends APIResource {
     /**
@@ -20781,7 +20813,7 @@ var BaseRateLimitResource = /* @__PURE__ */ (() => {
 var RateLimitResource = class extends BaseRateLimitResource {
 };
 
-// node_modules/@stainless-api/github-internal/resources/search.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/search.mjs
 var BaseSearch = /* @__PURE__ */ (() => {
   class BaseSearch2 extends APIResource {
     /**
@@ -20956,7 +20988,7 @@ var BaseSearch = /* @__PURE__ */ (() => {
 var Search = class extends BaseSearch {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/assignees.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/assignees.mjs
 var BaseAssignees = /* @__PURE__ */ (() => {
   class BaseAssignees3 extends APIResource {
     /**
@@ -21011,7 +21043,7 @@ var BaseAssignees = /* @__PURE__ */ (() => {
 var Assignees = class extends BaseAssignees {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/attestations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/attestations.mjs
 var BaseAttestations = /* @__PURE__ */ (() => {
   class BaseAttestations2 extends APIResource {
     /**
@@ -21080,7 +21112,7 @@ var BaseAttestations = /* @__PURE__ */ (() => {
 var Attestations = class extends BaseAttestations {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/autolinks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/autolinks.mjs
 var BaseAutolinks = /* @__PURE__ */ (() => {
   class BaseAutolinks2 extends APIResource {
     /**
@@ -21167,7 +21199,7 @@ var BaseAutolinks = /* @__PURE__ */ (() => {
 var Autolinks = class extends BaseAutolinks {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/automated-security-fixes.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/automated-security-fixes.mjs
 var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
   class BaseAutomatedSecurityFixes2 extends APIResource {
     /**
@@ -21239,7 +21271,7 @@ var BaseAutomatedSecurityFixes = /* @__PURE__ */ (() => {
 var AutomatedSecurityFixes = class extends BaseAutomatedSecurityFixes {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/check-runs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/check-runs.mjs
 var BaseCheckRuns = /* @__PURE__ */ (() => {
   class BaseCheckRuns2 extends APIResource {
     /**
@@ -21399,7 +21431,7 @@ var BaseCheckRuns = /* @__PURE__ */ (() => {
 var CheckRuns = class extends BaseCheckRuns {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/check-suites.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/check-suites.mjs
 var BaseCheckSuites = /* @__PURE__ */ (() => {
   class BaseCheckSuites2 extends APIResource {
     /**
@@ -21529,7 +21561,7 @@ var BaseCheckSuites = /* @__PURE__ */ (() => {
 var CheckSuites = class extends BaseCheckSuites {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/codeowners.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/codeowners.mjs
 var BaseCodeowners = /* @__PURE__ */ (() => {
   class BaseCodeowners2 extends APIResource {
     /**
@@ -21562,7 +21594,7 @@ var BaseCodeowners = /* @__PURE__ */ (() => {
 var Codeowners = class extends BaseCodeowners {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/collaborators.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/collaborators.mjs
 var BaseCollaborators = /* @__PURE__ */ (() => {
   class BaseCollaborators2 extends APIResource {
     /**
@@ -21785,7 +21817,7 @@ var BaseCollaborators = /* @__PURE__ */ (() => {
 var Collaborators = class extends BaseCollaborators {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/community.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/community.mjs
 var BaseCommunity = /* @__PURE__ */ (() => {
   class BaseCommunity2 extends APIResource {
     /**
@@ -21825,7 +21857,7 @@ var BaseCommunity = /* @__PURE__ */ (() => {
 var Community = class extends BaseCommunity {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/contents.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/contents.mjs
 var BaseContents = /* @__PURE__ */ (() => {
   class BaseContents2 extends APIResource {
     /**
@@ -21977,7 +22009,7 @@ var BaseContents = /* @__PURE__ */ (() => {
 var Contents = class extends BaseContents {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/contributors.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/contributors.mjs
 var BaseContributors = /* @__PURE__ */ (() => {
   class BaseContributors2 extends APIResource {
     /**
@@ -22019,7 +22051,7 @@ var BaseContributors = /* @__PURE__ */ (() => {
 var Contributors = class extends BaseContributors {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/dependency-graph.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/dependency-graph.mjs
 var BaseDependencyGraph = /* @__PURE__ */ (() => {
   class BaseDependencyGraph2 extends APIResource {
     /**
@@ -22101,7 +22133,7 @@ var BaseDependencyGraph = /* @__PURE__ */ (() => {
 var DependencyGraph = class extends BaseDependencyGraph {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/forks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/forks.mjs
 var BaseForks2 = /* @__PURE__ */ (() => {
   class BaseForks3 extends APIResource {
     /**
@@ -22155,7 +22187,7 @@ var BaseForks2 = /* @__PURE__ */ (() => {
 var Forks2 = class extends BaseForks2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/interaction-limits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/interaction-limits.mjs
 var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
   class BaseInteractionLimits4 extends APIResource {
     /**
@@ -22230,7 +22262,7 @@ var BaseInteractionLimits2 = /* @__PURE__ */ (() => {
 var InteractionLimits2 = class extends BaseInteractionLimits2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/invitations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/invitations.mjs
 var BaseInvitations2 = /* @__PURE__ */ (() => {
   class BaseInvitations3 extends APIResource {
     /**
@@ -22297,7 +22329,7 @@ var BaseInvitations2 = /* @__PURE__ */ (() => {
 var Invitations2 = class extends BaseInvitations2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/keys.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/keys.mjs
 var BaseKeys = /* @__PURE__ */ (() => {
   class BaseKeys3 extends APIResource {
     /**
@@ -22380,7 +22412,7 @@ var BaseKeys = /* @__PURE__ */ (() => {
 var Keys = class extends BaseKeys {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/labels.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/labels.mjs
 var BaseLabels2 = /* @__PURE__ */ (() => {
   class BaseLabels5 extends APIResource {
     /**
@@ -22481,7 +22513,7 @@ var BaseLabels2 = /* @__PURE__ */ (() => {
 var Labels2 = class extends BaseLabels2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/languages.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/languages.mjs
 var BaseLanguages = /* @__PURE__ */ (() => {
   class BaseLanguages2 extends APIResource {
     /**
@@ -22510,7 +22542,7 @@ var BaseLanguages = /* @__PURE__ */ (() => {
 var Languages = class extends BaseLanguages {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/milestones.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/milestones.mjs
 var BaseMilestones = /* @__PURE__ */ (() => {
   class BaseMilestones2 extends APIResource {
     /**
@@ -22632,7 +22664,7 @@ var BaseMilestones = /* @__PURE__ */ (() => {
 var Milestones = class extends BaseMilestones {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/notifications.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/notifications.mjs
 var BaseNotifications2 = /* @__PURE__ */ (() => {
   class BaseNotifications3 extends APIResource {
     /**
@@ -22685,7 +22717,7 @@ var BaseNotifications2 = /* @__PURE__ */ (() => {
 var Notifications2 = class extends BaseNotifications2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/private-vulnerability-reporting.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/private-vulnerability-reporting.mjs
 var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
   class BasePrivateVulnerabilityReporting2 extends APIResource {
     /**
@@ -22755,7 +22787,7 @@ var BasePrivateVulnerabilityReporting = /* @__PURE__ */ (() => {
 var PrivateVulnerabilityReporting = class extends BasePrivateVulnerabilityReporting {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/readme.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/readme.mjs
 var BaseReadme = /* @__PURE__ */ (() => {
   class BaseReadme2 extends APIResource {
     /**
@@ -22816,7 +22848,7 @@ var BaseReadme = /* @__PURE__ */ (() => {
 var Readme = class extends BaseReadme {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/rules.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/rules.mjs
 var BaseRules = /* @__PURE__ */ (() => {
   class BaseRules2 extends APIResource {
     /**
@@ -22845,7 +22877,7 @@ var BaseRules = /* @__PURE__ */ (() => {
 var Rules = class extends BaseRules {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/security-advisories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/security-advisories.mjs
 var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
   class BaseSecurityAdvisories2 extends APIResource {
     /**
@@ -23058,7 +23090,7 @@ var BaseSecurityAdvisories = /* @__PURE__ */ (() => {
 var SecurityAdvisories = class extends BaseSecurityAdvisories {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/stats.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/stats.mjs
 var BaseStats = /* @__PURE__ */ (() => {
   class BaseStats2 extends APIResource {
     /**
@@ -23174,7 +23206,7 @@ var BaseStats = /* @__PURE__ */ (() => {
 var Stats = class extends BaseStats {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/subscription.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/subscription.mjs
 var BaseSubscription2 = /* @__PURE__ */ (() => {
   class BaseSubscription3 extends APIResource {
     /**
@@ -23243,7 +23275,7 @@ var BaseSubscription2 = /* @__PURE__ */ (() => {
 var Subscription2 = class extends BaseSubscription2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/tags.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/tags.mjs
 var BaseTags = /* @__PURE__ */ (() => {
   class BaseTags3 extends APIResource {
     /**
@@ -23274,7 +23306,7 @@ var BaseTags = /* @__PURE__ */ (() => {
 var Tags = class extends BaseTags {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/teams.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/teams.mjs
 var BaseTeams3 = /* @__PURE__ */ (() => {
   class BaseTeams5 extends APIResource {
     /**
@@ -23313,7 +23345,7 @@ var BaseTeams3 = /* @__PURE__ */ (() => {
 var Teams3 = class extends BaseTeams3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/topics.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/topics.mjs
 var BaseTopics = /* @__PURE__ */ (() => {
   class BaseTopics2 extends APIResource {
     /**
@@ -23354,7 +23386,7 @@ var BaseTopics = /* @__PURE__ */ (() => {
 var Topics = class extends BaseTopics {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/tory-invitations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/tory-invitations.mjs
 var BaseToryInvitations = /* @__PURE__ */ (() => {
   class BaseToryInvitations2 extends APIResource {
     /**
@@ -23413,7 +23445,7 @@ var BaseToryInvitations = /* @__PURE__ */ (() => {
 var ToryInvitations = class extends BaseToryInvitations {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/vulnerability-alerts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/vulnerability-alerts.mjs
 var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
   class BaseVulnerabilityAlerts2 extends APIResource {
     /**
@@ -23489,7 +23521,7 @@ var BaseVulnerabilityAlerts = /* @__PURE__ */ (() => {
 var VulnerabilityAlerts = class extends BaseVulnerabilityAlerts {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/artifacts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/artifacts.mjs
 var BaseArtifacts = /* @__PURE__ */ (() => {
   class BaseArtifacts2 extends APIResource {
     /**
@@ -23585,7 +23617,7 @@ var BaseArtifacts = /* @__PURE__ */ (() => {
 var Artifacts = class extends BaseArtifacts {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/cache.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/cache.mjs
 var BaseCache2 = /* @__PURE__ */ (() => {
   class BaseCache3 extends APIResource {
     /**
@@ -23621,7 +23653,7 @@ var BaseCache2 = /* @__PURE__ */ (() => {
 var Cache2 = class extends BaseCache2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/caches.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/caches.mjs
 var BaseCaches = /* @__PURE__ */ (() => {
   class BaseCaches2 extends APIResource {
     /**
@@ -23699,7 +23731,7 @@ var BaseCaches = /* @__PURE__ */ (() => {
 var Caches = class extends BaseCaches {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/jobs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/jobs.mjs
 var BaseJobs = /* @__PURE__ */ (() => {
   class BaseJobs2 extends APIResource {
     /**
@@ -23776,7 +23808,7 @@ var BaseJobs = /* @__PURE__ */ (() => {
 var Jobs = class extends BaseJobs {
 };
 
-// node_modules/@stainless-api/github-internal/lib/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 async function encryptSecret(value, publicKey) {
   return import_libsodium_wrappers.default.ready.then(() => {
@@ -23788,7 +23820,7 @@ async function encryptSecret(value, publicKey) {
   });
 }
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/secrets.mjs
 var BaseSecrets4 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -23941,7 +23973,7 @@ var BaseSecrets4 = /* @__PURE__ */ (() => {
 var Secrets4 = class extends BaseSecrets4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/variables.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/variables.mjs
 var BaseVariables2 = /* @__PURE__ */ (() => {
   class BaseVariables4 extends APIResource {
     /**
@@ -24074,7 +24106,7 @@ var BaseVariables2 = /* @__PURE__ */ (() => {
 var Variables2 = class extends BaseVariables2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/workflows.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/workflows.mjs
 var BaseWorkflows = /* @__PURE__ */ (() => {
   class BaseWorkflows2 extends APIResource {
     /**
@@ -24279,7 +24311,7 @@ var BaseWorkflows = /* @__PURE__ */ (() => {
 var Workflows = class extends BaseWorkflows {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/sub.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/sub.mjs
 var BaseSub2 = /* @__PURE__ */ (() => {
   class BaseSub3 extends APIResource {
     /**
@@ -24333,7 +24365,7 @@ var BaseSub2 = /* @__PURE__ */ (() => {
 var Sub2 = class extends BaseSub2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/customization.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/customization/customization.mjs
 var BaseCustomization2 = /* @__PURE__ */ (() => {
   class BaseCustomization3 extends APIResource {
   }
@@ -24357,7 +24389,7 @@ var Customization2 = /* @__PURE__ */ (() => {
   return Customization3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/oidc.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/oidc/oidc.mjs
 var BaseOidc2 = /* @__PURE__ */ (() => {
   class BaseOidc3 extends APIResource {
   }
@@ -24380,7 +24412,7 @@ var Oidc2 = /* @__PURE__ */ (() => {
   return Oidc3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/access.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/access.mjs
 var BaseAccess = /* @__PURE__ */ (() => {
   class BaseAccess2 extends APIResource {
     /**
@@ -24443,7 +24475,7 @@ var BaseAccess = /* @__PURE__ */ (() => {
 var Access = class extends BaseAccess {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/selected-actions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/selected-actions.mjs
 var BaseSelectedActions2 = /* @__PURE__ */ (() => {
   class BaseSelectedActions3 extends APIResource {
     /**
@@ -24501,7 +24533,7 @@ var BaseSelectedActions2 = /* @__PURE__ */ (() => {
 var SelectedActions2 = class extends BaseSelectedActions2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/workflow.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/workflow.mjs
 var BaseWorkflow2 = /* @__PURE__ */ (() => {
   class BaseWorkflow3 extends APIResource {
     /**
@@ -24565,7 +24597,7 @@ var BaseWorkflow2 = /* @__PURE__ */ (() => {
 var Workflow2 = class extends BaseWorkflow2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/permissions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/permissions/permissions.mjs
 var BasePermissions2 = /* @__PURE__ */ (() => {
   class BasePermissions3 extends APIResource {
     /**
@@ -24640,7 +24672,7 @@ var Permissions2 = /* @__PURE__ */ (() => {
   return Permissions3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runners/labels.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runners/labels.mjs
 var BaseLabels3 = /* @__PURE__ */ (() => {
   class BaseLabels5 extends APIResource {
     /**
@@ -24780,7 +24812,7 @@ var BaseLabels3 = /* @__PURE__ */ (() => {
 var Labels3 = class extends BaseLabels3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runners/runners.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runners/runners.mjs
 var BaseRunners3 = /* @__PURE__ */ (() => {
   class BaseRunners4 extends APIResource {
     /**
@@ -24983,7 +25015,7 @@ var Runners3 = /* @__PURE__ */ (() => {
   return Runners4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runs/attempts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runs/attempts.mjs
 var BaseAttempts = /* @__PURE__ */ (() => {
   class BaseAttempts2 extends APIResource {
     /**
@@ -25070,7 +25102,7 @@ var BaseAttempts = /* @__PURE__ */ (() => {
 var Attempts = class extends BaseAttempts {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runs/logs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runs/logs.mjs
 var BaseLogs = /* @__PURE__ */ (() => {
   class BaseLogs2 extends APIResource {
     /**
@@ -25131,7 +25163,7 @@ var BaseLogs = /* @__PURE__ */ (() => {
 var Logs = class extends BaseLogs {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runs/pending-deployments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runs/pending-deployments.mjs
 var BasePendingDeployments = /* @__PURE__ */ (() => {
   class BasePendingDeployments2 extends APIResource {
     /**
@@ -25200,7 +25232,7 @@ var BasePendingDeployments = /* @__PURE__ */ (() => {
 var PendingDeployments = class extends BasePendingDeployments {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/runs/runs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/runs/runs.mjs
 var BaseRuns = /* @__PURE__ */ (() => {
   class BaseRuns2 extends APIResource {
     /**
@@ -25530,7 +25562,7 @@ var Runs = /* @__PURE__ */ (() => {
   return Runs2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/actions/actions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/actions/actions.mjs
 var BaseActions2 = /* @__PURE__ */ (() => {
   class BaseActions3 extends APIResource {
     /**
@@ -25630,7 +25662,7 @@ var Actions2 = /* @__PURE__ */ (() => {
   return Actions3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/enforce-admins.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/enforce-admins.mjs
 var BaseEnforceAdmins = /* @__PURE__ */ (() => {
   class BaseEnforceAdmins2 extends APIResource {
     /**
@@ -25711,7 +25743,7 @@ var BaseEnforceAdmins = /* @__PURE__ */ (() => {
 var EnforceAdmins = class extends BaseEnforceAdmins {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-pull-request-reviews.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-pull-request-reviews.mjs
 var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
   class BaseRequiredPullRequestReviews2 extends APIResource {
     /**
@@ -25806,7 +25838,7 @@ var BaseRequiredPullRequestReviews = /* @__PURE__ */ (() => {
 var RequiredPullRequestReviews = class extends BaseRequiredPullRequestReviews {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-signatures.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-signatures.mjs
 var BaseRequiredSignatures = /* @__PURE__ */ (() => {
   class BaseRequiredSignatures2 extends APIResource {
     /**
@@ -25895,7 +25927,7 @@ var BaseRequiredSignatures = /* @__PURE__ */ (() => {
 var RequiredSignatures = class extends BaseRequiredSignatures {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/contexts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/contexts.mjs
 var BaseContexts = /* @__PURE__ */ (() => {
   class BaseContexts2 extends APIResource {
     /**
@@ -26004,7 +26036,7 @@ var BaseContexts = /* @__PURE__ */ (() => {
 var Contexts = class extends BaseContexts {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/required-status-checks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/required-status-checks/required-status-checks.mjs
 var BaseRequiredStatusChecks = /* @__PURE__ */ (() => {
   class BaseRequiredStatusChecks2 extends APIResource {
     /**
@@ -26088,7 +26120,7 @@ var RequiredStatusChecks = /* @__PURE__ */ (() => {
   return RequiredStatusChecks2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/apps.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/apps.mjs
 var BaseApps2 = /* @__PURE__ */ (() => {
   class BaseApps3 extends APIResource {
     /**
@@ -26206,7 +26238,7 @@ var BaseApps2 = /* @__PURE__ */ (() => {
 var Apps2 = class extends BaseApps2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/teams.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/teams.mjs
 var BaseTeams4 = /* @__PURE__ */ (() => {
   class BaseTeams5 extends APIResource {
     /**
@@ -26327,7 +26359,7 @@ var BaseTeams4 = /* @__PURE__ */ (() => {
 var Teams4 = class extends BaseTeams4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/users.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/users.mjs
 var BaseUsers2 = /* @__PURE__ */ (() => {
   class BaseUsers4 extends APIResource {
     /**
@@ -26449,7 +26481,7 @@ var BaseUsers2 = /* @__PURE__ */ (() => {
 var Users2 = class extends BaseUsers2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/restrictions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/restrictions/restrictions.mjs
 var BaseRestrictions = /* @__PURE__ */ (() => {
   class BaseRestrictions2 extends APIResource {
     /**
@@ -26525,7 +26557,7 @@ var Restrictions = /* @__PURE__ */ (() => {
   return Restrictions2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/protection/protection.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/protection/protection.mjs
 var BaseProtection = /* @__PURE__ */ (() => {
   class BaseProtection2 extends APIResource {
     /**
@@ -26655,7 +26687,7 @@ var Protection = /* @__PURE__ */ (() => {
   return Protection2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/branches/branches.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/branches/branches.mjs
 var BaseBranches = /* @__PURE__ */ (() => {
   class BaseBranches2 extends APIResource {
     /**
@@ -26744,7 +26776,7 @@ var Branches = /* @__PURE__ */ (() => {
   return Branches3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/analyses.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/analyses.mjs
 var BaseAnalyses = /* @__PURE__ */ (() => {
   class BaseAnalyses2 extends APIResource {
     /**
@@ -26919,7 +26951,7 @@ var BaseAnalyses = /* @__PURE__ */ (() => {
 var Analyses = class extends BaseAnalyses {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/default-setup.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/default-setup.mjs
 var BaseDefaultSetup = /* @__PURE__ */ (() => {
   class BaseDefaultSetup2 extends APIResource {
     /**
@@ -26978,7 +27010,7 @@ var BaseDefaultSetup = /* @__PURE__ */ (() => {
 var DefaultSetup = class extends BaseDefaultSetup {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/sarifs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/sarifs.mjs
 var BaseSarifs = /* @__PURE__ */ (() => {
   class BaseSarifs2 extends APIResource {
     /**
@@ -27088,7 +27120,7 @@ var BaseSarifs = /* @__PURE__ */ (() => {
 var Sarifs = class extends BaseSarifs {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/autofix.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/autofix.mjs
 var BaseAutofix = /* @__PURE__ */ (() => {
   class BaseAutofix2 extends APIResource {
     /**
@@ -27174,7 +27206,7 @@ var BaseAutofix = /* @__PURE__ */ (() => {
 var Autofix = class extends BaseAutofix {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/instances.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/instances.mjs
 var BaseInstances = /* @__PURE__ */ (() => {
   class BaseInstances2 extends APIResource {
     /**
@@ -27211,7 +27243,7 @@ var BaseInstances = /* @__PURE__ */ (() => {
 var Instances = class extends BaseInstances {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/alerts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/alerts/alerts.mjs
 var BaseAlerts = /* @__PURE__ */ (() => {
   class BaseAlerts4 extends APIResource {
     /**
@@ -27311,7 +27343,7 @@ var Alerts = /* @__PURE__ */ (() => {
   return Alerts4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/databases.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/databases.mjs
 var BaseDatabases = /* @__PURE__ */ (() => {
   class BaseDatabases2 extends APIResource {
     /**
@@ -27395,7 +27427,7 @@ var BaseDatabases = /* @__PURE__ */ (() => {
 var Databases = class extends BaseDatabases {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/variant-analyses.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/variant-analyses.mjs
 var BaseVariantAnalyses = /* @__PURE__ */ (() => {
   class BaseVariantAnalyses2 extends APIResource {
     /**
@@ -27488,7 +27520,7 @@ var BaseVariantAnalyses = /* @__PURE__ */ (() => {
 var VariantAnalyses = class extends BaseVariantAnalyses {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/codeql.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/codeql/codeql.mjs
 var BaseCodeql = /* @__PURE__ */ (() => {
   class BaseCodeql2 extends APIResource {
   }
@@ -27514,7 +27546,7 @@ var Codeql = /* @__PURE__ */ (() => {
   return Codeql2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/code-scanning/code-scanning.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/code-scanning/code-scanning.mjs
 var BaseCodeScanning2 = /* @__PURE__ */ (() => {
   class BaseCodeScanning3 extends APIResource {
   }
@@ -27548,7 +27580,7 @@ var CodeScanning2 = /* @__PURE__ */ (() => {
   return CodeScanning3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/codespaces/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/codespaces/secrets.mjs
 var BaseSecrets5 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -27673,7 +27705,7 @@ var BaseSecrets5 = /* @__PURE__ */ (() => {
 var Secrets5 = class extends BaseSecrets5 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/codespaces/codespaces.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/codespaces/codespaces.mjs
 var BaseCodespaces3 = /* @__PURE__ */ (() => {
   class BaseCodespaces5 extends APIResource {
     /**
@@ -27819,7 +27851,7 @@ var Codespaces3 = /* @__PURE__ */ (() => {
   return Codespaces5;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/comments/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/comments/reactions.mjs
 var BaseReactions4 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -27898,7 +27930,7 @@ var BaseReactions4 = /* @__PURE__ */ (() => {
 var Reactions4 = class extends BaseReactions4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/comments/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/comments/comments.mjs
 var BaseComments5 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -28032,7 +28064,7 @@ var Comments5 = /* @__PURE__ */ (() => {
   return Comments7;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/dependabot/alerts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/dependabot/alerts.mjs
 var BaseAlerts2 = /* @__PURE__ */ (() => {
   class BaseAlerts4 extends APIResource {
     /**
@@ -28111,7 +28143,7 @@ var BaseAlerts2 = /* @__PURE__ */ (() => {
 var Alerts2 = class extends BaseAlerts2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/dependabot/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/dependabot/secrets.mjs
 var BaseSecrets6 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -28236,7 +28268,7 @@ var BaseSecrets6 = /* @__PURE__ */ (() => {
 var Secrets6 = class extends BaseSecrets6 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/dependabot/dependabot.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/dependabot/dependabot.mjs
 var BaseDependabot3 = /* @__PURE__ */ (() => {
   class BaseDependabot4 extends APIResource {
   }
@@ -28261,7 +28293,7 @@ var Dependabot3 = /* @__PURE__ */ (() => {
   return Dependabot4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/deployments/statuses.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/deployments/statuses.mjs
 var BaseStatuses = /* @__PURE__ */ (() => {
   class BaseStatuses2 extends APIResource {
     /**
@@ -28336,7 +28368,7 @@ var BaseStatuses = /* @__PURE__ */ (() => {
 var Statuses = class extends BaseStatuses {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/deployments/deployments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/deployments/deployments.mjs
 var BaseDeployments = /* @__PURE__ */ (() => {
   class BaseDeployments3 extends APIResource {
     /**
@@ -28503,7 +28535,7 @@ var Deployments = /* @__PURE__ */ (() => {
   return Deployments3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-branch-policies.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-branch-policies.mjs
 var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
   class BaseDeploymentBranchPolicies2 extends APIResource {
     /**
@@ -28624,7 +28656,7 @@ var BaseDeploymentBranchPolicies = /* @__PURE__ */ (() => {
 var DeploymentBranchPolicies = class extends BaseDeploymentBranchPolicies {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-protection-rules.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/environments/deployment-protection-rules.mjs
 var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
   class BaseDeploymentProtectionRules2 extends APIResource {
     /**
@@ -28772,7 +28804,7 @@ var BaseDeploymentProtectionRules = /* @__PURE__ */ (() => {
 var DeploymentProtectionRules = class extends BaseDeploymentProtectionRules {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/environments/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/environments/secrets.mjs
 var BaseSecrets7 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -28917,7 +28949,7 @@ var BaseSecrets7 = /* @__PURE__ */ (() => {
 var Secrets7 = class extends BaseSecrets7 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/environments/variables.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/environments/variables.mjs
 var BaseVariables3 = /* @__PURE__ */ (() => {
   class BaseVariables4 extends APIResource {
     /**
@@ -29060,7 +29092,7 @@ var BaseVariables3 = /* @__PURE__ */ (() => {
 var Variables3 = class extends BaseVariables3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/environments/environments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/environments/environments.mjs
 var BaseEnvironments = /* @__PURE__ */ (() => {
   class BaseEnvironments2 extends APIResource {
     /**
@@ -29196,7 +29228,7 @@ var Environments = /* @__PURE__ */ (() => {
   return Environments2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/git-refs/blobs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/git-refs/blobs.mjs
 var BaseBlobs = /* @__PURE__ */ (() => {
   class BaseBlobs2 extends APIResource {
     /**
@@ -29253,7 +29285,7 @@ var BaseBlobs = /* @__PURE__ */ (() => {
 var Blobs = class extends BaseBlobs {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/git-refs/commits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/git-refs/commits.mjs
 var BaseCommits2 = /* @__PURE__ */ (() => {
   class BaseCommits3 extends APIResource {
     /**
@@ -29376,7 +29408,7 @@ var BaseCommits2 = /* @__PURE__ */ (() => {
 var Commits2 = class extends BaseCommits2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/git-refs/tags.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/git-refs/tags.mjs
 var BaseTags2 = /* @__PURE__ */ (() => {
   class BaseTags3 extends APIResource {
     /**
@@ -29497,7 +29529,7 @@ var BaseTags2 = /* @__PURE__ */ (() => {
 var Tags2 = class extends BaseTags2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/git-refs/trees.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/git-refs/trees.mjs
 var BaseTrees = /* @__PURE__ */ (() => {
   class BaseTrees2 extends APIResource {
     /**
@@ -29568,7 +29600,7 @@ var BaseTrees = /* @__PURE__ */ (() => {
 var Trees = class extends BaseTrees {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/git-refs/git-refs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/git-refs/git-refs.mjs
 var BaseGitRefs = /* @__PURE__ */ (() => {
   class BaseGitRefs2 extends APIResource {
     /**
@@ -29712,7 +29744,7 @@ var GitRefs = /* @__PURE__ */ (() => {
   return GitRefs2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/hooks/config.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/hooks/config.mjs
 var BaseConfig3 = /* @__PURE__ */ (() => {
   class BaseConfig4 extends APIResource {
     /**
@@ -29770,7 +29802,7 @@ var BaseConfig3 = /* @__PURE__ */ (() => {
 var Config3 = class extends BaseConfig3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/hooks/deliveries.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/hooks/deliveries.mjs
 var BaseDeliveries3 = /* @__PURE__ */ (() => {
   class BaseDeliveries4 extends APIResource {
     /**
@@ -29836,7 +29868,7 @@ var BaseDeliveries3 = /* @__PURE__ */ (() => {
 var Deliveries3 = class extends BaseDeliveries3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/hooks/hooks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/hooks/hooks.mjs
 var BaseHooks2 = /* @__PURE__ */ (() => {
   class BaseHooks3 extends APIResource {
     /**
@@ -30003,7 +30035,7 @@ var Hooks2 = /* @__PURE__ */ (() => {
   return Hooks3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/assignees.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/assignees.mjs
 var BaseAssignees2 = /* @__PURE__ */ (() => {
   class BaseAssignees3 extends APIResource {
     /**
@@ -30083,7 +30115,7 @@ var BaseAssignees2 = /* @__PURE__ */ (() => {
 var Assignees2 = class extends BaseAssignees2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/events.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/events.mjs
 var BaseEvents2 = /* @__PURE__ */ (() => {
   class BaseEvents4 extends APIResource {
     /**
@@ -30130,7 +30162,7 @@ var BaseEvents2 = /* @__PURE__ */ (() => {
 var Events2 = class extends BaseEvents2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/labels.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/labels.mjs
 var BaseLabels4 = /* @__PURE__ */ (() => {
   class BaseLabels5 extends APIResource {
     /**
@@ -30233,7 +30265,7 @@ var BaseLabels4 = /* @__PURE__ */ (() => {
 var Labels4 = class extends BaseLabels4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/lock.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/lock.mjs
 var BaseLock = /* @__PURE__ */ (() => {
   class BaseLock2 extends APIResource {
     /**
@@ -30290,7 +30322,7 @@ var BaseLock = /* @__PURE__ */ (() => {
 var Lock = class extends BaseLock {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/reactions.mjs
 var BaseReactions5 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -30367,7 +30399,7 @@ var BaseReactions5 = /* @__PURE__ */ (() => {
 var Reactions5 = class extends BaseReactions5 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/sub-issues.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/sub-issues.mjs
 var BaseSubIssues = /* @__PURE__ */ (() => {
   class BaseSubIssues2 extends APIResource {
     /**
@@ -30474,7 +30506,7 @@ var BaseSubIssues = /* @__PURE__ */ (() => {
 var SubIssues = class extends BaseSubIssues {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/timeline.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/timeline.mjs
 var BaseTimeline = /* @__PURE__ */ (() => {
   class BaseTimeline2 extends APIResource {
     /**
@@ -30506,7 +30538,7 @@ var BaseTimeline = /* @__PURE__ */ (() => {
 var Timeline = class extends BaseTimeline {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/issues.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/issues/issues.mjs
 var BaseIssues2 = /* @__PURE__ */ (() => {
   class BaseIssues3 extends APIResource {
     /**
@@ -30805,7 +30837,7 @@ var Issues2 = /* @__PURE__ */ (() => {
   return Issues3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/pages/builds.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pages/builds.mjs
 var BaseBuilds = /* @__PURE__ */ (() => {
   class BaseBuilds2 extends APIResource {
     /**
@@ -30897,7 +30929,7 @@ var BaseBuilds = /* @__PURE__ */ (() => {
 var Builds = class extends BaseBuilds {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pages/deployments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pages/deployments.mjs
 var BaseDeployments2 = /* @__PURE__ */ (() => {
   class BaseDeployments3 extends APIResource {
     /**
@@ -30973,7 +31005,7 @@ var BaseDeployments2 = /* @__PURE__ */ (() => {
 var Deployments2 = class extends BaseDeployments2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pages/pages.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pages/pages.mjs
 var BasePages = /* @__PURE__ */ (() => {
   class BasePages2 extends APIResource {
     /**
@@ -31116,7 +31148,7 @@ var Pages = /* @__PURE__ */ (() => {
   return Pages2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/properties/values.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/properties/values.mjs
 var BaseValues2 = /* @__PURE__ */ (() => {
   class BaseValues3 extends APIResource {
     /**
@@ -31176,7 +31208,7 @@ var BaseValues2 = /* @__PURE__ */ (() => {
 var Values2 = class extends BaseValues2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/properties/properties.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/properties/properties.mjs
 var BaseProperties2 = /* @__PURE__ */ (() => {
   class BaseProperties3 extends APIResource {
   }
@@ -31198,7 +31230,7 @@ var Properties2 = /* @__PURE__ */ (() => {
   return Properties3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/merge.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/merge.mjs
 var BaseMerge = /* @__PURE__ */ (() => {
   class BaseMerge2 extends APIResource {
     /**
@@ -31256,7 +31288,7 @@ var BaseMerge = /* @__PURE__ */ (() => {
 var Merge = class extends BaseMerge {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/requested-reviewers.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/requested-reviewers.mjs
 var BaseRequestedReviewers = /* @__PURE__ */ (() => {
   class BaseRequestedReviewers2 extends APIResource {
     /**
@@ -31340,7 +31372,7 @@ var BaseRequestedReviewers = /* @__PURE__ */ (() => {
 var RequestedReviewers = class extends BaseRequestedReviewers {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/reviews.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/reviews.mjs
 var BaseReviews = /* @__PURE__ */ (() => {
   class BaseReviews2 extends APIResource {
     /**
@@ -31667,7 +31699,7 @@ var BaseReviews = /* @__PURE__ */ (() => {
 var Reviews = class extends BaseReviews {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/reactions.mjs
 var BaseReactions6 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -31744,7 +31776,7 @@ var BaseReactions6 = /* @__PURE__ */ (() => {
 var Reactions6 = class extends BaseReactions6 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/comments/comments.mjs
 var BaseComments6 = /* @__PURE__ */ (() => {
   class BaseComments7 extends APIResource {
     /**
@@ -31931,7 +31963,7 @@ var Comments6 = /* @__PURE__ */ (() => {
   return Comments7;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
 var BasePulls = /* @__PURE__ */ (() => {
   class BasePulls2 extends APIResource {
     /**
@@ -32378,7 +32410,7 @@ var Pulls = /* @__PURE__ */ (() => {
   return Pulls2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/releases/assets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/releases/assets.mjs
 var BaseAssets = /* @__PURE__ */ (() => {
   class BaseAssets2 extends APIResource {
     /**
@@ -32469,7 +32501,7 @@ var BaseAssets = /* @__PURE__ */ (() => {
 var Assets = class extends BaseAssets {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/releases/reactions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/releases/reactions.mjs
 var BaseReactions7 = /* @__PURE__ */ (() => {
   class BaseReactions8 extends APIResource {
     /**
@@ -32548,7 +32580,7 @@ var BaseReactions7 = /* @__PURE__ */ (() => {
 var Reactions7 = class extends BaseReactions7 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/releases/releases.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/releases/releases.mjs
 var BaseReleases = /* @__PURE__ */ (() => {
   class BaseReleases2 extends APIResource {
     /**
@@ -32738,7 +32770,7 @@ var Releases = /* @__PURE__ */ (() => {
   return Releases2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/rulesets/history.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/rulesets/history.mjs
 var BaseHistory2 = /* @__PURE__ */ (() => {
   class BaseHistory3 extends APIResource {
     /**
@@ -32788,7 +32820,7 @@ var BaseHistory2 = /* @__PURE__ */ (() => {
 var History2 = class extends BaseHistory2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/rulesets/rule-suites.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/rulesets/rule-suites.mjs
 var BaseRuleSuites2 = /* @__PURE__ */ (() => {
   class BaseRuleSuites3 extends APIResource {
     /**
@@ -32839,7 +32871,7 @@ var BaseRuleSuites2 = /* @__PURE__ */ (() => {
 var RuleSuites2 = class extends BaseRuleSuites2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/rulesets/rulesets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/rulesets/rulesets.mjs
 var BaseRulesets2 = /* @__PURE__ */ (() => {
   class BaseRulesets3 extends APIResource {
     /**
@@ -32998,7 +33030,7 @@ var Rulesets2 = /* @__PURE__ */ (() => {
   return Rulesets3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/alerts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/alerts.mjs
 var BaseAlerts3 = /* @__PURE__ */ (() => {
   class BaseAlerts4 extends APIResource {
     /**
@@ -33116,7 +33148,7 @@ var BaseAlerts3 = /* @__PURE__ */ (() => {
 var Alerts3 = class extends BaseAlerts3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/secret-scanning.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/secret-scanning/secret-scanning.mjs
 var BaseSecretScanning3 = /* @__PURE__ */ (() => {
   class BaseSecretScanning4 extends APIResource {
     /**
@@ -33187,7 +33219,7 @@ var SecretScanning3 = /* @__PURE__ */ (() => {
   return SecretScanning4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/traffic/popular.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/traffic/popular.mjs
 var BasePopular = /* @__PURE__ */ (() => {
   class BasePopular2 extends APIResource {
     /**
@@ -33233,7 +33265,7 @@ var BasePopular = /* @__PURE__ */ (() => {
 var Popular = class extends BasePopular {
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/traffic/traffic.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/traffic/traffic.mjs
 var BaseTraffic = /* @__PURE__ */ (() => {
   class BaseTraffic2 extends APIResource {
     /**
@@ -33286,7 +33318,7 @@ var Traffic = /* @__PURE__ */ (() => {
   return Traffic2;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
 var BaseRepos3 = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     constructor() {
@@ -34183,7 +34215,7 @@ var Repos3 = /* @__PURE__ */ (() => {
   return Repos6;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/blocks.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/blocks.mjs
 var BaseBlocks2 = /* @__PURE__ */ (() => {
   class BaseBlocks3 extends APIResource {
     /**
@@ -34252,7 +34284,7 @@ var BaseBlocks2 = /* @__PURE__ */ (() => {
 var Blocks2 = class extends BaseBlocks2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/docker.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/docker.mjs
 var BaseDocker2 = /* @__PURE__ */ (() => {
   class BaseDocker3 extends APIResource {
     /**
@@ -34295,7 +34327,7 @@ var BaseDocker2 = /* @__PURE__ */ (() => {
 var Docker2 = class extends BaseDocker2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/emails.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/emails.mjs
 var BaseEmails = /* @__PURE__ */ (() => {
   class BaseEmails2 extends APIResource {
     /**
@@ -34372,7 +34404,7 @@ var BaseEmails = /* @__PURE__ */ (() => {
 var Emails = class extends BaseEmails {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/events.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/events.mjs
 var BaseEvents3 = /* @__PURE__ */ (() => {
   class BaseEvents4 extends APIResource {
     /**
@@ -34446,7 +34478,7 @@ var BaseEvents3 = /* @__PURE__ */ (() => {
 var Events3 = class extends BaseEvents3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/following.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/following.mjs
 var BaseFollowing = /* @__PURE__ */ (() => {
   class BaseFollowing2 extends APIResource {
     /**
@@ -34495,7 +34527,7 @@ var BaseFollowing = /* @__PURE__ */ (() => {
 var Following = class extends BaseFollowing {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/gpg-keys.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/gpg-keys.mjs
 var BaseGpgKeys = /* @__PURE__ */ (() => {
   class BaseGpgKeys2 extends APIResource {
     /**
@@ -34571,7 +34603,7 @@ var BaseGpgKeys = /* @__PURE__ */ (() => {
 var GpgKeys = class extends BaseGpgKeys {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/interaction-limits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/interaction-limits.mjs
 var BaseInteractionLimits3 = /* @__PURE__ */ (() => {
   class BaseInteractionLimits4 extends APIResource {
     /**
@@ -34627,7 +34659,7 @@ var BaseInteractionLimits3 = /* @__PURE__ */ (() => {
 var InteractionLimits3 = class extends BaseInteractionLimits3 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/keys.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/keys.mjs
 var BaseKeys2 = /* @__PURE__ */ (() => {
   class BaseKeys3 extends APIResource {
     /**
@@ -34702,7 +34734,7 @@ var BaseKeys2 = /* @__PURE__ */ (() => {
 var Keys2 = class extends BaseKeys2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/marketplace-purchases.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/marketplace-purchases.mjs
 var BaseMarketplacePurchases = /* @__PURE__ */ (() => {
   class BaseMarketplacePurchases2 extends APIResource {
     /**
@@ -34743,7 +34775,7 @@ var BaseMarketplacePurchases = /* @__PURE__ */ (() => {
 var MarketplacePurchases = class extends BaseMarketplacePurchases {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/received-events.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/received-events.mjs
 var BaseReceivedEvents = /* @__PURE__ */ (() => {
   class BaseReceivedEvents2 extends APIResource {
     /**
@@ -34794,7 +34826,7 @@ var BaseReceivedEvents = /* @__PURE__ */ (() => {
 var ReceivedEvents = class extends BaseReceivedEvents {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/repos.mjs
 var BaseRepos4 = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     /**
@@ -35094,7 +35126,7 @@ var BaseRepos4 = /* @__PURE__ */ (() => {
 var Repos4 = class extends BaseRepos4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/social-accounts.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/social-accounts.mjs
 var BaseSocialAccounts = /* @__PURE__ */ (() => {
   class BaseSocialAccounts2 extends APIResource {
     /**
@@ -35166,7 +35198,7 @@ var BaseSocialAccounts = /* @__PURE__ */ (() => {
 var SocialAccounts = class extends BaseSocialAccounts {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/ssh-signing-keys.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/ssh-signing-keys.mjs
 var BaseSSHSigningKeys = /* @__PURE__ */ (() => {
   class BaseSSHSigningKeys2 extends APIResource {
     /**
@@ -35250,7 +35282,7 @@ var BaseSSHSigningKeys = /* @__PURE__ */ (() => {
 var SSHSigningKeys = class extends BaseSSHSigningKeys {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/codespaces/exports.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/codespaces/exports.mjs
 var BaseExports = /* @__PURE__ */ (() => {
   class BaseExports2 extends APIResource {
     /**
@@ -35303,7 +35335,7 @@ var BaseExports = /* @__PURE__ */ (() => {
 var Exports = class extends BaseExports {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/repositories.mjs
 var BaseRepositories8 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -35408,7 +35440,7 @@ var BaseRepositories8 = /* @__PURE__ */ (() => {
 var Repositories8 = class extends BaseRepositories8 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/codespaces/secrets/secrets.mjs
 var BaseSecrets8 = /* @__PURE__ */ (() => {
   class BaseSecrets9 extends APIResource {
     /**
@@ -35535,7 +35567,7 @@ var Secrets8 = /* @__PURE__ */ (() => {
   return Secrets9;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/codespaces/codespaces.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/codespaces/codespaces.mjs
 var BaseCodespaces4 = /* @__PURE__ */ (() => {
   class BaseCodespaces5 extends APIResource {
     /**
@@ -35719,7 +35751,7 @@ var Codespaces4 = /* @__PURE__ */ (() => {
   return Codespaces5;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/installations/repositories.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/installations/repositories.mjs
 var BaseRepositories9 = /* @__PURE__ */ (() => {
   class BaseRepositories10 extends APIResource {
     /**
@@ -35794,7 +35826,7 @@ var BaseRepositories9 = /* @__PURE__ */ (() => {
 var Repositories9 = class extends BaseRepositories9 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/installations/installations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/installations/installations.mjs
 var BaseInstallations2 = /* @__PURE__ */ (() => {
   class BaseInstallations3 extends APIResource {
     /**
@@ -35835,7 +35867,7 @@ var Installations2 = /* @__PURE__ */ (() => {
   return Installations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/memberships/orgs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/memberships/orgs.mjs
 var BaseOrgs2 = /* @__PURE__ */ (() => {
   class BaseOrgs3 extends APIResource {
     /**
@@ -35896,7 +35928,7 @@ var BaseOrgs2 = /* @__PURE__ */ (() => {
 var Orgs2 = class extends BaseOrgs2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/memberships/memberships.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/memberships/memberships.mjs
 var BaseMemberships3 = /* @__PURE__ */ (() => {
   class BaseMemberships4 extends APIResource {
   }
@@ -35918,7 +35950,7 @@ var Memberships3 = /* @__PURE__ */ (() => {
   return Memberships4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/migrations/archive.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/migrations/archive.mjs
 var BaseArchive2 = /* @__PURE__ */ (() => {
   class BaseArchive3 extends APIResource {
     /**
@@ -35990,7 +36022,7 @@ var BaseArchive2 = /* @__PURE__ */ (() => {
 var Archive2 = class extends BaseArchive2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/migrations/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/migrations/repos.mjs
 var BaseRepos5 = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     /**
@@ -36027,7 +36059,7 @@ var BaseRepos5 = /* @__PURE__ */ (() => {
 var Repos5 = class extends BaseRepos5 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/migrations/migrations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/migrations/migrations.mjs
 var BaseMigrations2 = /* @__PURE__ */ (() => {
   class BaseMigrations3 extends APIResource {
     /**
@@ -36119,7 +36151,7 @@ var Migrations2 = /* @__PURE__ */ (() => {
   return Migrations3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/packages/versions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/packages/versions.mjs
 var BaseVersions2 = /* @__PURE__ */ (() => {
   class BaseVersions4 extends APIResource {
     /**
@@ -36234,7 +36266,7 @@ var BaseVersions2 = /* @__PURE__ */ (() => {
 var Versions2 = class extends BaseVersions2 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/packages/packages.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/packages/packages.mjs
 var BasePackages2 = /* @__PURE__ */ (() => {
   class BasePackages3 extends APIResource {
     /**
@@ -36366,7 +36398,7 @@ var Packages2 = /* @__PURE__ */ (() => {
   return Packages3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/settings/billing.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/settings/billing.mjs
 var BaseBilling4 = /* @__PURE__ */ (() => {
   class BaseBilling5 extends APIResource {
     /**
@@ -36447,7 +36479,7 @@ var BaseBilling4 = /* @__PURE__ */ (() => {
 var Billing4 = class extends BaseBilling4 {
 };
 
-// node_modules/@stainless-api/github-internal/resources/users/settings/settings.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/settings/settings.mjs
 var BaseSettings3 = /* @__PURE__ */ (() => {
   class BaseSettings4 extends APIResource {
   }
@@ -36469,7 +36501,7 @@ var Settings3 = /* @__PURE__ */ (() => {
   return Settings4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/users/users.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/users/users.mjs
 var BaseUsers3 = /* @__PURE__ */ (() => {
   class BaseUsers4 extends APIResource {
     /**
@@ -36817,7 +36849,7 @@ var Users3 = /* @__PURE__ */ (() => {
   return Users4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/versions.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/resources/versions.mjs
 var BaseVersions3 = /* @__PURE__ */ (() => {
   class BaseVersions4 extends APIResource {
     /**
@@ -36833,7 +36865,7 @@ var BaseVersions3 = /* @__PURE__ */ (() => {
 var Versions3 = class extends BaseVersions3 {
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/internal/utils/env.mjs
 var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -36844,7 +36876,7 @@ var readEnv = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/github-internal/lib/auth.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 async function getAuthToken({ authMethods, owner, repo, logger: logger2 }) {
   const method = authMethods.find((method2) => method2.owner === owner) ?? authMethods.at(-1);
@@ -36891,7 +36923,7 @@ async function getAppToken(method) {
   return { authToken: appToken, expires: appTokenExpires };
 }
 
-// node_modules/@stainless-api/github-internal/client.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/client.mjs
 var _BaseGitHub_instances;
 var _BaseGitHub_encoder;
 var _BaseGitHub_baseURLOverridden;
@@ -37396,7 +37428,7 @@ var GitHub = /* @__PURE__ */ (() => {
   return GitHub2;
 })();
 
-// node_modules/@stainless-api/github-internal/tree-shakable.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.15.0/node_modules/@stainless-api/github-internal/tree-shakable.mjs
 function createClient(options) {
   const client = new BaseGitHub(options);
   for (const ResourceClass of options.resources) {
@@ -37974,12 +38006,24 @@ function shouldFailRun({
   baseOutcomes
 }) {
   const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
-    const { conclusion, reason } = categorizeOutcome({
+    const categorized = categorizeOutcome({
       outcome,
       baseOutcome: baseOutcomes?.[language]
     });
-    const didFail = conclusion && OutcomeConclusion.indexOf(conclusion) <= OutcomeConclusion.indexOf(failRunOn);
-    return didFail ? [{ language, reason }] : [];
+    if (categorized.isPending) {
+      return [];
+    }
+    const { severity, isRegression, description } = categorized;
+    const didFail = isRegression !== false && severity && OutcomeConclusion.indexOf(severity) <= OutcomeConclusion.indexOf(failRunOn);
+    return didFail ? [
+      {
+        language,
+        reason: getReason({
+          description,
+          isRegression
+        })
+      }
+    ] : [];
   });
   if (failures.length > 0) {
     logger.warn("The following languages did not build successfully:");
@@ -37994,138 +38038,113 @@ function categorizeOutcome({
   outcome,
   baseOutcome
 }) {
-  const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
-  const commitConclusion = outcome.commit?.completed?.conclusion;
-  const netNewCommitConclusion = baseCommitConclusion !== commitConclusion ? commitConclusion : void 0;
-  const diagnostics = getNewDiagnostics(
-    outcome.diagnostics,
-    baseOutcome?.diagnostics
+  const baseConclusion = baseOutcome?.commit?.conclusion;
+  const headConclusion = outcome.commit?.conclusion;
+  if (!headConclusion || baseOutcome && !baseConclusion) {
+    return { isPending: true };
+  }
+  const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
+  const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
+  if ([...Object.values(headChecks), ...Object.values(baseChecks)].some(
+    (check) => check && check.status !== "completed"
+  )) {
+    return { isPending: true };
+  }
+  const newDiagnostics = sortDiagnostics(
+    baseOutcome ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics) : outcome.diagnostics
   );
-  const diagnosticCounts = countDiagnosticLevels(diagnostics);
-  const checks = getNewChecks(outcome, baseOutcome);
+  const conclusions = {
+    fatal: [
+      "fatal",
+      "payment_required",
+      "timed_out",
+      "upstream_merge_conflict",
+      "version_bump"
+    ],
+    conflict: ["merge_conflict"],
+    diagnostic: ["error", "warning", "note"],
+    success: ["success", "noop", "cancelled"]
+  };
+  const checks = getNewChecks(headChecks, baseChecks);
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && checks[checkType].completed.conclusion !== "success"
   );
-  if (commitConclusion === "noop") {
+  if (conclusions.fatal.includes(headConclusion)) {
     return {
-      conclusion: "success",
-      reason: "Code was not generated because the target is skipped."
-    };
-  }
-  if (commitConclusion === "cancelled") {
-    return {
-      conclusion: "success",
-      reason: "Code was not generated because the build was cancelled."
-    };
-  }
-  if (!commitConclusion) {
-    return {
-      reason: "Build is still in progress.",
-      isPending: true
-    };
-  }
-  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
-    return {
+      isPending: false,
       conclusion: "fatal",
-      reason: "Code was not generated because there was a fatal error.",
-      isPending: outcome.commit?.status !== "completed"
+      severity: "fatal",
+      description: `had a "${headConclusion}" conclusion, and no code was generated`,
+      isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
     };
   }
-  if (commitConclusion === "timed_out") {
+  if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
+    const categoryOutcome = conclusions.diagnostic.includes(headConclusion) ? {
+      severity: headConclusion,
+      description: `had at least one "${headConclusion}" diagnostic`,
+      isRegression: baseConclusion ? conclusions.success.includes(baseConclusion) || conclusions.diagnostic.indexOf(headConclusion) < conclusions.diagnostic.indexOf(baseConclusion) ? true : false : null,
+      rank: 1
+    } : null;
+    const diagnosticLevelOutcome = newDiagnostics.length > 0 ? {
+      severity: newDiagnostics[0].level,
+      description: `had at least one ${baseOutcome ? "new " : ""}${newDiagnostics[0].level} diagnostic`,
+      isRegression: baseOutcome ? true : null,
+      rank: 2
+    } : null;
+    let checkFailureOutcome;
+    for (const { step, severity } of [
+      { step: "build", severity: "error" },
+      { step: "lint", severity: "warning" },
+      { step: "test", severity: "warning" }
+    ]) {
+      if (checkFailures.includes(step)) {
+        checkFailureOutcome = {
+          severity,
+          description: `had a failure in the ${step} CI job`,
+          isRegression: baseChecks ? true : null,
+          rank: 3
+        };
+        break;
+      }
+    }
+    const worstOutcome = [
+      categoryOutcome,
+      diagnosticLevelOutcome,
+      checkFailureOutcome
+    ].filter((r) => r !== null).sort(
+      (a, b) => (
+        // sort by severity then rank
+        conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
+      )
+    )[0];
     return {
-      conclusion: "fatal",
-      reason: "Timed out."
+      isPending: false,
+      conclusion: headConclusion,
+      ...worstOutcome
     };
   }
-  if (![
-    // Merge conflicts are warnings, not fatal:
-    "merge_conflict",
-    // Success conclusion are handled below:
-    "error",
-    "warning",
-    "note",
-    "success"
-    // All other commit conclusions are unknown, and thus fatal.
-  ].includes(commitConclusion)) {
+  if (conclusions.conflict.includes(headConclusion)) {
     return {
-      conclusion: "fatal",
-      reason: `Unknown conclusion: ${commitConclusion}`
-    };
-  }
-  if (diagnosticCounts.fatal > 0) {
-    return {
-      conclusion: "fatal",
-      reason: `Found ${diagnosticCounts.fatal} fatal diagnostics.`
-    };
-  }
-  if (diagnosticCounts.error > 0) {
-    return {
-      conclusion: "error",
-      reason: `Found ${diagnosticCounts.error} new error diagnostics.`
-    };
-  }
-  if (checkFailures.includes("build")) {
-    return {
-      conclusion: "error",
-      reason: "The build CI job failed."
-    };
-  }
-  if (netNewCommitConclusion === "error") {
-    return {
-      conclusion: "error",
-      reason: "Build had an error conclusion."
-    };
-  }
-  if (diagnosticCounts.warning > 0) {
-    return {
-      conclusion: "warning",
-      reason: `Found ${diagnosticCounts.warning} warning diagnostics.`
-    };
-  }
-  if (checkFailures.includes("lint")) {
-    return {
-      conclusion: "warning",
-      reason: "The lint CI job failed."
-    };
-  }
-  if (checkFailures.includes("test")) {
-    return {
-      conclusion: "warning",
-      reason: "The test CI job failed."
-    };
-  }
-  if (netNewCommitConclusion === "warning") {
-    return {
-      conclusion: "warning",
-      reason: "Build had a warning conclusion."
-    };
-  }
-  if (netNewCommitConclusion === "merge_conflict") {
-    return {
-      conclusion: "warning",
-      reason: "There was a conflict between your custom code and your generated changes.",
-      isMergeConflict: true
-    };
-  }
-  if (diagnosticCounts.note > 0) {
-    return {
-      conclusion: "note",
-      reason: `Found ${diagnosticCounts.note} note diagnostics.`
-    };
-  }
-  if (netNewCommitConclusion === "note") {
-    return {
-      conclusion: "note",
-      reason: "Build had a note conclusion."
+      isPending: false,
+      conclusion: "merge_conflict",
+      severity: baseConclusion !== "merge_conflict" ? "warning" : null,
+      description: "resulted in a merge conflict between your custom code and the newly generated changes",
+      isRegression: baseConclusion ? baseConclusion !== "merge_conflict" ? true : false : null
     };
   }
   return {
-    conclusion: "success",
-    reason: "Build was successful.",
-    isPending: Object.values(checks).some(
-      (check) => check.status !== "completed"
-    )
+    isPending: false,
+    conclusion: headConclusion,
+    severity: null,
+    description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
+    isRegression: baseConclusion ? false : null
   };
+}
+function getReason({
+  description,
+  isRegression
+}) {
+  return `Your SDK build ${description}${isRegression === true ? ", which is a regression from the base state" : isRegression === false ? ", but this did not represent a regression" : ""}.`;
 }
 var DiagnosticLevel = ["fatal", "error", "warning", "note"];
 function countDiagnosticLevels(diagnostics) {
@@ -38158,13 +38177,24 @@ function sortDiagnostics(diagnostics) {
   );
 }
 var CheckType = ["build", "lint", "test"];
-function getNewChecks(outcome, baseOutcome) {
+function getChecks(outcome) {
+  const results = {};
+  for (const checkType of CheckType) {
+    results[checkType] = outcome[checkType] || null;
+  }
+  return results;
+}
+function getNewChecks(headChecks, baseChecks) {
   const result = {};
   for (const checkType of CheckType) {
-    const baseConclusion = baseOutcome?.[checkType]?.status === "completed" && baseOutcome?.[checkType].completed.conclusion;
-    const conclusion = outcome[checkType]?.status === "completed" && outcome[checkType].completed.conclusion;
-    if (outcome[checkType] && (!baseConclusion || baseConclusion !== conclusion)) {
-      result[checkType] = outcome[checkType];
+    const headCheck = headChecks[checkType];
+    const baseCheck = baseChecks ? baseChecks[checkType] : null;
+    if (headCheck) {
+      const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
+      const conclusion = headCheck.status === "completed" && headCheck.conclusion;
+      if (!baseConclusion || baseConclusion !== conclusion) {
+        result[checkType] = headCheck;
+      }
     }
   }
   return result;
@@ -38312,24 +38342,29 @@ function Result({
   head,
   base
 }) {
-  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+  const categorized = categorizeOutcome({
     outcome: head,
     baseOutcome: base
   });
   const { ResultIcon, Description } = (() => {
-    if (isPending) {
+    if (categorized.isPending) {
       return {
         ResultIcon: Symbol2.HourglassFlowingSand,
         Description: ""
       };
     }
-    if (conclusion === "fatal") {
+    const { severity, conclusion, isRegression, description } = categorized;
+    const reason = getReason({
+      description,
+      isRegression
+    });
+    if (isRegression !== false && severity === "fatal") {
       return {
         ResultIcon: Symbol2.Exclamation,
         Description: Italic(reason)
       };
     }
-    if (isMergeConflict) {
+    if (isRegression !== false && conclusion === "merge_conflict") {
       return {
         ResultIcon: Symbol2.Zap,
         Description: [
@@ -38343,15 +38378,15 @@ function Result({
         ].join("\n")
       };
     }
-    if (conclusion !== "note" && conclusion !== "success") {
+    if (isRegression !== false && severity !== "note" && severity !== null) {
       return {
         ResultIcon: Symbol2.Warning,
-        Description: Italic("There was a regression in your SDK.")
+        Description: Italic(reason)
       };
     }
     return {
       ResultIcon: Symbol2.WhiteCheckMark,
-      Description: Italic("Your SDK built successfully.")
+      Description: Italic(reason)
     };
   })();
   return Details({
@@ -38374,7 +38409,7 @@ function Result({
       InstallationDetails(head, lang),
       base ? DiagnosticsDetails(head, base) : null
     ].filter((value) => Boolean(value)).join("\n"),
-    open: conclusion !== "note" && conclusion !== "success" && !isPending
+    open: !categorized.isPending && categorized.isRegression !== false && categorized.severity !== "note" && categorized.severity !== null
   });
 }
 function StatusLine(base, head) {
@@ -38622,7 +38657,7 @@ function makeCommitMessageConventional(message) {
   return message;
 }
 
-// node_modules/nano-spawn/source/context.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/context.js
 var import_node_process = __toESM(require("node:process"), 1);
 var import_node_util = require("node:util");
 var getContext = (raw) => ({
@@ -38632,7 +38667,7 @@ var getContext = (raw) => ({
 });
 var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
 
-// node_modules/nano-spawn/source/options.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/options.js
 var import_node_path = __toESM(require("node:path"), 1);
 var import_node_url = require("node:url");
 var import_node_process2 = __toESM(require("node:process"), 1);
@@ -38664,12 +38699,12 @@ var addLocalPath = ({ Path = "", PATH = Path, ...env }, cwd) => {
 };
 var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
 
-// node_modules/nano-spawn/source/spawn.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
 var import_node_child_process = require("node:child_process");
 var import_node_events2 = require("node:events");
 var import_node_process5 = __toESM(require("node:process"), 1);
 
-// node_modules/nano-spawn/source/windows.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/windows.js
 var import_promises = __toESM(require("node:fs/promises"), 1);
 var import_node_path2 = __toESM(require("node:path"), 1);
 var import_node_process3 = __toESM(require("node:process"), 1);
@@ -38703,7 +38738,7 @@ var exeExtensions = [".exe", ".com"];
 var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
 var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
 
-// node_modules/nano-spawn/source/result.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/result.js
 var import_node_events = require("node:events");
 var import_node_process4 = __toESM(require("node:process"), 1);
 var getResult = async (nodeChildProcess, { input }, context) => {
@@ -38762,7 +38797,7 @@ var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
 });
 var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
 
-// node_modules/nano-spawn/source/spawn.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
 var spawnSubprocess = async (file, commandArguments, options, context) => {
   try {
     if (["node", "node.exe"].includes(file.toLowerCase())) {
@@ -38796,7 +38831,7 @@ var bufferOutput = (stream, { state }, streamName) => {
   }
 };
 
-// node_modules/nano-spawn/source/pipe.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/pipe.js
 var import_promises2 = require("node:stream/promises");
 var handlePipe = async (subprocesses) => {
   const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
@@ -38830,7 +38865,7 @@ var closeStdin = async (nodeChildProcess) => {
   stdin.end();
 };
 
-// node_modules/nano-spawn/source/iterable.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/iterable.js
 var readline = __toESM(require("node:readline/promises"), 1);
 var lineIterator = async function* (subprocess, { state }, streamName) {
   if (state.isIterating === false) {
@@ -38880,7 +38915,7 @@ var getNext = async (iterator) => {
   }
 };
 
-// node_modules/nano-spawn/source/index.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/index.js
 function spawn2(file, second, third, previous) {
   const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
   const context = getContext([file, ...commandArguments]);
@@ -39023,7 +39058,7 @@ async function isConfigChanged({
   return changed;
 }
 
-// node_modules/diff/libesm/diff/base.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/base.js
 var Diff = class {
   diff(oldStr, newStr, options = {}) {
     let callback;
@@ -39225,7 +39260,7 @@ var Diff = class {
   }
 };
 
-// node_modules/diff/libesm/util/string.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/string.js
 function hasOnlyWinLineEndings(string) {
   return string.includes("\r\n") && !string.startsWith("\n") && !string.match(/[^\r]\n/);
 }
@@ -39233,7 +39268,7 @@ function hasOnlyUnixLineEndings(string) {
   return !string.includes("\r\n") && string.includes("\n");
 }
 
-// node_modules/diff/libesm/diff/line.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/line.js
 var LineDiff = class extends Diff {
   constructor() {
     super(...arguments);
@@ -39281,7 +39316,7 @@ function tokenize(value, options) {
   return retLines;
 }
 
-// node_modules/diff/libesm/patch/line-endings.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/line-endings.js
 function unixToWin(patch) {
   if (Array.isArray(patch)) {
     return patch.map((p) => unixToWin(p));
@@ -39313,7 +39348,7 @@ function isWin(patch) {
   })));
 }
 
-// node_modules/diff/libesm/patch/parse.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/parse.js
 function parsePatch(uniDiff) {
   const diffstr = uniDiff.split(/\n/), list = [];
   let i = 0;
@@ -39418,7 +39453,7 @@ function parsePatch(uniDiff) {
   return list;
 }
 
-// node_modules/diff/libesm/util/distance-iterator.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/distance-iterator.js
 function distance_iterator_default(start, minLine, maxLine) {
   let wantForward = true, backwardExhausted = false, forwardExhausted = false, localOffset = 1;
   return function iterator() {
@@ -39447,7 +39482,7 @@ function distance_iterator_default(start, minLine, maxLine) {
   };
 }
 
-// node_modules/diff/libesm/patch/apply.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/apply.js
 function applyPatch(source, patch, options = {}) {
   let patches;
   if (typeof patch === "string") {
@@ -39596,7 +39631,7 @@ function applyStructuredPatch(source, patch, options = {}) {
   return resultLines.join("\n");
 }
 
-// node_modules/diff/libesm/patch/create.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/create.js
 var INCLUDE_HEADERS = {
   includeIndex: true,
   includeUnderline: true,
@@ -39779,7 +39814,7 @@ function splitLines(text) {
   return result;
 }
 
-// node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -39797,7 +39832,7 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid42 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -39809,7 +39844,7 @@ var uuid42 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError2(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -39840,7 +39875,7 @@ var castToError2 = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/sdk/core/error.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/core/error.mjs
 var StainlessError = class extends Error {
 };
 var APIError2 = class _APIError extends StainlessError {
@@ -39929,7 +39964,7 @@ var RateLimitError2 = class extends APIError2 {
 var InternalServerError2 = class extends APIError2 {
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL2 = (url) => {
   return startsWithSchemeRegexp2.test(url);
@@ -39969,13 +40004,13 @@ var safeJSON2 = (text) => {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/sdk/version.mjs
-var VERSION2 = "0.1.0-alpha.19";
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/version.mjs
+var VERSION2 = "0.1.0-alpha.24";
 
-// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform2() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -40101,7 +40136,7 @@ var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
 
-// node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch2() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -40146,7 +40181,7 @@ async function CancelReadableStream2(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder2 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -40156,7 +40191,7 @@ var FallbackEncoder2 = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format2 = "RFC3986";
 var default_formatter2 = (v) => String(v);
 var formatters2 = {
@@ -40165,7 +40200,7 @@ var formatters2 = {
 };
 var RFC17382 = "RFC1738";
 
-// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
 var hex_table2 = /* @__PURE__ */ (() => {
   const array = [];
@@ -40244,7 +40279,7 @@ function maybe_map2(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators2 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -40522,7 +40557,7 @@ function stringify2(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/log.mjs
 var levelNumbers2 = {
   off: 0,
   error: 200,
@@ -40595,7 +40630,7 @@ var formatRequestDetails2 = (details) => {
   return details;
 };
 
-// node_modules/@stainless-api/sdk/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/parse.mjs
 async function defaultParseResponse2(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -40609,6 +40644,10 @@ async function defaultParseResponse2(client, props) {
     const mediaType = contentType?.split(";")[0]?.trim();
     const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
     if (isJSON) {
+      const contentLength = response.headers.get("content-length");
+      if (contentLength === "0") {
+        return void 0;
+      }
       const json = await response.json();
       return json;
     }
@@ -40625,7 +40664,7 @@ async function defaultParseResponse2(client, props) {
   return body;
 }
 
-// node_modules/@stainless-api/sdk/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/core/api-promise.mjs
 var _APIPromise_client2;
 var APIPromise2 = class _APIPromise extends Promise {
   constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
@@ -40686,7 +40725,7 @@ var APIPromise2 = class _APIPromise extends Promise {
 };
 _APIPromise_client2 = /* @__PURE__ */ new WeakMap();
 
-// node_modules/@stainless-api/sdk/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/core/pagination.mjs
 var _AbstractPage_client2;
 var AbstractPage2 = class {
   constructor(client, response, body, options) {
@@ -40767,7 +40806,7 @@ var Page = class extends AbstractPage2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport2 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -40784,7 +40823,7 @@ function getName2(value) {
 }
 var isAsyncIterable2 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/to-file.mjs
 var isBlobLike2 = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike2 = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike2(value);
 var isResponseLike2 = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -40836,14 +40875,14 @@ function propsForError2(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/@stainless-api/sdk/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/core/resource.mjs
 var APIResource2 = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/path.mjs
 function encodeURIPath2(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -40898,7 +40937,7 @@ ${underline}`);
 };
 var path5 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
-// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource2 {
   /**
    * Get the list of diagnostics for a given build.
@@ -40914,7 +40953,7 @@ var Diagnostics = class extends APIResource2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource2 {
   /**
    * Retrieve a method to download an output for a given build target.
@@ -40933,7 +40972,7 @@ var TargetOutputs = class extends APIResource2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
 var Builds2 = class extends APIResource2 {
   constructor() {
     super(...arguments);
@@ -40985,7 +41024,7 @@ var Builds2 = class extends APIResource2 {
 Builds2.Diagnostics = Diagnostics;
 Builds2.TargetOutputs = TargetOutputs;
 
-// node_modules/@stainless-api/sdk/resources/orgs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs3 = class extends APIResource2 {
   /**
    * Retrieve an organization by name.
@@ -41001,7 +41040,7 @@ var Orgs3 = class extends APIResource2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches2 = class extends APIResource2 {
   /**
    * Create a new branch for a project.
@@ -41066,7 +41105,7 @@ var Branches2 = class extends APIResource2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource2 {
   /**
    * Retrieve the configuration files for a given project.
@@ -41084,7 +41123,7 @@ var Configs = class extends APIResource2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
 var Projects = class extends APIResource2 {
   constructor() {
     super(...arguments);
@@ -41117,11 +41156,22 @@ var Projects = class extends APIResource2 {
   list(query = {}, options) {
     return this._client.getAPIList("/v0/projects", Page, { query, ...options });
   }
+  /**
+   * Generates an AI commit message by comparing two git refs in the SDK repository.
+   */
+  generateCommitMessage(params, options) {
+    const { project = this._client.project, target, ...body } = params;
+    return this._client.post(path5`/v0/projects/${project}/generate_commit_message`, {
+      query: { target },
+      body,
+      ...options
+    });
+  }
 };
 Projects.Branches = Branches2;
 Projects.Configs = Configs;
 
-// node_modules/@stainless-api/sdk/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/headers.mjs
 var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders2(headers) {
   if (!headers)
@@ -41184,7 +41234,7 @@ var buildHeaders2 = (newHeaders) => {
   return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv2 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -41195,7 +41245,7 @@ var readEnv2 = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/sdk/lib/unwrap.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/lib/unwrap.mjs
 async function unwrapFile(value) {
   if (value === null) {
     return null;
@@ -41207,7 +41257,7 @@ async function unwrapFile(value) {
   return response.text();
 }
 
-// node_modules/@stainless-api/sdk/client.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.24/node_modules/@stainless-api/sdk/client.mjs
 var _Stainless_instances;
 var _a2;
 var _Stainless_encoder;
@@ -41457,7 +41507,7 @@ var Stainless = class {
     return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
   }
   getAPIList(path6, Page2, opts) {
-    return this.requestAPIList(Page2, { method: "get", path: path6, ...opts });
+    return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path6, ...opts2 })) : { method: "get", path: path6, ...opts });
   }
   requestAPIList(Page2, options) {
     const request = this.makeRequest(options, null, void 0);
@@ -41465,9 +41515,10 @@ var Stainless = class {
   }
   async fetchWithTimeout(url, init, ms, controller) {
     const { signal, method, ...options } = init || {};
+    const abort = this._makeAbort(controller);
     if (signal)
-      signal.addEventListener("abort", () => controller.abort());
-    const timeout = setTimeout(() => controller.abort(), ms);
+      signal.addEventListener("abort", abort, { once: true });
+    const timeout = setTimeout(abort, ms);
     const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
     const fetchOptions = {
       signal: controller.signal,
@@ -41576,6 +41627,9 @@ var Stainless = class {
     ]);
     this.validateHeaders(headers);
     return headers.values;
+  }
+  _makeAbort(controller) {
+    return () => controller.abort();
   }
   buildBody({ options: { body, headers: rawHeaders } }) {
     if (!body) {
@@ -42089,6 +42143,9 @@ async function* pollBuild({
       },
       commit: {
         status: "completed",
+        conclusion: "timed_out",
+        commit: null,
+        merge_conflict_pr: null,
         completed: {
           conclusion: "timed_out",
           commit: null,
