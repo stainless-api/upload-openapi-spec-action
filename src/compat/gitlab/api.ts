@@ -1,73 +1,86 @@
+import { APIError } from "@stainless-api/gitlab-internal/core/error";
+import type { APIEntitiesNote } from "@stainless-api/gitlab-internal/resources/projects/issues/notes/notes";
+import {
+  APIEntitiesMergeRequest,
+  BaseMergeRequests as GitLabMergeRequests,
+} from "@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests";
+import { BaseNotes as GitLabNotes } from "@stainless-api/gitlab-internal/resources/projects/merge-requests/notes";
+import { BaseCommits as GitLabCommits } from "@stainless-api/gitlab-internal/resources/projects/repository/commits";
+import {
+  createClient as createGitLabClient,
+  PartialGitLab,
+} from "@stainless-api/gitlab-internal/tree-shakable";
+
 import { logger } from "../../logger";
 import type { APIClient, Comment, PullRequest } from "../api";
 import { getInput } from "../input";
 import { getGitLabContext as ctx } from "./context";
 
 class GitLabClient implements APIClient {
-  private token: string;
+  private client: PartialGitLab<{
+    projects: {
+      repository: { commits: GitLabCommits };
+      mergeRequests: GitLabMergeRequests & { notes: GitLabNotes };
+    };
+  }>;
 
   constructor(token: string) {
-    this.token = token;
-  }
-
-  private requestId = 0;
-  private async request(method: string, endpoint: string, body?: unknown) {
-    const id = this.requestId++;
-    const url = `${ctx().urls.api}/v4/projects/${ctx().projectID}${endpoint}`;
-    logger.debug(`[${id}] sending request`, {
-      body: body ? JSON.stringify(body) : undefined,
-      method,
-      url,
+    this.client = createGitLabClient({
+      apiToken: token,
+      baseURL: ctx().urls.api,
+      resources: [GitLabCommits, GitLabMergeRequests, GitLabNotes],
     });
-    const response = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/json",
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (!response.ok) {
-      logger.debug(`[${id}] request failed`, {
-        status: response.status,
-        statusText: response.statusText,
-        body: await response.text().catch(() => "[failed to read body]"),
-      });
-      throw new Error(
-        `GitLab API error: ${response.status} ${response.statusText}`,
-      );
-    }
-    return response.json();
   }
 
   async listComments(): Promise<Comment[]> {
-    const notes = await this.request(
-      "GET",
-      `/merge_requests/${ctx().prNumber}/notes`,
-    );
-    return (notes as { id: string; body: string }[]).map((n) => ({
-      id: n.id,
-      body: n.body,
-    }));
+    // The OAS claims it's a single object, but the docs claim it's an array.
+    // Just handle both.
+    const comments: APIEntitiesNote[] =
+      await this.client.projects.mergeRequests.notes
+        .list(ctx().prNumber!, {
+          id: ctx().projectID,
+        })
+        .then((data) => (Array.isArray(data) ? data : [data]))
+        .catch((err) => {
+          if (err instanceof APIError && err.status === 404) {
+            return [];
+          }
+          throw err;
+        });
+
+    return comments.map((c) => ({ id: c.id!, body: c.body ?? "" }));
   }
 
   async createComment(body: string): Promise<void> {
-    await this.request("POST", `/merge_requests/${ctx().prNumber}/notes`, {
+    await this.client.projects.mergeRequests.notes.create(ctx().prNumber!, {
+      id: ctx().projectID,
       body,
     });
   }
 
   async updateComment(id: number, body: string): Promise<void> {
-    await this.request("PUT", `/merge_requests/${ctx().prNumber}/notes/${id}`, {
+    await this.client.projects.mergeRequests.notes.update(id, {
+      id: ctx().projectID,
+      noteable_id: ctx().prNumber!,
       body,
     });
   }
 
   async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
-    const mergeRequests = (await this.request(
-      "GET",
-      `/repository/commits/${sha}/merge_requests`,
-    )) as { iid: number }[];
+    const mergeRequests: APIEntitiesMergeRequest[] =
+      await this.client.projects.repository.commits
+        .retrieveMergeRequests(sha, {
+          id: ctx().projectID,
+        })
+        // The OAS claims it's a single object, but the docs claim it's an
+        // array? Just handle both.
+        .then((data) => (Array.isArray(data) ? data : [data]))
+        .catch((err) => {
+          if (err instanceof APIError && err.status === 404) {
+            return [];
+          }
+          throw err;
+        });
     if (mergeRequests.length === 0) {
       return null;
     }
@@ -79,38 +92,23 @@ class GitLabClient implements APIClient {
     }
 
     const mergeRequestIID = mergeRequests[0]!.iid;
-    let attempts = 0;
-    let mergeRequest: {
-      iid: number;
-      state: "opened" | "closed" | "merged" | "locked";
-      /**
-       * Per GitLab docs:
-       * > Empty when the merge request is created, and populates asynchronously.
-       * So we poll until it's populated.
-       */
-      diff_refs: {
-        /**
-         * GitLab docs say:
-         * > SHA of the target branch commit. The starting point for the diff.
-         * > Usually the same as base_sha.
-         * So this is what corresponds with our `base_sha`; their `base_sha`
-         * is what we call the merge base SHA.
-         */
-        start_sha: string;
-        head_sha: string;
-      } | null;
-      source_branch: string;
-      target_branch: string;
-    } | null = null;
+    /**
+     * Per GitLab docs, diff_refs is "Empty when the merge request is created,
+     * and populates asynchronously." So we poll until it's populated.
+     */
+    let mergeRequest: APIEntitiesMergeRequest | null = null;
 
-    while (attempts < 3) {
-      attempts++;
-      mergeRequest = await this.request(
-        "GET",
-        `/merge_requests/${mergeRequestIID}`,
+    let attempts = 0;
+    while (attempts++ < 3) {
+      mergeRequest = await this.client.projects.mergeRequests.retrieve(
+        mergeRequestIID,
+        { id: ctx().projectID },
       );
 
-      if (mergeRequest?.diff_refs) {
+      if (
+        mergeRequest?.diff_refs?.start_sha &&
+        mergeRequest?.diff_refs?.head_sha
+      ) {
         return {
           number: mergeRequest.iid,
           state:
@@ -118,7 +116,7 @@ class GitLabClient implements APIClient {
               ? "open"
               : mergeRequest.state === "locked"
                 ? "closed"
-                : mergeRequest.state,
+                : (mergeRequest.state as "closed" | "merged"),
           base_sha: mergeRequest.diff_refs.start_sha,
           base_ref: mergeRequest.target_branch,
           head_sha: mergeRequest.diff_refs.head_sha,
