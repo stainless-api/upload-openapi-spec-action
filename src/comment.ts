@@ -1,5 +1,5 @@
 import {
-  createCommentClient,
+  createVCSClient,
   getCITerm,
   getPRTerm,
   getRepoPath,
@@ -12,6 +12,7 @@ import {
   categorizeOutcome,
   countDiagnosticLevels,
   getNewDiagnostics,
+  getReason,
   sortDiagnostics,
 } from "./outcomes";
 
@@ -237,25 +238,32 @@ export function Result({
   base?: Outcomes[string];
   hasDiff?: boolean;
 }): string | null {
-  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+  const categorized = categorizeOutcome({
     outcome: head,
     baseOutcome: base,
   });
 
   const { ResultIcon, Description } = (() => {
-    if (isPending) {
+    if (categorized.isPending) {
       return {
         ResultIcon: MD.Symbol.HourglassFlowingSand,
         Description: "",
       };
     }
-    if (conclusion === "fatal") {
+
+    const { severity, conclusion, isRegression, description } = categorized;
+    const reason = getReason({
+      description,
+      isRegression,
+    });
+
+    if (isRegression !== false && severity === "fatal") {
       return {
         ResultIcon: MD.Symbol.Exclamation,
         Description: MD.Italic(reason),
       };
     }
-    if (isMergeConflict) {
+    if (isRegression !== false && conclusion === "merge_conflict") {
       return {
         ResultIcon: MD.Symbol.Zap,
         Description: [
@@ -270,15 +278,15 @@ export function Result({
         ].join("\n"),
       };
     }
-    if (conclusion !== "note" && conclusion !== "success") {
+    if (isRegression !== false && severity !== "note" && severity !== null) {
       return {
         ResultIcon: MD.Symbol.Warning,
-        Description: MD.Italic("There was a regression in your SDK."),
+        Description: MD.Italic(reason),
       };
     }
     return {
       ResultIcon: MD.Symbol.WhiteCheckMark,
-      Description: MD.Italic("Your SDK built successfully."),
+      Description: MD.Italic(reason),
     };
   })();
 
@@ -308,7 +316,11 @@ export function Result({
     ]
       .filter((value): value is NonNullable<typeof value> => Boolean(value))
       .join("\n"),
-    open: conclusion !== "note" && conclusion !== "success" && !isPending,
+    open:
+      !categorized.isPending &&
+      categorized.isRegression !== false &&
+      categorized.severity !== "note" &&
+      categorized.severity !== null,
   });
 }
 
@@ -588,7 +600,7 @@ export async function retrieveComment({
   token: string;
   prNumber: number;
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
   const comments = await client.listComments();
 
   const existingComment =
@@ -612,7 +624,7 @@ export async function upsertComment({
   prNumber: number;
   skipCreate?: boolean;
 }) {
-  const client = createCommentClient(token, prNumber);
+  const client = createVCSClient(token, prNumber);
 
   logger.debug(`Upserting comment on ${getPRTerm()} #${prNumber}`);
 

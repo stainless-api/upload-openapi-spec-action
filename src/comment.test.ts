@@ -199,7 +199,13 @@ describe("printComment", () => {
           },
         },
         lint: {
-          status: "in_progress",
+          status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/212",
+          completed: {
+            conclusion: "success",
+            url: "https://github.com/test-org/test-sdk/actions/runs/212",
+          },
         },
         test: {
           status: "completed",

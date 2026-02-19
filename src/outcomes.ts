@@ -35,15 +35,33 @@ export function shouldFailRun({
   baseOutcomes?: Outcomes | null;
 }) {
   const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
-    const { conclusion, reason } = categorizeOutcome({
+    const categorized = categorizeOutcome({
       outcome,
       baseOutcome: baseOutcomes?.[language],
     });
+
+    if (categorized.isPending) {
+      return [];
+    }
+
+    const { severity, isRegression, description } = categorized;
+
     const didFail =
-      conclusion &&
-      OutcomeConclusion.indexOf(conclusion) <=
+      isRegression !== false &&
+      severity &&
+      OutcomeConclusion.indexOf(severity) <=
         OutcomeConclusion.indexOf(failRunOn);
-    return didFail ? [{ language, reason }] : [];
+    return didFail
+      ? [
+          {
+            language,
+            reason: getReason({
+              description,
+              isRegression,
+            }),
+          },
+        ]
+      : [];
   });
 
   if (failures.length > 0) {
@@ -63,26 +81,61 @@ export function categorizeOutcome({
 }: {
   outcome: Outcomes[string];
   baseOutcome?: Outcomes[string];
-}): {
-  conclusion?: OutcomeConclusion;
-  reason: string;
-  isMergeConflict?: boolean;
-  isPending?: boolean;
-} {
-  const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
-  const commitConclusion = outcome.commit?.completed?.conclusion;
-  const netNewCommitConclusion =
-    baseCommitConclusion !== commitConclusion ? commitConclusion : undefined;
+}):
+  | {
+      isPending: false;
+      conclusion: Stainless.Builds.BuildTarget.Completed["conclusion"];
+      severity: Exclude<FailRunOn, "never"> | null;
+      description: string;
+      // true if the outcome is worse than the base outcome, false if it's not worse, null if there is no base outcome
+      isRegression: boolean | null;
+    }
+  | {
+      isPending: true;
+    } {
+  const baseConclusion = baseOutcome?.commit?.conclusion;
+  const headConclusion = outcome.commit?.conclusion;
+  if (!headConclusion || (baseOutcome && !baseConclusion)) {
+    return { isPending: true };
+  }
 
-  // If we have old diagnostics, only fail run against new diagnostics.
-  const diagnostics = getNewDiagnostics(
-    outcome.diagnostics,
-    baseOutcome?.diagnostics,
+  const baseChecks =
+    baseOutcome && baseOutcome.commit?.commit
+      ? getChecks(baseOutcome)
+      : ({} as Record<string, Stainless.Builds.CheckStep>);
+  const headChecks = outcome.commit?.commit
+    ? getChecks(outcome)
+    : ({} as Record<string, Stainless.Builds.CheckStep>);
+
+  // wait for all checks to complete
+  if (
+    [...Object.values(headChecks), ...Object.values(baseChecks)].some(
+      (check) => check && check.status !== "completed",
+    )
+  ) {
+    return { isPending: true };
+  }
+
+  const newDiagnostics = sortDiagnostics(
+    baseOutcome
+      ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics)
+      : outcome.diagnostics,
   );
-  const diagnosticCounts = countDiagnosticLevels(diagnostics);
 
-  // If we have old checks, only fail run against new checks.
-  const checks = getNewChecks(outcome, baseOutcome);
+  const conclusions = {
+    fatal: [
+      "fatal",
+      "payment_required",
+      "timed_out",
+      "upstream_merge_conflict",
+      "version_bump",
+    ],
+    conflict: ["merge_conflict"],
+    diagnostic: ["error", "warning", "note"],
+    success: ["success", "noop", "cancelled"],
+  };
+
+  const checks = getNewChecks(headChecks, baseChecks);
   const checkFailures = CheckType.filter(
     (checkType) =>
       checks[checkType] &&
@@ -90,140 +143,120 @@ export function categorizeOutcome({
       checks[checkType].completed.conclusion !== "success",
   );
 
-  // Special case: noops and cancels are successful
-  if (commitConclusion === "noop") {
+  if (conclusions.fatal.includes(headConclusion)) {
     return {
-      conclusion: "success",
-      reason: "Code was not generated because the target is skipped.",
-    };
-  }
-  if (commitConclusion === "cancelled") {
-    return {
-      conclusion: "success",
-      reason: "Code was not generated because the build was cancelled.",
-    };
-  }
-
-  if (!commitConclusion) {
-    return {
-      reason: "Build is still in progress.",
-      isPending: true,
-    };
-  }
-
-  // Fatal reasons
-  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
-    return {
+      isPending: false,
       conclusion: "fatal",
-      reason: "Code was not generated because there was a fatal error.",
-      isPending: outcome.commit?.status !== "completed",
-    };
-  }
-  if (commitConclusion === "timed_out") {
-    return {
-      conclusion: "fatal",
-      reason: "Timed out.",
+      severity: "fatal",
+      description: `had a "${headConclusion}" conclusion, and no code was generated`,
+      isRegression: baseConclusion
+        ? conclusions.fatal.includes(baseConclusion)
+          ? false
+          : true
+        : null,
     };
   }
   if (
-    ![
-      // Merge conflicts are warnings, not fatal:
-      "merge_conflict",
-      // Success conclusion are handled below:
-      "error",
-      "warning",
-      "note",
-      "success",
-      // All other commit conclusions are unknown, and thus fatal.
-    ].includes(commitConclusion)
+    conclusions.diagnostic.includes(headConclusion) ||
+    newDiagnostics.length > 0 ||
+    checkFailures.length > 0
   ) {
-    return {
-      conclusion: "fatal",
-      reason: `Unknown conclusion: ${commitConclusion}`,
-    };
-  }
-  if (diagnosticCounts.fatal > 0) {
-    return {
-      conclusion: "fatal",
-      reason: `Found ${diagnosticCounts.fatal} fatal diagnostics.`,
-    };
-  }
+    const categoryOutcome = conclusions.diagnostic.includes(headConclusion)
+      ? {
+          severity: headConclusion as Exclude<FailRunOn, "never">,
+          description: `had at least one "${headConclusion}" diagnostic`,
+          isRegression: baseConclusion
+            ? conclusions.success.includes(baseConclusion) ||
+              conclusions.diagnostic.indexOf(headConclusion) <
+                conclusions.diagnostic.indexOf(baseConclusion)
+              ? true
+              : false
+            : null,
+          rank: 1,
+        }
+      : null;
 
-  // Error reasons
-  if (diagnosticCounts.error > 0) {
-    return {
-      conclusion: "error",
-      reason: `Found ${diagnosticCounts.error} new error diagnostics.`,
-    };
-  }
-  if (checkFailures.includes("build")) {
-    return {
-      conclusion: "error",
-      reason: "The build CI job failed.",
-    };
-  }
-  if (netNewCommitConclusion === "error") {
-    return {
-      conclusion: "error",
-      reason: "Build had an error conclusion.",
-    };
-  }
+    const diagnosticLevelOutcome =
+      newDiagnostics.length > 0
+        ? {
+            severity: newDiagnostics[0].level as Exclude<FailRunOn, "never">,
+            description: `had at least one ${baseOutcome ? "new " : ""}${newDiagnostics[0].level} diagnostic`,
+            isRegression: baseOutcome ? true : null,
+            rank: 2,
+          }
+        : null;
 
-  // Warning reasons
-  if (diagnosticCounts.warning > 0) {
-    return {
-      conclusion: "warning",
-      reason: `Found ${diagnosticCounts.warning} warning diagnostics.`,
-    };
-  }
-  if (checkFailures.includes("lint")) {
-    return {
-      conclusion: "warning",
-      reason: "The lint CI job failed.",
-    };
-  }
-  if (checkFailures.includes("test")) {
-    return {
-      conclusion: "warning",
-      reason: "The test CI job failed.",
-    };
-  }
-  if (netNewCommitConclusion === "warning") {
-    return {
-      conclusion: "warning",
-      reason: "Build had a warning conclusion.",
-    };
-  }
-  if (netNewCommitConclusion === "merge_conflict") {
-    return {
-      conclusion: "warning",
-      reason:
-        "There was a conflict between your custom code and your generated changes.",
-      isMergeConflict: true,
-    };
-  }
+    let checkFailureOutcome;
+    for (const { step, severity } of [
+      { step: "build", severity: "error" } as const,
+      { step: "lint", severity: "warning" } as const,
+      { step: "test", severity: "warning" } as const,
+    ]) {
+      if (checkFailures.includes(step)) {
+        checkFailureOutcome = {
+          severity: severity as Exclude<FailRunOn, "never">,
+          description: `had a failure in the ${step} CI job`,
+          isRegression: baseChecks ? true : null,
+          rank: 3,
+        };
+        break;
+      }
+    }
 
-  // Note reasons
-  if (diagnosticCounts.note > 0) {
+    const worstOutcome = [
+      categoryOutcome,
+      diagnosticLevelOutcome,
+      checkFailureOutcome,
+    ]
+      .filter((r): r is Exclude<typeof categoryOutcome, null> => r !== null)
+      .sort(
+        (a, b) =>
+          // sort by severity then rank
+          conclusions.diagnostic.indexOf(a.severity) -
+            conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank,
+      )[0];
+
     return {
-      conclusion: "note",
-      reason: `Found ${diagnosticCounts.note} note diagnostics.`,
+      isPending: false,
+      conclusion: headConclusion,
+      ...worstOutcome,
     };
   }
-  if (netNewCommitConclusion === "note") {
+  if (conclusions.conflict.includes(headConclusion)) {
     return {
-      conclusion: "note",
-      reason: "Build had a note conclusion.",
+      isPending: false,
+      conclusion: "merge_conflict",
+      severity: baseConclusion !== "merge_conflict" ? "warning" : null,
+      description:
+        "resulted in a merge conflict between your custom code and the newly generated changes",
+      isRegression: baseConclusion
+        ? baseConclusion !== "merge_conflict"
+          ? true
+          : false
+        : null,
     };
   }
 
   return {
-    conclusion: "success",
-    reason: "Build was successful.",
-    isPending: Object.values(checks).some(
-      (check) => check.status !== "completed",
-    ),
+    isPending: false,
+    conclusion: headConclusion,
+    severity: null,
+    description:
+      headConclusion === "success"
+        ? "was successful"
+        : `had a conclusion of ${headConclusion}`,
+    isRegression: baseConclusion ? false : null,
   };
+}
+
+export function getReason({
+  description,
+  isRegression,
+}: {
+  description: string;
+  isRegression: boolean | null;
+}) {
+  return `Your SDK build ${description}${isRegression === true ? ", which is a regression from the base state" : isRegression === false ? ", but this did not represent a regression" : ""}.`;
 }
 
 export const DiagnosticLevel = ["fatal", "error", "warning", "note"] as const;
@@ -276,9 +309,21 @@ export function sortDiagnostics(diagnostics: Outcomes[string]["diagnostics"]) {
 const CheckType = ["build", "lint", "test"] as const;
 type CheckType = (typeof CheckType)[number];
 
-function getNewChecks(
+function getChecks(
   outcome: Outcomes[string],
-  baseOutcome?: Outcomes[string],
+): Record<CheckType, Outcomes[string][CheckType] | null> {
+  const results = {} as Record<CheckType, Outcomes[string][CheckType] | null>;
+
+  for (const checkType of CheckType) {
+    results[checkType] = outcome[checkType] || null;
+  }
+
+  return results;
+}
+
+function getNewChecks(
+  headChecks: Record<CheckType, Outcomes[string][CheckType] | null>,
+  baseChecks?: Record<CheckType, Outcomes[string][CheckType] | null> | null,
 ) {
   const result = {} as Record<
     CheckType,
@@ -286,18 +331,18 @@ function getNewChecks(
   >;
 
   for (const checkType of CheckType) {
-    const baseConclusion =
-      baseOutcome?.[checkType]?.status === "completed" &&
-      baseOutcome?.[checkType].completed.conclusion;
-    const conclusion =
-      outcome[checkType]?.status === "completed" &&
-      outcome[checkType].completed.conclusion;
+    const headCheck = headChecks[checkType];
+    const baseCheck = baseChecks ? baseChecks[checkType] : null;
 
-    if (
-      outcome[checkType] &&
-      (!baseConclusion || baseConclusion !== conclusion)
-    ) {
-      result[checkType] = outcome[checkType];
+    if (headCheck) {
+      const baseConclusion =
+        baseCheck?.status === "completed" && baseCheck.conclusion;
+      const conclusion =
+        headCheck.status === "completed" && headCheck.conclusion;
+
+      if (!baseConclusion || baseConclusion !== conclusion) {
+        result[checkType] = headCheck;
+      }
     }
   }
 
