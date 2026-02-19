@@ -18318,6 +18318,51 @@ function getBooleanInput(name, options) {
   return void 0;
 }
 
+// src/compat/github/logging.ts
+function getGitHubLogging() {
+  return {
+    emitErrorAnnotation(message) {
+      process.stdout.write(`::error::${message}
+`);
+    },
+    startGroup(name) {
+      process.stdout.write(`::group::${name}
+`);
+      return "";
+    },
+    endGroup() {
+      process.stdout.write(`::endgroup::
+`);
+    }
+  };
+}
+
+// src/compat/gitlab/logging.ts
+var COLORS = {
+  reset: "\x1B[0m",
+  bold: "\x1B[1m"
+};
+function getGitLabLogging() {
+  let gitlabSectionCounter = 0;
+  return {
+    emitErrorAnnotation() {
+    },
+    startGroup(name) {
+      const id = `section_${++gitlabSectionCounter}`;
+      const ts = Math.floor(Date.now() / 1e3);
+      process.stdout.write(
+        `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
+`
+      );
+      return id;
+    },
+    endGroup(id) {
+      const ts = Math.floor(Date.now() / 1e3);
+      process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+    }
+  };
+}
+
 // src/compat/provider.ts
 function getProvider() {
   if (process.env.GITLAB_CI === "true") {
@@ -18329,44 +18374,23 @@ function getProvider() {
   return "github";
 }
 
-// src/compat/platform.ts
-var COLORS = {
-  reset: "\x1B[0m",
-  bold: "\x1B[1m"
-};
-var githubPlatform = {
-  emitErrorAnnotation(message) {
-    process.stdout.write(`::error::${message}
-`);
-  },
-  startGroup(name) {
-    process.stdout.write(`::group::${name}
-`);
-    return "";
-  },
-  endGroup() {
-    process.stdout.write(`::endgroup::
-`);
+// src/compat/logging.ts
+var cachedLogging;
+function logging() {
+  if (cachedLogging) {
+    return cachedLogging;
   }
-};
-var gitlabSectionCounter = 0;
-var gitlabPlatform = {
-  startGroup(name) {
-    const id = `section_${++gitlabSectionCounter}`;
-    const ts = Math.floor(Date.now() / 1e3);
-    process.stdout.write(
-      `\x1B[0Ksection_start:${ts}:${id}\r\x1B[0K${COLORS.bold}${name}${COLORS.reset}
-`
-    );
-    return id;
-  },
-  endGroup(id) {
-    const ts = Math.floor(Date.now() / 1e3);
-    process.stdout.write(`\x1B[0Ksection_end:${ts}:${id}\r\x1B[0K`);
+  switch (getProvider()) {
+    case "github": {
+      cachedLogging = getGitHubLogging();
+      break;
+    }
+    case "gitlab": {
+      cachedLogging = getGitLabLogging();
+      break;
+    }
   }
-};
-function detectPlatform() {
-  return getProvider() === "gitlab" ? gitlabPlatform : githubPlatform;
+  return cachedLogging;
 }
 
 // src/logger.ts
@@ -18401,9 +18425,6 @@ var LEVEL_LABELS = {
 };
 var LABEL_WIDTH = 5;
 var LOG_LEVEL_CHOICES = ["debug", "info", "warn", "error", "off"];
-function getLogLevelFromInput() {
-  return getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info";
-}
 function formatTimestamp() {
   const now = /* @__PURE__ */ new Date();
   const pad = (n, len = 2) => n.toString().padStart(len, "0");
@@ -18423,7 +18444,7 @@ function formatArgs(args) {
     }
   }).join(" ");
 }
-function createLogFn(level, minLevel, platform, context) {
+function createLogFn(level, { context, minLevel, provider }) {
   if (LOG_LEVELS[level] < minLevel) {
     return () => {
     };
@@ -18440,18 +18461,19 @@ function createLogFn(level, minLevel, platform, context) {
     const stream = level === "error" || level === "warn" ? process.stderr : process.stdout;
     stream.write(line + "\n");
     if (level === "error") {
-      platform.emitErrorAnnotation?.(message + (extra ? " " + extra : ""));
+      provider.emitErrorAnnotation(message + (extra ? " " + extra : ""));
     }
   };
 }
 var BUG_REPORT_URL = "https://github.com/stainless-api/upload-openapi-spec-action/issues";
-function createLoggerImpl(platform, minLevel, context) {
-  const errorFn = createLogFn("error", minLevel, platform, context);
+function createLoggerImpl(logContext) {
+  const { provider } = logContext;
+  const errorFn = createLogFn("error", logContext);
   const groupStack = [];
   return {
-    debug: createLogFn("debug", minLevel, platform, context),
-    info: createLogFn("info", minLevel, platform, context),
-    warn: createLogFn("warn", minLevel, platform, context),
+    debug: createLogFn("debug", logContext),
+    info: createLogFn("info", logContext),
+    warn: createLogFn("warn", logContext),
     error: errorFn,
     fatal(message, ...args) {
       errorFn(message, ...args);
@@ -18462,42 +18484,44 @@ This is a bug. Please report it at ${BUG_REPORT_URL}
       );
     },
     child(childContext) {
+      const { context, ...rest } = logContext;
       const newContext = context ? `${context}:${childContext}` : childContext;
-      return createLoggerImpl(platform, minLevel, newContext);
+      return createLoggerImpl({ context: newContext, ...rest });
     },
     group(name) {
-      const id = platform.startGroup(name);
+      const id = provider.startGroup(name);
       groupStack.push(id);
     },
     groupEnd() {
       const id = groupStack.pop();
       if (id !== void 0) {
-        platform.endGroup(id);
+        provider.endGroup(id);
       }
     },
     withGroup(name, fn) {
-      const id = platform.startGroup(name);
+      const id = provider.startGroup(name);
       try {
         const result = fn();
         if (result instanceof Promise) {
-          return result.finally(() => platform.endGroup(id));
+          return result.finally(() => provider.endGroup(id));
         }
-        platform.endGroup(id);
+        provider.endGroup(id);
         return result;
       } catch (e) {
-        platform.endGroup(id);
+        provider.endGroup(id);
         throw e;
       }
     }
   };
 }
-function createLogger(options) {
-  const level = options.level ?? getLogLevelFromInput();
-  return createLoggerImpl(options.platform, LOG_LEVELS[level]);
+function createLogger(options = {}) {
+  const minLevel = LOG_LEVELS[options.level ?? getInput("log_level", { choices: LOG_LEVEL_CHOICES }) ?? "info"];
+  const provider = logging();
+  return createLoggerImpl({ minLevel, provider });
 }
-var logger = createLogger({ platform: detectPlatform() });
+var logger = createLogger();
 
-// src/compat/context.ts
+// src/compat/github/context.ts
 var fs = __toESM(require("node:fs"));
 function getGitHubContext() {
   const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
@@ -18534,6 +18558,8 @@ function getGitHubContext() {
     prNumber
   };
 }
+
+// src/compat/gitlab/context.ts
 function getGitLabContext() {
   const owner = process.env.CI_PROJECT_NAMESPACE;
   const repo = process.env.CI_PROJECT_NAME;
@@ -18563,6 +18589,8 @@ function getGitLabContext() {
     projectID
   };
 }
+
+// src/compat/context.ts
 var cachedContext;
 function ctx() {
   if (cachedContext) {

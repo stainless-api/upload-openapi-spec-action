@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import type { Context } from "../context";
 
 export function ctx(): Context {
   return {

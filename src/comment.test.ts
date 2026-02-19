@@ -3,7 +3,7 @@ import { parseCommitMessage, printComment } from "./comment";
 import * as MD from "./markdown";
 import type { Outcomes } from "./outcomes";
 
-vi.mock("./compat/context");
+vi.mock("./compat");
 
 describe("printComment", () => {
   beforeAll(() => {
