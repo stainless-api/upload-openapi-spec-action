@@ -67,6 +67,8 @@ export function categorizeOutcome({
   conclusion?: OutcomeConclusion;
   reason: string;
   isMergeConflict?: boolean;
+  isBothMergeConflict?: boolean;
+  isBothFatal?: boolean;
   isPending?: boolean;
 } {
   const baseCommitConclusion = baseOutcome?.commit?.completed?.conclusion;
@@ -112,10 +114,20 @@ export function categorizeOutcome({
   }
 
   // Fatal reasons
-  if (commitConclusion === "fatal" || netNewCommitConclusion === "fatal") {
+  if (netNewCommitConclusion === "fatal") {
     return {
       conclusion: "fatal",
       reason: "Code was not generated because there was a fatal error.",
+      isPending: outcome.commit?.status !== "completed",
+    };
+  }
+  if (commitConclusion === "fatal") {
+    // Both base and head have fatal — not a new regression
+    return {
+      conclusion: "success",
+      reason:
+        "Code was not generated because there was a fatal error. This error also existed in the base.",
+      isBothFatal: true,
       isPending: outcome.commit?.status !== "completed",
     };
   }
@@ -200,6 +212,15 @@ export function categorizeOutcome({
       reason:
         "There was a conflict between your custom code and your generated changes.",
       isMergeConflict: true,
+    };
+  }
+  // Both base and head have merge conflict — not a new regression
+  if (commitConclusion === "merge_conflict") {
+    return {
+      conclusion: "success",
+      reason:
+        "There was a conflict between your custom code and your generated changes. This conflict also existed in the base.",
+      isBothMergeConflict: true,
     };
   }
 

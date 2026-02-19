@@ -237,7 +237,7 @@ export function Result({
   base?: Outcomes[string];
   hasDiff?: boolean;
 }): string | null {
-  const { conclusion, reason, isMergeConflict, isPending } = categorizeOutcome({
+  const { conclusion, reason, isMergeConflict, isBothMergeConflict, isBothFatal, isPending } = categorizeOutcome({
     outcome: head,
     baseOutcome: base,
   });
@@ -268,6 +268,31 @@ export function Result({
               })}.`,
           ),
         ].join("\n"),
+      };
+    }
+    if (isBothMergeConflict) {
+      return {
+        ResultIcon: MD.Symbol.WhiteCheckMark,
+        Description: [
+          MD.Italic(
+            "There was a conflict between your custom code and your generated changes. This conflict also existed in the base, so no new conflict was introduced by this PR.",
+          ),
+          MD.Italic(
+            `You will need to resolve this conflict for your changes to be released to your users. ` +
+              `Read more about why this happened ${MD.Link({
+                text: "here",
+                href: "https://www.stainless.com/docs/guides/add-custom-code",
+              })}.`,
+          ),
+        ].join("\n"),
+      };
+    }
+    if (isBothFatal) {
+      return {
+        ResultIcon: MD.Symbol.WhiteCheckMark,
+        Description: MD.Italic(
+          "Code was not generated because there was a fatal error. This error also existed in the base, so no new issue was introduced by this PR.",
+        ),
       };
     }
     if (conclusion !== "note" && conclusion !== "success") {
@@ -436,6 +461,9 @@ function CompareLink(
   head: Outcomes[string],
 ): string | null {
   if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+    return null;
+  }
+  if (head.hasDiff === false) {
     return null;
   }
 
