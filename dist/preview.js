@@ -38373,7 +38373,7 @@ function Result({
           href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
         }),
         GitHubLink(head),
-        base ? CompareLink(base, head) : null,
+        base && hasDiff !== false ? CompareLink(base, head) : null,
         MergeConflictLink(head)
       ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
     ].join(" "),

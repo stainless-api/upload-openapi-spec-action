@@ -7,7 +7,7 @@ import { addBuildIdForTelemetry } from "./wrapAction";
 type Build = Stainless.Builds.Build;
 
 const POLLING_INTERVAL_SECONDS = 5;
-const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
+const MAX_POLLING_SECONDS = 15 * 60; // 15 minutes
 
 export type RunResult = {
   baseOutcomes: Outcomes | null;

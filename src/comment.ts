@@ -302,7 +302,7 @@ export function Result({
           href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`,
         }),
         GitHubLink(head),
-        base ? CompareLink(base, head) : null,
+        base && hasDiff !== false ? CompareLink(base, head) : null,
         MergeConflictLink(head),
       ]
         .filter((link): link is string => link !== null)
@@ -693,7 +693,7 @@ export function printInternalComment(
   } of projects) {
     const projectResults: string[] = [];
     let hasPending = false;
-    let worst: OutcomeConclusion = "success";
+    let worstRegression: OutcomeConclusion = "success";
     let projectHasDiff = false;
 
     // show languagues with diffs first
@@ -708,8 +708,8 @@ export function printInternalComment(
       });
       hasPending ||= categorized.isPending ?? false;
 
-      if (categorized.conclusion) {
-        worst = worstConclusion(worst, categorized.conclusion);
+      if (!categorized.isPending && categorized.isRegression === true && categorized.severity) {
+        worstRegression = worstConclusion(worstRegression, categorized.severity);
       }
 
       const hasDiff = head.hasDiff ?? false;
@@ -725,7 +725,7 @@ export function printInternalComment(
         hasDiff,
       });
       if (result) {
-        projectResults.push(result);
+        projectResults.push(`<li>${result}</li>`);
       }
     }
 
@@ -739,7 +739,7 @@ export function printInternalComment(
 
     const statusEmoji = hasPending
       ? MD.Symbol.HourglassFlowingSand
-      : conclusionEmoji(worst);
+      : conclusionEmoji(worstRegression);
 
     const diffIndicator = projectHasDiff ? ` ${MD.Symbol.Eyes}` : "";
     blocks.push(
@@ -747,7 +747,7 @@ export function printInternalComment(
         summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
-        open: worst !== "success" && worst !== "note" && !hasPending,
+        open: worstRegression !== "success" && worstRegression !== "note" && !hasPending,
       }),
     );
   }
@@ -760,7 +760,7 @@ export function printInternalComment(
   return MD.Dedent`
     ${COMMENT_TITLE}
 
-    ${blocks.join(`\n\n${MD.Rule()}\n\n`)}
+    ${blocks.join(`\n\n`)}
 
     ${MD.Rule()}
 

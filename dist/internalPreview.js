@@ -38218,7 +38218,7 @@ function Result({
           href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
         }),
         GitHubLink(head),
-        base ? CompareLink(base, head) : null,
+        base && hasDiff !== false ? CompareLink(base, head) : null,
         MergeConflictLink(head)
       ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
     ].join(" "),
@@ -38444,7 +38444,7 @@ function printInternalComment(projects) {
   } of projects) {
     const projectResults = [];
     let hasPending = false;
-    let worst = "success";
+    let worstRegression = "success";
     let projectHasDiff = false;
     for (const [lang, head] of Object.entries(outcomes).sort(
       (a, b) => a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1
@@ -38455,8 +38455,8 @@ function printInternalComment(projects) {
         baseOutcome: base
       });
       hasPending ||= categorized.isPending ?? false;
-      if (categorized.conclusion) {
-        worst = worstConclusion(worst, categorized.conclusion);
+      if (!categorized.isPending && categorized.isRegression === true && categorized.severity) {
+        worstRegression = worstConclusion(worstRegression, categorized.severity);
       }
       const hasDiff = head.hasDiff ?? false;
       projectHasDiff ||= hasDiff;
@@ -38470,7 +38470,7 @@ function printInternalComment(projects) {
         hasDiff
       });
       if (result) {
-        projectResults.push(result);
+        projectResults.push(`<li>${result}</li>`);
       }
     }
     if (hasPending) {
@@ -38480,14 +38480,14 @@ function printInternalComment(projects) {
         `
       );
     }
-    const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worst);
+    const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worstRegression);
     const diffIndicator = projectHasDiff ? ` ${Symbol2.Eyes}` : "";
     blocks.push(
       Details({
         summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
-        open: worst !== "success" && worst !== "note" && !hasPending
+        open: worstRegression !== "success" && worstRegression !== "note" && !hasPending
       })
     );
   }
@@ -38496,8 +38496,6 @@ function printInternalComment(projects) {
     ${COMMENT_TITLE}
 
     ${blocks.join(`
-
-${Rule()}
 
 `)}
 
