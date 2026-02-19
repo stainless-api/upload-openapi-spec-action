@@ -25,6 +25,12 @@ export type OutcomeConclusion = Exclude<
   "never"
 >;
 
+export function getDiffLanguages(outcomes: Outcomes): string[] {
+  return Object.entries(outcomes)
+    .filter(([, outcome]) => outcome.commit?.commit !== null)
+    .map(([lang]) => lang);
+}
+
 export function shouldFailRun({
   failRunOn,
   outcomes,

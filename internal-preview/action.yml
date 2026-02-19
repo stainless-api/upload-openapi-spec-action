@@ -66,3 +66,7 @@ outputs:
     description: >-
       JSON object keyed by `{org}/{project}`, where values are per-language
       outcome objects.
+  diff_targets:
+    description: >-
+      JSON array of `{project, language}` objects for targets that produced
+      a diff (i.e. head and base tree OIDs differ).

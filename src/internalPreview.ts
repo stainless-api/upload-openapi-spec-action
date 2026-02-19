@@ -2,7 +2,12 @@ import type { Target } from "@stainless-api/sdk/resources/shared";
 import { commentThrottler, printInternalComment } from "./comment";
 import { getInput, getPRNumber, getStainlessAuth, setOutput } from "./compat";
 import { logger } from "./logger";
-import { type Outcomes, FailRunOn, shouldFailRun } from "./outcomes";
+import {
+  type Outcomes,
+  FailRunOn,
+  getDiffLanguages,
+  shouldFailRun,
+} from "./outcomes";
 import { combineAsyncIterators, pollBuild } from "./runBuilds";
 import { createAutoRefreshFetch, getStainlessClient } from "./stainless";
 
@@ -140,13 +145,24 @@ async function main() {
 
     for (let i = 0; i < compareResults.length; i++) {
       const { base, head } = compareResults[i];
+      const projectName = targetGroups[i].project;
       pollIterators.push({
-        iterator: pollBuild({ stainless, build: base, label: "base" }),
+        iterator: pollBuild({
+          stainless,
+          build: base,
+          projectName,
+          label: "base",
+        }),
         projectIndex: i,
         isBase: true,
       });
       pollIterators.push({
-        iterator: pollBuild({ stainless, build: head, label: "head" }),
+        iterator: pollBuild({
+          stainless,
+          build: head,
+          projectName,
+          label: "head",
+        }),
         projectIndex: i,
         isBase: false,
       });
@@ -217,6 +233,12 @@ async function main() {
       }
     }
     setOutput("outcomes", allOutcomes);
+    setOutput(
+      "diff_targets",
+      Object.entries(allOutcomes).flatMap(([project, outcomes]) =>
+        getDiffLanguages(outcomes).map((language) => ({ project, language })),
+      ),
+    );
 
     // Check if any project should fail the run
     let shouldFail = false;

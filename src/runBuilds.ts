@@ -92,6 +92,7 @@ export async function* runBuilds({
     for await (const { outcomes, documentedSpec } of pollBuild({
       stainless,
       build,
+      projectName,
       label: "head",
     })) {
       yield {
@@ -249,8 +250,8 @@ export async function* runBuilds({
   let lastDocumentedSpec: string | null = null;
 
   for await (const { index, value } of combineAsyncIterators(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" }),
+    pollBuild({ stainless, build: base, projectName, label: "base" }),
+    pollBuild({ stainless, build: head, projectName, label: "head" }),
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -299,12 +300,14 @@ export async function* combineAsyncIterators<T>(
 export async function* pollBuild({
   stainless,
   build,
+  projectName,
   label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS,
 }: {
   stainless: Stainless;
   build: Build;
+  projectName: string;
   label: "base" | "head";
   pollingIntervalSeconds?: number;
   maxPollingSeconds?: number;
@@ -328,11 +331,11 @@ export async function* pollBuild({
 
   if (buildId) {
     log.info(
-      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
+      `[${projectName}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
     addBuildIdForTelemetry(buildId);
   } else {
-    logger.info("No new build was created; exiting.");
+    logger.info(`[${projectName}] No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -358,7 +361,9 @@ export async function* pollBuild({
 
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        log.info(`Build for ${language} has status ${buildOutput.status}`);
+        log.info(
+          `[${projectName}/${buildId}] Build for ${language} has status ${buildOutput.status}`,
+        );
       }
 
       // Also has a change if any of the checks have changed:
