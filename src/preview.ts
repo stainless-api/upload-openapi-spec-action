@@ -11,11 +11,10 @@ import {
   makeCommitMessageConventional,
 } from "./commitMessage";
 import {
+  ctx,
   getBooleanInput,
   getGitHostToken,
   getInput,
-  getPRNumber,
-  isPullRequestOpenedEvent,
   setOutput,
 } from "./compat";
 import type { Config } from "./config";
@@ -55,7 +54,11 @@ const main = wrapAction("preview", async (stainless) => {
   const headSha = getInput("head_sha", { required: true });
   const branch = getInput("branch", { required: true });
   const outputDir = getInput("output_dir", { required: false }) || undefined;
-  const prNumber = getPRNumber();
+  const prNumber = ctx().prNumber;
+
+  if (!prNumber) {
+    throw new Error("This action must be run from a pull request.");
+  }
 
   // Tracks which languages have had commit messages generated this run
   const hasAiCommitMessageMap: Record<string, boolean> = {};
@@ -121,7 +124,7 @@ const main = wrapAction("preview", async (stainless) => {
     // In this case, we only want to make a comment if there's an existing
     // comment---which can happen if the changes introduced by the PR
     // disappear for some reason.
-    if (isPullRequestOpenedEvent() && makeComment) {
+    if (makeComment) {
       logger.group("Updating comment");
 
       const commentBody = printComment({ noChanges: true });

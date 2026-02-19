@@ -5,10 +5,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
-import { isGitLabCI } from "./platform";
+import { getProvider } from "./provider";
 
 export function setOutput(name: string, value: any) {
-  if (isGitLabCI()) return;
+  if (getProvider() === "gitlab") return;
 
   const stringified =
     value === null || value === undefined

@@ -1,8 +1,8 @@
 import {
+  ctx,
   getBooleanInput,
   getGitHostToken,
   getInput,
-  getPRNumber,
   setOutput,
 } from "./compat";
 import { logger } from "./logger";
@@ -36,14 +36,14 @@ const main = wrapAction("merge", async (stainless) => {
   const headSha = getInput("head_sha", { required: true });
   const mergeBranch = getInput("merge_branch", { required: true });
   const outputDir = getInput("output_dir", { required: false }) || undefined;
-  const prNumber = getPRNumber();
+  const prNumber = ctx().prNumber;
 
   if (baseRef !== defaultBranch) {
     logger.info("Not merging to default branch, skipping merge");
     return;
   }
 
-  if (makeComment && !getPRNumber()) {
+  if (makeComment && prNumber === null) {
     throw new Error(
       "This action requires a pull request number to make a comment.",
     );
@@ -103,7 +103,7 @@ const main = wrapAction("merge", async (stainless) => {
   // Per-SDK commit messages (only used when multiple_commit_messages is enabled)
   const commitMessages: Record<string, string> = {};
 
-  if (makeComment && gitHostToken) {
+  if (makeComment && gitHostToken && prNumber) {
     const comment = await retrieveComment({ token: gitHostToken, prNumber });
 
     // Load existing commit message(s) from comment
@@ -134,7 +134,7 @@ const main = wrapAction("merge", async (stainless) => {
   });
 
   let latestRun: RunResult | null = null;
-  const upsert = commentThrottler(gitHostToken!, prNumber);
+  const upsert = prNumber ? commentThrottler(gitHostToken!, prNumber) : null;
 
   while (true) {
     const run = await generator.next();
@@ -143,7 +143,7 @@ const main = wrapAction("merge", async (stainless) => {
       latestRun = run.value;
     }
 
-    if (makeComment && latestRun) {
+    if (makeComment && latestRun && upsert) {
       const { outcomes } = latestRun;
 
       if (multipleCommitMessages) {

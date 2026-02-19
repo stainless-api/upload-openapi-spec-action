@@ -2,6 +2,8 @@
  * Platform implementations for GitHub Actions and GitLab CI logging.
  */
 
+import { getProvider } from "./provider";
+
 export interface Platform {
   emitErrorAnnotation?(message: string): void;
   startGroup(name: string): string;
@@ -43,10 +45,6 @@ export const gitlabPlatform: Platform = {
   },
 };
 
-export function isGitLabCI(): boolean {
-  return process.env["GITLAB_CI"] === "true";
-}
-
 export function detectPlatform(): Platform {
-  return isGitLabCI() ? gitlabPlatform : githubPlatform;
+  return getProvider() === "gitlab" ? gitlabPlatform : githubPlatform;
 }

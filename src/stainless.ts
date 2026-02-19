@@ -1,6 +1,6 @@
 import Stainless, { ClientOptions } from "@stainless-api/sdk";
 import packageJSON from "../package.json";
-import { isGitLabCI } from "./compat";
+import { ctx } from "./compat";
 import { logger } from "./logger";
 
 type StainlessAuth = { key: string; expiresAt: number | null };
@@ -39,9 +39,8 @@ export function getStainlessClient(
   };
 
   if (action) {
-    headers["X-Stainless-Platform"] = isGitLabCI()
-      ? "gitlab-ci"
-      : "github-actions";
+    headers["X-Stainless-Platform"] =
+      ctx().provider === "gitlab" ? "gitlab-ci" : "github-actions";
     headers["X-Stainless-Action"] =
       `stainless-api/upload-openapi-spec-action/${action}`;
   }

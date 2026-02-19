@@ -1,12 +1,12 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+  combineOpenAPISpecs,
+  countPaths,
   findFiles,
   loadSpec,
   saveSpec,
-  countPaths,
-  combineOpenAPISpecs,
   type OpenAPISpec,
 } from "./combine";
 
