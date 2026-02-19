@@ -16,7 +16,7 @@ Edit this comment to update it. It will appear in the SDK's changelogs.
 
 <blockquote>
 
-<i>Code was not generated because there was a fatal error.</i>
+<i>Your SDK build had a "fatal" conclusion, and no code was generated.</i>
 
 </blockquote>
 
@@ -27,7 +27,7 @@ Edit this comment to update it. It will appear in the SDK's changelogs.
 
 <blockquote>
 
-<i>There was a conflict between your custom code and your generated changes.</i>
+<i>Your SDK build resulted in a merge conflict between your custom code and the newly generated changes.</i>
 <i>You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened <a href="https://www.stainless.com/docs/guides/add-custom-code">here</a>.</i>
 
 </blockquote>
@@ -39,8 +39,8 @@ Edit this comment to update it. It will appear in the SDK's changelogs.
 
 <blockquote>
 
-<i>There was a regression in your SDK.</i>
-<code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <code>lint ⏳</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
+<i>Your SDK build had at least one new error diagnostic, which is a regression from the base state.</i>
+<code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/211"><code>build ❗</code></a> (prev: <a href="https://github.com/test-org/test-sdk/actions/runs/200"><code>build ✅</code></a>) → <a href="https://github.com/test-org/test-sdk/actions/runs/212"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>test ✅</code></a>
 \`\`\`bash
 npm install https://pkg.stainless.com/pkg/s/test-sdk/abc123
 \`\`\`
@@ -78,7 +78,7 @@ npm install https://pkg.stainless.com/pkg/s/test-sdk/abc123
 
 <blockquote>
 
-<i>Your SDK built successfully.</i>
+<i>Your SDK build was successful.</i>
 <code>generate ✅</code> → <a href="https://github.com/test-org/test-sdk/actions/runs/213"><code>lint ✅</code></a> → <a href="https://github.com/test-org/test-sdk/actions/runs/214"><code>test ✅</code></a>
 
 </blockquote>

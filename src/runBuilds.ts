@@ -426,6 +426,9 @@ async function* pollBuild({
       },
       commit: {
         status: "completed",
+        conclusion: "timed_out",
+        commit: null,
+        merge_conflict_pr: null,
         completed: {
           conclusion: "timed_out",
           commit: null,

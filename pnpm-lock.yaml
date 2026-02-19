@@ -15,8 +15,8 @@ importers:
         specifier: ^0.15.0
         version: 0.15.0
       '@stainless-api/sdk':
-        specifier: ^0.1.0-alpha.19
-        version: 0.1.0-alpha.19
+        specifier: ^0.1.0-alpha.24
+        version: 0.1.0-alpha.27
       diff:
         specifier: ^8.0.3
         version: 8.0.3
@@ -747,8 +747,8 @@ packages:
   '@stainless-api/github-internal@0.15.0':
     resolution: {integrity: sha512-q9DoA65Hvl7bMl/wdPxV+TcLxIGSLzy86toDYo41ul9nBZrca5Lc2kQztu78ycu42T4oHAC6BUv2UxcOJ9NWLg==}
 
-  '@stainless-api/sdk@0.1.0-alpha.19':
-    resolution: {integrity: sha512-BwIW5++NcBwVPrwWpXszw/ismlzJn5e5j6m04VXgI7gsLhon7svG8Np4BBeBCX2KdphujOPjVEemPL3orhCoKw==}
+  '@stainless-api/sdk@0.1.0-alpha.27':
+    resolution: {integrity: sha512-7nbbO/Q/W+bJKVgi9Kfi3Gy5hGQVmGMMeMMQHF30dagWwvvQVCHUV6TvK72k1L98KE78cjCYGPaPOowGx4cbzg==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -2766,7 +2766,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       libsodium-wrappers: 0.7.15
 
-  '@stainless-api/sdk@0.1.0-alpha.19': {}
+  '@stainless-api/sdk@0.1.0-alpha.27': {}
 
   '@types/chai@5.2.3':
     dependencies:

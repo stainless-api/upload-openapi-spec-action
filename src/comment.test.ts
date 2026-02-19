@@ -39,6 +39,16 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "success",
+          commit: {
+            sha: "def456",
+            repo: {
+              owner: "test-org",
+              name: "test-sdk",
+              branch: "base-branch",
+            },
+          },
+          merge_conflict_pr: null,
           completed: {
             conclusion: "success",
             commit: {
@@ -54,6 +64,8 @@ describe("printComment", () => {
         },
         build: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/200",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/200",
@@ -61,6 +73,8 @@ describe("printComment", () => {
         },
         lint: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/201",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/201",
@@ -68,6 +82,8 @@ describe("printComment", () => {
         },
         test: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/202",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/202",
@@ -92,6 +108,9 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "fatal",
+          commit: null,
+          merge_conflict_pr: null,
           completed: {
             conclusion: "fatal",
             commit: null,
@@ -112,6 +131,15 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "merge_conflict",
+          commit: null,
+          merge_conflict_pr: {
+            number: 1,
+            repo: {
+              owner: "test-org",
+              name: "test-sdk",
+            },
+          },
           completed: {
             conclusion: "merge_conflict",
             commit: null,
@@ -138,6 +166,16 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "success",
+          commit: {
+            sha: "abc123",
+            repo: {
+              owner: "test-org",
+              name: "test-sdk",
+              branch: "feature-branch",
+            },
+          },
+          merge_conflict_pr: null,
           completed: {
             conclusion: "success",
             commit: {
@@ -153,16 +191,26 @@ describe("printComment", () => {
         },
         build: {
           status: "completed",
+          conclusion: "failure",
+          url: "https://github.com/test-org/test-sdk/actions/runs/211",
           completed: {
             conclusion: "failure",
             url: "https://github.com/test-org/test-sdk/actions/runs/211",
           },
         },
         lint: {
-          status: "in_progress",
+          status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/212",
+          completed: {
+            conclusion: "success",
+            url: "https://github.com/test-org/test-sdk/actions/runs/212",
+          },
         },
         test: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/213",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
@@ -198,6 +246,16 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "success",
+          commit: {
+            sha: "abc123",
+            repo: {
+              owner: "test-org",
+              name: "test-sdk",
+              branch: "feature-branch",
+            },
+          },
+          merge_conflict_pr: null,
           completed: {
             conclusion: "success",
             commit: {
@@ -213,6 +271,8 @@ describe("printComment", () => {
         },
         lint: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/213",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
@@ -229,6 +289,16 @@ describe("printComment", () => {
         status: "completed",
         commit: {
           status: "completed",
+          conclusion: "success",
+          commit: {
+            sha: "abc123",
+            repo: {
+              owner: "test-org",
+              name: "test-sdk",
+              branch: "feature-branch",
+            },
+          },
+          merge_conflict_pr: null,
           completed: {
             conclusion: "success",
             commit: {
@@ -244,6 +314,8 @@ describe("printComment", () => {
         },
         lint: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/213",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/213",
@@ -251,6 +323,8 @@ describe("printComment", () => {
         },
         test: {
           status: "completed",
+          conclusion: "success",
+          url: "https://github.com/test-org/test-sdk/actions/runs/214",
           completed: {
             conclusion: "success",
             url: "https://github.com/test-org/test-sdk/actions/runs/214",
