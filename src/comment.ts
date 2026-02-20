@@ -1,3 +1,4 @@
+import { makeCommitMessageConventional } from "./commitMessage";
 import { api, ctx } from "./compat";
 import { logger } from "./logger";
 import * as MD from "./markdown";
@@ -22,8 +23,8 @@ type PrintCommentOptions = {
   projectName: string;
   branch: string;
   commitMessage: string;
-  commitMessages?: Record<string, string>;
-  hasAiCommitMessageMap?: Record<string, boolean>;
+  targetCommitMessages?: Record<string, string>;
+  pendingAiCommitMessages?: Set<string>;
   baseOutcomes?: Outcomes | null;
   outcomes: Outcomes;
 };
@@ -34,8 +35,8 @@ export function printComment({
   projectName,
   branch,
   commitMessage,
-  commitMessages,
-  hasAiCommitMessageMap,
+  targetCommitMessages,
+  pendingAiCommitMessages,
   baseOutcomes,
   outcomes,
 }:
@@ -47,49 +48,30 @@ export function printComment({
     if (noChanges) {
       return "No changes were made to the SDKs.";
     }
+
     // Can edit if this is a preview comment (and thus baseOutcomes exist).
     // Otherwise, this is post-merge and editing it won't do anything.
     const canEdit = !!baseOutcomes;
 
-    const hasMultipleCommitMessages =
-      commitMessages && Object.keys(commitMessages).length > 0;
-
-    if (hasMultipleCommitMessages) {
-      return [
-        MD.Dedent`
-          This ${ctx().names.pr} will update the ${MD.CodeInline(
-            projectName,
-          )} SDKs with the following commit messages.
-        `,
-        CommitMessagesSection({
-          commitMessages,
-          hasAiCommitMessageMap,
-          outcomes,
-        }),
-        canEdit
-          ? "Edit this comment to update them. They will appear in their respective SDK's changelogs."
-          : null,
-        Results({ orgName, projectName, branch, outcomes, baseOutcomes }),
-      ]
-        .filter((f): f is string => f !== null)
-        .join(`\n\n`);
-    }
-
-    // Default: single shared commit message
     return [
       MD.Dedent`
         This ${ctx().names.pr} will update the ${MD.CodeInline(
           projectName,
-        )} SDKs with the following commit message.
-
-        ${MD.CodeBlock(commitMessage)}
-
-        ${
-          canEdit
-            ? "Edit this comment to update it. It will appear in the SDK's changelogs."
-            : ""
-        }
+        )} SDKs with the following commit ${targetCommitMessages ? "messages" : "message"}.
       `,
+      targetCommitMessages
+        ? CommitMessagesSection({
+            targets: Object.keys(outcomes).sort(),
+            pendingAiCommitMessages,
+            targetCommitMessages,
+            commitMessage,
+          })
+        : MD.CodeBlock(commitMessage),
+      !canEdit
+        ? null
+        : targetCommitMessages
+          ? "Edit this comment to update them. They will appear in their respective SDK's changelogs."
+          : "Edit this comment to update it. It will appear in the SDK's changelogs.",
       Results({ orgName, projectName, branch, outcomes, baseOutcomes }),
     ]
       .filter((f): f is string => f !== null)
@@ -124,34 +106,29 @@ export function printComment({
 }
 
 function CommitMessagesSection({
-  commitMessages,
-  hasAiCommitMessageMap,
-  outcomes,
+  targets,
+  pendingAiCommitMessages,
+  targetCommitMessages,
+  commitMessage,
 }: {
-  commitMessages: Record<string, string>;
-  hasAiCommitMessageMap?: Record<string, boolean>;
-  outcomes: Outcomes;
+  targets: string[];
+  pendingAiCommitMessages?: Set<string>;
+  targetCommitMessages: Record<string, string>;
+  commitMessage: string;
 }): string {
-  const languages = Object.keys(outcomes).sort();
+  return targets
+    .map((target) => {
+      const statusText = pendingAiCommitMessages?.has(target)
+        ? `${MD.Symbol.HourglassFlowingSand} (generating...)`
+        : "";
+      const message = targetCommitMessages[target] ?? commitMessage;
 
-  const messageBlocks = languages.map((lang) => {
-    const message = commitMessages[lang] || "No changes detected";
-
-    // If we're still generating an AI commit message for this SDK, show a loading indicator
-    const isGeneratingAiCommitMessage =
-      hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
-
-    const statusText = isGeneratingAiCommitMessage
-      ? `${MD.Symbol.HourglassFlowingSand} (generating...)\n`
-      : "";
-
-    return MD.Dedent`
-      **${lang}**
-      ${statusText}${MD.CodeBlock(message)}
-    `;
-  });
-
-  return messageBlocks.join("\n");
+      return MD.Dedent`
+        **${target}**
+        ${statusText}${MD.CodeBlock(message)}
+      `;
+    })
+    .join("\n");
 }
 
 const DiagnosticIcon: Record<DiagnosticLevel, string> = {
@@ -551,18 +528,15 @@ function InstallationDetails(
   return MD.CodeBlock({ content: installation, language: "bash" });
 }
 
-export function parseCommitMessage(body?: string | null) {
-  return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
-}
-
-export function parseCommitMessages(
-  body?: string | null,
-): Record<string, string> | null {
+export function parseCommitMessages(body?: string | null): {
+  commitMessage?: string;
+  targetCommitMessages?: Record<string, string>;
+} {
   if (!body) {
-    return null;
+    return {};
   }
 
-  const commitMessages: Record<string, string> = {};
+  const targetCommitMessages: Record<string, string> = {};
 
   // Match pattern: **language**\n```\ncommit message\n```
   const languageBlocks = body.matchAll(
@@ -572,30 +546,35 @@ export function parseCommitMessages(
   for (const match of languageBlocks) {
     const language = match[1];
     const message = match[2].trim();
-
-    // Skip "No changes detected" messages
-    if (message && message !== "No changes detected") {
-      commitMessages[language] = message;
+    if (message) {
+      targetCommitMessages[language] = makeCommitMessageConventional(message);
     }
   }
 
-  if (Object.keys(commitMessages).length === 0) {
-    return null;
+  if (Object.keys(targetCommitMessages).length > 0) {
+    return { targetCommitMessages };
   }
 
-  return commitMessages;
+  const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
+  return message
+    ? { commitMessage: makeCommitMessageConventional(message) }
+    : {};
 }
 
 export async function retrieveComment() {
   const comments = await api().listComments();
 
-  const existingComment =
-    comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
+  const existingComment = comments.find((comment) =>
+    comment.body?.includes(COMMENT_TITLE),
+  );
+
+  if (!existingComment) {
+    return null;
+  }
 
   return {
-    id: existingComment?.id,
-    commitMessages: parseCommitMessages(existingComment?.body),
-    commitMessage: parseCommitMessage(existingComment?.body),
+    id: existingComment.id,
+    ...parseCommitMessages(existingComment.body),
   };
 }
 

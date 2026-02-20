@@ -6,10 +6,7 @@ import {
   retrieveComment,
   upsertComment,
 } from "./comment";
-import {
-  generateAICommitMessage,
-  makeCommitMessageConventional,
-} from "./commitMessage";
+import { makeCommitMessageConventional } from "./commitMessage";
 import { api, ctx, getBooleanInput, getInput, setOutput } from "./compat";
 import type { Config } from "./config";
 import {
@@ -57,9 +54,6 @@ const main = wrapAction("preview", async (stainless) => {
     throw new Error("This action requires an API token to make a comment.");
   }
 
-  // Tracks which languages have had commit messages generated this run
-  const hasAiCommitMessageMap: Record<string, boolean> = {};
-
   // If we came from the checkout-pr-ref action, we might need to save the
   // generated config files.
   const { savedSha } = await saveConfig({
@@ -72,21 +66,23 @@ const main = wrapAction("preview", async (stainless) => {
     );
   }
 
-  // Fetch org data to check enable_ai_commit_messages field
-  let org: { enable_ai_commit_messages: boolean } | null = null;
-  try {
-    org = (await stainless.get(`/v0/orgs/${orgName}`)) as {
-      enable_ai_commit_messages: boolean;
-    };
-  } catch (error) {
-    logger.warn(
-      `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-      error,
-    );
-  }
-
-  // Enable AI commit messages if org setting is enabled
-  if (org?.enable_ai_commit_messages) {
+  const enableAiCommitMessages = await stainless.orgs
+    .retrieve(orgName)
+    .then((org) => org.enable_ai_commit_messages)
+    .catch((err) => {
+      logger.warn(`Could not fetch data for ${orgName}.`, err);
+      return false;
+    });
+  if (enableAiCommitMessages) {
+    if (multipleCommitMessages === false) {
+      logger.warn(
+        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.',
+      );
+    } else if (multipleCommitMessages === undefined) {
+      logger.info(
+        'AI commit messages are enabled; setting "multiple_commit_messages" to true.',
+      );
+    }
     multipleCommitMessages = true;
   }
 
@@ -148,42 +144,26 @@ const main = wrapAction("preview", async (stainless) => {
 
   logger.groupEnd();
 
-  let commitMessage = defaultCommitMessage;
-  const commitMessages: Record<string, string> = {};
+  const initialComment = makeComment ? await retrieveComment() : null;
+  let commitMessage =
+    initialComment?.commitMessage ??
+    makeCommitMessageConventional(defaultCommitMessage);
+  let targetCommitMessages = multipleCommitMessages
+    ? (initialComment?.targetCommitMessages ?? {})
+    : undefined;
 
-  // If we're making the comment for the first time (not updating an existing one for a new commit),
-  // we should generate AI commit messages for it.
-  let shouldGenerateAiCommitMessages = false;
-
-  if (makeComment) {
-    const comment = await retrieveComment();
-
-    // For now, let's set this true only if this is our first-ever run (so there wouldn't be a pre-existing comment).
-    // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
-    if (
-      multipleCommitMessages &&
-      org?.enable_ai_commit_messages &&
-      comment.commitMessage == null &&
-      comment.commitMessages == null
-    ) {
-      shouldGenerateAiCommitMessages = true;
-    }
-
-    // Load existing commit message(s) from comment
-    if (multipleCommitMessages && comment.commitMessages) {
-      for (const [lang, commentCommitMessage] of Object.entries(
-        comment.commitMessages,
-      )) {
-        commitMessages[lang] =
-          makeCommitMessageConventional(commentCommitMessage);
-      }
-    } else if (comment.commitMessage) {
-      commitMessage = comment.commitMessage;
-    }
+  if (targetCommitMessages) {
+    logger.info("Using commit messages:", targetCommitMessages);
+    logger.info("With default commit message:", commitMessage);
+  } else {
+    logger.info("Using commit message:", commitMessage);
   }
 
-  commitMessage = makeCommitMessageConventional(commitMessage);
-  logger.info("Using commit message:", commitMessage);
+  // For now, let's set this true only if this is our first-ever run (so there wouldn't be a pre-existing comment).
+  // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
+  const shouldGenerateAiCommitMessages =
+    enableAiCommitMessages &&
+    Object.keys(targetCommitMessages ?? {}).length === 0;
 
   const generator = runBuilds({
     stainless,
@@ -197,11 +177,13 @@ const main = wrapAction("preview", async (stainless) => {
     branch,
     guessConfig: guessConfig ?? (!configPath && !!oasPath),
     commitMessage,
-    commitMessages,
+    targetCommitMessages,
   });
 
   let latestRun: RunResult | null = null;
   const upsert = commentThrottler();
+
+  let pendingAiCommitMessages: Set<string> | undefined;
 
   while (true) {
     const run = await generator.next();
@@ -215,63 +197,40 @@ const main = wrapAction("preview", async (stainless) => {
 
       // In case the comment was updated between polls:
       const comment = await retrieveComment();
+      commitMessage = comment?.commitMessage ?? commitMessage;
+      targetCommitMessages =
+        comment?.targetCommitMessages ?? targetCommitMessages;
 
-      // Update commit message from comment
-      if (comment.commitMessage) {
-        commitMessage = makeCommitMessageConventional(comment.commitMessage);
-      }
-
-      if (multipleCommitMessages) {
-        // Update commit messages from comment
-        if (comment.commitMessages) {
-          for (const [lang, commentCommitMessage] of Object.entries(
-            comment.commitMessages,
-          )) {
-            commitMessages[lang] =
-              makeCommitMessageConventional(commentCommitMessage);
+      if (shouldGenerateAiCommitMessages) {
+        if (pendingAiCommitMessages === undefined) {
+          pendingAiCommitMessages = new Set();
+          for (const lang of Object.keys(outcomes)) {
+            pendingAiCommitMessages.add(lang);
           }
         }
-      }
 
-      if (multipleCommitMessages) {
-        // Did any languages just complete a build?
-        for (const lang of Object.keys(outcomes)) {
+        for (const lang of pendingAiCommitMessages) {
           const commit = outcomes[lang].commit?.completed?.commit;
           const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
 
-          if (
-            commit &&
-            baseCommit &&
-            shouldGenerateAiCommitMessages &&
-            !hasAiCommitMessageMap[lang]
-          ) {
-            const baseRef = baseCommit.sha;
-            const headRef = commit.sha;
-
-            try {
-              const message = await generateAICommitMessage(stainless, {
-                projectName: projectName,
-                target: lang,
-                baseRef,
-                headRef,
-              });
-
-              commitMessages[lang] = message;
-            } catch (e) {
-              logger.error("Error in AI commit message generation:", e);
-              commitMessages[lang] = commitMessage;
-            }
-
-            // Mark true in both cases so we don't keep retrying (in the event of e.g. an oversized diff)
-            hasAiCommitMessageMap[lang] = true;
+          if (!commit || !baseCommit) {
+            continue;
           }
-        }
 
-        // Use default message for any SDKs missing from comment (initial state for new comments)
-        for (const lang of Object.keys(outcomes)) {
-          if (!commitMessages[lang]) {
-            commitMessages[lang] = commitMessage;
-          }
+          targetCommitMessages![lang] = await stainless.projects
+            .generateCommitMessage({
+              project: projectName,
+              target: lang as Stainless.Target,
+              base_ref: baseCommit.sha,
+              head_ref: commit.sha,
+            })
+            .then((result) => result.ai_commit_message)
+            .catch((err) => {
+              logger.error("Error in AI commit message generation:", err);
+              return commitMessage;
+            });
+
+          pendingAiCommitMessages.delete(lang);
         }
       }
 
@@ -280,10 +239,8 @@ const main = wrapAction("preview", async (stainless) => {
         projectName,
         branch,
         commitMessage,
-        commitMessages: multipleCommitMessages ? commitMessages : undefined,
-        hasAiCommitMessageMap: shouldGenerateAiCommitMessages
-          ? hasAiCommitMessageMap
-          : undefined,
+        targetCommitMessages,
+        pendingAiCommitMessages,
         outcomes,
         baseOutcomes,
       });

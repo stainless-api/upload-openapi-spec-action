@@ -25,9 +25,9 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// node_modules/libsodium/dist/modules/libsodium.js
+// node_modules/.pnpm/libsodium@0.7.15/node_modules/libsodium/dist/modules/libsodium.js
 var require_libsodium = __commonJS({
-  "node_modules/libsodium/dist/modules/libsodium.js"(exports2, module2) {
+  "node_modules/.pnpm/libsodium@0.7.15/node_modules/libsodium/dist/modules/libsodium.js"(exports2, module2) {
     !(function(A) {
       function I(A2) {
         "use strict";
@@ -2631,9 +2631,9 @@ var require_libsodium = __commonJS({
   }
 });
 
-// node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js
+// node_modules/.pnpm/libsodium-wrappers@0.7.15/node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js
 var require_libsodium_wrappers = __commonJS({
-  "node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js"(exports2) {
+  "node_modules/.pnpm/libsodium-wrappers@0.7.15/node_modules/libsodium-wrappers/dist/modules/libsodium-wrappers.js"(exports2) {
     !(function(e) {
       function a(e2, a2) {
         "use strict";
@@ -5234,9 +5234,9 @@ var require_libsodium_wrappers = __commonJS({
   }
 });
 
-// node_modules/safe-buffer/index.js
+// node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS({
-  "node_modules/safe-buffer/index.js"(exports2, module2) {
+  "node_modules/.pnpm/safe-buffer@5.2.1/node_modules/safe-buffer/index.js"(exports2, module2) {
     var buffer = require("buffer");
     var Buffer2 = buffer.Buffer;
     function copyProps(src, dst) {
@@ -5292,9 +5292,9 @@ var require_safe_buffer = __commonJS({
   }
 });
 
-// node_modules/jws/lib/data-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/data-stream.js
 var require_data_stream = __commonJS({
-  "node_modules/jws/lib/data-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/data-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var Stream = require("stream");
     var util = require("util");
@@ -5340,9 +5340,9 @@ var require_data_stream = __commonJS({
   }
 });
 
-// node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js
+// node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js
 var require_param_bytes_for_alg = __commonJS({
-  "node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js"(exports2, module2) {
+  "node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/param-bytes-for-alg.js"(exports2, module2) {
     "use strict";
     function getParamSize(keySize) {
       var result = (keySize / 8 | 0) + (keySize % 8 === 0 ? 0 : 1);
@@ -5364,9 +5364,9 @@ var require_param_bytes_for_alg = __commonJS({
   }
 });
 
-// node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js
+// node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js
 var require_ecdsa_sig_formatter = __commonJS({
-  "node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js"(exports2, module2) {
+  "node_modules/.pnpm/ecdsa-sig-formatter@1.0.11/node_modules/ecdsa-sig-formatter/src/ecdsa-sig-formatter.js"(exports2, module2) {
     "use strict";
     var Buffer2 = require_safe_buffer().Buffer;
     var getParamBytesForAlg = require_param_bytes_for_alg();
@@ -5504,9 +5504,9 @@ var require_ecdsa_sig_formatter = __commonJS({
   }
 });
 
-// node_modules/buffer-equal-constant-time/index.js
+// node_modules/.pnpm/buffer-equal-constant-time@1.0.1/node_modules/buffer-equal-constant-time/index.js
 var require_buffer_equal_constant_time = __commonJS({
-  "node_modules/buffer-equal-constant-time/index.js"(exports2, module2) {
+  "node_modules/.pnpm/buffer-equal-constant-time@1.0.1/node_modules/buffer-equal-constant-time/index.js"(exports2, module2) {
     "use strict";
     var Buffer2 = require("buffer").Buffer;
     var SlowBuffer = require("buffer").SlowBuffer;
@@ -5538,9 +5538,9 @@ var require_buffer_equal_constant_time = __commonJS({
   }
 });
 
-// node_modules/jwa/index.js
+// node_modules/.pnpm/jwa@2.0.1/node_modules/jwa/index.js
 var require_jwa = __commonJS({
-  "node_modules/jwa/index.js"(exports2, module2) {
+  "node_modules/.pnpm/jwa@2.0.1/node_modules/jwa/index.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var crypto2 = require("crypto");
     var formatEcdsa = require_ecdsa_sig_formatter();
@@ -5749,7 +5749,7 @@ var require_jwa = __commonJS({
         es: createECDSAVerifer,
         none: createNoneVerifier
       };
-      var match = algorithm.match(/^(RS|PS|ES|HS)(256|384|512)$|^(none)$/i);
+      var match = algorithm.match(/^(RS|PS|ES|HS)(256|384|512)$|^(none)$/);
       if (!match)
         throw typeError(MSG_INVALID_ALGORITHM, algorithm);
       var algo = (match[1] || match[3]).toLowerCase();
@@ -5762,9 +5762,9 @@ var require_jwa = __commonJS({
   }
 });
 
-// node_modules/jws/lib/tostring.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/tostring.js
 var require_tostring = __commonJS({
-  "node_modules/jws/lib/tostring.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/tostring.js"(exports2, module2) {
     var Buffer2 = require("buffer").Buffer;
     module2.exports = function toString(obj) {
       if (typeof obj === "string")
@@ -5776,9 +5776,9 @@ var require_tostring = __commonJS({
   }
 });
 
-// node_modules/jws/lib/sign-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/sign-stream.js
 var require_sign_stream = __commonJS({
-  "node_modules/jws/lib/sign-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/sign-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var DataStream = require_data_stream();
     var jwa = require_jwa();
@@ -5805,7 +5805,12 @@ var require_sign_stream = __commonJS({
       return util.format("%s.%s", securedInput, signature);
     }
     function SignStream(opts) {
-      var secret = opts.secret || opts.privateKey || opts.key;
+      var secret = opts.secret;
+      secret = secret == null ? opts.privateKey : secret;
+      secret = secret == null ? opts.key : secret;
+      if (/^hs/i.test(opts.header.alg) === true && secret == null) {
+        throw new TypeError("secret must be a string or buffer or a KeyObject");
+      }
       var secretStream = new DataStream(secret);
       this.readable = true;
       this.header = opts.header;
@@ -5846,9 +5851,9 @@ var require_sign_stream = __commonJS({
   }
 });
 
-// node_modules/jws/lib/verify-stream.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/verify-stream.js
 var require_verify_stream = __commonJS({
-  "node_modules/jws/lib/verify-stream.js"(exports2, module2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/lib/verify-stream.js"(exports2, module2) {
     var Buffer2 = require_safe_buffer().Buffer;
     var DataStream = require_data_stream();
     var jwa = require_jwa();
@@ -5917,7 +5922,12 @@ var require_verify_stream = __commonJS({
     }
     function VerifyStream(opts) {
       opts = opts || {};
-      var secretOrKey = opts.secret || opts.publicKey || opts.key;
+      var secretOrKey = opts.secret;
+      secretOrKey = secretOrKey == null ? opts.publicKey : secretOrKey;
+      secretOrKey = secretOrKey == null ? opts.key : secretOrKey;
+      if (/^hs/i.test(opts.algorithm) === true && secretOrKey == null) {
+        throw new TypeError("secret must be a string or buffer or a KeyObject");
+      }
       var secretStream = new DataStream(secretOrKey);
       this.readable = true;
       this.algorithm = opts.algorithm;
@@ -5956,9 +5966,9 @@ var require_verify_stream = __commonJS({
   }
 });
 
-// node_modules/jws/index.js
+// node_modules/.pnpm/jws@4.0.1/node_modules/jws/index.js
 var require_jws = __commonJS({
-  "node_modules/jws/index.js"(exports2) {
+  "node_modules/.pnpm/jws@4.0.1/node_modules/jws/index.js"(exports2) {
     var SignStream = require_sign_stream();
     var VerifyStream = require_verify_stream();
     var ALGORITHMS = [
@@ -5989,9 +5999,9 @@ var require_jws = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/decode.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/decode.js
 var require_decode = __commonJS({
-  "node_modules/jsonwebtoken/decode.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/decode.js"(exports2, module2) {
     var jws = require_jws();
     module2.exports = function(jwt, options) {
       options = options || {};
@@ -6021,9 +6031,9 @@ var require_decode = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/JsonWebTokenError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/JsonWebTokenError.js
 var require_JsonWebTokenError = __commonJS({
-  "node_modules/jsonwebtoken/lib/JsonWebTokenError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/JsonWebTokenError.js"(exports2, module2) {
     var JsonWebTokenError = function(message, error) {
       Error.call(this, message);
       if (Error.captureStackTrace) {
@@ -6039,9 +6049,9 @@ var require_JsonWebTokenError = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/NotBeforeError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/NotBeforeError.js
 var require_NotBeforeError = __commonJS({
-  "node_modules/jsonwebtoken/lib/NotBeforeError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/NotBeforeError.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var NotBeforeError = function(message, date) {
       JsonWebTokenError.call(this, message);
@@ -6054,9 +6064,9 @@ var require_NotBeforeError = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/TokenExpiredError.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/TokenExpiredError.js
 var require_TokenExpiredError = __commonJS({
-  "node_modules/jsonwebtoken/lib/TokenExpiredError.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/TokenExpiredError.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var TokenExpiredError = function(message, expiredAt) {
       JsonWebTokenError.call(this, message);
@@ -6069,9 +6079,9 @@ var require_TokenExpiredError = __commonJS({
   }
 });
 
-// node_modules/ms/index.js
+// node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js
 var require_ms = __commonJS({
-  "node_modules/ms/index.js"(exports2, module2) {
+  "node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js"(exports2, module2) {
     var s = 1e3;
     var m = s * 60;
     var h = m * 60;
@@ -6185,9 +6195,9 @@ var require_ms = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/timespan.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/timespan.js
 var require_timespan = __commonJS({
-  "node_modules/jsonwebtoken/lib/timespan.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/timespan.js"(exports2, module2) {
     var ms = require_ms();
     module2.exports = function(time, iat) {
       var timestamp = iat || Math.floor(Date.now() / 1e3);
@@ -6206,9 +6216,9 @@ var require_timespan = __commonJS({
   }
 });
 
-// node_modules/semver/internal/constants.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/constants.js
 var require_constants = __commonJS({
-  "node_modules/semver/internal/constants.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/constants.js"(exports2, module2) {
     "use strict";
     var SEMVER_SPEC_VERSION = "2.0.0";
     var MAX_LENGTH = 256;
@@ -6238,9 +6248,9 @@ var require_constants = __commonJS({
   }
 });
 
-// node_modules/semver/internal/debug.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/debug.js
 var require_debug = __commonJS({
-  "node_modules/semver/internal/debug.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/debug.js"(exports2, module2) {
     "use strict";
     var debug = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {
     };
@@ -6248,9 +6258,9 @@ var require_debug = __commonJS({
   }
 });
 
-// node_modules/semver/internal/re.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/re.js
 var require_re = __commonJS({
-  "node_modules/semver/internal/re.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/re.js"(exports2, module2) {
     "use strict";
     var {
       MAX_SAFE_COMPONENT_LENGTH,
@@ -6336,9 +6346,9 @@ var require_re = __commonJS({
   }
 });
 
-// node_modules/semver/internal/parse-options.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/parse-options.js
 var require_parse_options = __commonJS({
-  "node_modules/semver/internal/parse-options.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/parse-options.js"(exports2, module2) {
     "use strict";
     var looseOption = Object.freeze({ loose: true });
     var emptyOpts = Object.freeze({});
@@ -6355,12 +6365,15 @@ var require_parse_options = __commonJS({
   }
 });
 
-// node_modules/semver/internal/identifiers.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/identifiers.js
 var require_identifiers = __commonJS({
-  "node_modules/semver/internal/identifiers.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/identifiers.js"(exports2, module2) {
     "use strict";
     var numeric = /^[0-9]+$/;
     var compareIdentifiers = (a, b) => {
+      if (typeof a === "number" && typeof b === "number") {
+        return a === b ? 0 : a < b ? -1 : 1;
+      }
       const anum = numeric.test(a);
       const bnum = numeric.test(b);
       if (anum && bnum) {
@@ -6377,9 +6390,9 @@ var require_identifiers = __commonJS({
   }
 });
 
-// node_modules/semver/classes/semver.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/semver.js
 var require_semver = __commonJS({
-  "node_modules/semver/classes/semver.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/semver.js"(exports2, module2) {
     "use strict";
     var debug = require_debug();
     var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants();
@@ -6467,7 +6480,25 @@ var require_semver = __commonJS({
         if (!(other instanceof _SemVer)) {
           other = new _SemVer(other, this.options);
         }
-        return compareIdentifiers(this.major, other.major) || compareIdentifiers(this.minor, other.minor) || compareIdentifiers(this.patch, other.patch);
+        if (this.major < other.major) {
+          return -1;
+        }
+        if (this.major > other.major) {
+          return 1;
+        }
+        if (this.minor < other.minor) {
+          return -1;
+        }
+        if (this.minor > other.minor) {
+          return 1;
+        }
+        if (this.patch < other.patch) {
+          return -1;
+        }
+        if (this.patch > other.patch) {
+          return 1;
+        }
+        return 0;
       }
       comparePre(other) {
         if (!(other instanceof _SemVer)) {
@@ -6638,9 +6669,9 @@ var require_semver = __commonJS({
   }
 });
 
-// node_modules/semver/functions/parse.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/parse.js
 var require_parse = __commonJS({
-  "node_modules/semver/functions/parse.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/parse.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var parse = (version, options, throwErrors = false) => {
@@ -6660,9 +6691,9 @@ var require_parse = __commonJS({
   }
 });
 
-// node_modules/semver/functions/valid.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/valid.js
 var require_valid = __commonJS({
-  "node_modules/semver/functions/valid.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/valid.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var valid = (version, options) => {
@@ -6673,9 +6704,9 @@ var require_valid = __commonJS({
   }
 });
 
-// node_modules/semver/functions/clean.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/clean.js
 var require_clean = __commonJS({
-  "node_modules/semver/functions/clean.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/clean.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var clean = (version, options) => {
@@ -6686,9 +6717,9 @@ var require_clean = __commonJS({
   }
 });
 
-// node_modules/semver/functions/inc.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/inc.js
 var require_inc = __commonJS({
-  "node_modules/semver/functions/inc.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/inc.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var inc = (version, release, options, identifier, identifierBase) => {
@@ -6710,9 +6741,9 @@ var require_inc = __commonJS({
   }
 });
 
-// node_modules/semver/functions/diff.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/diff.js
 var require_diff = __commonJS({
-  "node_modules/semver/functions/diff.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/diff.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var diff = (version1, version2) => {
@@ -6754,9 +6785,9 @@ var require_diff = __commonJS({
   }
 });
 
-// node_modules/semver/functions/major.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/major.js
 var require_major = __commonJS({
-  "node_modules/semver/functions/major.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/major.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var major = (a, loose) => new SemVer(a, loose).major;
@@ -6764,9 +6795,9 @@ var require_major = __commonJS({
   }
 });
 
-// node_modules/semver/functions/minor.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/minor.js
 var require_minor = __commonJS({
-  "node_modules/semver/functions/minor.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/minor.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var minor = (a, loose) => new SemVer(a, loose).minor;
@@ -6774,9 +6805,9 @@ var require_minor = __commonJS({
   }
 });
 
-// node_modules/semver/functions/patch.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/patch.js
 var require_patch = __commonJS({
-  "node_modules/semver/functions/patch.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/patch.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var patch = (a, loose) => new SemVer(a, loose).patch;
@@ -6784,9 +6815,9 @@ var require_patch = __commonJS({
   }
 });
 
-// node_modules/semver/functions/prerelease.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/prerelease.js
 var require_prerelease = __commonJS({
-  "node_modules/semver/functions/prerelease.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/prerelease.js"(exports2, module2) {
     "use strict";
     var parse = require_parse();
     var prerelease = (version, options) => {
@@ -6797,9 +6828,9 @@ var require_prerelease = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare.js
 var require_compare = __commonJS({
-  "node_modules/semver/functions/compare.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
@@ -6807,9 +6838,9 @@ var require_compare = __commonJS({
   }
 });
 
-// node_modules/semver/functions/rcompare.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rcompare.js
 var require_rcompare = __commonJS({
-  "node_modules/semver/functions/rcompare.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rcompare.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var rcompare = (a, b, loose) => compare(b, a, loose);
@@ -6817,9 +6848,9 @@ var require_rcompare = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare-loose.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-loose.js
 var require_compare_loose = __commonJS({
-  "node_modules/semver/functions/compare-loose.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-loose.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var compareLoose = (a, b) => compare(a, b, true);
@@ -6827,9 +6858,9 @@ var require_compare_loose = __commonJS({
   }
 });
 
-// node_modules/semver/functions/compare-build.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-build.js
 var require_compare_build = __commonJS({
-  "node_modules/semver/functions/compare-build.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/compare-build.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var compareBuild = (a, b, loose) => {
@@ -6841,9 +6872,9 @@ var require_compare_build = __commonJS({
   }
 });
 
-// node_modules/semver/functions/sort.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/sort.js
 var require_sort = __commonJS({
-  "node_modules/semver/functions/sort.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/sort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
     var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
@@ -6851,9 +6882,9 @@ var require_sort = __commonJS({
   }
 });
 
-// node_modules/semver/functions/rsort.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rsort.js
 var require_rsort = __commonJS({
-  "node_modules/semver/functions/rsort.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/rsort.js"(exports2, module2) {
     "use strict";
     var compareBuild = require_compare_build();
     var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
@@ -6861,9 +6892,9 @@ var require_rsort = __commonJS({
   }
 });
 
-// node_modules/semver/functions/gt.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gt.js
 var require_gt = __commonJS({
-  "node_modules/semver/functions/gt.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var gt = (a, b, loose) => compare(a, b, loose) > 0;
@@ -6871,9 +6902,9 @@ var require_gt = __commonJS({
   }
 });
 
-// node_modules/semver/functions/lt.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lt.js
 var require_lt = __commonJS({
-  "node_modules/semver/functions/lt.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lt.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var lt = (a, b, loose) => compare(a, b, loose) < 0;
@@ -6881,9 +6912,9 @@ var require_lt = __commonJS({
   }
 });
 
-// node_modules/semver/functions/eq.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/eq.js
 var require_eq = __commonJS({
-  "node_modules/semver/functions/eq.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/eq.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var eq = (a, b, loose) => compare(a, b, loose) === 0;
@@ -6891,9 +6922,9 @@ var require_eq = __commonJS({
   }
 });
 
-// node_modules/semver/functions/neq.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/neq.js
 var require_neq = __commonJS({
-  "node_modules/semver/functions/neq.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/neq.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var neq = (a, b, loose) => compare(a, b, loose) !== 0;
@@ -6901,9 +6932,9 @@ var require_neq = __commonJS({
   }
 });
 
-// node_modules/semver/functions/gte.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gte.js
 var require_gte = __commonJS({
-  "node_modules/semver/functions/gte.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/gte.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var gte = (a, b, loose) => compare(a, b, loose) >= 0;
@@ -6911,9 +6942,9 @@ var require_gte = __commonJS({
   }
 });
 
-// node_modules/semver/functions/lte.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lte.js
 var require_lte = __commonJS({
-  "node_modules/semver/functions/lte.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/lte.js"(exports2, module2) {
     "use strict";
     var compare = require_compare();
     var lte = (a, b, loose) => compare(a, b, loose) <= 0;
@@ -6921,9 +6952,9 @@ var require_lte = __commonJS({
   }
 });
 
-// node_modules/semver/functions/cmp.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/cmp.js
 var require_cmp = __commonJS({
-  "node_modules/semver/functions/cmp.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/cmp.js"(exports2, module2) {
     "use strict";
     var eq = require_eq();
     var neq = require_neq();
@@ -6971,9 +7002,9 @@ var require_cmp = __commonJS({
   }
 });
 
-// node_modules/semver/functions/coerce.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/coerce.js
 var require_coerce = __commonJS({
-  "node_modules/semver/functions/coerce.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/coerce.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var parse = require_parse();
@@ -7017,9 +7048,9 @@ var require_coerce = __commonJS({
   }
 });
 
-// node_modules/semver/internal/lrucache.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/lrucache.js
 var require_lrucache = __commonJS({
-  "node_modules/semver/internal/lrucache.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/internal/lrucache.js"(exports2, module2) {
     "use strict";
     var LRUCache = class {
       constructor() {
@@ -7055,9 +7086,9 @@ var require_lrucache = __commonJS({
   }
 });
 
-// node_modules/semver/classes/range.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/range.js
 var require_range = __commonJS({
-  "node_modules/semver/classes/range.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/range.js"(exports2, module2) {
     "use strict";
     var SPACE_CHARACTERS = /\s+/g;
     var Range = class _Range {
@@ -7228,6 +7259,7 @@ var require_range = __commonJS({
       return result;
     };
     var parseComparator = (comp, options) => {
+      comp = comp.replace(re[t.BUILD], "");
       debug("comp", comp, options);
       comp = replaceCarets(comp, options);
       debug("caret", comp);
@@ -7431,9 +7463,9 @@ var require_range = __commonJS({
   }
 });
 
-// node_modules/semver/classes/comparator.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/comparator.js
 var require_comparator = __commonJS({
-  "node_modules/semver/classes/comparator.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/classes/comparator.js"(exports2, module2) {
     "use strict";
     var ANY = Symbol("SemVer ANY");
     var Comparator = class _Comparator {
@@ -7544,9 +7576,9 @@ var require_comparator = __commonJS({
   }
 });
 
-// node_modules/semver/functions/satisfies.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/satisfies.js
 var require_satisfies = __commonJS({
-  "node_modules/semver/functions/satisfies.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/functions/satisfies.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var satisfies = (version, range, options) => {
@@ -7561,9 +7593,9 @@ var require_satisfies = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/to-comparators.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/to-comparators.js
 var require_to_comparators = __commonJS({
-  "node_modules/semver/ranges/to-comparators.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/to-comparators.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
@@ -7571,9 +7603,9 @@ var require_to_comparators = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/max-satisfying.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/max-satisfying.js
 var require_max_satisfying = __commonJS({
-  "node_modules/semver/ranges/max-satisfying.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/max-satisfying.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7600,9 +7632,9 @@ var require_max_satisfying = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/min-satisfying.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-satisfying.js
 var require_min_satisfying = __commonJS({
-  "node_modules/semver/ranges/min-satisfying.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-satisfying.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7629,9 +7661,9 @@ var require_min_satisfying = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/min-version.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-version.js
 var require_min_version = __commonJS({
-  "node_modules/semver/ranges/min-version.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/min-version.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Range = require_range();
@@ -7688,9 +7720,9 @@ var require_min_version = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/valid.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/valid.js
 var require_valid2 = __commonJS({
-  "node_modules/semver/ranges/valid.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/valid.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var validRange = (range, options) => {
@@ -7704,9 +7736,9 @@ var require_valid2 = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/outside.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/outside.js
 var require_outside = __commonJS({
-  "node_modules/semver/ranges/outside.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/outside.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
     var Comparator = require_comparator();
@@ -7773,9 +7805,9 @@ var require_outside = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/gtr.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/gtr.js
 var require_gtr = __commonJS({
-  "node_modules/semver/ranges/gtr.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/gtr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
     var gtr = (version, range, options) => outside(version, range, ">", options);
@@ -7783,9 +7815,9 @@ var require_gtr = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/ltr.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/ltr.js
 var require_ltr = __commonJS({
-  "node_modules/semver/ranges/ltr.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/ltr.js"(exports2, module2) {
     "use strict";
     var outside = require_outside();
     var ltr = (version, range, options) => outside(version, range, "<", options);
@@ -7793,9 +7825,9 @@ var require_ltr = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/intersects.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/intersects.js
 var require_intersects = __commonJS({
-  "node_modules/semver/ranges/intersects.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/intersects.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var intersects = (r1, r2, options) => {
@@ -7807,9 +7839,9 @@ var require_intersects = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/simplify.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/simplify.js
 var require_simplify = __commonJS({
-  "node_modules/semver/ranges/simplify.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/simplify.js"(exports2, module2) {
     "use strict";
     var satisfies = require_satisfies();
     var compare = require_compare();
@@ -7857,9 +7889,9 @@ var require_simplify = __commonJS({
   }
 });
 
-// node_modules/semver/ranges/subset.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/subset.js
 var require_subset = __commonJS({
-  "node_modules/semver/ranges/subset.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/ranges/subset.js"(exports2, module2) {
     "use strict";
     var Range = require_range();
     var Comparator = require_comparator();
@@ -8019,9 +8051,9 @@ var require_subset = __commonJS({
   }
 });
 
-// node_modules/semver/index.js
+// node_modules/.pnpm/semver@7.7.3/node_modules/semver/index.js
 var require_semver2 = __commonJS({
-  "node_modules/semver/index.js"(exports2, module2) {
+  "node_modules/.pnpm/semver@7.7.3/node_modules/semver/index.js"(exports2, module2) {
     "use strict";
     var internalRe = require_re();
     var constants = require_constants();
@@ -8114,25 +8146,25 @@ var require_semver2 = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js
 var require_asymmetricKeyDetailsSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/asymmetricKeyDetailsSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, ">=15.7.0");
   }
 });
 
-// node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js
 var require_rsaPssKeyDetailsSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/rsaPssKeyDetailsSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, ">=16.9.0");
   }
 });
 
-// node_modules/jsonwebtoken/lib/validateAsymmetricKey.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/validateAsymmetricKey.js
 var require_validateAsymmetricKey = __commonJS({
-  "node_modules/jsonwebtoken/lib/validateAsymmetricKey.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/validateAsymmetricKey.js"(exports2, module2) {
     var ASYMMETRIC_KEY_DETAILS_SUPPORTED = require_asymmetricKeyDetailsSupported();
     var RSA_PSS_KEY_DETAILS_SUPPORTED = require_rsaPssKeyDetailsSupported();
     var allowedAlgorithmsForKeys = {
@@ -8183,17 +8215,17 @@ var require_validateAsymmetricKey = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/lib/psSupported.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/psSupported.js
 var require_psSupported = __commonJS({
-  "node_modules/jsonwebtoken/lib/psSupported.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/lib/psSupported.js"(exports2, module2) {
     var semver = require_semver2();
     module2.exports = semver.satisfies(process.version, "^6.12.0 || >=8.0.0");
   }
 });
 
-// node_modules/jsonwebtoken/verify.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/verify.js
 var require_verify = __commonJS({
-  "node_modules/jsonwebtoken/verify.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/verify.js"(exports2, module2) {
     var JsonWebTokenError = require_JsonWebTokenError();
     var NotBeforeError = require_NotBeforeError();
     var TokenExpiredError = require_TokenExpiredError();
@@ -8406,9 +8438,9 @@ var require_verify = __commonJS({
   }
 });
 
-// node_modules/lodash.includes/index.js
+// node_modules/.pnpm/lodash.includes@4.3.0/node_modules/lodash.includes/index.js
 var require_lodash = __commonJS({
-  "node_modules/lodash.includes/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.includes@4.3.0/node_modules/lodash.includes/index.js"(exports2, module2) {
     var INFINITY = 1 / 0;
     var MAX_SAFE_INTEGER = 9007199254740991;
     var MAX_INTEGER = 17976931348623157e292;
@@ -8590,9 +8622,9 @@ var require_lodash = __commonJS({
   }
 });
 
-// node_modules/lodash.isboolean/index.js
+// node_modules/.pnpm/lodash.isboolean@3.0.3/node_modules/lodash.isboolean/index.js
 var require_lodash2 = __commonJS({
-  "node_modules/lodash.isboolean/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isboolean@3.0.3/node_modules/lodash.isboolean/index.js"(exports2, module2) {
     var boolTag = "[object Boolean]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8606,9 +8638,9 @@ var require_lodash2 = __commonJS({
   }
 });
 
-// node_modules/lodash.isinteger/index.js
+// node_modules/.pnpm/lodash.isinteger@4.0.4/node_modules/lodash.isinteger/index.js
 var require_lodash3 = __commonJS({
-  "node_modules/lodash.isinteger/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isinteger@4.0.4/node_modules/lodash.isinteger/index.js"(exports2, module2) {
     var INFINITY = 1 / 0;
     var MAX_INTEGER = 17976931348623157e292;
     var NAN = 0 / 0;
@@ -8670,9 +8702,9 @@ var require_lodash3 = __commonJS({
   }
 });
 
-// node_modules/lodash.isnumber/index.js
+// node_modules/.pnpm/lodash.isnumber@3.0.3/node_modules/lodash.isnumber/index.js
 var require_lodash4 = __commonJS({
-  "node_modules/lodash.isnumber/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isnumber@3.0.3/node_modules/lodash.isnumber/index.js"(exports2, module2) {
     var numberTag = "[object Number]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8686,9 +8718,9 @@ var require_lodash4 = __commonJS({
   }
 });
 
-// node_modules/lodash.isplainobject/index.js
+// node_modules/.pnpm/lodash.isplainobject@4.0.6/node_modules/lodash.isplainobject/index.js
 var require_lodash5 = __commonJS({
-  "node_modules/lodash.isplainobject/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isplainobject@4.0.6/node_modules/lodash.isplainobject/index.js"(exports2, module2) {
     var objectTag = "[object Object]";
     function isHostObject(value) {
       var result = false;
@@ -8730,9 +8762,9 @@ var require_lodash5 = __commonJS({
   }
 });
 
-// node_modules/lodash.isstring/index.js
+// node_modules/.pnpm/lodash.isstring@4.0.1/node_modules/lodash.isstring/index.js
 var require_lodash6 = __commonJS({
-  "node_modules/lodash.isstring/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.isstring@4.0.1/node_modules/lodash.isstring/index.js"(exports2, module2) {
     var stringTag = "[object String]";
     var objectProto = Object.prototype;
     var objectToString = objectProto.toString;
@@ -8747,9 +8779,9 @@ var require_lodash6 = __commonJS({
   }
 });
 
-// node_modules/lodash.once/index.js
+// node_modules/.pnpm/lodash.once@4.1.1/node_modules/lodash.once/index.js
 var require_lodash7 = __commonJS({
-  "node_modules/lodash.once/index.js"(exports2, module2) {
+  "node_modules/.pnpm/lodash.once@4.1.1/node_modules/lodash.once/index.js"(exports2, module2) {
     var FUNC_ERROR_TEXT = "Expected a function";
     var INFINITY = 1 / 0;
     var MAX_INTEGER = 17976931348623157e292;
@@ -8828,9 +8860,9 @@ var require_lodash7 = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/sign.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/sign.js
 var require_sign = __commonJS({
-  "node_modules/jsonwebtoken/sign.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/sign.js"(exports2, module2) {
     var timespan = require_timespan();
     var PS_SUPPORTED = require_psSupported();
     var validateAsymmetricKey = require_validateAsymmetricKey();
@@ -9053,9 +9085,9 @@ var require_sign = __commonJS({
   }
 });
 
-// node_modules/jsonwebtoken/index.js
+// node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/index.js
 var require_jsonwebtoken = __commonJS({
-  "node_modules/jsonwebtoken/index.js"(exports2, module2) {
+  "node_modules/.pnpm/jsonwebtoken@9.0.3/node_modules/jsonwebtoken/index.js"(exports2, module2) {
     module2.exports = {
       decode: require_decode(),
       verify: require_verify(),
@@ -9067,9 +9099,9 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
-// node_modules/ts-dedent/dist/index.js
+// node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js
 var require_dist = __commonJS({
-  "node_modules/ts-dedent/dist/index.js"(exports2) {
+  "node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.dedent = void 0;
@@ -9342,7 +9374,21 @@ function createLogger(options = {}) {
 }
 var logger = createLogger();
 
-// node_modules/@stainless-api/github-internal/core/resource.mjs
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
   class APIResource4 {
     constructor(client) {
@@ -9353,7 +9399,7 @@ var APIResource = /* @__PURE__ */ (() => {
   return APIResource4;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -9371,7 +9417,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/github-internal/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -9402,7 +9448,7 @@ var castToError = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/github-internal/core/error.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/error.mjs
 var GitHubError = /* @__PURE__ */ (() => {
   class GitHubError2 extends Error {
   }
@@ -9494,7 +9540,7 @@ var RateLimitError = class extends APIError {
 var InternalServerError = class extends APIError {
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
   return startsWithSchemeRegexp.test(url);
@@ -9534,7 +9580,7 @@ var safeJSON = (text) => {
   }
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/log.mjs
 var levelNumbers = {
   off: 0,
   error: 200,
@@ -9607,7 +9653,7 @@ var formatRequestDetails = (details) => {
   return details;
 };
 
-// node_modules/@stainless-api/github-internal/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/parse.mjs
 async function defaultParseResponse(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -9641,7 +9687,7 @@ async function defaultParseResponse(client, props) {
   return body;
 }
 
-// node_modules/@stainless-api/github-internal/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/api-promise.mjs
 var _APIPromise_client;
 var APIPromise = /* @__PURE__ */ (() => {
   class APIPromise4 extends Promise {
@@ -9705,7 +9751,7 @@ var APIPromise = /* @__PURE__ */ (() => {
   return APIPromise4;
 })();
 
-// node_modules/@stainless-api/github-internal/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/pagination.mjs
 var _AbstractPage_client;
 var AbstractPage = /* @__PURE__ */ (() => {
   class AbstractPage3 {
@@ -9789,7 +9835,7 @@ var NumberedPage = class extends AbstractPage {
   }
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/path.mjs
 function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -9844,7 +9890,7 @@ ${underline}`);
 };
 var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
-// node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
 var BaseCommits = /* @__PURE__ */ (() => {
   class BaseCommits4 extends APIResource {
     /**
@@ -10120,7 +10166,7 @@ var BaseCommits = /* @__PURE__ */ (() => {
   return BaseCommits4;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/headers.mjs
 var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders(headers) {
   if (!headers)
@@ -10183,7 +10229,7 @@ var buildHeaders = (newHeaders) => {
   return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
 var BaseComments2 = /* @__PURE__ */ (() => {
   class BaseComments8 extends APIResource {
     /**
@@ -10367,7 +10413,7 @@ var BaseComments2 = /* @__PURE__ */ (() => {
   return BaseComments8;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
 var uuid4 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -10379,13 +10425,13 @@ var uuid4 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/github-internal/version.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/version.mjs
 var VERSION = "0.25.1";
 
-// node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
 function getDetectedPlatform() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -10511,7 +10557,7 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// node_modules/@stainless-api/github-internal/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -10556,7 +10602,7 @@ async function CancelReadableStream(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/github-internal/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -10566,7 +10612,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -10575,7 +10621,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -10654,7 +10700,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -10932,7 +10978,7 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
 var BaseInstallations = /* @__PURE__ */ (() => {
   class BaseInstallations4 extends APIResource {
     /**
@@ -11041,7 +11087,7 @@ var BaseInstallations = /* @__PURE__ */ (() => {
   return BaseInstallations4;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
 var BaseOrgs = /* @__PURE__ */ (() => {
   class BaseOrgs3 extends APIResource {
     /**
@@ -11298,7 +11344,7 @@ var BaseOrgs = /* @__PURE__ */ (() => {
   return BaseOrgs3;
 })();
 
-// node_modules/@stainless-api/github-internal/resources/search.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/search.mjs
 var BaseSearch = /* @__PURE__ */ (() => {
   class BaseSearch6 extends APIResource {
     /**
@@ -11473,10 +11519,10 @@ var BaseSearch = /* @__PURE__ */ (() => {
 var Search = class extends BaseSearch {
 };
 
-// node_modules/@stainless-api/github-internal/lib/secrets.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
-// node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
 var BaseRepos3 = /* @__PURE__ */ (() => {
   class BaseRepos6 extends APIResource {
     constructor() {
@@ -12217,7 +12263,7 @@ var BaseRepos3 = /* @__PURE__ */ (() => {
   return BaseRepos6;
 })();
 
-// node_modules/@stainless-api/github-internal/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/env.mjs
 var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -12228,7 +12274,7 @@ var readEnv = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/github-internal/lib/auth.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
 async function getAuthToken({ authMethods, owner, repo, logger: logger2 }) {
   const method = authMethods.find((method2) => method2.owner === owner) ?? authMethods.at(-1);
@@ -12280,7 +12326,7 @@ async function getAppToken(method) {
   return { authToken: appToken, expires: appTokenExpires };
 }
 
-// node_modules/@stainless-api/github-internal/client.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/client.mjs
 var _BaseGitHub_instances;
 var _BaseGitHub_encoder;
 var _BaseGitHub_baseURLOverridden;
@@ -12714,7 +12760,7 @@ var BaseGitHub = /* @__PURE__ */ (() => {
   return BaseGitHub3;
 })();
 
-// node_modules/@stainless-api/github-internal/tree-shakable.mjs
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/tree-shakable.mjs
 function createClient(options) {
   const client = new BaseGitHub(options);
   for (const ResourceClass of options.resources) {
@@ -12856,7 +12902,7 @@ function getGitHubClient() {
   return cachedClient;
 }
 
-// node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
 function isAbortError2(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -12887,7 +12933,7 @@ var castToError2 = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/gitlab-internal/core/error.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
 var GitLabError = /* @__PURE__ */ (() => {
   class GitLabError2 extends Error {
   }
@@ -12979,7 +13025,7 @@ var RateLimitError2 = class extends APIError2 {
 var InternalServerError2 = class extends APIError2 {
 };
 
-// node_modules/@stainless-api/gitlab-internal/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
 var APIResource2 = /* @__PURE__ */ (() => {
   class APIResource4 {
     constructor(client) {
@@ -12990,7 +13036,7 @@ var APIResource2 = /* @__PURE__ */ (() => {
   return APIResource4;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL2 = (url) => {
   return startsWithSchemeRegexp2.test(url);
@@ -13024,7 +13070,7 @@ var safeJSON2 = (text) => {
   }
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
 var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders2(headers) {
   if (!headers)
@@ -13087,7 +13133,7 @@ var buildHeaders2 = (newHeaders) => {
   return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
 function encodeURIPath2(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -13142,7 +13188,7 @@ ${underline}`);
 };
 var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
-// node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
 var BaseNotes2 = /* @__PURE__ */ (() => {
   class BaseNotes13 extends APIResource2 {
     /**
@@ -13242,7 +13288,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
   return BaseNotes13;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
 var BaseMergeRequests = /* @__PURE__ */ (() => {
   class BaseMergeRequests3 extends APIResource2 {
     /**
@@ -13799,7 +13845,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
   return BaseMergeRequests3;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
 function getDefaultFetch2() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -13844,7 +13890,7 @@ async function CancelReadableStream2(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
 var checkFileSupport2 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -13916,7 +13962,7 @@ var addFormValue = async (form, key, value) => {
   }
 };
 
-// node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
 var BaseCommits3 = /* @__PURE__ */ (() => {
   class BaseCommits4 extends APIResource2 {
     /**
@@ -14135,7 +14181,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
   return BaseCommits4;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -14153,7 +14199,7 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
 var uuid42 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -14165,13 +14211,13 @@ var uuid42 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/gitlab-internal/version.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/version.mjs
 var VERSION2 = "0.2.0";
 
-// node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
 function getDetectedPlatform2() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -14297,7 +14343,7 @@ var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
 var FallbackEncoder2 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -14307,7 +14353,7 @@ var FallbackEncoder2 = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
 var default_format2 = "RFC3986";
 var default_formatter2 = (v) => String(v);
 var formatters2 = {
@@ -14316,7 +14362,7 @@ var formatters2 = {
 };
 var RFC17382 = "RFC1738";
 
-// node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
 var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
 var hex_table2 = /* @__PURE__ */ (() => {
   const array = [];
@@ -14395,7 +14441,7 @@ function maybe_map2(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
 var array_prefix_generators2 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -14673,7 +14719,7 @@ function stringify2(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
 var levelNumbers2 = {
   off: 0,
   error: 200,
@@ -14746,7 +14792,7 @@ var formatRequestDetails2 = (details) => {
   return details;
 };
 
-// node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
 async function defaultParseResponse2(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -14780,7 +14826,7 @@ async function defaultParseResponse2(client, props) {
   return body;
 }
 
-// node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
 var _APIPromise_client2;
 var APIPromise2 = /* @__PURE__ */ (() => {
   class APIPromise4 extends Promise {
@@ -14844,7 +14890,7 @@ var APIPromise2 = /* @__PURE__ */ (() => {
   return APIPromise4;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
 var readEnv2 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -14855,7 +14901,7 @@ var readEnv2 = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/gitlab-internal/client.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/client.mjs
 var _BaseGitLab_instances;
 var _BaseGitLab_encoder;
 var _BaseGitLab_baseURLOverridden;
@@ -15340,7 +15386,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
   return BaseGitLab2;
 })();
 
-// node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
 function createClient2(options) {
   const client = new BaseGitLab(options);
   for (const ResourceClass of options.resources) {
@@ -15896,8 +15942,8 @@ function printComment({
   projectName,
   branch,
   commitMessage,
-  commitMessages,
-  hasAiCommitMessageMap,
+  targetCommitMessages,
+  pendingAiCommitMessages,
   baseOutcomes,
   outcomes
 }) {
@@ -15906,35 +15952,19 @@ function printComment({
       return "No changes were made to the SDKs.";
     }
     const canEdit = !!baseOutcomes;
-    const hasMultipleCommitMessages = commitMessages && Object.keys(commitMessages).length > 0;
-    if (hasMultipleCommitMessages) {
-      return [
-        Dedent`
-          This ${ctx().names.pr} will update the ${CodeInline(
-          projectName
-        )} SDKs with the following commit messages.
-        `,
-        CommitMessagesSection({
-          commitMessages,
-          hasAiCommitMessageMap,
-          outcomes
-        }),
-        canEdit ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : null,
-        Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-      ].filter((f) => f !== null).join(`
-
-`);
-    }
     return [
       Dedent`
         This ${ctx().names.pr} will update the ${CodeInline(
         projectName
-      )} SDKs with the following commit message.
-
-        ${CodeBlock(commitMessage)}
-
-        ${canEdit ? "Edit this comment to update it. It will appear in the SDK's changelogs." : ""}
+      )} SDKs with the following commit ${targetCommitMessages ? "messages" : "message"}.
       `,
+      targetCommitMessages ? CommitMessagesSection({
+        targets: Object.keys(outcomes).sort(),
+        pendingAiCommitMessages,
+        targetCommitMessages,
+        commitMessage
+      }) : CodeBlock(commitMessage),
+      !canEdit ? null : targetCommitMessages ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : "Edit this comment to update it. It will appear in the SDK's changelogs.",
       Results({ orgName, projectName, branch, outcomes, baseOutcomes })
     ].filter((f) => f !== null).join(`
 
@@ -15960,22 +15990,19 @@ function printComment({
   return fullComment;
 }
 function CommitMessagesSection({
-  commitMessages,
-  hasAiCommitMessageMap,
-  outcomes
+  targets,
+  pendingAiCommitMessages,
+  targetCommitMessages,
+  commitMessage
 }) {
-  const languages = Object.keys(outcomes).sort();
-  const messageBlocks = languages.map((lang) => {
-    const message = commitMessages[lang] || "No changes detected";
-    const isGeneratingAiCommitMessage = hasAiCommitMessageMap != null && !hasAiCommitMessageMap[lang];
-    const statusText = isGeneratingAiCommitMessage ? `${Symbol2.HourglassFlowingSand} (generating...)
-` : "";
+  return targets.map((target) => {
+    const statusText = pendingAiCommitMessages?.has(target) ? `${Symbol2.HourglassFlowingSand} (generating...)` : "";
+    const message = targetCommitMessages[target] ?? commitMessage;
     return Dedent`
-      **${lang}**
-      ${statusText}${CodeBlock(message)}
-    `;
-  });
-  return messageBlocks.join("\n");
+        **${target}**
+        ${statusText}${CodeBlock(message)}
+      `;
+  }).join("\n");
 }
 var DiagnosticIcon = {
   fatal: Symbol2.Exclamation,
@@ -16257,36 +16284,38 @@ function InstallationDetails(head, lang) {
   if (!installation) return null;
   return CodeBlock({ content: installation, language: "bash" });
 }
-function parseCommitMessage(body) {
-  return body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim() ?? null;
-}
 function parseCommitMessages(body) {
   if (!body) {
-    return null;
+    return {};
   }
-  const commitMessages = {};
+  const targetCommitMessages = {};
   const languageBlocks = body.matchAll(
     /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
   );
   for (const match of languageBlocks) {
     const language = match[1];
-    const message = match[2].trim();
-    if (message && message !== "No changes detected") {
-      commitMessages[language] = message;
+    const message2 = match[2].trim();
+    if (message2) {
+      targetCommitMessages[language] = makeCommitMessageConventional(message2);
     }
   }
-  if (Object.keys(commitMessages).length === 0) {
-    return null;
+  if (Object.keys(targetCommitMessages).length > 0) {
+    return { targetCommitMessages };
   }
-  return commitMessages;
+  const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
+  return message ? { commitMessage: makeCommitMessageConventional(message) } : {};
 }
 async function retrieveComment() {
   const comments = await api().listComments();
-  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
+  const existingComment = comments.find(
+    (comment) => comment.body?.includes(COMMENT_TITLE)
+  );
+  if (!existingComment) {
+    return null;
+  }
   return {
-    id: existingComment?.id,
-    commitMessages: parseCommitMessages(existingComment?.body),
-    commitMessage: parseCommitMessage(existingComment?.body)
+    id: existingComment.id,
+    ...parseCommitMessages(existingComment.body)
   };
 }
 async function upsertComment({
@@ -16322,21 +16351,7 @@ function commentThrottler() {
   };
 }
 
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
-
-// node_modules/nano-spawn/source/context.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/context.js
 var import_node_process = __toESM(require("node:process"), 1);
 var import_node_util = require("node:util");
 var getContext = (raw) => ({
@@ -16346,7 +16361,7 @@ var getContext = (raw) => ({
 });
 var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
 
-// node_modules/nano-spawn/source/options.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/options.js
 var import_node_path = __toESM(require("node:path"), 1);
 var import_node_url = require("node:url");
 var import_node_process2 = __toESM(require("node:process"), 1);
@@ -16378,12 +16393,12 @@ var addLocalPath = ({ Path: Path3 = "", PATH = Path3, ...env }, cwd) => {
 };
 var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
 
-// node_modules/nano-spawn/source/spawn.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
 var import_node_child_process = require("node:child_process");
 var import_node_events2 = require("node:events");
 var import_node_process5 = __toESM(require("node:process"), 1);
 
-// node_modules/nano-spawn/source/windows.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/windows.js
 var import_promises = __toESM(require("node:fs/promises"), 1);
 var import_node_path2 = __toESM(require("node:path"), 1);
 var import_node_process3 = __toESM(require("node:process"), 1);
@@ -16417,7 +16432,7 @@ var exeExtensions = [".exe", ".com"];
 var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
 var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
 
-// node_modules/nano-spawn/source/result.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/result.js
 var import_node_events = require("node:events");
 var import_node_process4 = __toESM(require("node:process"), 1);
 var getResult = async (nodeChildProcess, { input }, context) => {
@@ -16476,7 +16491,7 @@ var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
 });
 var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
 
-// node_modules/nano-spawn/source/spawn.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
 var spawnSubprocess = async (file, commandArguments, options, context) => {
   try {
     if (["node", "node.exe"].includes(file.toLowerCase())) {
@@ -16510,7 +16525,7 @@ var bufferOutput = (stream, { state }, streamName) => {
   }
 };
 
-// node_modules/nano-spawn/source/pipe.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/pipe.js
 var import_promises2 = require("node:stream/promises");
 var handlePipe = async (subprocesses) => {
   const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
@@ -16544,7 +16559,7 @@ var closeStdin = async (nodeChildProcess) => {
   stdin.end();
 };
 
-// node_modules/nano-spawn/source/iterable.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/iterable.js
 var readline = __toESM(require("node:readline/promises"), 1);
 var lineIterator = async function* (subprocess, { state }, streamName) {
   if (state.isIterating === false) {
@@ -16594,7 +16609,7 @@ var getNext = async (iterator) => {
   }
 };
 
-// node_modules/nano-spawn/source/index.js
+// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/index.js
 function spawn2(file, second, third, previous) {
   const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
   const context = getContext([file, ...commandArguments]);
@@ -16737,7 +16752,7 @@ async function isConfigChanged({
   return changed;
 }
 
-// node_modules/diff/libesm/diff/base.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/base.js
 var Diff = class {
   diff(oldStr, newStr, options = {}) {
     let callback;
@@ -16939,7 +16954,7 @@ var Diff = class {
   }
 };
 
-// node_modules/diff/libesm/util/string.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/string.js
 function hasOnlyWinLineEndings(string) {
   return string.includes("\r\n") && !string.startsWith("\n") && !string.match(/[^\r]\n/);
 }
@@ -16947,7 +16962,7 @@ function hasOnlyUnixLineEndings(string) {
   return !string.includes("\r\n") && string.includes("\n");
 }
 
-// node_modules/diff/libesm/diff/line.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/line.js
 var LineDiff = class extends Diff {
   constructor() {
     super(...arguments);
@@ -16995,7 +17010,7 @@ function tokenize(value, options) {
   return retLines;
 }
 
-// node_modules/diff/libesm/patch/line-endings.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/line-endings.js
 function unixToWin(patch) {
   if (Array.isArray(patch)) {
     return patch.map((p) => unixToWin(p));
@@ -17027,7 +17042,7 @@ function isWin(patch) {
   })));
 }
 
-// node_modules/diff/libesm/patch/parse.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/parse.js
 function parsePatch(uniDiff) {
   const diffstr = uniDiff.split(/\n/), list = [];
   let i = 0;
@@ -17132,7 +17147,7 @@ function parsePatch(uniDiff) {
   return list;
 }
 
-// node_modules/diff/libesm/util/distance-iterator.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/distance-iterator.js
 function distance_iterator_default(start, minLine, maxLine) {
   let wantForward = true, backwardExhausted = false, forwardExhausted = false, localOffset = 1;
   return function iterator() {
@@ -17161,7 +17176,7 @@ function distance_iterator_default(start, minLine, maxLine) {
   };
 }
 
-// node_modules/diff/libesm/patch/apply.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/apply.js
 function applyPatch(source, patch, options = {}) {
   let patches;
   if (typeof patch === "string") {
@@ -17310,7 +17325,7 @@ function applyStructuredPatch(source, patch, options = {}) {
   return resultLines.join("\n");
 }
 
-// node_modules/diff/libesm/patch/create.js
+// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/create.js
 var INCLUDE_HEADERS = {
   includeIndex: true,
   includeUnderline: true,
@@ -17493,7 +17508,7 @@ function splitLines(text) {
   return result;
 }
 
-// node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet3(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -17511,7 +17526,7 @@ function __classPrivateFieldGet3(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid43 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -17523,7 +17538,7 @@ var uuid43 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError3(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -17554,7 +17569,7 @@ var castToError3 = (err) => {
   return new Error(err);
 };
 
-// node_modules/@stainless-api/sdk/core/error.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/error.mjs
 var StainlessError = class extends Error {
 };
 var APIError3 = class _APIError extends StainlessError {
@@ -17643,7 +17658,7 @@ var RateLimitError3 = class extends APIError3 {
 var InternalServerError3 = class extends APIError3 {
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp3 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL3 = (url) => {
   return startsWithSchemeRegexp3.test(url);
@@ -17683,13 +17698,13 @@ var safeJSON3 = (text) => {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/@stainless-api/sdk/version.mjs
-var VERSION3 = "0.1.0";
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/version.mjs
+var VERSION3 = "0.1.0-alpha.27";
 
-// node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform3() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -17815,7 +17830,7 @@ var getPlatformHeaders3 = () => {
   return _platformHeaders3 ?? (_platformHeaders3 = getPlatformProperties3());
 };
 
-// node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch3() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -17860,7 +17875,7 @@ async function CancelReadableStream3(stream) {
   await cancelPromise;
 }
 
-// node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder3 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -17870,7 +17885,7 @@ var FallbackEncoder3 = ({ headers, body }) => {
   };
 };
 
-// node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format3 = "RFC3986";
 var default_formatter3 = (v) => String(v);
 var formatters3 = {
@@ -17879,7 +17894,7 @@ var formatters3 = {
 };
 var RFC17383 = "RFC1738";
 
-// node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has3 = (obj, key) => (has3 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has3(obj, key));
 var hex_table3 = /* @__PURE__ */ (() => {
   const array = [];
@@ -17958,7 +17973,7 @@ function maybe_map3(val, fn) {
   return fn(val);
 }
 
-// node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators3 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -18236,7 +18251,7 @@ function stringify3(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/@stainless-api/sdk/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/log.mjs
 var levelNumbers3 = {
   off: 0,
   error: 200,
@@ -18309,7 +18324,7 @@ var formatRequestDetails3 = (details) => {
   return details;
 };
 
-// node_modules/@stainless-api/sdk/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/parse.mjs
 async function defaultParseResponse3(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -18343,7 +18358,7 @@ async function defaultParseResponse3(client, props) {
   return body;
 }
 
-// node_modules/@stainless-api/sdk/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/api-promise.mjs
 var _APIPromise_client3;
 var APIPromise3 = class _APIPromise extends Promise {
   constructor(client, responsePromise, parseResponse = defaultParseResponse3) {
@@ -18404,7 +18419,7 @@ var APIPromise3 = class _APIPromise extends Promise {
 };
 _APIPromise_client3 = /* @__PURE__ */ new WeakMap();
 
-// node_modules/@stainless-api/sdk/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/pagination.mjs
 var _AbstractPage_client2;
 var AbstractPage2 = class {
   constructor(client, response, body, options) {
@@ -18485,7 +18500,7 @@ var Page = class extends AbstractPage2 {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport3 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -18502,7 +18517,7 @@ function getName3(value) {
 }
 var isAsyncIterable3 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -18554,14 +18569,14 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/@stainless-api/sdk/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/resource.mjs
 var APIResource3 = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/path.mjs
 function encodeURIPath3(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -18616,7 +18631,7 @@ ${underline}`);
 };
 var path6 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
 
-// node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource3 {
   /**
    * Get the list of diagnostics for a given build.
@@ -18632,7 +18647,7 @@ var Diagnostics = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource3 {
   /**
    * Retrieve a method to download an output for a given build target.
@@ -18651,7 +18666,7 @@ var TargetOutputs = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
 var Builds2 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -18703,7 +18718,7 @@ var Builds2 = class extends APIResource3 {
 Builds2.Diagnostics = Diagnostics;
 Builds2.TargetOutputs = TargetOutputs;
 
-// node_modules/@stainless-api/sdk/resources/orgs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs3 = class extends APIResource3 {
   /**
    * Retrieve an organization by name.
@@ -18719,7 +18734,7 @@ var Orgs3 = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches3 = class extends APIResource3 {
   /**
    * Create a new branch for a project.
@@ -18784,7 +18799,7 @@ var Branches3 = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource3 {
   /**
    * Retrieve the configuration files for a given project.
@@ -18802,7 +18817,7 @@ var Configs = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
 var Projects5 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -18850,7 +18865,7 @@ var Projects5 = class extends APIResource3 {
 Projects5.Branches = Branches3;
 Projects5.Configs = Configs;
 
-// node_modules/@stainless-api/sdk/resources/user.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/user.mjs
 var User = class extends APIResource3 {
   /**
    * Retrieve the currently authenticated user's information.
@@ -18860,7 +18875,7 @@ var User = class extends APIResource3 {
   }
 };
 
-// node_modules/@stainless-api/sdk/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/headers.mjs
 var brand_privateNullableHeaders3 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders3(headers) {
   if (!headers)
@@ -18923,7 +18938,7 @@ var buildHeaders3 = (newHeaders) => {
   return { [brand_privateNullableHeaders3]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv3 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -18934,7 +18949,7 @@ var readEnv3 = (env) => {
   return void 0;
 };
 
-// node_modules/@stainless-api/sdk/lib/unwrap.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/lib/unwrap.mjs
 async function unwrapFile(value) {
   if (value === null) {
     return null;
@@ -18946,7 +18961,7 @@ async function unwrapFile(value) {
   return response.text();
 }
 
-// node_modules/@stainless-api/sdk/client.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/client.mjs
 var _Stainless_instances;
 var _a;
 var _Stainless_encoder;
@@ -19538,7 +19553,7 @@ async function* runBuilds({
   baseConfigContent,
   guessConfig = false,
   commitMessage,
-  commitMessages,
+  targetCommitMessages,
   allowEmpty = true
 }) {
   if (mergeBranch && (oasContent || configContent)) {
@@ -19572,7 +19587,7 @@ async function* runBuilds({
         },
         branch,
         commit_message: commitMessage,
-        target_commit_messages: commitMessages,
+        target_commit_messages: targetCommitMessages,
         allow_empty: allowEmpty
       },
       {
@@ -19905,18 +19920,20 @@ var main = wrapAction("merge", async (stainless) => {
       `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
     );
   }
-  let org = null;
-  if (orgName) {
-    try {
-      org = await stainless.get(`/v0/orgs/${orgName}`);
-    } catch (error) {
+  const enableAiCommitMessages = orgName && await stainless.orgs.retrieve(orgName).then((org) => org.enable_ai_commit_messages).catch((err) => {
+    logger.warn(`Could not fetch data for ${orgName}.`, err);
+    return false;
+  });
+  if (enableAiCommitMessages) {
+    if (multipleCommitMessages === false) {
       logger.warn(
-        `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-        error
+        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.'
+      );
+    } else if (multipleCommitMessages === void 0) {
+      logger.info(
+        'AI commit messages are enabled; setting "multiple_commit_messages" to true.'
       );
     }
-  }
-  if (org?.enable_ai_commit_messages) {
     multipleCommitMessages = true;
   }
   const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
@@ -19929,27 +19946,20 @@ var main = wrapAction("merge", async (stainless) => {
     logger.info("No config files changed, skipping merge");
     return;
   }
-  let commitMessage = defaultCommitMessage;
-  const commitMessages = {};
-  if (makeComment && prNumber) {
-    const comment = await retrieveComment();
-    if (multipleCommitMessages && comment.commitMessages) {
-      for (const [lang, commentCommitMessage] of Object.entries(
-        comment.commitMessages
-      )) {
-        commitMessages[lang] = makeCommitMessageConventional(commentCommitMessage);
-      }
-    } else if (comment.commitMessage) {
-      commitMessage = comment.commitMessage;
-    }
+  const comment = makeComment ? await retrieveComment() : null;
+  const commitMessage = comment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
+  const targetCommitMessages = multipleCommitMessages ? comment?.targetCommitMessages ?? {} : void 0;
+  if (targetCommitMessages) {
+    logger.info("Using commit messages:", targetCommitMessages);
+    logger.info("With default commit message:", commitMessage);
+  } else {
+    logger.info("Using commit message:", commitMessage);
   }
-  commitMessage = makeCommitMessageConventional(commitMessage);
-  logger.info("Using commit message:", commitMessage);
   const generator = runBuilds({
     stainless,
     projectName,
     commitMessage,
-    commitMessages,
+    targetCommitMessages,
     // This action always merges to the Stainless `main` branch:
     branch: "main",
     mergeBranch,
@@ -19964,19 +19974,12 @@ var main = wrapAction("merge", async (stainless) => {
     }
     if (makeComment && latestRun && upsert) {
       const { outcomes } = latestRun;
-      if (multipleCommitMessages) {
-        for (const lang of Object.keys(outcomes)) {
-          if (!commitMessages[lang]) {
-            commitMessages[lang] = commitMessage;
-          }
-        }
-      }
       const commentBody = printComment({
         orgName,
         projectName,
         branch: "main",
         commitMessage,
-        commitMessages: multipleCommitMessages ? commitMessages : void 0,
+        targetCommitMessages,
         outcomes
       });
       await upsert({ body: commentBody, force: run.done });

@@ -64,23 +64,25 @@ const main = wrapAction("merge", async (stainless) => {
     );
   }
 
-  // Fetch org data to check enable_ai_commit_messages field
-  let org: { enable_ai_commit_messages: boolean } | null = null;
-  if (orgName) {
-    try {
-      org = (await stainless.get(`/v0/orgs/${orgName}`)) as {
-        enable_ai_commit_messages: boolean;
-      };
-    } catch (error) {
+  const enableAiCommitMessages =
+    orgName &&
+    (await stainless.orgs
+      .retrieve(orgName)
+      .then((org) => org.enable_ai_commit_messages)
+      .catch((err) => {
+        logger.warn(`Could not fetch data for ${orgName}.`, err);
+        return false;
+      }));
+  if (enableAiCommitMessages) {
+    if (multipleCommitMessages === false) {
       logger.warn(
-        `Failed to fetch org data for ${orgName}. AI commit messages will be disabled.`,
-        error,
+        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.',
+      );
+    } else if (multipleCommitMessages === undefined) {
+      logger.info(
+        'AI commit messages are enabled; setting "multiple_commit_messages" to true.',
       );
     }
-  }
-
-  // Enable AI commit messages if org setting is enabled
-  if (org?.enable_ai_commit_messages) {
     multipleCommitMessages = true;
   }
 
@@ -96,34 +98,26 @@ const main = wrapAction("merge", async (stainless) => {
     return;
   }
 
-  let commitMessage = defaultCommitMessage;
-  // Per-SDK commit messages (only used when multiple_commit_messages is enabled)
-  const commitMessages: Record<string, string> = {};
+  const comment = makeComment ? await retrieveComment() : null;
+  const commitMessage =
+    comment?.commitMessage ??
+    makeCommitMessageConventional(defaultCommitMessage);
+  const targetCommitMessages = multipleCommitMessages
+    ? (comment?.targetCommitMessages ?? {})
+    : undefined;
 
-  if (makeComment && prNumber) {
-    const comment = await retrieveComment();
-
-    // Load existing commit message(s) from comment
-    if (multipleCommitMessages && comment.commitMessages) {
-      for (const [lang, commentCommitMessage] of Object.entries(
-        comment.commitMessages,
-      )) {
-        commitMessages[lang] =
-          makeCommitMessageConventional(commentCommitMessage);
-      }
-    } else if (comment.commitMessage) {
-      commitMessage = comment.commitMessage;
-    }
+  if (targetCommitMessages) {
+    logger.info("Using commit messages:", targetCommitMessages);
+    logger.info("With default commit message:", commitMessage);
+  } else {
+    logger.info("Using commit message:", commitMessage);
   }
-
-  commitMessage = makeCommitMessageConventional(commitMessage);
-  logger.info("Using commit message:", commitMessage);
 
   const generator = runBuilds({
     stainless,
     projectName,
     commitMessage,
-    commitMessages,
+    targetCommitMessages,
     // This action always merges to the Stainless `main` branch:
     branch: "main",
     mergeBranch,
@@ -143,21 +137,12 @@ const main = wrapAction("merge", async (stainless) => {
     if (makeComment && latestRun && upsert) {
       const { outcomes } = latestRun;
 
-      if (multipleCommitMessages) {
-        // For any SDKs that don't have commit messages, use the default
-        for (const lang of Object.keys(outcomes)) {
-          if (!commitMessages[lang]) {
-            commitMessages[lang] = commitMessage;
-          }
-        }
-      }
-
       const commentBody = printComment({
         orgName: orgName!,
         projectName,
         branch: "main",
         commitMessage,
-        commitMessages: multipleCommitMessages ? commitMessages : undefined,
+        targetCommitMessages,
         outcomes,
       });
 

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { parseCommitMessage, printComment } from "./comment";
+import { parseCommitMessages, printComment } from "./comment";
 import * as MD from "./markdown";
 import type { Outcomes } from "./outcomes";
 
@@ -355,7 +355,7 @@ describe("parseCommitMessage", () => {
     `);
 
     expect(
-      parseCommitMessage(
+      parseCommitMessages(
         MD.Dedent(`
           ${MD.Symbol.SpeechBalloon} This PR updates ${MD.CodeInline(
             "test-project",
@@ -364,6 +364,6 @@ describe("parseCommitMessage", () => {
           ${MD.CodeBlock(commitMessage)}
         `),
       ),
-    ).toBe(commitMessage);
+    ).toEqual({ commitMessage });
   });
 });
