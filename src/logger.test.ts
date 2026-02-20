@@ -7,8 +7,19 @@ import {
   vi,
   type Mock,
 } from "vitest";
-import { githubPlatform, gitlabPlatform, type Platform } from "./compat";
-import { createLogger } from "./logger";
+import { logging, type Logging } from "./compat/logging";
+import { createLogger, type LogLevel } from "./logger";
+
+vi.mock("./compat/logging", async () => {
+  const actual =
+    await vi.importActual<typeof import("./compat/logging")>(
+      "./compat/logging",
+    );
+  return {
+    ...actual,
+    logging: vi.fn(),
+  };
+});
 
 describe("logger", () => {
   let stdoutSpy: Mock;
@@ -27,7 +38,7 @@ describe("logger", () => {
     vi.restoreAllMocks();
   });
 
-  function mockPlatform(): Platform & {
+  function mockProvider(): Logging & {
     calls: { method: string; args: unknown[] }[];
   } {
     const calls: { method: string; args: unknown[] }[] = [];
@@ -46,10 +57,15 @@ describe("logger", () => {
     };
   }
 
+  function setupLogger(level: LogLevel) {
+    const provider = mockProvider();
+    vi.mocked(logging).mockReturnValue(provider);
+    return { logger: createLogger({ level }), provider };
+  }
+
   describe("log levels", () => {
     it("filters messages below configured level", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "warn" });
+      const { logger } = setupLogger("warn");
 
       logger.debug("debug message");
       logger.info("info message");
@@ -64,8 +80,7 @@ describe("logger", () => {
     });
 
     it("logs all messages at debug level", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "debug" });
+      const { logger } = setupLogger("debug");
 
       logger.debug("debug message");
       logger.info("info message");
@@ -76,8 +91,7 @@ describe("logger", () => {
     });
 
     it("logs nothing at off level", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "off" });
+      const { logger } = setupLogger("off");
 
       logger.debug("debug");
       logger.info("info");
@@ -91,8 +105,7 @@ describe("logger", () => {
 
   describe("child loggers", () => {
     it("adds context prefix to messages", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger } = setupLogger("info");
       const child = logger.child("build");
 
       child.info("starting");
@@ -103,8 +116,7 @@ describe("logger", () => {
     });
 
     it("chains context prefixes", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger } = setupLogger("info");
       const child = logger.child("build").child("typescript");
 
       child.info("compiling");
@@ -114,26 +126,24 @@ describe("logger", () => {
     });
   });
 
-  describe("platform integration", () => {
+  describe("provider integration", () => {
     it("calls emitErrorAnnotation on error", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "error" });
+      const { logger, provider } = setupLogger("error");
 
       logger.error("something failed");
 
-      expect(platform.calls).toContainEqual({
+      expect(provider.calls).toContainEqual({
         method: "emitErrorAnnotation",
         args: ["something failed"],
       });
     });
 
     it("does not call emitErrorAnnotation on warn", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "warn" });
+      const { logger, provider } = setupLogger("warn");
 
       logger.warn("something warned");
 
-      expect(platform.calls).not.toContainEqual(
+      expect(provider.calls).not.toContainEqual(
         expect.objectContaining({ method: "emitErrorAnnotation" }),
       );
     });
@@ -141,28 +151,26 @@ describe("logger", () => {
 
   describe("group/groupEnd", () => {
     it("calls startGroup and endGroup", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       logger.group("Test Group");
       logger.groupEnd();
 
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Test Group"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
     });
 
     it("handles nested groups with stack", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       logger.group("Outer");
       logger.group("Inner");
       logger.groupEnd();
       logger.groupEnd();
 
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Outer"] },
         { method: "startGroup", args: ["Inner"] },
         { method: "endGroup", args: ["group-2"] },
@@ -173,38 +181,35 @@ describe("logger", () => {
 
   describe("withGroup", () => {
     it("wraps sync function in group", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       const result = logger.withGroup("Sync Work", () => {
         return 42;
       });
 
       expect(result).toBe(42);
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Sync Work"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
     });
 
     it("wraps async function in group", async () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       const result = await logger.withGroup("Async Work", async () => {
         return "done";
       });
 
       expect(result).toBe("done");
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Async Work"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
     });
 
     it("ends group on sync error", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       expect(() =>
         logger.withGroup("Failing Work", () => {
@@ -212,15 +217,14 @@ describe("logger", () => {
         }),
       ).toThrow("oops");
 
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Failing Work"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
     });
 
     it("ends group on async error", async () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger, provider } = setupLogger("info");
 
       await expect(
         logger.withGroup("Failing Async", async () => {
@@ -228,7 +232,7 @@ describe("logger", () => {
         }),
       ).rejects.toThrow("async oops");
 
-      expect(platform.calls).toEqual([
+      expect(provider.calls).toEqual([
         { method: "startGroup", args: ["Failing Async"] },
         { method: "endGroup", args: ["group-1"] },
       ]);
@@ -237,8 +241,7 @@ describe("logger", () => {
 
   describe("fatal", () => {
     it("logs error and bug report URL", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "error" });
+      const { logger } = setupLogger("error");
 
       logger.fatal("Something broke", new Error("test error"));
 
@@ -250,13 +253,12 @@ describe("logger", () => {
       );
     });
 
-    it("calls platform error annotation", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "error" });
+    it("calls provider error annotation", () => {
+      const { logger, provider } = setupLogger("error");
 
       logger.fatal("Fatal error occurred");
 
-      expect(platform.calls).toContainEqual({
+      expect(provider.calls).toContainEqual({
         method: "emitErrorAnnotation",
         args: ["Fatal error occurred"],
       });
@@ -265,8 +267,7 @@ describe("logger", () => {
 
   describe("argument formatting", () => {
     it("formats Error objects with stack trace", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "error" });
+      const { logger } = setupLogger("error");
       const error = new Error("test error");
 
       logger.error("Failed:", error);
@@ -277,8 +278,7 @@ describe("logger", () => {
     });
 
     it("formats objects as JSON", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger } = setupLogger("info");
 
       logger.info("Data:", { foo: "bar", count: 42 });
 
@@ -288,50 +288,13 @@ describe("logger", () => {
     });
 
     it("handles null and undefined", () => {
-      const platform = mockPlatform();
-      const logger = createLogger({ platform, level: "info" });
+      const { logger } = setupLogger("info");
 
       logger.info("Values:", null, undefined);
 
       const output = stdoutSpy.mock.calls.map((c) => c[0]).join("");
       expect(output).toContain("null");
       expect(output).toContain("undefined");
-    });
-  });
-
-  describe("platform implementations", () => {
-    describe("githubPlatform", () => {
-      it("emits ::error:: annotation", () => {
-        githubPlatform.emitErrorAnnotation?.("test error");
-
-        const output = stdoutSpy.mock.calls.map((c) => c[0]).join("");
-        expect(output).toBe("::error::test error\n");
-      });
-
-      it("emits ::group:: and ::endgroup::", () => {
-        const id = githubPlatform.startGroup("Test");
-        githubPlatform.endGroup(id);
-
-        const output = stdoutSpy.mock.calls.map((c) => c[0]).join("");
-        expect(output).toContain("::group::Test\n");
-        expect(output).toContain("::endgroup::\n");
-      });
-    });
-
-    describe("gitlabPlatform", () => {
-      it("does not have emitErrorAnnotation", () => {
-        expect(gitlabPlatform.emitErrorAnnotation).toBeUndefined();
-      });
-
-      it("emits section_start and section_end", () => {
-        const id = gitlabPlatform.startGroup("Test Section");
-        gitlabPlatform.endGroup(id);
-
-        const output = stdoutSpy.mock.calls.map((c) => c[0]).join("");
-        expect(output).toMatch(/section_start:\d+:/);
-        expect(output).toContain("Test Section");
-        expect(output).toMatch(/section_end:\d+:/);
-      });
     });
   });
 });

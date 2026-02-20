@@ -1,7 +1,3 @@
-/**
- * Input handling for GitHub Actions and GitLab CI.
- */
-
 export function getInput<const T extends readonly string[]>(
   name: string,
   options: { choices: T; required: true },

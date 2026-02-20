@@ -11,27 +11,13 @@ import {
 import { logger } from "../logger";
 import { ctx } from "./context";
 import { getBooleanInput, getInput } from "./input";
-import { setOutput } from "./output";
-import {
-  detectPlatform,
-  githubPlatform,
-  gitlabPlatform,
-  type Platform,
-} from "./platform";
 import { getProvider } from "./provider";
 
 export { ctx } from "./context";
+export { getBooleanInput, getInput } from "./input";
+export { logging } from "./logging";
+export { setOutput } from "./output";
 export { getProvider } from "./provider";
-
-export {
-  detectPlatform,
-  getBooleanInput,
-  getInput,
-  githubPlatform,
-  gitlabPlatform,
-  setOutput,
-  type Platform,
-};
 
 interface Comment {
   id: string | number;
