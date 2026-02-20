@@ -1,18 +1,12 @@
-import {
-  ctx,
-  getBooleanInput,
-  getGitHostToken,
-  getInput,
-  setOutput,
-} from "./compat";
-import { logger } from "./logger";
 import * as fs from "node:fs";
 import { commentThrottler, printComment, retrieveComment } from "./comment";
 import { makeCommitMessageConventional } from "./commitMessage";
+import { api, ctx, getBooleanInput, getInput, setOutput } from "./compat";
 import { isConfigChanged, readConfig, saveConfig } from "./config";
-import { shouldFailRun, FailRunOn } from "./outcomes";
-import { runBuilds } from "./runBuilds";
+import { logger } from "./logger";
+import { FailRunOn, shouldFailRun } from "./outcomes";
 import type { RunResult } from "./runBuilds";
+import { runBuilds } from "./runBuilds";
 import { wrapAction } from "./wrapAction";
 
 const main = wrapAction("merge", async (stainless) => {
@@ -29,7 +23,6 @@ const main = wrapAction("merge", async (stainless) => {
   let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
     required: false,
   });
-  const gitHostToken = getGitHostToken();
   const baseSha = getInput("base_sha", { required: true });
   const baseRef = getInput("base_ref", { required: true });
   const defaultBranch = getInput("default_branch", { required: true });
@@ -53,6 +46,10 @@ const main = wrapAction("merge", async (stainless) => {
     throw new Error(
       "This action requires an organization name to make a comment.",
     );
+  }
+
+  if (makeComment && api({ optional: true }) === null) {
+    throw new Error("This action requires an API token to make a comment.");
   }
 
   // If we came from the checkout-pr-ref action, we might need to save the
@@ -103,8 +100,8 @@ const main = wrapAction("merge", async (stainless) => {
   // Per-SDK commit messages (only used when multiple_commit_messages is enabled)
   const commitMessages: Record<string, string> = {};
 
-  if (makeComment && gitHostToken && prNumber) {
-    const comment = await retrieveComment({ token: gitHostToken, prNumber });
+  if (makeComment && prNumber) {
+    const comment = await retrieveComment();
 
     // Load existing commit message(s) from comment
     if (multipleCommitMessages && comment.commitMessages) {
@@ -134,7 +131,7 @@ const main = wrapAction("merge", async (stainless) => {
   });
 
   let latestRun: RunResult | null = null;
-  const upsert = prNumber ? commentThrottler(gitHostToken!, prNumber) : null;
+  const upsert = prNumber ? commentThrottler() : null;
 
   while (true) {
     const run = await generator.next();

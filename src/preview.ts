@@ -10,13 +10,7 @@ import {
   generateAICommitMessage,
   makeCommitMessageConventional,
 } from "./commitMessage";
-import {
-  ctx,
-  getBooleanInput,
-  getGitHostToken,
-  getInput,
-  setOutput,
-} from "./compat";
+import { api, ctx, getBooleanInput, getInput, setOutput } from "./compat";
 import type { Config } from "./config";
 import {
   getMergeBase,
@@ -46,7 +40,6 @@ const main = wrapAction("preview", async (stainless) => {
   let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
     required: false,
   });
-  const gitHostToken = getGitHostToken();
   const baseSha = getInput("base_sha", { required: true });
   const baseRef = getInput("base_ref", { required: true });
   const baseBranch = getInput("base_branch", { required: true });
@@ -58,6 +51,10 @@ const main = wrapAction("preview", async (stainless) => {
 
   if (!prNumber) {
     throw new Error("This action must be run from a pull request.");
+  }
+
+  if (makeComment && api({ optional: true }) === null) {
+    throw new Error("This action requires an API token to make a comment.");
   }
 
   // Tracks which languages have had commit messages generated this run
@@ -131,9 +128,7 @@ const main = wrapAction("preview", async (stainless) => {
 
       await upsertComment({
         body: commentBody,
-        token: gitHostToken!,
         skipCreate: true,
-        prNumber,
       });
 
       logger.groupEnd();
@@ -161,7 +156,7 @@ const main = wrapAction("preview", async (stainless) => {
   let shouldGenerateAiCommitMessages = false;
 
   if (makeComment) {
-    const comment = await retrieveComment({ token: gitHostToken!, prNumber });
+    const comment = await retrieveComment();
 
     // For now, let's set this true only if this is our first-ever run (so there wouldn't be a pre-existing comment).
     // In the future, we'll want to trigger this for *every* run until a user has manually edited the comment.
@@ -206,7 +201,7 @@ const main = wrapAction("preview", async (stainless) => {
   });
 
   let latestRun: RunResult | null = null;
-  const upsert = commentThrottler(gitHostToken!, prNumber);
+  const upsert = commentThrottler();
 
   while (true) {
     const run = await generator.next();
@@ -219,10 +214,7 @@ const main = wrapAction("preview", async (stainless) => {
       const { outcomes, baseOutcomes } = latestRun;
 
       // In case the comment was updated between polls:
-      const comment = await retrieveComment({
-        token: gitHostToken!,
-        prNumber,
-      });
+      const comment = await retrieveComment();
 
       // Update commit message from comment
       if (comment.commitMessage) {

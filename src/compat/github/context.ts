@@ -1,11 +1,18 @@
 import * as fs from "node:fs";
 import type { BaseContext } from "../context";
+import { logger } from "../../logger";
 
 export type GitHubContext = BaseContext & {
   provider: "github";
 };
 
+let cachedContext: GitHubContext | undefined;
+
 export function getGitHubContext(): GitHubContext {
+  if (cachedContext) {
+    return cachedContext;
+  }
+
   const [owner, repo] = process.env.GITHUB_REPOSITORY?.split("/") ?? [];
   const runID = process.env.GITHUB_RUN_ID;
 
@@ -38,7 +45,7 @@ export function getGitHubContext(): GitHubContext {
     throw new Error(`Failed to parse GitHub event: ${e}`);
   }
 
-  return {
+  cachedContext = {
     provider: "github",
     host,
     owner,
@@ -47,4 +54,7 @@ export function getGitHubContext(): GitHubContext {
     names: { ci: "GitHub Actions", pr: "PR" },
     prNumber,
   };
+
+  logger.debug("GitHub context", cachedContext);
+  return cachedContext;
 }

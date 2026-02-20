@@ -41,21 +41,13 @@ export type BaseContext = {
 
 export type Context = GitHubContext | GitLabContext;
 
-let cachedContext: Context | undefined;
-
 export function ctx(): Context {
-  if (cachedContext) {
-    return cachedContext;
-  }
   switch (getProvider()) {
     case "github": {
-      cachedContext = getGitHubContext();
-      break;
+      return getGitHubContext();
     }
     case "gitlab": {
-      cachedContext = getGitLabContext();
-      break;
+      return getGitLabContext();
     }
   }
-  return cachedContext;
 }

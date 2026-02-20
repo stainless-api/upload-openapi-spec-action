@@ -1,4 +1,4 @@
-import { createVCSClient, ctx } from "./compat";
+import { api, ctx } from "./compat";
 import { logger } from "./logger";
 import * as MD from "./markdown";
 import type { DiagnosticLevel, Outcomes } from "./outcomes";
@@ -586,15 +586,8 @@ export function parseCommitMessages(
   return commitMessages;
 }
 
-export async function retrieveComment({
-  token,
-  prNumber,
-}: {
-  token: string;
-  prNumber: number;
-}) {
-  const client = createVCSClient(token, prNumber);
-  const comments = await client.listComments();
+export async function retrieveComment() {
+  const comments = await api().listComments();
 
   const existingComment =
     comments.find((comment) => comment.body?.includes(COMMENT_TITLE)) ?? null;
@@ -608,20 +601,14 @@ export async function retrieveComment({
 
 export async function upsertComment({
   body,
-  token,
-  prNumber,
   skipCreate = false,
 }: {
   body: string;
-  token: string;
-  prNumber: number;
   skipCreate?: boolean;
 }) {
-  const client = createVCSClient(token, prNumber);
+  logger.debug(`Upserting comment on ${ctx().names.pr} #${ctx().prNumber}`);
 
-  logger.debug(`Upserting comment on ${ctx().names.pr} #${prNumber}`);
-
-  const comments = await client.listComments();
+  const comments = await api().listComments();
 
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find((comment) =>
@@ -630,10 +617,10 @@ export async function upsertComment({
 
   if (existingComment) {
     logger.debug("Updating existing comment:", existingComment.id);
-    await client.updateComment(existingComment.id, body);
+    await api().updateComment(existingComment.id, body);
   } else if (!skipCreate) {
     logger.debug("Creating new comment");
-    await client.createComment(body);
+    await api().createComment(body);
   }
 }
 
@@ -645,7 +632,7 @@ function areCommentsEqual(a: string, b: string) {
   );
 }
 
-export function commentThrottler(token: string, prNumber: number) {
+export function commentThrottler() {
   let lastComment: string | null = null;
   let lastCommentTime: Date | null = null;
 
@@ -658,7 +645,7 @@ export function commentThrottler(token: string, prNumber: number) {
         Date.now() - lastCommentTime.getTime() > 10 * 1000) ||
       Date.now() - lastCommentTime.getTime() > 30 * 1000
     ) {
-      await upsertComment({ body, token, prNumber });
+      await upsertComment({ body });
       lastComment = body;
       lastCommentTime = new Date();
     }
