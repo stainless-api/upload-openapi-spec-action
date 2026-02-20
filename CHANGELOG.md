@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.12.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.6...v1.12.0) (2026-02-20)
+
+
+### Features
+
+* refactor outcome logic ([#189](https://github.com/stainless-api/upload-openapi-spec-action/issues/189)) ([cec1106](https://github.com/stainless-api/upload-openapi-spec-action/commit/cec11060b292826e929d94a08379ffbb86317299))
+
+
+### Bug Fixes
+
+* allow multi-line conventional commits ([#177](https://github.com/stainless-api/upload-openapi-spec-action/issues/177)) ([0079085](https://github.com/stainless-api/upload-openapi-spec-action/commit/0079085539102bb10b95abbdd3652b72ccb4a83d))
+* fix display for pending results ([#179](https://github.com/stainless-api/upload-openapi-spec-action/issues/179)) ([89af7c3](https://github.com/stainless-api/upload-openapi-spec-action/commit/89af7c3871f904027141077b9e3afb88f60bb5e4))
+
 ## [1.11.6](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.5...v1.11.6) (2026-02-03)
 
 
