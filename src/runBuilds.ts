@@ -28,7 +28,7 @@ export async function* runBuilds({
   baseConfigContent,
   guessConfig = false,
   commitMessage,
-  commitMessages,
+  targetCommitMessages,
   allowEmpty = true,
 }: {
   stainless: Stainless;
@@ -43,7 +43,7 @@ export async function* runBuilds({
   baseConfigContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
-  commitMessages?: Record<string, string>;
+  targetCommitMessages?: Record<string, string>;
   allowEmpty?: boolean;
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasContent || configContent)) {
@@ -80,7 +80,7 @@ export async function* runBuilds({
             },
         branch,
         commit_message: commitMessage,
-        target_commit_messages: commitMessages,
+        target_commit_messages: targetCommitMessages,
         allow_empty: allowEmpty,
       },
       {
