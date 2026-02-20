@@ -2,4 +2,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-npm run lint
+
+echo "==> Running tsc"
+./node_modules/.bin/tsc
+
+echo "==> Running prettier --check"
+./node_modules/.bin/prettier --check src 'examples/*.yml' '**/action.yml'
+
+echo "==> Running eslint"
+./node_modules/.bin/eslint src
