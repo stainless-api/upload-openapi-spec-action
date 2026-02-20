@@ -2,4 +2,31 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-npm run build
+
+echo "==> Building dist/build.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/build.ts --outdir=dist
+
+echo "==> Building dist/checkoutPRRef.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/checkoutPRRef.ts --outdir=dist
+
+echo "==> Building dist/index.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/index.ts --outdir=dist
+
+echo "==> Building dist/merge.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/merge.ts --outdir=dist
+
+echo "==> Building dist/preview.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/preview.ts --outdir=dist
+
+echo "==> Building dist/prepareCombine.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/combine/index.ts --outfile=dist/prepareCombine.js --external:@redocly/cli
+
+echo "==> Building dist/prepareSwagger.js"
+./node_modules/.bin/esbuild --bundle --platform=node --target=node20 \
+  src/prepareSwagger.ts --outdir=dist
