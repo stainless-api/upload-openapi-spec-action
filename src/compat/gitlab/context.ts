@@ -1,3 +1,4 @@
+import { logger } from "../../logger";
 import type { BaseContext } from "../context";
 
 export type GitLabContext = BaseContext & {
@@ -5,7 +6,13 @@ export type GitLabContext = BaseContext & {
   projectID: string;
 };
 
+let cachedContext: GitLabContext | undefined;
+
 export function getGitLabContext(): GitLabContext {
+  if (cachedContext) {
+    return cachedContext;
+  }
+
   const owner = process.env.CI_PROJECT_NAMESPACE;
   const repo = process.env.CI_PROJECT_NAME;
   const runURL = process.env.CI_JOB_URL;
@@ -26,7 +33,7 @@ export function getGitLabContext(): GitLabContext {
   );
   const prNumber = Number.isInteger(maybePRNumber) ? maybePRNumber : null;
 
-  return {
+  cachedContext = {
     provider: "gitlab",
     host,
     owner,
@@ -36,4 +43,7 @@ export function getGitLabContext(): GitLabContext {
     prNumber,
     projectID,
   };
+
+  logger.debug("GitLab context", cachedContext);
+  return cachedContext;
 }
