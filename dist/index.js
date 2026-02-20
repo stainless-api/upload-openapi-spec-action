@@ -18252,7 +18252,7 @@ Stainless.User = User;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.11.6",
+  version: "1.12.0",
   main: "dist/index.js",
   scripts: {
     build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
