@@ -315,11 +315,15 @@ function getChecks(
   const results = {} as Record<CheckType, Outcomes[string][CheckType] | null>;
 
   const commitCompletedMoreThanXSecsAgo = outcome.commit
-    ? new Date().getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1000
+    ? new Date().getTime() - new Date(outcome.commit.completed_at).getTime() >
+      ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1000
     : false;
 
   for (const checkType of CheckType) {
-    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
+    if (
+      outcome[checkType]?.status === "not_started" &&
+      commitCompletedMoreThanXSecsAgo
+    ) {
       outcome[checkType] = {
         status: "completed",
         conclusion: "skipped",
@@ -328,7 +332,7 @@ function getChecks(
           url: null,
         },
         url: null,
-      }
+      };
     }
 
     results[checkType] = outcome[checkType] || null;
