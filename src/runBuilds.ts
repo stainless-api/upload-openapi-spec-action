@@ -415,6 +415,7 @@ async function* pollBuild({
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
+    const now = new Date().toISOString();
     outcomes[language] = {
       object: "build_target",
       status: "completed",
@@ -429,10 +430,12 @@ async function* pollBuild({
         conclusion: "timed_out",
         commit: null,
         merge_conflict_pr: null,
+        completed_at: now,
         completed: {
           conclusion: "timed_out",
           commit: null,
           merge_conflict_pr: null,
+          completed_at: now,
         },
       },
       install_url: null,
