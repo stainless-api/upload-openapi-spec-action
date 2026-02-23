@@ -378,7 +378,9 @@ function StatusSymbol(
   if (stepData.status === "completed") {
     return stepData.completed.conclusion === "success"
       ? MD.Symbol.WhiteCheckMark
-      : MD.Symbol.Exclamation;
+      : stepData.completed.conclusion === "skipped"
+        ? MD.Symbol.Skipped
+        : MD.Symbol.Exclamation;
   }
 
   return MD.Symbol.HourglassFlowingSand;

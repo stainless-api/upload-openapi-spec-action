@@ -45,8 +45,11 @@ describe("printComment", () => {
               name: "test-sdk",
               branch: "base-branch",
             },
+            stats: null,
+            tree_oid: null,
           },
           merge_conflict_pr: null,
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "success",
             commit: {
@@ -56,8 +59,11 @@ describe("printComment", () => {
                 name: "test-sdk",
                 branch: "base-branch",
               },
+              stats: null,
+              tree_oid: null,
             },
             merge_conflict_pr: null,
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         build: {
@@ -109,10 +115,12 @@ describe("printComment", () => {
           conclusion: "fatal",
           commit: null,
           merge_conflict_pr: null,
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "fatal",
             commit: null,
             merge_conflict_pr: null,
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         lint: {
@@ -138,6 +146,7 @@ describe("printComment", () => {
               name: "test-sdk",
             },
           },
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "merge_conflict",
             commit: null,
@@ -148,6 +157,7 @@ describe("printComment", () => {
                 name: "test-sdk",
               },
             },
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         lint: {
@@ -172,8 +182,11 @@ describe("printComment", () => {
               name: "test-sdk",
               branch: "feature-branch",
             },
+            stats: null,
+            tree_oid: null,
           },
           merge_conflict_pr: null,
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "success",
             commit: {
@@ -183,8 +196,11 @@ describe("printComment", () => {
                 name: "test-sdk",
                 branch: "feature-branch",
               },
+              stats: null,
+              tree_oid: null,
             },
             merge_conflict_pr: null,
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         build: {
@@ -252,8 +268,11 @@ describe("printComment", () => {
               name: "test-sdk",
               branch: "feature-branch",
             },
+            stats: null,
+            tree_oid: null,
           },
           merge_conflict_pr: null,
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "success",
             commit: {
@@ -263,8 +282,11 @@ describe("printComment", () => {
                 name: "test-sdk",
                 branch: "feature-branch",
               },
+              stats: null,
+              tree_oid: null,
             },
             merge_conflict_pr: null,
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         lint: {
@@ -295,8 +317,11 @@ describe("printComment", () => {
               name: "test-sdk",
               branch: "feature-branch",
             },
+            stats: null,
+            tree_oid: null,
           },
           merge_conflict_pr: null,
+          completed_at: "2000-01-01T00:00:00Z",
           completed: {
             conclusion: "success",
             commit: {
@@ -306,8 +331,11 @@ describe("printComment", () => {
                 name: "test-sdk",
                 branch: "feature-branch",
               },
+              stats: null,
+              tree_oid: null,
             },
             merge_conflict_pr: null,
+            completed_at: "2000-01-01T00:00:00Z",
           },
         },
         lint: {

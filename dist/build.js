@@ -16388,7 +16388,7 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -16406,7 +16406,7 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid4 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -16418,7 +16418,7 @@ var uuid4 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -16449,7 +16449,7 @@ var castToError = (err) => {
   return new Error(err);
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/error.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/error.mjs
 var StainlessError = class extends Error {
 };
 var APIError = class _APIError extends StainlessError {
@@ -16538,7 +16538,7 @@ var RateLimitError = class extends APIError {
 var InternalServerError = class extends APIError {
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL = (url) => {
   return startsWithSchemeRegexp.test(url);
@@ -16578,13 +16578,13 @@ var safeJSON = (text) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/version.mjs
-var VERSION = "0.1.0-alpha.27";
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/version.mjs
+var VERSION = "0.3.0";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -16710,7 +16710,7 @@ var getPlatformHeaders = () => {
   return _platformHeaders ?? (_platformHeaders = getPlatformProperties());
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -16755,7 +16755,7 @@ async function CancelReadableStream(stream) {
   await cancelPromise;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -16765,7 +16765,7 @@ var FallbackEncoder = ({ headers, body }) => {
   };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format = "RFC3986";
 var default_formatter = (v) => String(v);
 var formatters = {
@@ -16774,7 +16774,7 @@ var formatters = {
 };
 var RFC1738 = "RFC1738";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has = (obj, key) => (has = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has(obj, key));
 var hex_table = /* @__PURE__ */ (() => {
   const array = [];
@@ -16853,7 +16853,7 @@ function maybe_map(val, fn) {
   return fn(val);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -17131,7 +17131,7 @@ function stringify(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/log.mjs
 var levelNumbers = {
   off: 0,
   error: 200,
@@ -17204,7 +17204,7 @@ var formatRequestDetails = (details) => {
   return details;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/parse.mjs
 async function defaultParseResponse(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -17238,7 +17238,7 @@ async function defaultParseResponse(client, props) {
   return body;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/api-promise.mjs
 var _APIPromise_client;
 var APIPromise = class _APIPromise extends Promise {
   constructor(client, responsePromise, parseResponse = defaultParseResponse) {
@@ -17299,7 +17299,7 @@ var APIPromise = class _APIPromise extends Promise {
 };
 _APIPromise_client = /* @__PURE__ */ new WeakMap();
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/pagination.mjs
 var _AbstractPage_client;
 var AbstractPage = class {
   constructor(client, response, body, options) {
@@ -17380,7 +17380,7 @@ var Page = class extends AbstractPage {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -17397,7 +17397,7 @@ function getName(value) {
 }
 var isAsyncIterable = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -17449,14 +17449,14 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/resource.mjs
 var APIResource = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/path.mjs
 function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -17511,7 +17511,7 @@ ${underline}`);
 };
 var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource {
   /**
    * Get the list of diagnostics for a given build.
@@ -17527,7 +17527,7 @@ var Diagnostics = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource {
   /**
    * Retrieve a method to download an output for a given build target.
@@ -17546,7 +17546,7 @@ var TargetOutputs = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
 var Builds = class extends APIResource {
   constructor() {
     super(...arguments);
@@ -17598,7 +17598,7 @@ var Builds = class extends APIResource {
 Builds.Diagnostics = Diagnostics;
 Builds.TargetOutputs = TargetOutputs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/orgs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs = class extends APIResource {
   /**
    * Retrieve an organization by name.
@@ -17614,7 +17614,7 @@ var Orgs = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches = class extends APIResource {
   /**
    * Create a new branch for a project.
@@ -17679,7 +17679,7 @@ var Branches = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource {
   /**
    * Retrieve the configuration files for a given project.
@@ -17697,7 +17697,7 @@ var Configs = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
 var Projects = class extends APIResource {
   constructor() {
     super(...arguments);
@@ -17745,7 +17745,7 @@ var Projects = class extends APIResource {
 Projects.Branches = Branches;
 Projects.Configs = Configs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/user.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/user.mjs
 var User = class extends APIResource {
   /**
    * Retrieve the currently authenticated user's information.
@@ -17755,7 +17755,7 @@ var User = class extends APIResource {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/headers.mjs
 var brand_privateNullableHeaders = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders(headers) {
   if (!headers)
@@ -17818,7 +17818,7 @@ var buildHeaders = (newHeaders) => {
   return { [brand_privateNullableHeaders]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -17829,7 +17829,7 @@ var readEnv = (env) => {
   return void 0;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/lib/unwrap.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/lib/unwrap.mjs
 async function unwrapFile(value) {
   if (value === null) {
     return null;
@@ -17841,7 +17841,7 @@ async function unwrapFile(value) {
   return response.text();
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/client.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/client.mjs
 var _Stainless_instances;
 var _a;
 var _Stainless_encoder;
@@ -19809,7 +19809,7 @@ var package_default = {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
     "@stainless-api/gitlab-internal": "^0.2.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.24",
+    "@stainless-api/sdk": "^0.3.0",
     diff: "^8.0.3",
     glob: "^11.0.0",
     "nano-spawn": "^1.0.3",
@@ -20231,6 +20231,7 @@ async function* pollBuild({
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
+    const now = (/* @__PURE__ */ new Date()).toISOString();
     outcomes[language] = {
       object: "build_target",
       status: "completed",
@@ -20245,10 +20246,12 @@ async function* pollBuild({
         conclusion: "timed_out",
         commit: null,
         merge_conflict_pr: null,
+        completed_at: now,
         completed: {
           conclusion: "timed_out",
           commit: null,
-          merge_conflict_pr: null
+          merge_conflict_pr: null,
+          completed_at: now
         }
       },
       install_url: null,
