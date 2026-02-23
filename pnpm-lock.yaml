@@ -18,8 +18,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       '@stainless-api/sdk':
-        specifier: ^0.1.0-alpha.24
-        version: 0.1.0-alpha.27
+        specifier: ^0.3.0
+        version: 0.3.0
       diff:
         specifier: ^8.0.3
         version: 8.0.3
@@ -753,8 +753,8 @@ packages:
   '@stainless-api/gitlab-internal@0.2.0':
     resolution: {integrity: sha512-9czeLHTnCr693mV2smuEMziSHOP1U67qqJqSH3F0iNSGXFZumqcE5R5jO4iID/AA9SQqQiVscFNnVN8MOBPjhg==}
 
-  '@stainless-api/sdk@0.1.0-alpha.27':
-    resolution: {integrity: sha512-7nbbO/Q/W+bJKVgi9Kfi3Gy5hGQVmGMMeMMQHF30dagWwvvQVCHUV6TvK72k1L98KE78cjCYGPaPOowGx4cbzg==}
+  '@stainless-api/sdk@0.3.0':
+    resolution: {integrity: sha512-0woIYbpWauIuDOZW0CkClubAaI97LknXOf2bum8GT0UDScMpbTtwCjvpD9e1Lbb1rRBkpFebVPZ2gZoIi0WHDQ==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -2774,7 +2774,7 @@ snapshots:
 
   '@stainless-api/gitlab-internal@0.2.0': {}
 
-  '@stainless-api/sdk@0.1.0-alpha.27': {}
+  '@stainless-api/sdk@0.3.0': {}
 
   '@types/chai@5.2.3':
     dependencies:

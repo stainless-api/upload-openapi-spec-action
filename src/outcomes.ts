@@ -1,6 +1,10 @@
 import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
 
+// if a check has not started after this many seconds since the commit completed, assume it
+// was skipped and mark it as such to avoid blocking the outcome indefinitely`
+const ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
+
 export type Outcomes = Record<
   string,
   Omit<Stainless.Builds.BuildTarget, "commit"> & {
@@ -136,7 +140,7 @@ export function categorizeOutcome({
     (checkType) =>
       checks[checkType] &&
       checks[checkType].status === "completed" &&
-      checks[checkType].completed.conclusion !== "success",
+      ["failure", "timed_out"].includes(checks[checkType].completed.conclusion),
   );
 
   if (conclusions.fatal.includes(headConclusion)) {
@@ -310,7 +314,23 @@ function getChecks(
 ): Record<CheckType, Outcomes[string][CheckType] | null> {
   const results = {} as Record<CheckType, Outcomes[string][CheckType] | null>;
 
+  const commitCompletedMoreThanXSecsAgo = outcome.commit
+    ? new Date().getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1000
+    : false;
+
   for (const checkType of CheckType) {
+    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
+      outcome[checkType] = {
+        status: "completed",
+        conclusion: "skipped",
+        completed: {
+          conclusion: "skipped",
+          url: null,
+        },
+        url: null,
+      }
+    }
+
     results[checkType] = outcome[checkType] || null;
   }
 

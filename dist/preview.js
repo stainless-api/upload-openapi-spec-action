@@ -15667,12 +15667,14 @@ var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
   Bulb: "\u{1F4A1}",
   Exclamation: "\u2757",
+  Eyes: "\u{1F440}",
   GreenSquare: "\u{1F7E9}",
   HeavyAsterisk: "\u2731",
   HourglassFlowingSand: "\u23F3",
   MiddleDot: "\xB7",
   RedSquare: "\u{1F7E5}",
   RightwardsArrow: "\u2192",
+  Skipped: "\u23ED\uFE0F",
   SpeechBalloon: "\u{1F4AC}",
   Warning: "\u26A0\uFE0F",
   WhiteCheckMark: "\u2705",
@@ -15723,6 +15725,7 @@ var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
 var Rule = () => `<hr />`;
 
 // src/outcomes.ts
+var ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
 var FailRunOn = [
   "never",
   "fatal",
@@ -15798,7 +15801,7 @@ function categorizeOutcome({
   };
   const checks = getNewChecks(headChecks, baseChecks);
   const checkFailures = CheckType.filter(
-    (checkType) => checks[checkType] && checks[checkType].status === "completed" && checks[checkType].completed.conclusion !== "success"
+    (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
   );
   if (conclusions.fatal.includes(headConclusion)) {
     return {
@@ -15910,7 +15913,19 @@ function sortDiagnostics(diagnostics) {
 var CheckType = ["build", "lint", "test"];
 function getChecks(outcome) {
   const results = {};
+  const commitCompletedMoreThanXSecsAgo = outcome.commit ? (/* @__PURE__ */ new Date()).getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1e3 : false;
   for (const checkType of CheckType) {
+    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
+      outcome[checkType] = {
+        status: "completed",
+        conclusion: "skipped",
+        completed: {
+          conclusion: "skipped",
+          url: null
+        },
+        url: null
+      };
+    }
     results[checkType] = outcome[checkType] || null;
   }
   return results;
@@ -16177,7 +16192,7 @@ function StatusSymbol(outcome, step) {
     return null;
   }
   if (stepData.status === "completed") {
-    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : Symbol2.Exclamation;
+    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : stepData.completed.conclusion === "skipped" ? Symbol2.Skipped : Symbol2.Exclamation;
   }
   return Symbol2.HourglassFlowingSand;
 }
@@ -17575,7 +17590,7 @@ function splitLines(text) {
   return result;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet3(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -17593,7 +17608,7 @@ function __classPrivateFieldGet3(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid43 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -17605,7 +17620,7 @@ var uuid43 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError3(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -17636,7 +17651,7 @@ var castToError3 = (err) => {
   return new Error(err);
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/error.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/error.mjs
 var StainlessError = class extends Error {
 };
 var APIError3 = class _APIError extends StainlessError {
@@ -17725,7 +17740,7 @@ var RateLimitError3 = class extends APIError3 {
 var InternalServerError3 = class extends APIError3 {
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp3 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL3 = (url) => {
   return startsWithSchemeRegexp3.test(url);
@@ -17765,13 +17780,13 @@ var safeJSON3 = (text) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/version.mjs
-var VERSION3 = "0.1.0-alpha.27";
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/version.mjs
+var VERSION3 = "0.3.0";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform3() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -17897,7 +17912,7 @@ var getPlatformHeaders3 = () => {
   return _platformHeaders3 ?? (_platformHeaders3 = getPlatformProperties3());
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch3() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -17942,7 +17957,7 @@ async function CancelReadableStream3(stream) {
   await cancelPromise;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder3 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -17952,7 +17967,7 @@ var FallbackEncoder3 = ({ headers, body }) => {
   };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format3 = "RFC3986";
 var default_formatter3 = (v) => String(v);
 var formatters3 = {
@@ -17961,7 +17976,7 @@ var formatters3 = {
 };
 var RFC17383 = "RFC1738";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has3 = (obj, key) => (has3 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has3(obj, key));
 var hex_table3 = /* @__PURE__ */ (() => {
   const array = [];
@@ -18040,7 +18055,7 @@ function maybe_map3(val, fn) {
   return fn(val);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators3 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -18318,7 +18333,7 @@ function stringify3(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/log.mjs
 var levelNumbers3 = {
   off: 0,
   error: 200,
@@ -18391,7 +18406,7 @@ var formatRequestDetails3 = (details) => {
   return details;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/parse.mjs
 async function defaultParseResponse3(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -18425,7 +18440,7 @@ async function defaultParseResponse3(client, props) {
   return body;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/api-promise.mjs
 var _APIPromise_client3;
 var APIPromise3 = class _APIPromise extends Promise {
   constructor(client, responsePromise, parseResponse = defaultParseResponse3) {
@@ -18486,7 +18501,7 @@ var APIPromise3 = class _APIPromise extends Promise {
 };
 _APIPromise_client3 = /* @__PURE__ */ new WeakMap();
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/pagination.mjs
 var _AbstractPage_client2;
 var AbstractPage2 = class {
   constructor(client, response, body, options) {
@@ -18567,7 +18582,7 @@ var Page = class extends AbstractPage2 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport3 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -18584,7 +18599,7 @@ function getName3(value) {
 }
 var isAsyncIterable3 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -18636,14 +18651,14 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/resource.mjs
 var APIResource3 = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/path.mjs
 function encodeURIPath3(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -18698,7 +18713,7 @@ ${underline}`);
 };
 var path6 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource3 {
   /**
    * Get the list of diagnostics for a given build.
@@ -18714,7 +18729,7 @@ var Diagnostics = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource3 {
   /**
    * Retrieve a method to download an output for a given build target.
@@ -18733,7 +18748,7 @@ var TargetOutputs = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
 var Builds2 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -18785,7 +18800,7 @@ var Builds2 = class extends APIResource3 {
 Builds2.Diagnostics = Diagnostics;
 Builds2.TargetOutputs = TargetOutputs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/orgs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs3 = class extends APIResource3 {
   /**
    * Retrieve an organization by name.
@@ -18801,7 +18816,7 @@ var Orgs3 = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches3 = class extends APIResource3 {
   /**
    * Create a new branch for a project.
@@ -18866,7 +18881,7 @@ var Branches3 = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource3 {
   /**
    * Retrieve the configuration files for a given project.
@@ -18884,7 +18899,7 @@ var Configs = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
 var Projects5 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -18932,7 +18947,7 @@ var Projects5 = class extends APIResource3 {
 Projects5.Branches = Branches3;
 Projects5.Configs = Configs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/resources/user.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/user.mjs
 var User = class extends APIResource3 {
   /**
    * Retrieve the currently authenticated user's information.
@@ -18942,7 +18957,7 @@ var User = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/headers.mjs
 var brand_privateNullableHeaders3 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders3(headers) {
   if (!headers)
@@ -19005,7 +19020,7 @@ var buildHeaders3 = (newHeaders) => {
   return { [brand_privateNullableHeaders3]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv3 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -19016,7 +19031,7 @@ var readEnv3 = (env) => {
   return void 0;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/lib/unwrap.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/lib/unwrap.mjs
 async function unwrapFile(value) {
   if (value === null) {
     return null;
@@ -19028,7 +19043,7 @@ async function unwrapFile(value) {
   return response.text();
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.1.0-alpha.27/node_modules/@stainless-api/sdk/client.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/client.mjs
 var _Stainless_instances;
 var _a;
 var _Stainless_encoder;
@@ -19484,7 +19499,7 @@ var package_default = {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
     "@stainless-api/gitlab-internal": "^0.2.0",
-    "@stainless-api/sdk": "^0.1.0-alpha.24",
+    "@stainless-api/sdk": "^0.3.0",
     diff: "^8.0.3",
     glob: "^11.0.0",
     "nano-spawn": "^1.0.3",
