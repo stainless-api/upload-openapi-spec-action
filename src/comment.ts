@@ -563,8 +563,8 @@ export function parseCommitMessages(body?: string | null): {
     : {};
 }
 
-export async function retrieveComment() {
-  const comments = await api().listComments();
+export async function retrieveComment(prNumber: number) {
+  const comments = await api().listComments(prNumber);
 
   const existingComment = comments.find((comment) =>
     comment.body?.includes(COMMENT_TITLE),
@@ -580,16 +580,19 @@ export async function retrieveComment() {
   };
 }
 
-export async function upsertComment({
-  body,
-  skipCreate = false,
-}: {
-  body: string;
-  skipCreate?: boolean;
-}) {
-  logger.debug(`Upserting comment on ${ctx().names.pr} #${ctx().prNumber}`);
+export async function upsertComment(
+  prNumber: number,
+  {
+    body,
+    skipCreate = false,
+  }: {
+    body: string;
+    skipCreate?: boolean;
+  },
+) {
+  logger.debug(`Upserting comment on ${ctx().names.pr} #${prNumber}`);
 
-  const comments = await api().listComments();
+  const comments = await api().listComments(prNumber);
 
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find((comment) =>
@@ -598,10 +601,10 @@ export async function upsertComment({
 
   if (existingComment) {
     logger.debug("Updating existing comment:", existingComment.id);
-    await api().updateComment(existingComment.id, body);
+    await api().updateComment(prNumber, { ...existingComment, body });
   } else if (!skipCreate) {
     logger.debug("Creating new comment");
-    await api().createComment(body);
+    await api().createComment(prNumber, { body });
   }
 }
 
@@ -613,7 +616,7 @@ function areCommentsEqual(a: string, b: string) {
   );
 }
 
-export function commentThrottler() {
+export function commentThrottler(prNumber: number) {
   let lastComment: string | null = null;
   let lastCommentTime: Date | null = null;
 
@@ -626,7 +629,7 @@ export function commentThrottler() {
         Date.now() - lastCommentTime.getTime() > 10 * 1000) ||
       Date.now() - lastCommentTime.getTime() > 30 * 1000
     ) {
-      await upsertComment({ body });
+      await upsertComment(prNumber, { body });
       lastComment = body;
       lastCommentTime = new Date();
     }

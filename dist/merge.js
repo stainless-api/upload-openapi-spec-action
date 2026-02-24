@@ -12853,17 +12853,22 @@ var GitHubClient = class {
       resources: [BaseComments2, BaseCommits]
     });
   }
-  async listComments() {
-    const { data } = await this.client.repos.issues.comments.list(
-      getGitHubContext().prNumber
-    );
+  async listComments(prNumber) {
+    const { data } = await this.client.repos.issues.comments.list(prNumber);
     return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
-  async createComment(body) {
-    await this.client.repos.issues.comments.create(getGitHubContext().prNumber, { body });
+  async createComment(prNumber, props) {
+    const data = await this.client.repos.issues.comments.create(
+      prNumber,
+      props
+    );
+    return { id: data.id, body: data.body };
   }
-  async updateComment(id, body) {
-    await this.client.repos.issues.comments.update(id, { body });
+  async updateComment(_prNumber, { id, body }) {
+    const data = await this.client.repos.issues.comments.update(id, {
+      body
+    });
+    return { id: data.id, body: data.body };
   }
   async getPullRequestForCommit(sha) {
     const { data } = await this.client.repos.commits.listPullRequests(sha);
@@ -15449,10 +15454,8 @@ var GitLabClient = class {
       resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
     });
   }
-  async listComments() {
-    const comments = await this.client.projects.mergeRequests.notes.list(getGitLabContext().prNumber, {
-      id: getGitLabContext().projectID
-    }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
+  async listComments(prNumber) {
+    const comments = await this.client.projects.mergeRequests.notes.list(prNumber, { id: getGitLabContext().projectID }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
       if (err instanceof APIError2 && err.status === 404) {
         return [];
       }
@@ -15460,18 +15463,19 @@ var GitLabClient = class {
     });
     return comments.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
-  async createComment(body) {
-    await this.client.projects.mergeRequests.notes.create(getGitLabContext().prNumber, {
-      id: getGitLabContext().projectID,
-      body
-    });
+  async createComment(prNumber, props) {
+    const data = await this.client.projects.mergeRequests.notes.create(
+      prNumber,
+      { ...props, id: getGitLabContext().projectID }
+    );
+    return { id: data.id, body: data.body };
   }
-  async updateComment(id, body) {
-    await this.client.projects.mergeRequests.notes.update(id, {
-      id: getGitLabContext().projectID,
-      noteable_id: getGitLabContext().prNumber,
-      body
-    });
+  async updateComment(prNumber, props) {
+    const data = await this.client.projects.mergeRequests.notes.update(
+      props.id,
+      { ...props, id: getGitLabContext().projectID, noteable_id: prNumber }
+    );
+    return { id: data.id, body: data.body };
   }
   async getPullRequestForCommit(sha) {
     const mergeRequests = await this.client.projects.repository.commits.retrieveMergeRequests(sha, {
@@ -16299,8 +16303,8 @@ function parseCommitMessages(body) {
   const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
   return message ? { commitMessage: makeCommitMessageConventional(message) } : {};
 }
-async function retrieveComment() {
-  const comments = await api().listComments();
+async function retrieveComment(prNumber) {
+  const comments = await api().listComments(prNumber);
   const existingComment = comments.find(
     (comment) => comment.body?.includes(COMMENT_TITLE)
   );
@@ -16312,33 +16316,33 @@ async function retrieveComment() {
     ...parseCommitMessages(existingComment.body)
   };
 }
-async function upsertComment({
+async function upsertComment(prNumber, {
   body,
   skipCreate = false
 }) {
-  logger.debug(`Upserting comment on ${ctx().names.pr} #${ctx().prNumber}`);
-  const comments = await api().listComments();
+  logger.debug(`Upserting comment on ${ctx().names.pr} #${prNumber}`);
+  const comments = await api().listComments(prNumber);
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
     logger.debug("Updating existing comment:", existingComment.id);
-    await api().updateComment(existingComment.id, body);
+    await api().updateComment(prNumber, { ...existingComment, body });
   } else if (!skipCreate) {
     logger.debug("Creating new comment");
-    await api().createComment(body);
+    await api().createComment(prNumber, { body });
   }
 }
 function areCommentsEqual(a, b) {
   return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
 }
-function commentThrottler() {
+function commentThrottler(prNumber) {
   let lastComment = null;
   let lastCommentTime = null;
   return async ({ body, force = false }) => {
     if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
-      await upsertComment({ body });
+      await upsertComment(prNumber, { body });
       lastComment = body;
       lastCommentTime = /* @__PURE__ */ new Date();
     }
@@ -19938,7 +19942,7 @@ var main = wrapAction("merge", async (stainless) => {
     logger.info("No config files changed, skipping merge");
     return;
   }
-  const comment = makeComment ? await retrieveComment() : null;
+  const comment = makeComment && prNumber ? await retrieveComment(prNumber) : null;
   const commitMessage = comment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
   const targetCommitMessages = multipleCommitMessages ? comment?.targetCommitMessages ?? {} : void 0;
   if (targetCommitMessages) {
@@ -19958,7 +19962,7 @@ var main = wrapAction("merge", async (stainless) => {
     guessConfig: false
   });
   let latestRun = null;
-  const upsert = prNumber ? commentThrottler() : null;
+  const upsert = prNumber ? commentThrottler(prNumber) : null;
   while (true) {
     const run = await generator.next();
     if (run.value) {
