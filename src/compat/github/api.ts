@@ -27,19 +27,30 @@ class GitHubClient implements APIClient {
     });
   }
 
-  async listComments(): Promise<Comment[]> {
-    const { data } = await this.client.repos.issues.comments.list(
-      ctx().prNumber!,
-    );
+  async listComments(prNumber: number): Promise<Comment[]> {
+    const { data } = await this.client.repos.issues.comments.list(prNumber);
     return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
 
-  async createComment(body: string): Promise<void> {
-    await this.client.repos.issues.comments.create(ctx().prNumber!, { body });
+  async createComment(
+    prNumber: number,
+    props: Omit<Comment, "id">,
+  ): Promise<Comment> {
+    const data = await this.client.repos.issues.comments.create(
+      prNumber,
+      props,
+    );
+    return { id: data.id, body: data.body! };
   }
 
-  async updateComment(id: number, body: string): Promise<void> {
-    await this.client.repos.issues.comments.update(id, { body });
+  async updateComment(
+    _prNumber: number,
+    { id, body }: Comment,
+  ): Promise<Comment> {
+    const data = await this.client.repos.issues.comments.update(id as number, {
+      body,
+    });
+    return { id: data.id, body: data.body! };
   }
 
   async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {

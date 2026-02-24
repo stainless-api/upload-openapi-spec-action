@@ -17,9 +17,9 @@ export interface PullRequest {
 }
 
 export interface APIClient {
-  listComments(): Promise<Comment[]>;
-  createComment(body: string): Promise<void>;
-  updateComment(id: string | number, body: string): Promise<void>;
+  listComments(prNumber: number): Promise<Comment[]>;
+  createComment(prNumber: number, props: Omit<Comment, "id">): Promise<Comment>;
+  updateComment(prNumber: number, props: Comment): Promise<Comment>;
 
   getPullRequestForCommit(sha: string): Promise<PullRequest | null>;
 }

@@ -122,7 +122,7 @@ const main = wrapAction("preview", async (stainless) => {
 
       const commentBody = printComment({ noChanges: true });
 
-      await upsertComment({
+      await upsertComment(prNumber, {
         body: commentBody,
         skipCreate: true,
       });
@@ -144,7 +144,8 @@ const main = wrapAction("preview", async (stainless) => {
 
   logger.groupEnd();
 
-  const initialComment = makeComment ? await retrieveComment() : null;
+  const initialComment =
+    makeComment && prNumber ? await retrieveComment(prNumber) : null;
   let commitMessage =
     initialComment?.commitMessage ??
     makeCommitMessageConventional(defaultCommitMessage);
@@ -181,7 +182,7 @@ const main = wrapAction("preview", async (stainless) => {
   });
 
   let latestRun: RunResult | null = null;
-  const upsert = commentThrottler();
+  const upsert = prNumber ? commentThrottler(prNumber) : null;
 
   let pendingAiCommitMessages: Set<string> | undefined;
 
@@ -192,11 +193,11 @@ const main = wrapAction("preview", async (stainless) => {
       latestRun = run.value;
     }
 
-    if (makeComment && latestRun) {
+    if (makeComment && latestRun && upsert) {
       const { outcomes, baseOutcomes } = latestRun;
 
       // In case the comment was updated between polls:
-      const comment = await retrieveComment();
+      const comment = await retrieveComment(prNumber);
       commitMessage = comment?.commitMessage ?? commitMessage;
       targetCommitMessages =
         comment?.targetCommitMessages ?? targetCommitMessages;

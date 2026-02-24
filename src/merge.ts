@@ -98,7 +98,8 @@ const main = wrapAction("merge", async (stainless) => {
     return;
   }
 
-  const comment = makeComment ? await retrieveComment() : null;
+  const comment =
+    makeComment && prNumber ? await retrieveComment(prNumber) : null;
   const commitMessage =
     comment?.commitMessage ??
     makeCommitMessageConventional(defaultCommitMessage);
@@ -125,7 +126,7 @@ const main = wrapAction("merge", async (stainless) => {
   });
 
   let latestRun: RunResult | null = null;
-  const upsert = prNumber ? commentThrottler() : null;
+  const upsert = prNumber ? commentThrottler(prNumber) : null;
 
   while (true) {
     const run = await generator.next();

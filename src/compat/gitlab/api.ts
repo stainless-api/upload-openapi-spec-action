@@ -32,14 +32,12 @@ class GitLabClient implements APIClient {
     });
   }
 
-  async listComments(): Promise<Comment[]> {
+  async listComments(prNumber: number): Promise<Comment[]> {
     // The OAS claims it's a single object, but the docs claim it's an array.
     // Just handle both.
     const comments: APIEntitiesNote[] =
       await this.client.projects.mergeRequests.notes
-        .list(ctx().prNumber!, {
-          id: ctx().projectID,
-        })
+        .list(prNumber, { id: ctx().projectID })
         .then((data) => (Array.isArray(data) ? data : [data]))
         .catch((err) => {
           if (err instanceof APIError && err.status === 404) {
@@ -51,19 +49,23 @@ class GitLabClient implements APIClient {
     return comments.map((c) => ({ id: c.id!, body: c.body ?? "" }));
   }
 
-  async createComment(body: string): Promise<void> {
-    await this.client.projects.mergeRequests.notes.create(ctx().prNumber!, {
-      id: ctx().projectID,
-      body,
-    });
+  async createComment(
+    prNumber: number,
+    props: Omit<Comment, "id">,
+  ): Promise<Comment> {
+    const data = await this.client.projects.mergeRequests.notes.create(
+      prNumber,
+      { ...props, id: ctx().projectID },
+    );
+    return { id: data.id!, body: data.body! };
   }
 
-  async updateComment(id: number, body: string): Promise<void> {
-    await this.client.projects.mergeRequests.notes.update(id, {
-      id: ctx().projectID,
-      noteable_id: ctx().prNumber!,
-      body,
-    });
+  async updateComment(prNumber: number, props: Comment): Promise<Comment> {
+    const data = await this.client.projects.mergeRequests.notes.update(
+      props.id as number,
+      { ...props, id: ctx().projectID, noteable_id: prNumber },
+    );
+    return { id: data.id!, body: data.body! };
   }
 
   async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
