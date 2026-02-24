@@ -18309,7 +18309,7 @@ var package_default = {
   dependencies: {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
-    "@stainless-api/gitlab-internal": "^0.2.0",
+    "@stainless-api/gitlab-internal": "^0.3.0",
     "@stainless-api/sdk": "^0.3.0",
     diff: "^8.0.3",
     glob: "^11.0.0",
@@ -18609,8 +18609,7 @@ function getGitLabContext() {
     );
   }
   const host = process.env.CI_SERVER_URL || "https://gitlab.com";
-  const apiV4URL = process.env.CI_API_V4_URL || `${host}/api/v4`;
-  const apiURL = apiV4URL.replace(/\/v4\/?$/, "");
+  const apiURL = process.env.CI_API_V4_URL || `${host}/api/v4`;
   const maybePRNumber = parseInt(
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10
