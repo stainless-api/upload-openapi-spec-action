@@ -25,8 +25,7 @@ export function getGitLabContext(): GitLabContext {
   }
 
   const host = process.env.CI_SERVER_URL || "https://gitlab.com";
-  const apiV4URL = process.env.CI_API_V4_URL || `${host}/api/v4`;
-  const apiURL = apiV4URL.replace(/\/v4\/?$/, "");
+  const apiURL = process.env.CI_API_V4_URL || `${host}/api/v4`;
   const maybePRNumber = parseInt(
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10,

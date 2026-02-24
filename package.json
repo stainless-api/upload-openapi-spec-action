@@ -25,7 +25,7 @@
   "dependencies": {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
-    "@stainless-api/gitlab-internal": "^0.2.0",
+    "@stainless-api/gitlab-internal": "^0.3.0",
     "@stainless-api/sdk": "^0.3.0",
     "diff": "^8.0.3",
     "glob": "^11.0.0",

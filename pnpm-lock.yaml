@@ -15,8 +15,8 @@ importers:
         specifier: ^0.25.1
         version: 0.25.1
       '@stainless-api/gitlab-internal':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
       '@stainless-api/sdk':
         specifier: ^0.3.0
         version: 0.3.0
@@ -750,8 +750,8 @@ packages:
   '@stainless-api/github-internal@0.25.1':
     resolution: {integrity: sha512-/KTljyiGKWAaAjaiOwbyYzEd9P8H1Vma0Sr67T4fKr48z1/KuQRj3tAivIf6tueP2eEGv90e0pti/fJEQ6wWpg==}
 
-  '@stainless-api/gitlab-internal@0.2.0':
-    resolution: {integrity: sha512-9czeLHTnCr693mV2smuEMziSHOP1U67qqJqSH3F0iNSGXFZumqcE5R5jO4iID/AA9SQqQiVscFNnVN8MOBPjhg==}
+  '@stainless-api/gitlab-internal@0.3.0':
+    resolution: {integrity: sha512-98VkAMEqkpQToPmHWL4gNfNG18VsqHtw2ZjtbxBPVdPC69B31jiUiDlFttL/KvwglF6sJMzj950brVXwgoZIUw==}
 
   '@stainless-api/sdk@0.3.0':
     resolution: {integrity: sha512-0woIYbpWauIuDOZW0CkClubAaI97LknXOf2bum8GT0UDScMpbTtwCjvpD9e1Lbb1rRBkpFebVPZ2gZoIi0WHDQ==}
@@ -2772,7 +2772,7 @@ snapshots:
       jsonwebtoken: 9.0.3
       libsodium-wrappers: 0.7.15
 
-  '@stainless-api/gitlab-internal@0.2.0': {}
+  '@stainless-api/gitlab-internal@0.3.0': {}
 
   '@stainless-api/sdk@0.3.0': {}
 
