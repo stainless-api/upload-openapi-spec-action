@@ -26512,11 +26512,18 @@ var package_default = {
   version: "1.12.0",
   main: "dist/index.js",
   scripts: {
-    build: "./scripts/build",
-    lint: "./scripts/lint",
-    "lint:fix": "./scripts/format",
-    test: "./scripts/test",
-    "test:watch": "vitest"
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
+    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:internal-preview": "esbuild --bundle src/internalPreview.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-combine": "esbuild --bundle src/combine/index.ts --outfile=dist/prepareCombine.js --platform=node --target=node20 --external:@redocly/cli",
+    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
+    lint: "tsc && prettier --check src 'examples/*.yml' '**/action.yml' && eslint src",
+    "lint:fix": "prettier --write src 'examples/*.yml' '**/action.yml' && eslint src --fix",
+    test: "vitest"
   },
   license: "ISC",
   devDependencies: {
@@ -26652,7 +26659,7 @@ async function maybeReportResult({
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 10 * 60;
+var MAX_POLLING_SECONDS = 20 * 60;
 async function* runBuilds({
   stainless,
   projectName,
@@ -26711,6 +26718,7 @@ async function* runBuilds({
     for await (const { outcomes, documentedSpec } of pollBuild({
       stainless,
       build,
+      projectName,
       label: "head"
     })) {
       yield {
@@ -26840,8 +26848,8 @@ async function* runBuilds({
   let lastOutcome = null;
   let lastDocumentedSpec = null;
   for await (const { index, value } of combineAsyncIterators2(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" })
+    pollBuild({ stainless, build: base, projectName, label: "base" }),
+    pollBuild({ stainless, build: head, projectName, label: "head" })
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -26859,7 +26867,7 @@ async function* runBuilds({
   }
   return;
 }
-var combineAsyncIterators2 = async function* (...args) {
+async function* combineAsyncIterators2(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;
   const never = new Promise(() => {
@@ -26876,10 +26884,11 @@ var combineAsyncIterators2 = async function* (...args) {
       yield { index, value: result.value };
     }
   }
-};
+}
 async function* pollBuild({
   stainless,
   build,
+  projectName,
   label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
@@ -26896,11 +26905,11 @@ async function* pollBuild({
   );
   if (buildId) {
     log.info(
-      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
+      `[${projectName}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
     addBuildIdForTelemetry(buildId);
   } else {
-    logger.info("No new build was created; exiting.");
+    logger.info(`[${projectName}] No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -26918,7 +26927,9 @@ async function* pollBuild({
       };
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        log.info(`Build for ${language} has status ${buildOutput.status}`);
+        log.info(
+          `[${projectName}/${buildId}] Build for ${language} has status ${buildOutput.status}`
+        );
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {

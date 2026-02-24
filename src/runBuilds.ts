@@ -7,7 +7,7 @@ import { addBuildIdForTelemetry } from "./wrapAction";
 type Build = Stainless.Builds.Build;
 
 const POLLING_INTERVAL_SECONDS = 5;
-const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
+const MAX_POLLING_SECONDS = 20 * 60; // 20 minutes
 
 export type RunResult = {
   baseOutcomes: Outcomes | null;
@@ -92,6 +92,7 @@ export async function* runBuilds({
     for await (const { outcomes, documentedSpec } of pollBuild({
       stainless,
       build,
+      projectName,
       label: "head",
     })) {
       yield {
@@ -249,8 +250,8 @@ export async function* runBuilds({
   let lastDocumentedSpec: string | null = null;
 
   for await (const { index, value } of combineAsyncIterators(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" }),
+    pollBuild({ stainless, build: base, projectName, label: "base" }),
+    pollBuild({ stainless, build: head, projectName, label: "head" }),
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -271,7 +272,7 @@ export async function* runBuilds({
   return;
 }
 
-const combineAsyncIterators = async function* <T>(
+export async function* combineAsyncIterators<T>(
   ...args: AsyncIterable<T>[]
 ): AsyncGenerator<{ index: number; value: T }> {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
@@ -294,17 +295,19 @@ const combineAsyncIterators = async function* <T>(
       yield { index, value: result.value };
     }
   }
-};
+}
 
-async function* pollBuild({
+export async function* pollBuild({
   stainless,
   build,
+  projectName,
   label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS,
 }: {
   stainless: Stainless;
   build: Build;
+  projectName: string;
   label: "base" | "head";
   pollingIntervalSeconds?: number;
   maxPollingSeconds?: number;
@@ -328,11 +331,11 @@ async function* pollBuild({
 
   if (buildId) {
     log.info(
-      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
+      `[${projectName}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`,
     );
     addBuildIdForTelemetry(buildId);
   } else {
-    logger.info("No new build was created; exiting.");
+    logger.info(`[${projectName}] No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -358,7 +361,9 @@ async function* pollBuild({
 
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        log.info(`Build for ${language} has status ${buildOutput.status}`);
+        log.info(
+          `[${projectName}/${buildId}] Build for ${language} has status ${buildOutput.status}`,
+        );
       }
 
       // Also has a change if any of the checks have changed:

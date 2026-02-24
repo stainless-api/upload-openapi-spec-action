@@ -10,6 +10,9 @@ export type Outcomes = Record<
   Omit<Stainless.Builds.BuildTarget, "commit"> & {
     commit: Stainless.Builds.BuildTarget.Completed | null;
     diagnostics: Stainless.Builds.Diagnostics.BuildDiagnostic[];
+    hasDiff?: boolean;
+    codegenCompareUrl?: string;
+    diffStats?: { additions: number; deletions: number; changedFiles: number };
   }
 >;
 
@@ -23,16 +26,27 @@ export const FailRunOn = [
 export type FailRunOn = (typeof FailRunOn)[number];
 
 const OutcomeConclusion = [...FailRunOn, "success"] as const;
-type OutcomeConclusion = (typeof OutcomeConclusion)[number];
+export type OutcomeConclusion = Exclude<
+  (typeof OutcomeConclusion)[number],
+  "never"
+>;
+
+export function getDiffLanguages(outcomes: Outcomes): string[] {
+  return Object.entries(outcomes)
+    .filter(([, outcome]) => outcome.hasDiff === true)
+    .map(([lang]) => lang);
+}
 
 export function shouldFailRun({
   failRunOn,
   outcomes,
   baseOutcomes,
+  projectName,
 }: {
   failRunOn: FailRunOn;
   outcomes: Outcomes;
   baseOutcomes?: Outcomes | null;
+  projectName?: string;
 }) {
   const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
     const categorized = categorizeOutcome({
@@ -67,7 +81,9 @@ export function shouldFailRun({
   if (failures.length > 0) {
     logger.warn("The following languages did not build successfully:");
     for (const { language, reason } of failures) {
-      logger.warn(`  ${language}: ${reason}`);
+      logger.warn(
+        `${projectName ? `[${projectName}] ` : ""}${language}: ${reason}`,
+      );
     }
     return false;
   }

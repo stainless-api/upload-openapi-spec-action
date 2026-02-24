@@ -16119,7 +16119,8 @@ var OutcomeConclusion = [...FailRunOn, "success"];
 function shouldFailRun({
   failRunOn,
   outcomes,
-  baseOutcomes
+  baseOutcomes,
+  projectName
 }) {
   const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
     const categorized = categorizeOutcome({
@@ -16144,7 +16145,9 @@ function shouldFailRun({
   if (failures.length > 0) {
     logger.warn("The following languages did not build successfully:");
     for (const { language, reason } of failures) {
-      logger.warn(`  ${language}: ${reason}`);
+      logger.warn(
+        `${projectName ? `[${projectName}] ` : ""}${language}: ${reason}`
+      );
     }
     return false;
   }
@@ -16411,6 +16414,9 @@ var Rule = () => `<hr />`;
 var COMMENT_TITLE = Heading(
   `${Symbol2.HeavyAsterisk} Stainless preview builds`
 );
+var INTERNAL_COMMENT_TITLE = Heading(
+  `${Symbol2.HeavyAsterisk} Stainless internal preview builds`
+);
 var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
 function printComment({
   noChanges,
@@ -16528,7 +16534,8 @@ function Result({
   branch,
   lang,
   head,
-  base
+  base,
+  hasDiff
 }) {
   const categorized = categorizeOutcome({
     outcome: head,
@@ -16577,17 +16584,21 @@ function Result({
       Description: Italic(reason)
     };
   })();
+  const diffIndicator = hasDiff ? ` ${Symbol2.Eyes}` : "";
   return Details({
     summary: [
       ResultIcon,
-      Bold(`${projectName}-${lang}`),
+      Bold(`${projectName}-${lang}`) + diffIndicator,
       [
         Link({
           text: "studio",
           href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
         }),
         GitHubLink(head),
-        base ? CompareLink(base, head) : null,
+        base && hasDiff !== false ? head.codegenCompareUrl ? Link({
+          text: "(generated) diff",
+          href: head.codegenCompareUrl
+        }) : CompareLink(base, head) : null,
         MergeConflictLink(head)
       ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
     ].join(" "),
@@ -16674,15 +16685,18 @@ function GitHubLink(outcome) {
     href: `https://github.com/${owner}/${name}/tree/${encodeURIComponent(branch)}`
   });
 }
-function CompareLink(base, head) {
-  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+function CompareUrl(base, head) {
+  if (!base?.commit?.completed?.commit || !head.commit?.completed?.commit) {
     return null;
   }
   const { repo } = head.commit.completed.commit;
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
-  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
-  return Link({ text: "diff", href: compareURL });
+  return `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+}
+function CompareLink(base, head) {
+  const url = CompareUrl(base, head);
+  return url ? Link({ text: "diff", href: url }) : null;
 }
 function MergeConflictLink(outcome) {
   if (!outcome.commit?.completed?.merge_conflict_pr) return null;
@@ -19937,11 +19951,18 @@ var package_default = {
   version: "1.12.0",
   main: "dist/index.js",
   scripts: {
-    build: "./scripts/build",
-    lint: "./scripts/lint",
-    "lint:fix": "./scripts/format",
-    test: "./scripts/test",
-    "test:watch": "vitest"
+    build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
+    "build:build": "esbuild --bundle src/build.ts --outdir=dist --platform=node --target=node20",
+    "build:checkout-pr-ref": "esbuild --bundle src/checkoutPRRef.ts --outdir=dist --platform=node --target=node20",
+    "build:index": "esbuild --bundle src/index.ts --outdir=dist --platform=node --target=node20",
+    "build:internal-preview": "esbuild --bundle src/internalPreview.ts --outdir=dist --platform=node --target=node20",
+    "build:merge": "esbuild --bundle src/merge.ts --outdir=dist --platform=node --target=node20",
+    "build:preview": "esbuild --bundle src/preview.ts --outdir=dist --platform=node --target=node20",
+    "build:prepare-combine": "esbuild --bundle src/combine/index.ts --outfile=dist/prepareCombine.js --platform=node --target=node20 --external:@redocly/cli",
+    "build:prepare-swagger": "esbuild --bundle src/prepareSwagger.ts --outdir=dist --platform=node --target=node20",
+    lint: "tsc && prettier --check src 'examples/*.yml' '**/action.yml' && eslint src",
+    "lint:fix": "prettier --write src 'examples/*.yml' '**/action.yml' && eslint src --fix",
+    test: "vitest"
   },
   license: "ISC",
   devDependencies: {
@@ -20077,7 +20098,7 @@ async function maybeReportResult({
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 10 * 60;
+var MAX_POLLING_SECONDS = 20 * 60;
 async function* runBuilds({
   stainless,
   projectName,
@@ -20136,6 +20157,7 @@ async function* runBuilds({
     for await (const { outcomes, documentedSpec } of pollBuild({
       stainless,
       build,
+      projectName,
       label: "head"
     })) {
       yield {
@@ -20265,8 +20287,8 @@ async function* runBuilds({
   let lastOutcome = null;
   let lastDocumentedSpec = null;
   for await (const { index, value } of combineAsyncIterators2(
-    pollBuild({ stainless, build: base, label: "base" }),
-    pollBuild({ stainless, build: head, label: "head" })
+    pollBuild({ stainless, build: base, projectName, label: "base" }),
+    pollBuild({ stainless, build: head, projectName, label: "head" })
   )) {
     if (index === 0) {
       lastBaseOutcome = value.outcomes;
@@ -20284,7 +20306,7 @@ async function* runBuilds({
   }
   return;
 }
-var combineAsyncIterators2 = async function* (...args) {
+async function* combineAsyncIterators2(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;
   const never = new Promise(() => {
@@ -20301,10 +20323,11 @@ var combineAsyncIterators2 = async function* (...args) {
       yield { index, value: result.value };
     }
   }
-};
+}
 async function* pollBuild({
   stainless,
   build,
+  projectName,
   label,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
@@ -20321,11 +20344,11 @@ async function* pollBuild({
   );
   if (buildId) {
     log.info(
-      `Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
+      `[${projectName}] Created build ${buildId} against ${build.config_commit} for languages: ${languages.join(", ")}`
     );
     addBuildIdForTelemetry(buildId);
   } else {
-    logger.info("No new build was created; exiting.");
+    logger.info(`[${projectName}] No new build was created; exiting.`);
     yield { outcomes, documentedSpec };
     return;
   }
@@ -20343,7 +20366,9 @@ async function* pollBuild({
       };
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
-        log.info(`Build for ${language} has status ${buildOutput.status}`);
+        log.info(
+          `[${projectName}/${buildId}] Build for ${language} has status ${buildOutput.status}`
+        );
       }
       for (const step of ["build", "lint", "test"]) {
         if (!existing?.[step] || existing[step]?.status !== buildOutput[step]?.status) {

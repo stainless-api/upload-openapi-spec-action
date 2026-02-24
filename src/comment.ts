@@ -2,7 +2,7 @@ import { makeCommitMessageConventional } from "./commitMessage";
 import { api, ctx } from "./compat";
 import { logger } from "./logger";
 import * as MD from "./markdown";
-import type { DiagnosticLevel, Outcomes } from "./outcomes";
+import type { DiagnosticLevel, OutcomeConclusion, Outcomes } from "./outcomes";
 import {
   categorizeOutcome,
   countDiagnosticLevels,
@@ -13,6 +13,10 @@ import {
 
 const COMMENT_TITLE = MD.Heading(
   `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,
+);
+
+const INTERNAL_COMMENT_TITLE = MD.Heading(
+  `${MD.Symbol.HeavyAsterisk} Stainless internal preview builds`,
 );
 
 const COMMENT_FOOTER_DIVIDER = MD.Comment("stainless-preview-footer");
@@ -192,13 +196,14 @@ function Results({
   return results.join("\n\n");
 }
 
-function Result({
+export function Result({
   orgName,
   projectName,
   branch,
   lang,
   head,
   base,
+  hasDiff,
 }: {
   orgName: string;
   projectName: string;
@@ -206,6 +211,7 @@ function Result({
   lang: string;
   head: Outcomes[string];
   base?: Outcomes[string];
+  hasDiff?: boolean;
 }): string | null {
   const categorized = categorizeOutcome({
     outcome: head,
@@ -259,10 +265,11 @@ function Result({
     };
   })();
 
+  const diffIndicator = hasDiff ? ` ${MD.Symbol.Eyes}` : "";
   return MD.Details({
     summary: [
       ResultIcon,
-      MD.Bold(`${projectName}-${lang}`),
+      MD.Bold(`${projectName}-${lang}`) + diffIndicator,
 
       [
         MD.Link({
@@ -270,7 +277,14 @@ function Result({
           href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`,
         }),
         GitHubLink(head),
-        base ? CompareLink(base, head) : null,
+        base && hasDiff !== false
+          ? head.codegenCompareUrl
+            ? MD.Link({
+                text: "(generated) diff",
+                href: head.codegenCompareUrl,
+              })
+            : CompareLink(base, head)
+          : null,
         MergeConflictLink(head),
       ]
         .filter((link): link is string => link !== null)
@@ -414,20 +428,26 @@ function GitHubLink(outcome: Outcomes[string]): string | null {
   });
 }
 
-function CompareLink(
-  base: Outcomes[string],
+function CompareUrl(
+  base: Outcomes[string] | undefined,
   head: Outcomes[string],
 ): string | null {
-  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+  if (!base?.commit?.completed?.commit || !head.commit?.completed?.commit) {
     return null;
   }
-
   const { repo } = head.commit.completed.commit;
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
   // This is a staging repo, so it's always GitHub.
-  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
-  return MD.Link({ text: "diff", href: compareURL });
+  return `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+}
+
+function CompareLink(
+  base: Outcomes[string],
+  head: Outcomes[string],
+): string | null {
+  const url = CompareUrl(base, head);
+  return url ? MD.Link({ text: "diff", href: url }) : null;
 }
 
 function MergeConflictLink(outcome: Outcomes[string]): string | null {
@@ -606,6 +626,194 @@ export async function upsertComment(
     logger.debug("Creating new comment");
     await api().createComment(prNumber, { body });
   }
+}
+
+// Severity ordering for outcome conclusions (lower index = worse)
+const ConclusionSeverity: OutcomeConclusion[] = [
+  "fatal",
+  "error",
+  "warning",
+  "note",
+  "success",
+];
+
+function worstConclusion(
+  a: OutcomeConclusion,
+  b: OutcomeConclusion,
+): OutcomeConclusion {
+  return ConclusionSeverity.indexOf(a) <= ConclusionSeverity.indexOf(b) ? a : b;
+}
+
+function conclusionEmoji(conclusion: OutcomeConclusion): string {
+  switch (conclusion) {
+    case "fatal":
+    case "error":
+      return MD.Symbol.Exclamation;
+    case "warning":
+      return MD.Symbol.Warning;
+    case "note":
+    case "success":
+      return MD.Symbol.WhiteCheckMark;
+  }
+}
+
+function DiffSummaryTable(
+  projects: {
+    orgName: string;
+    projectName: string;
+    outcomes: Outcomes;
+    baseOutcomes: Outcomes | null;
+  }[],
+  isComplete: boolean,
+): string | null {
+  const rows: string[] = [];
+  for (const { orgName, projectName, outcomes, baseOutcomes } of projects) {
+    for (const [lang, head] of Object.entries(outcomes)) {
+      if (!head.hasDiff) continue;
+      const base = baseOutcomes?.[lang];
+      const url = head.codegenCompareUrl ?? CompareUrl(base, head);
+      if (!url) continue;
+      const target = `${orgName}/${projectName}-${lang}`;
+      const lines =
+        head.diffStats != null
+          ? `+${head.diffStats.additions} / -${head.diffStats.deletions}`
+          : "—";
+      const files =
+        head.diffStats != null ? String(head.diffStats.changedFiles) : "—";
+      rows.push(
+        `<tr><td>${MD.Link({ text: target, href: url })}</td><td>${lines}</td><td>${files}</td></tr>`,
+      );
+    }
+  }
+  if (rows.length === 0 && isComplete) return null;
+  const footer = !isComplete
+    ? `<tr><td colspan="3">${MD.Italic(`${MD.Symbol.HourglassFlowingSand} Builds still in progress — table may be incomplete`)}</td></tr>`
+    : null;
+  return [
+    `**SDK diffs**`,
+    `<table>`,
+    `<tr><th>Target</th><th>Lines changed</th><th>Files changed</th></tr>`,
+    ...rows,
+    ...(footer ? [footer] : []),
+    `</table>`,
+  ].join("\n");
+}
+
+export function printInternalComment(
+  projects: {
+    orgName: string;
+    projectName: string;
+    branch: string;
+    outcomes: Outcomes;
+    baseOutcomes: Outcomes | null;
+  }[],
+  { isComplete = false }: { isComplete?: boolean } = {},
+) {
+  const blocks: string[] = [];
+
+  for (const {
+    orgName,
+    projectName,
+    branch,
+    outcomes,
+    baseOutcomes,
+  } of projects) {
+    const projectResults: string[] = [];
+    let hasPending = false;
+    let worstRegression: OutcomeConclusion = "success";
+    let projectHasDiff = false;
+
+    // show languagues with diffs first
+    for (const [lang, head] of Object.entries(outcomes).sort((a, b) =>
+      a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1,
+    )) {
+      const base = baseOutcomes?.[lang];
+
+      const categorized = categorizeOutcome({
+        outcome: head,
+        baseOutcome: base,
+      });
+      hasPending ||= categorized.isPending ?? false;
+
+      if (
+        !categorized.isPending &&
+        categorized.isRegression === true &&
+        categorized.severity
+      ) {
+        worstRegression = worstConclusion(
+          worstRegression,
+          categorized.severity,
+        );
+      }
+
+      const hasDiff = head.hasDiff ?? false;
+      projectHasDiff ||= hasDiff;
+
+      const result = Result({
+        orgName,
+        projectName,
+        branch,
+        lang,
+        head,
+        base,
+        hasDiff,
+      });
+      if (result) {
+        projectResults.push(`<li>${result}</li>`);
+      }
+    }
+
+    if (hasPending) {
+      projectResults.push(
+        MD.Dedent`
+          ${MD.Symbol.HourglassFlowingSand} These are partial results; builds are still running.
+        `,
+      );
+    }
+
+    const statusEmoji = hasPending
+      ? MD.Symbol.HourglassFlowingSand
+      : conclusionEmoji(worstRegression);
+
+    const diffIndicator = projectHasDiff ? ` ${MD.Symbol.Eyes}` : "";
+    blocks.push(
+      MD.Details({
+        summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
+        body: projectResults.join("\n\n"),
+        indent: false,
+        open:
+          worstRegression !== "success" &&
+          worstRegression !== "note" &&
+          !hasPending,
+      }),
+    );
+  }
+
+  const dateString = new Date()
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d+Z$/, " UTC");
+
+  const diffTable = DiffSummaryTable(
+    projects.map(({ orgName, projectName, outcomes, baseOutcomes }) => ({
+      orgName,
+      projectName,
+      outcomes,
+      baseOutcomes,
+    })),
+    isComplete,
+  );
+
+  return [
+    INTERNAL_COMMENT_TITLE,
+    blocks.join("\n\n"),
+    diffTable,
+    MD.Rule(),
+    COMMENT_FOOTER_DIVIDER,
+    MD.Italic(`Last updated: ${dateString}`),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 function areCommentsEqual(a: string, b: string) {

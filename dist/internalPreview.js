@@ -8810,7 +8810,7 @@ var require_lodash7 = __commonJS({
         return result;
       };
     }
-    function once3(func) {
+    function once(func) {
       return before(2, func);
     }
     function isObject(value) {
@@ -8856,7 +8856,7 @@ var require_lodash7 = __commonJS({
       var isBinary = reIsBinary.test(value);
       return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
     }
-    module2.exports = once3;
+    module2.exports = once;
   }
 });
 
@@ -8873,7 +8873,7 @@ var require_sign = __commonJS({
     var isNumber = require_lodash4();
     var isPlainObject = require_lodash5();
     var isString = require_lodash6();
-    var once3 = require_lodash7();
+    var once = require_lodash7();
     var { KeyObject, createSecretKey, createPrivateKey } = require("crypto");
     var SUPPORTED_ALGS = ["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "HS256", "HS384", "HS512", "none"];
     if (PS_SUPPORTED) {
@@ -9062,7 +9062,7 @@ var require_sign = __commonJS({
       });
       const encoding = options.encoding || "utf8";
       if (typeof callback === "function") {
-        callback = callback && once3(callback);
+        callback = callback && once(callback);
         jws.createSign({
           header,
           privateKey: secretOrPrivateKey,
@@ -9148,6 +9148,9 @@ var require_dist = __commonJS({
   }
 });
 
+// src/internalPreview.ts
+var import_child_process = require("child_process");
+
 // src/compat/input.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
@@ -9160,12 +9163,6 @@ function getInput(name, options) {
     );
   }
   return value || void 0;
-}
-function getBooleanInput(name, options) {
-  const value = getInput(name, options)?.toLowerCase();
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return void 0;
 }
 
 // src/compat/github/logging.ts
@@ -9371,6 +9368,40 @@ function createLogger(options = {}) {
 }
 var logger = createLogger();
 
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
+var APIResource = /* @__PURE__ */ (() => {
+  class APIResource4 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource4._key = [];
+  return APIResource4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
@@ -9493,35 +9524,6 @@ var RateLimitError = class extends APIError {
 };
 var InternalServerError = class extends APIError {
 };
-
-// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
-var APIResource = /* @__PURE__ */ (() => {
-  class APIResource4 {
-    constructor(client) {
-      this._client = client;
-    }
-  }
-  APIResource4._key = [];
-  return APIResource4;
-})();
-
-// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
-function __classPrivateFieldSet(receiver, state, value, kind, f) {
-  if (kind === "m")
-    throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-}
-function __classPrivateFieldGet(receiver, state, kind, f) {
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
@@ -9823,12 +9825,12 @@ function encodeURIPath(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
 var EMPTY = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction = (pathEncoder = encodeURIPath) => function path7(statics, ...params) {
+var createPathTagFunction = (pathEncoder = encodeURIPath) => function path4(statics, ...params) {
   if (statics.length === 1)
     return statics[0];
   let postPath = false;
   const invalidSegments = [];
-  const path8 = statics.reduce((previousValue, currentValue, index) => {
+  const path5 = statics.reduce((previousValue, currentValue, index) => {
     if (/[?#]/.test(currentValue)) {
       postPath = true;
     }
@@ -9845,7 +9847,7 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path7(stat
     }
     return previousValue + currentValue + (index === params.length ? "" : encoded);
   }, "");
-  const pathOnly = path8.split(/[?#]/, 1)[0];
+  const pathOnly = path5.split(/[?#]/, 1)[0];
   const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
   let match;
   while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
@@ -9866,10 +9868,10 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path7(stat
     }, "");
     throw new GitHubError(`Path parameters result in path with invalid segments:
 ${invalidSegments.map((e) => e.error).join("\n")}
-${path8}
+${path5}
 ${underline}`);
   }
-  return path8;
+  return path5;
 };
 var path = /* @__PURE__ */ createPathTagFunction(encodeURIPath);
 
@@ -10394,433 +10396,6 @@ var BaseComments2 = /* @__PURE__ */ (() => {
     "comments"
   ]);
   return BaseComments8;
-})();
-
-// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
-var BasePulls = /* @__PURE__ */ (() => {
-  class BasePulls2 extends APIResource {
-    /**
-     * Draft pull requests are available in public repositories with GitHub Free and
-     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
-     * plans, and in public and private repositories with GitHub Team and GitHub
-     * Enterprise Cloud. For more information, see
-     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
-     * in the GitHub Help documentation.
-     *
-     * To open or update a pull request in a public repository, you must have write
-     * access to the head or the source branch. For organization-owned repositories,
-     * you must be a member of the organization that owns the repository to open or
-     * update a pull request.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const pullRequest = await client.repos.pulls.create({
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   base: 'master',
-     *   head: 'octocat:new-feature',
-     *   body: 'Please pull these awesome changes in!',
-     *   title: 'Amazing new feature',
-     * });
-     * ```
-     */
-    create(params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path`/repos/${owner}/${repo}/pulls`, { body, ...options });
-    }
-    /**
-     * Draft pull requests are available in public repositories with GitHub Free and
-     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
-     * plans, and in public and private repositories with GitHub Team and GitHub
-     * Enterprise Cloud. For more information, see
-     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
-     * in the GitHub Help documentation.
-     *
-     * Lists details of a pull request by providing its number.
-     *
-     * When you get,
-     * [create](https://docs.github.com/rest/pulls/pulls/#create-a-pull-request), or
-     * [edit](https://docs.github.com/rest/pulls/pulls#update-a-pull-request) a pull
-     * request, GitHub creates a merge commit to test whether the pull request can be
-     * automatically merged into the base branch. This test commit is not added to the
-     * base branch or the head branch. You can review the status of the test commit
-     * using the `mergeable` key. For more information, see
-     * "[Checking mergeability of pull requests](https://docs.github.com/rest/guides/getting-started-with-the-git-database-api#checking-mergeability-of-pull-requests)".
-     *
-     * The value of the `mergeable` attribute can be `true`, `false`, or `null`. If the
-     * value is `null`, then GitHub has started a background job to compute the
-     * mergeability. After giving the job time to complete, resubmit the request. When
-     * the job finishes, you will see a non-`null` value for the `mergeable` attribute
-     * in the response. If `mergeable` is `true`, then `merge_commit_sha` will be the
-     * SHA of the _test_ merge commit.
-     *
-     * The value of the `merge_commit_sha` attribute changes depending on the state of
-     * the pull request. Before merging a pull request, the `merge_commit_sha`
-     * attribute holds the SHA of the _test_ merge commit. After merging a pull
-     * request, the `merge_commit_sha` attribute changes depending on how you merged
-     * the pull request:
-     *
-     * - If merged as a
-     *   [merge commit](https://docs.github.com/articles/about-merge-methods-on-github/),
-     *   `merge_commit_sha` represents the SHA of the merge commit.
-     * - If merged via a
-     *   [squash](https://docs.github.com/articles/about-merge-methods-on-github/#squashing-your-merge-commits),
-     *   `merge_commit_sha` represents the SHA of the squashed commit on the base
-     *   branch.
-     * - If
-     *   [rebased](https://docs.github.com/articles/about-merge-methods-on-github/#rebasing-and-merging-your-commits),
-     *   `merge_commit_sha` represents the commit that the base branch was updated to.
-     *
-     * Pass the appropriate
-     * [media type](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)
-     * to fetch diff and patch formats.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     * - **`application/vnd.github.diff`**: For more information, see
-     *   "[git-diff](https://git-scm.com/docs/git-diff)" in the Git documentation. If a
-     *   diff is corrupt, contact us through the
-     *   [GitHub Support portal](https://support.github.com/). Include the repository
-     *   name and pull request ID in your message.
-     *
-     * @example
-     * ```ts
-     * const pullRequest = await client.repos.pulls.retrieve(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     * });
-     * ```
-     */
-    retrieve(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
-      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, options);
-    }
-    /**
-     * Draft pull requests are available in public repositories with GitHub Free and
-     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
-     * plans, and in public and private repositories with GitHub Team and GitHub
-     * Enterprise Cloud. For more information, see
-     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
-     * in the GitHub Help documentation.
-     *
-     * To open or update a pull request in a public repository, you must have write
-     * access to the head or the source branch. For organization-owned repositories,
-     * you must be a member of the organization that owns the repository to open or
-     * update a pull request.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * const pullRequest = await client.repos.pulls.update(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   base: 'master',
-     *   body: 'updated body',
-     *   state: 'open',
-     *   title: 'new title',
-     * });
-     * ```
-     */
-    update(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.patch(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, { body, ...options });
-    }
-    /**
-     * Lists pull requests in a specified repository.
-     *
-     * Draft pull requests are available in public repositories with GitHub Free and
-     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
-     * plans, and in public and private repositories with GitHub Team and GitHub
-     * Enterprise Cloud. For more information, see
-     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
-     * in the GitHub Help documentation.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const pullRequestSimple of client.repos.pulls.list(
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    list(params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls`, NumberedPage, {
-        query,
-        ...options
-      });
-    }
-    /**
-     * Creates a codespace owned by the authenticated user for the specified pull
-     * request.
-     *
-     * OAuth app tokens and personal access tokens (classic) need the `codespace` scope
-     * to use this endpoint.
-     *
-     * @example
-     * ```ts
-     * const codespace = await client.repos.pulls.createCodespace(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * );
-     * ```
-     */
-    createCodespace(pullNumber, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/codespaces`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * Creates a review comment on the diff of a specified pull request. To add a
-     * regular comment to a pull request timeline, see
-     * "[Create an issue comment](https://docs.github.com/rest/issues/comments#create-an-issue-comment)."
-     *
-     * If your comment applies to more than one line in the pull request diff, you
-     * should use the parameters `line`, `side`, and optionally `start_line` and
-     * `start_side` in your request.
-     *
-     * The `position` parameter is closing down. If you use `position`, the `line`,
-     * `side`, `start_line`, and `start_side` parameters are not required.
-     *
-     * This endpoint triggers
-     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
-     * Creating content too quickly using this endpoint may result in secondary rate
-     * limiting. For more information, see
-     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
-     * and
-     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
-     *   body. Response will include `body`. This is the default if you do not pass any
-     *   specific media type.
-     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
-     *   representation of the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
-     *   from the body's markdown. Response will include `body_html`.
-     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
-     *   HTML representations. Response will include `body`, `body_text`, and
-     *   `body_html`.
-     *
-     * @example
-     * ```ts
-     * const response = await client.repos.pulls.createComment(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   body: 'Great stuff!',
-     *   commit_id: '6dcb09b5b57875f334f61aebed695e2e4193db5e',
-     *   path: 'file1.txt',
-     *   line: 2,
-     *   side: 'RIGHT',
-     *   start_line: 1,
-     *   start_side: 'RIGHT',
-     * });
-     * ```
-     */
-    createComment(pullNumber, params, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
-      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {
-        body,
-        ...options
-      });
-    }
-    /**
-     * Lists all review comments for a specified pull request. By default, review
-     * comments are in ascending order by ID.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
-     *   body. Response will include `body`. This is the default if you do not pass any
-     *   specific media type.
-     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
-     *   representation of the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
-     *   from the body's markdown. Response will include `body_html`.
-     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
-     *   HTML representations. Response will include `body`, `body_text`, and
-     *   `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const pullListCommentsResponse of client.repos.pulls.listComments(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    listComments(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, NumberedPage, { query, ...options });
-    }
-    /**
-     * Lists a maximum of 250 commits for a pull request. To receive a complete commit
-     * list for pull requests with more than 250 commits, use the
-     * [List commits](https://docs.github.com/rest/commits/commits#list-commits)
-     * endpoint.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const commit of client.repos.pulls.listCommits(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    listCommits(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/commits`, NumberedPage, { query, ...options });
-    }
-    /**
-     * Lists the files in a specified pull request.
-     *
-     * > [!NOTE] Responses include a maximum of 3000 files. The paginated response
-     * > returns 30 files per page by default.
-     *
-     * This endpoint supports the following custom media types. For more information,
-     * see
-     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
-     *
-     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
-     *   will include `body`. This is the default if you do not pass any specific media
-     *   type.
-     * - **`application/vnd.github.text+json`**: Returns a text only representation of
-     *   the markdown body. Response will include `body_text`.
-     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
-     *   markdown. Response will include `body_html`.
-     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
-     *   representations. Response will include `body`, `body_text`, and `body_html`.
-     *
-     * @example
-     * ```ts
-     * // Automatically fetches more pages as needed.
-     * for await (const pullListFilesResponse of client.repos.pulls.listFiles(
-     *   0,
-     *   { owner: 'owner', repo: 'repo' },
-     * )) {
-     *   // ...
-     * }
-     * ```
-     */
-    listFiles(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
-      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/files`, NumberedPage, { query, ...options });
-    }
-    /**
-     * Updates the pull request branch with the latest upstream changes by merging HEAD
-     * from the base branch into the pull request branch. Note: If making a request on
-     * behalf of a GitHub App you must also have permissions to write the contents of
-     * the head repository.
-     *
-     * @example
-     * ```ts
-     * const response = await client.repos.pulls.updateBranch(0, {
-     *   owner: 'owner',
-     *   repo: 'repo',
-     *   expected_head_sha:
-     *     '6dcb09b5b57875f334f61aebed695e2e4193db5e',
-     * });
-     * ```
-     */
-    updateBranch(pullNumber, params = {}, options) {
-      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
-      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pullNumber}/update-branch`, {
-        body,
-        ...options
-      });
-    }
-  }
-  BasePulls2._key = Object.freeze(["repos", "pulls"]);
-  return BasePulls2;
 })();
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
@@ -12866,9 +12441,9 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     makeStatusError(status, error, message, headers) {
       return APIError.generate(status, error, message, headers);
     }
-    buildURL(path7, query, defaultBaseURL) {
+    buildURL(path4, query, defaultBaseURL) {
       const baseURL = !__classPrivateFieldGet(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-      const url = isAbsoluteURL(path7) ? new URL(path7) : new URL(baseURL + (baseURL.endsWith("/") && path7.startsWith("/") ? path7.slice(1) : path7));
+      const url = isAbsoluteURL(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
       const defaultQuery = this.defaultQuery();
       if (!isEmptyObj(defaultQuery)) {
         query = { ...defaultQuery, ...query };
@@ -12891,24 +12466,24 @@ var BaseGitHub = /* @__PURE__ */ (() => {
      */
     async prepareRequest(request, { url, options }) {
     }
-    get(path7, opts) {
-      return this.methodRequest("get", path7, opts);
+    get(path4, opts) {
+      return this.methodRequest("get", path4, opts);
     }
-    post(path7, opts) {
-      return this.methodRequest("post", path7, opts);
+    post(path4, opts) {
+      return this.methodRequest("post", path4, opts);
     }
-    patch(path7, opts) {
-      return this.methodRequest("patch", path7, opts);
+    patch(path4, opts) {
+      return this.methodRequest("patch", path4, opts);
     }
-    put(path7, opts) {
-      return this.methodRequest("put", path7, opts);
+    put(path4, opts) {
+      return this.methodRequest("put", path4, opts);
     }
-    delete(path7, opts) {
-      return this.methodRequest("delete", path7, opts);
+    delete(path4, opts) {
+      return this.methodRequest("delete", path4, opts);
     }
-    methodRequest(method, path7, opts) {
+    methodRequest(method, path4, opts) {
       return this.request(Promise.resolve(opts).then((opts2) => {
-        return { method, path: path7, ...opts2 };
+        return { method, path: path4, ...opts2 };
       }));
     }
     request(options, remainingRetries = null) {
@@ -13011,8 +12586,8 @@ var BaseGitHub = /* @__PURE__ */ (() => {
       }));
       return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
     }
-    getAPIList(path7, Page2, opts) {
-      return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path7, ...opts2 })) : { method: "get", path: path7, ...opts });
+    getAPIList(path4, Page2, opts) {
+      return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path4, ...opts2 })) : { method: "get", path: path4, ...opts });
     }
     requestAPIList(Page2, options) {
       const request = this.makeRequest(options, null, void 0);
@@ -13091,8 +12666,8 @@ var BaseGitHub = /* @__PURE__ */ (() => {
     }
     async buildRequest(inputOptions, { retryCount = 0 } = {}) {
       const options = { ...inputOptions };
-      const { method, path: path7, query, defaultBaseURL } = options;
-      const url = this.buildURL(path7, query, defaultBaseURL);
+      const { method, path: path4, query, defaultBaseURL } = options;
+      const url = this.buildURL(path4, query, defaultBaseURL);
       if ("timeout" in options)
         validatePositiveInteger("timeout", options.timeout);
       options.timeout = options.timeout ?? this.timeout;
@@ -13224,15 +12799,10 @@ function getGitHubContext() {
   const host = process.env.GITHUB_SERVER_URL || "https://github.com";
   const apiURL = process.env.GITHUB_API_URL || "https://api.github.com";
   const runURL = `${host}/${owner}/${repo}/actions/runs/${runID}`;
-  let defaultBranch = null;
   let prNumber = null;
   try {
     const eventPath = process.env.GITHUB_EVENT_PATH;
     const payload = eventPath && fs.existsSync(eventPath) && JSON.parse(fs.readFileSync(eventPath, "utf-8"));
-    const maybeDefaultBranch = payload?.repository?.default_branch;
-    if (typeof maybeDefaultBranch === "string") {
-      defaultBranch = maybeDefaultBranch;
-    }
     const maybePRNumber = parseInt(
       payload?.pull_request?.number ?? process.env.PR_NUMBER ?? "",
       10
@@ -13243,19 +12813,14 @@ function getGitHubContext() {
   } catch (e) {
     throw new Error(`Failed to parse GitHub event: ${e}`);
   }
-  const refName = process.env.GITHUB_REF_NAME || null;
-  const sha = process.env.GITHUB_SHA || null;
   cachedContext = {
     provider: "github",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitHub Actions", pr: "PR", provider: "GitHub" },
-    defaultBranch,
-    prNumber,
-    refName,
-    sha
+    names: { ci: "GitHub Actions", pr: "PR" },
+    prNumber
   };
   logger.debug("GitHub context", cachedContext);
   return cachedContext;
@@ -13270,67 +12835,40 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseCommits, BaseComments2, BasePulls]
+      resources: [BaseComments2, BaseCommits]
     });
   }
-  async listComments(prNumber) {
-    const { data } = await this.client.repos.issues.comments.list(prNumber);
+  async listComments() {
+    const { data } = await this.client.repos.issues.comments.list(
+      getGitHubContext().prNumber
+    );
     return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
-  async createComment(prNumber, props) {
-    const data = await this.client.repos.issues.comments.create(
-      prNumber,
-      props
-    );
-    return { id: data.id, body: data.body };
+  async createComment(body) {
+    await this.client.repos.issues.comments.create(getGitHubContext().prNumber, { body });
   }
-  async updateComment(_prNumber, { id, body }) {
-    const data = await this.client.repos.issues.comments.update(id, {
-      body
-    });
-    return { id: data.id, body: data.body };
-  }
-  async getPullRequest(number) {
-    const data = await this.client.repos.pulls.retrieve(number);
-    return {
-      number,
-      state: data.merged_at ? "merged" : data.state,
-      title: data.title,
-      base_sha: data.base.sha,
-      base_ref: data.base.ref,
-      head_ref: data.head.ref,
-      head_sha: data.head.sha,
-      merge_commit_sha: data.merge_commit_sha
-    };
+  async updateComment(id, body) {
+    await this.client.repos.issues.comments.update(id, { body });
   }
   async getPullRequestForCommit(sha) {
-    const pullRequests = await this.client.repos.commits.listPullRequests(sha).then(
-      ({ data }) => data.filter((c) => c.merged_at || c.state !== "closed")
-    ).catch((err) => {
-      if (err instanceof APIError && err.status === 404) {
-        return [];
-      }
-      throw err;
-    });
-    if (pullRequests.length === 0) {
+    const { data } = await this.client.repos.commits.listPullRequests(sha);
+    if (data.length === 0) {
       return null;
     }
-    if (pullRequests.length > 1) {
+    if (data.length > 1) {
       logger.warn(
         `Multiple pull requests found for commit; only using first.`,
-        { commit: sha, pulls: pullRequests.map((c) => c.number) }
+        { commit: sha, pulls: data.map((c) => c.number) }
       );
     }
-    const pull = pullRequests[0];
+    const pull = data[0];
     return {
       number: pull.number,
       state: pull.merged_at ? "merged" : pull.state,
-      title: pull.title,
       base_sha: pull.base.sha,
       base_ref: pull.base.ref,
       head_ref: pull.head.ref,
-      head_sha: pull.head.sha,
-      merge_commit_sha: pull.merge_commit_sha
+      head_sha: pull.head.sha
     };
   }
 };
@@ -13349,7 +12887,7 @@ function getGitHubClient() {
   return cachedClient;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
 function isAbortError2(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -13380,7 +12918,7 @@ var castToError2 = (err) => {
   return new Error(err);
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
 var GitLabError = /* @__PURE__ */ (() => {
   class GitLabError2 extends Error {
   }
@@ -13472,7 +13010,7 @@ var RateLimitError2 = class extends APIError2 {
 var InternalServerError2 = class extends APIError2 {
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
 var APIResource2 = /* @__PURE__ */ (() => {
   class APIResource4 {
     constructor(client) {
@@ -13483,7 +13021,7 @@ var APIResource2 = /* @__PURE__ */ (() => {
   return APIResource4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL2 = (url) => {
   return startsWithSchemeRegexp2.test(url);
@@ -13517,7 +13055,7 @@ var safeJSON2 = (text) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
 var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders2(headers) {
   if (!headers)
@@ -13580,17 +13118,17 @@ var buildHeaders2 = (newHeaders) => {
   return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
 function encodeURIPath2(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
 var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path7(statics, ...params) {
+var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path4(statics, ...params) {
   if (statics.length === 1)
     return statics[0];
   let postPath = false;
   const invalidSegments = [];
-  const path8 = statics.reduce((previousValue, currentValue, index) => {
+  const path5 = statics.reduce((previousValue, currentValue, index) => {
     if (/[?#]/.test(currentValue)) {
       postPath = true;
     }
@@ -13607,7 +13145,7 @@ var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path7(st
     }
     return previousValue + currentValue + (index === params.length ? "" : encoded);
   }, "");
-  const pathOnly = path8.split(/[?#]/, 1)[0];
+  const pathOnly = path5.split(/[?#]/, 1)[0];
   const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
   let match;
   while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
@@ -13628,14 +13166,14 @@ var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path7(st
     }, "");
     throw new GitLabError(`Path parameters result in path with invalid segments:
 ${invalidSegments.map((e) => e.error).join("\n")}
-${path8}
+${path5}
 ${underline}`);
   }
-  return path8;
+  return path5;
 };
 var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
 var BaseNotes2 = /* @__PURE__ */ (() => {
   class BaseNotes13 extends APIResource2 {
     /**
@@ -13652,7 +13190,10 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     create(noteableID, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${noteableID}/notes`, { body, ...options });
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${noteableID}/notes`, {
+        body,
+        ...options
+      });
     }
     /**
      * Get a single merge request note
@@ -13668,7 +13209,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     retrieve(noteID, params, options) {
       const { id, noteable_id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
     }
     /**
      * Update an existing merge request note
@@ -13684,7 +13225,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     update(noteID, params, options) {
       const { id, noteable_id, ...body } = params;
-      return this._client.put(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, {
+      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, {
         body,
         ...options
       });
@@ -13702,7 +13243,10 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     list(noteableID, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${noteableID}/notes`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${noteableID}/notes`, {
+        query,
+        ...options
+      });
     }
     /**
      * Delete a merge request note
@@ -13718,7 +13262,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     delete(noteID, params, options) {
       const { id, noteable_id } = params;
-      return this._client.delete(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+      return this._client.delete(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
     }
   }
   BaseNotes13._key = Object.freeze([
@@ -13729,7 +13273,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
   return BaseNotes13;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
 var BaseMergeRequests = /* @__PURE__ */ (() => {
   class BaseMergeRequests3 extends APIResource2 {
     /**
@@ -13746,7 +13290,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      * ```
      */
     create(id, body, options) {
-      return this._client.post(path2`/projects/${id}/merge_requests`, { body, ...options });
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests`, { body, ...options });
     }
     /**
      * Shows information about a single merge request. Note: the `changes_count` value
@@ -13764,7 +13308,10 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieve(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
+        query,
+        ...options
+      });
     }
     /**
      * Updates an existing merge request. You can change the target branch, title, or
@@ -13780,7 +13327,10 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     update(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, { body, ...options });
+      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
+        body,
+        ...options
+      });
     }
     /**
      * Get all merge requests for this project.
@@ -13792,7 +13342,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      * ```
      */
     list(id, query = {}, options) {
-      return this._client.get(path2`/projects/${id}/merge_requests`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests`, { query, ...options });
     }
     /**
      * Only for administrators and project owners. Deletes the merge request in
@@ -13807,7 +13357,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     delete(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.delete(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, {
+      return this._client.delete(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -13826,7 +13376,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     addSpentTime(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/add_spent_time`, {
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/add_spent_time`, {
         body,
         ...options
       });
@@ -13844,7 +13394,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     approve(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approve`, {
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approve`, {
         body,
         ...options
       });
@@ -13863,7 +13413,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     cancelMergeWhenPipelineSucceeds(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/cancel_merge_when_pipeline_succeeds`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/cancel_merge_when_pipeline_succeeds`, options);
     }
     /**
      * Resets the total spent time for this merge_request to 0 seconds.
@@ -13878,7 +13428,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     resetSpentTime(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_spent_time`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_spent_time`, options);
     }
     /**
      * Resets the estimated time for this merge_request to 0 seconds.
@@ -13893,7 +13443,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     resetTimeEstimate(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_time_estimate`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_time_estimate`, options);
     }
     /**
      * List approval rules for merge request
@@ -13908,11 +13458,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveApprovalSettings(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approval_settings`, {
-        query,
-        ...options,
-        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
-      });
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approval_settings`, { query, ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
     }
     /**
      * Get approval state of merge request
@@ -13928,7 +13474,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveApprovalState(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approval_state`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approval_state`, options);
     }
     /**
      * Get all merge requests are blockees for this merge request
@@ -13943,7 +13489,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveBlockees(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/blockees`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/blockees`, {
         query,
         ...options
       });
@@ -13961,7 +13507,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveChanges(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/changes`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/changes`, {
         query,
         ...options
       });
@@ -13980,7 +13526,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveClosesIssues(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/closes_issues`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/closes_issues`, {
         query,
         ...options
       });
@@ -13998,7 +13544,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveCommits(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/commits`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/commits`, {
         query,
         ...options
       });
@@ -14016,7 +13562,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveDiffs(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/diffs`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/diffs`, {
         query,
         ...options
       });
@@ -14033,7 +13579,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveMergeRef(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/merge_ref`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/merge_ref`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14052,7 +13598,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveParticipants(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/participants`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/participants`, options);
     }
     /**
      * Get the raw diffs of a merge request that can used programmatically.
@@ -14066,7 +13612,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveRawDiffs(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/raw_diffs`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/raw_diffs`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14085,7 +13631,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveRelatedIssues(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/related_issues`, {
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/related_issues`, {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -14104,7 +13650,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveReviewers(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reviewers`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reviewers`, options);
     }
     /**
      * Get time tracking stats
@@ -14119,7 +13665,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveTimeStats(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/time_stats`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/time_stats`, options);
     }
     /**
      * Set status of an external status check
@@ -14140,10 +13686,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     statusCheckResponses(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/status_check_responses`, {
-        body,
-        ...options
-      });
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/status_check_responses`, { body, ...options });
     }
     /**
      * Subscribe to a resource
@@ -14159,7 +13702,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     subscribe(subscribableID, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${subscribableID}/subscribe`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${subscribableID}/subscribe`, options);
     }
     /**
      * Sets an estimated time of work for this merge_request.
@@ -14175,7 +13718,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     timeEstimate(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/time_estimate`, {
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/time_estimate`, {
         body,
         ...options
       });
@@ -14191,7 +13734,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     todo(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/todo`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/todo`, options);
     }
     /**
      * Remove an approval from a merge request
@@ -14206,7 +13749,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     unapprove(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/unapprove`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/unapprove`, options);
     }
     /**
      * Unsubscribe from a resource
@@ -14222,7 +13765,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     unsubscribe(subscribableID, params, options) {
       const { id } = params;
-      return this._client.post(path2`/projects/${id}/merge_requests/${subscribableID}/unsubscribe`, options);
+      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${subscribableID}/unsubscribe`, options);
     }
     /**
      * Accept and merge changes submitted with the merge request using this API.
@@ -14237,7 +13780,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateMerge(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/merge`, {
+      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/merge`, {
         body,
         ...options
       });
@@ -14255,7 +13798,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateRebase(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/rebase`, {
+      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/rebase`, {
         body,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -14274,7 +13817,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateResetApprovals(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_approvals`, {
+      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_approvals`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14287,7 +13830,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
   return BaseMergeRequests3;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
 function getDefaultFetch2() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -14332,11 +13875,11 @@ async function CancelReadableStream2(stream) {
   await cancelPromise;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
 var checkFileSupport2 = () => {
   if (typeof File === "undefined") {
-    const { process: process7 } = globalThis;
-    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    const { process: process2 } = globalThis;
+    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
     throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
   }
 };
@@ -14404,7 +13947,7 @@ var addFormValue = async (form, key, value) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
 var BaseCommits3 = /* @__PURE__ */ (() => {
   class BaseCommits4 extends APIResource2 {
     /**
@@ -14420,7 +13963,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     create(id, body, options) {
-      return this._client.post(path2`/projects/${id}/repository/commits`, multipartFormRequestOptions({ body, ...options }, this._client));
+      return this._client.post(path2`/api/v4/projects/${id}/repository/commits`, multipartFormRequestOptions({ body, ...options }, this._client));
     }
     /**
      * Get a specific commit of a project
@@ -14435,7 +13978,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieve(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}`, { query, ...options });
     }
     /**
      * Get a project repository commits
@@ -14447,7 +13990,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     list(id, query = {}, options) {
-      return this._client.get(path2`/projects/${id}/repository/commits`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits`, { query, ...options });
     }
     /**
      * Authorize commits upload
@@ -14460,7 +14003,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     authorize(id, options) {
-      return this._client.post(path2`/projects/${id}/repository/commits/authorize`, {
+      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/authorize`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14479,7 +14022,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     cherryPick(sha, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/repository/commits/${sha}/cherry_pick`, {
+      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/${sha}/cherry_pick`, {
         body,
         ...options
       });
@@ -14498,7 +14041,10 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveDiff(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/diff`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/diff`, {
+        query,
+        ...options
+      });
     }
     /**
      * Get Merge Requests associated with a commit
@@ -14514,7 +14060,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveMergeRequests(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/merge_requests`, {
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/merge_requests`, {
         query,
         ...options
       });
@@ -14533,7 +14079,10 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveRefs(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/refs`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/refs`, {
+        query,
+        ...options
+      });
     }
     /**
      * Get the sequence count of a commit SHA
@@ -14549,7 +14098,10 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveSequence(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/sequence`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/sequence`, {
+        query,
+        ...options
+      });
     }
     /**
      * Get a commit's signature
@@ -14565,7 +14117,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveSignature(sha, params, options) {
       const { id } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/signature`, options);
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/signature`, options);
     }
     /**
      * Get a commit's statuses
@@ -14581,7 +14133,10 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveStatuses(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/statuses`, { query, ...options });
+      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/statuses`, {
+        query,
+        ...options
+      });
     }
     /**
      * This feature was introduced in GitLab 11.5
@@ -14597,7 +14152,10 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     revert(sha, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/projects/${id}/repository/commits/${sha}/revert`, { body, ...options });
+      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/${sha}/revert`, {
+        body,
+        ...options
+      });
     }
   }
   BaseCommits4._key = Object.freeze([
@@ -14608,7 +14166,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
   return BaseCommits4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -14626,7 +14184,7 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
 var uuid42 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -14638,13 +14196,13 @@ var uuid42 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/version.mjs
-var VERSION2 = "0.3.0";
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/version.mjs
+var VERSION2 = "0.2.0";
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
 function getDetectedPlatform2() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -14770,7 +14328,7 @@ var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
 var FallbackEncoder2 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -14780,7 +14338,7 @@ var FallbackEncoder2 = ({ headers, body }) => {
   };
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
 var default_format2 = "RFC3986";
 var default_formatter2 = (v) => String(v);
 var formatters2 = {
@@ -14789,7 +14347,7 @@ var formatters2 = {
 };
 var RFC17382 = "RFC1738";
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
 var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
 var hex_table2 = /* @__PURE__ */ (() => {
   const array = [];
@@ -14868,7 +14426,7 @@ function maybe_map2(val, fn) {
   return fn(val);
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
 var array_prefix_generators2 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -15146,7 +14704,7 @@ function stringify2(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
 var levelNumbers2 = {
   off: 0,
   error: 200,
@@ -15219,7 +14777,7 @@ var formatRequestDetails2 = (details) => {
   return details;
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
 async function defaultParseResponse2(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -15253,7 +14811,7 @@ async function defaultParseResponse2(client, props) {
   return body;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
 var _APIPromise_client2;
 var APIPromise2 = /* @__PURE__ */ (() => {
   class APIPromise4 extends Promise {
@@ -15317,7 +14875,7 @@ var APIPromise2 = /* @__PURE__ */ (() => {
   return APIPromise4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
 var readEnv2 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -15328,7 +14886,7 @@ var readEnv2 = (env) => {
   return void 0;
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/client.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/client.mjs
 var _BaseGitLab_instances;
 var _BaseGitLab_encoder;
 var _BaseGitLab_baseURLOverridden;
@@ -15338,7 +14896,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * API Client for interfacing with the GitLab API.
      *
      * @param {string | undefined} [opts.apiToken=process.env['GITLAB_API_TOKEN'] ?? undefined]
-     * @param {string} [opts.baseURL=process.env['GITLAB_BASE_URL'] ?? https://gitlab.com/api/v4] - Override the default base URL for the API.
+     * @param {string} [opts.baseURL=process.env['GITLAB_BASE_URL'] ?? https://gitlab.com/api] - Override the default base URL for the API.
      * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
      * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
      * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
@@ -15355,7 +14913,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
       const options = {
         apiToken,
         ...opts,
-        baseURL: baseURL || `https://gitlab.com/api/v4`
+        baseURL: baseURL || `https://gitlab.com/api`
       };
       this.baseURL = options.baseURL;
       this.timeout = options.timeout ?? BaseGitLab2.DEFAULT_TIMEOUT;
@@ -15392,13 +14950,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Execute a GLQL (GitLab Query Language) query
      */
     glql(body, options) {
-      return this.post("/glql", { body, ...options });
+      return this.post("/api/v4/glql", { body, ...options });
     }
     /**
      * This feature was introduced in GitLab 11.0.
      */
     markdown(body, options) {
-      return this.post("/markdown", { body, ...options });
+      return this.post("/api/v4/markdown", { body, ...options });
     }
     /**
      * This feature was introduced in GitLab 17.5. \
@@ -15407,32 +14965,32 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      *  In GitLab 18.3, feature flag changed to `organization_switching`.
      */
     organizations(body, options) {
-      return this.post("/organizations", multipartFormRequestOptions({ body, ...options }, this));
+      return this.post("/api/v4/organizations", multipartFormRequestOptions({ body, ...options }, this));
     }
     /**
      * Return avatar url for a user
      */
     retrieveAvatar(query, options) {
-      return this.get("/avatar", { query, ...options });
+      return this.get("/api/v4/avatar", { query, ...options });
     }
     /**
      * Get a list of all deploy tokens across the GitLab instance. This endpoint
      * requires administrator access. This feature was introduced in GitLab 12.9.
      */
     retrieveDeployTokens(query = {}, options) {
-      return this.get("/deploy_tokens", { query, ...options });
+      return this.get("/api/v4/deploy_tokens", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 17.9. It will be removed in 18.0.
      */
     retrieveDiscoverCertBasedClusters(query, options) {
-      return this.get("/discover-cert-based-clusters", { query, ...options });
+      return this.get("/api/v4/discover-cert-based-clusters", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 9.3.
      */
     retrieveEvents(query = {}, options) {
-      return this.get("/events", { query, ...options });
+      return this.get("/api/v4/events", { query, ...options });
     }
     /**
      * Get a list of all experiments. Each experiment has an enabled status that
@@ -15440,13 +14998,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * contexts.
      */
     retrieveExperiments(options) {
-      return this.get("/experiments", options);
+      return this.get("/api/v4/experiments", options);
     }
     /**
      * Get currently authenticated user's issues statistics
      */
     retrieveIssuesStatistics(query = {}, options) {
-      return this.get("/issues_statistics", {
+      return this.get("/api/v4/issues_statistics", {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -15456,7 +15014,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Get a list of licenses
      */
     retrieveLicenses(options) {
-      return this.get("/licenses", options);
+      return this.get("/api/v4/licenses", options);
     }
     /**
      * Get all merge requests the authenticated user has access to. By default it
@@ -15464,19 +15022,19 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * requests, use parameter `scope=all`.
      */
     retrieveMergeRequests(query = {}, options) {
-      return this.get("/merge_requests", { query, ...options });
+      return this.get("/api/v4/merge_requests", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 15.2.
      */
     retrieveMetadata(options) {
-      return this.get("/metadata", options);
+      return this.get("/api/v4/metadata", options);
     }
     /**
      * This feature was introduced in GitLab 10.5.
      */
     retrieveSearch(query, options) {
-      return this.get("/search", {
+      return this.get("/api/v4/search", {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -15486,14 +15044,14 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Assigned open issues, assigned MRs and pending todos count
      */
     retrieveUserCounts(options) {
-      return this.get("/user_counts", options);
+      return this.get("/api/v4/user_counts", options);
     }
     /**
      * This feature was introduced in GitLab 8.13 and deprecated in 15.5. We recommend
      * you instead use the Metadata API.
      */
     retrieveVersion(options) {
-      return this.get("/version", options);
+      return this.get("/api/v4/version", options);
     }
     defaultQuery() {
       return this._options.defaultQuery;
@@ -15516,9 +15074,9 @@ var BaseGitLab = /* @__PURE__ */ (() => {
     makeStatusError(status, error, message, headers) {
       return APIError2.generate(status, error, message, headers);
     }
-    buildURL(path7, query, defaultBaseURL) {
+    buildURL(path4, query, defaultBaseURL) {
       const baseURL = !__classPrivateFieldGet2(this, _BaseGitLab_instances, "m", _BaseGitLab_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-      const url = isAbsoluteURL2(path7) ? new URL(path7) : new URL(baseURL + (baseURL.endsWith("/") && path7.startsWith("/") ? path7.slice(1) : path7));
+      const url = isAbsoluteURL2(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
       const defaultQuery = this.defaultQuery();
       if (!isEmptyObj2(defaultQuery)) {
         query = { ...defaultQuery, ...query };
@@ -15541,24 +15099,24 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      */
     async prepareRequest(request, { url, options }) {
     }
-    get(path7, opts) {
-      return this.methodRequest("get", path7, opts);
+    get(path4, opts) {
+      return this.methodRequest("get", path4, opts);
     }
-    post(path7, opts) {
-      return this.methodRequest("post", path7, opts);
+    post(path4, opts) {
+      return this.methodRequest("post", path4, opts);
     }
-    patch(path7, opts) {
-      return this.methodRequest("patch", path7, opts);
+    patch(path4, opts) {
+      return this.methodRequest("patch", path4, opts);
     }
-    put(path7, opts) {
-      return this.methodRequest("put", path7, opts);
+    put(path4, opts) {
+      return this.methodRequest("put", path4, opts);
     }
-    delete(path7, opts) {
-      return this.methodRequest("delete", path7, opts);
+    delete(path4, opts) {
+      return this.methodRequest("delete", path4, opts);
     }
-    methodRequest(method, path7, opts) {
+    methodRequest(method, path4, opts) {
       return this.request(Promise.resolve(opts).then((opts2) => {
-        return { method, path: path7, ...opts2 };
+        return { method, path: path4, ...opts2 };
       }));
     }
     request(options, remainingRetries = null) {
@@ -15734,8 +15292,8 @@ var BaseGitLab = /* @__PURE__ */ (() => {
     }
     async buildRequest(inputOptions, { retryCount = 0 } = {}) {
       const options = { ...inputOptions };
-      const { method, path: path7, query, defaultBaseURL } = options;
-      const url = this.buildURL(path7, query, defaultBaseURL);
+      const { method, path: path4, query, defaultBaseURL } = options;
+      const url = this.buildURL(path4, query, defaultBaseURL);
       if ("timeout" in options)
         validatePositiveInteger2("timeout", options.timeout);
       options.timeout = options.timeout ?? this.timeout;
@@ -15807,13 +15365,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
     }
   }
   _BaseGitLab_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitLab_instances = /* @__PURE__ */ new WeakSet(), _BaseGitLab_baseURLOverridden = function _BaseGitLab_baseURLOverridden2() {
-    return this.baseURL !== "https://gitlab.com/api/v4";
+    return this.baseURL !== "https://gitlab.com/api";
   };
   BaseGitLab2.DEFAULT_TIMEOUT = 6e4;
   return BaseGitLab2;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
 function createClient2(options) {
   const client = new BaseGitLab(options);
   for (const ResourceClass of options.resources) {
@@ -15866,27 +15424,22 @@ function getGitLabContext() {
     );
   }
   const host = process.env.CI_SERVER_URL || "https://gitlab.com";
-  const apiURL = process.env.CI_API_V4_URL || `${host}/api/v4`;
+  const apiV4URL = process.env.CI_API_V4_URL || `${host}/api/v4`;
+  const apiURL = apiV4URL.replace(/\/v4\/?$/, "");
   const maybePRNumber = parseInt(
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10
   );
-  const defaultBranch = process.env.CI_DEFAULT_BRANCH || null;
   const prNumber = Number.isInteger(maybePRNumber) ? maybePRNumber : null;
-  const refName = process.env.CI_COMMIT_REF_NAME || null;
-  const sha = process.env.CI_COMMIT_SHA || null;
   cachedContext2 = {
     provider: "gitlab",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitLab CI", pr: "MR", provider: "GitLab" },
-    defaultBranch,
+    names: { ci: "GitLab CI", pr: "MR" },
     prNumber,
-    projectID,
-    refName,
-    sha
+    projectID
   };
   logger.debug("GitLab context", cachedContext2);
   return cachedContext2;
@@ -15902,8 +15455,10 @@ var GitLabClient = class {
       resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
     });
   }
-  async listComments(prNumber) {
-    const comments = await this.client.projects.mergeRequests.notes.list(prNumber, { id: getGitLabContext().projectID }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
+  async listComments() {
+    const comments = await this.client.projects.mergeRequests.notes.list(getGitLabContext().prNumber, {
+      id: getGitLabContext().projectID
+    }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
       if (err instanceof APIError2 && err.status === 404) {
         return [];
       }
@@ -15911,61 +15466,23 @@ var GitLabClient = class {
     });
     return comments.map((c) => ({ id: c.id, body: c.body ?? "" }));
   }
-  async createComment(prNumber, props) {
-    const data = await this.client.projects.mergeRequests.notes.create(
-      prNumber,
-      { ...props, id: getGitLabContext().projectID }
-    );
-    return { id: data.id, body: data.body };
+  async createComment(body) {
+    await this.client.projects.mergeRequests.notes.create(getGitLabContext().prNumber, {
+      id: getGitLabContext().projectID,
+      body
+    });
   }
-  async updateComment(prNumber, props) {
-    const data = await this.client.projects.mergeRequests.notes.update(
-      props.id,
-      { ...props, id: getGitLabContext().projectID, noteable_id: prNumber }
-    );
-    return { id: data.id, body: data.body };
-  }
-  async getPullRequest(number) {
-    let mergeRequest = null;
-    let attempts = 0;
-    while (attempts++ < 3) {
-      mergeRequest = await this.client.projects.mergeRequests.retrieve(number, {
-        id: getGitLabContext().projectID
-      });
-      if (mergeRequest?.diff_refs?.start_sha && mergeRequest?.diff_refs?.head_sha) {
-        return {
-          number: mergeRequest.iid,
-          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
-          title: mergeRequest.title,
-          base_sha: mergeRequest.diff_refs.start_sha,
-          base_ref: mergeRequest.target_branch,
-          head_sha: mergeRequest.diff_refs.head_sha,
-          head_ref: mergeRequest.source_branch,
-          merge_commit_sha: mergeRequest.merge_commit_sha || mergeRequest.squash_commit_sha || null
-        };
-      }
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
-      });
-    }
-    logger.warn(
-      `Failed to find get diff_refs for merge request after ${attempts} attempts`,
-      { mergeRequestIID: number }
-    );
-    return null;
+  async updateComment(id, body) {
+    await this.client.projects.mergeRequests.notes.update(id, {
+      id: getGitLabContext().projectID,
+      noteable_id: getGitLabContext().prNumber,
+      body
+    });
   }
   async getPullRequestForCommit(sha) {
     const mergeRequests = await this.client.projects.repository.commits.retrieveMergeRequests(sha, {
       id: getGitLabContext().projectID
-    }).then(
-      (data) => (
-        // The OAS claims it's a single object, but the docs claim it's an
-        // array? Just handle both.
-        (Array.isArray(data) ? data : [data]).filter(
-          (c) => c.state !== "closed" && c.state !== "locked"
-        )
-      )
-    ).catch((err) => {
+    }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
       if (err instanceof APIError2 && err.status === 404) {
         return [];
       }
@@ -15981,8 +15498,32 @@ var GitLabClient = class {
       );
     }
     const mergeRequestIID = mergeRequests[0].iid;
-    const mergeRequest = await this.getPullRequest(mergeRequestIID);
-    return mergeRequest;
+    let mergeRequest = null;
+    let attempts = 0;
+    while (attempts++ < 3) {
+      mergeRequest = await this.client.projects.mergeRequests.retrieve(
+        mergeRequestIID,
+        { id: getGitLabContext().projectID }
+      );
+      if (mergeRequest?.diff_refs?.start_sha && mergeRequest?.diff_refs?.head_sha) {
+        return {
+          number: mergeRequest.iid,
+          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch
+        };
+      }
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
+      });
+    }
+    logger.warn(
+      `Failed to find merge request for commit after ${attempts} attempts`,
+      { commit: sha, mergeRequestIID }
+    );
+    return null;
   }
 };
 var cachedClient2;
@@ -16106,23 +15647,6 @@ async function getStainlessAuth() {
   }
 }
 
-// src/merge.run.ts
-var fs5 = __toESM(require("node:fs"));
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
-
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
@@ -16195,6 +15719,9 @@ var FailRunOn = [
   "note"
 ];
 var OutcomeConclusion = [...FailRunOn, "success"];
+function getDiffLanguages(outcomes) {
+  return Object.entries(outcomes).filter(([, outcome]) => outcome.hasDiff === true).map(([lang]) => lang);
+}
 function shouldFailRun({
   failRunOn,
   outcomes,
@@ -16317,7 +15844,7 @@ function categorizeOutcome({
     )[0];
     return {
       isPending: false,
-      conclusion: worstOutcome.severity,
+      conclusion: headConclusion,
       ...worstOutcome
     };
   }
@@ -16418,116 +15945,12 @@ var INTERNAL_COMMENT_TITLE = Heading(
   `${Symbol2.HeavyAsterisk} Stainless internal preview builds`
 );
 var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
-function printComment({
-  noChanges,
-  orgName,
-  projectName,
-  branch,
-  commitMessage,
-  targetCommitMessages,
-  pendingAiCommitMessages,
-  baseOutcomes,
-  outcomes
-}) {
-  const Blocks4 = (() => {
-    if (noChanges) {
-      return "No changes were made to the SDKs.";
-    }
-    const canEdit = !!baseOutcomes;
-    return [
-      Dedent`
-        This ${ctx().names.pr} will update the ${CodeInline(
-        projectName
-      )} SDKs with the following commit ${targetCommitMessages ? "messages" : "message"}.
-      `,
-      targetCommitMessages ? CommitMessagesSection({
-        targets: Object.keys(outcomes).sort(),
-        pendingAiCommitMessages,
-        targetCommitMessages,
-        commitMessage
-      }) : CodeBlock(commitMessage),
-      !canEdit ? null : targetCommitMessages ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : "Edit this comment to update it. It will appear in the SDK's changelogs.",
-      Results({ orgName, projectName, branch, outcomes, baseOutcomes })
-    ].filter((f) => f !== null).join(`
-
-`);
-  })();
-  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
-  const fullComment = Dedent`
-    ${COMMENT_TITLE}
-
-    ${Blocks4}
-
-    ${Rule()}
-
-    ${COMMENT_FOOTER_DIVIDER}
-
-    ${Italic(
-    `This comment is auto-generated by ${ctx().names.ci} and is automatically kept up to date as you push.<br/>If you push custom code to the preview branch, ${Link({
-      text: `re-run this workflow`,
-      href: ctx().urls.run
-    })} to update the comment.<br/>Last updated: ${dateString}`
-  )}
-  `;
-  return fullComment;
-}
-function CommitMessagesSection({
-  targets,
-  pendingAiCommitMessages,
-  targetCommitMessages,
-  commitMessage
-}) {
-  return targets.map((target) => {
-    const statusText = pendingAiCommitMessages?.has(target) ? `${Symbol2.HourglassFlowingSand} (generating...)` : "";
-    const message = targetCommitMessages[target] ?? commitMessage;
-    return Dedent`
-        **${target}**
-        ${statusText}${CodeBlock(message)}
-      `;
-  }).join("\n");
-}
 var DiagnosticIcon = {
   fatal: Symbol2.Exclamation,
   error: Symbol2.Exclamation,
   warning: Symbol2.Warning,
   note: Symbol2.Bulb
 };
-function Results({
-  orgName,
-  projectName,
-  branch,
-  outcomes,
-  baseOutcomes
-}) {
-  const results = [];
-  let hasPending = false;
-  Object.entries(outcomes).forEach(([lang, head]) => {
-    const base = baseOutcomes?.[lang];
-    hasPending ||= categorizeOutcome({
-      outcome: head,
-      baseOutcome: base
-    }).isPending ?? false;
-    const result = Result({
-      orgName,
-      projectName,
-      branch,
-      lang,
-      head,
-      base
-    });
-    if (result) {
-      results.push(result);
-    }
-  });
-  if (hasPending) {
-    results.push(
-      Dedent`
-        ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
-      `
-    );
-  }
-  return results.join("\n\n");
-}
 function Result({
   orgName,
   projectName,
@@ -16774,1229 +16197,172 @@ function InstallationDetails(head, lang) {
   if (!installation) return null;
   return CodeBlock({ content: installation, language: "bash" });
 }
-function parseCommitMessages(body) {
-  if (!body) {
-    return {};
-  }
-  const targetCommitMessages = {};
-  const languageBlocks = body.matchAll(
-    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
-  );
-  for (const match of languageBlocks) {
-    const language = match[1];
-    const message2 = match[2].trim();
-    if (message2) {
-      targetCommitMessages[language] = makeCommitMessageConventional(message2);
-    }
-  }
-  if (Object.keys(targetCommitMessages).length > 0) {
-    return { targetCommitMessages };
-  }
-  const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
-  return message ? { commitMessage: makeCommitMessageConventional(message) } : {};
-}
-async function retrieveComment(prNumber) {
-  const comments = await api().listComments(prNumber);
-  const existingComment = comments.find(
-    (comment) => comment.body?.includes(COMMENT_TITLE)
-  );
-  if (!existingComment) {
-    return null;
-  }
-  return {
-    id: existingComment.id,
-    ...parseCommitMessages(existingComment.body)
-  };
-}
-async function upsertComment(prNumber, {
+async function upsertComment({
   body,
   skipCreate = false
 }) {
-  logger.debug(`Upserting comment on ${ctx().names.pr} #${prNumber}`);
-  const comments = await api().listComments(prNumber);
+  logger.debug(`Upserting comment on ${ctx().names.pr} #${ctx().prNumber}`);
+  const comments = await api().listComments();
   const firstLine = body.trim().split("\n")[0];
   const existingComment = comments.find(
     (comment) => comment.body?.includes(firstLine)
   );
   if (existingComment) {
     logger.debug("Updating existing comment:", existingComment.id);
-    await api().updateComment(prNumber, { ...existingComment, body });
+    await api().updateComment(existingComment.id, body);
   } else if (!skipCreate) {
     logger.debug("Creating new comment");
-    await api().createComment(prNumber, { body });
+    await api().createComment(body);
   }
+}
+var ConclusionSeverity = [
+  "fatal",
+  "error",
+  "warning",
+  "note",
+  "success"
+];
+function worstConclusion(a, b) {
+  return ConclusionSeverity.indexOf(a) <= ConclusionSeverity.indexOf(b) ? a : b;
+}
+function conclusionEmoji(conclusion) {
+  switch (conclusion) {
+    case "fatal":
+    case "error":
+      return Symbol2.Exclamation;
+    case "warning":
+      return Symbol2.Warning;
+    case "note":
+    case "success":
+      return Symbol2.WhiteCheckMark;
+  }
+}
+function DiffSummaryTable(projects, isComplete) {
+  const rows = [];
+  for (const { orgName, projectName, outcomes, baseOutcomes } of projects) {
+    for (const [lang, head] of Object.entries(outcomes)) {
+      if (!head.hasDiff) continue;
+      const base = baseOutcomes?.[lang];
+      const url = head.codegenCompareUrl ?? CompareUrl(base, head);
+      if (!url) continue;
+      const target = `${orgName}/${projectName}-${lang}`;
+      const lines = head.diffStats != null ? `+${head.diffStats.additions} / -${head.diffStats.deletions}` : "\u2014";
+      const files = head.diffStats != null ? String(head.diffStats.changedFiles) : "\u2014";
+      rows.push(
+        `<tr><td>${Link({ text: target, href: url })}</td><td>${lines}</td><td>${files}</td></tr>`
+      );
+    }
+  }
+  if (rows.length === 0 && isComplete) return null;
+  const footer = !isComplete ? `<tr><td colspan="3">${Italic(`${Symbol2.HourglassFlowingSand} Builds still in progress \u2014 table may be incomplete`)}</td></tr>` : null;
+  return [
+    `**SDK diffs**`,
+    `<table>`,
+    `<tr><th>Target</th><th>Lines changed</th><th>Files changed</th></tr>`,
+    ...rows,
+    ...footer ? [footer] : [],
+    `</table>`
+  ].join("\n");
+}
+function printInternalComment(projects, { isComplete = false } = {}) {
+  const blocks = [];
+  for (const {
+    orgName,
+    projectName,
+    branch,
+    outcomes,
+    baseOutcomes
+  } of projects) {
+    const projectResults = [];
+    let hasPending = false;
+    let worstRegression = "success";
+    let projectHasDiff = false;
+    for (const [lang, head] of Object.entries(outcomes).sort(
+      (a, b) => a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1
+    )) {
+      const base = baseOutcomes?.[lang];
+      const categorized = categorizeOutcome({
+        outcome: head,
+        baseOutcome: base
+      });
+      hasPending ||= categorized.isPending ?? false;
+      if (!categorized.isPending && categorized.isRegression === true && categorized.severity) {
+        worstRegression = worstConclusion(
+          worstRegression,
+          categorized.severity
+        );
+      }
+      const hasDiff = head.hasDiff ?? false;
+      projectHasDiff ||= hasDiff;
+      const result = Result({
+        orgName,
+        projectName,
+        branch,
+        lang,
+        head,
+        base,
+        hasDiff
+      });
+      if (result) {
+        projectResults.push(`<li>${result}</li>`);
+      }
+    }
+    if (hasPending) {
+      projectResults.push(
+        Dedent`
+          ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
+        `
+      );
+    }
+    const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worstRegression);
+    const diffIndicator = projectHasDiff ? ` ${Symbol2.Eyes}` : "";
+    blocks.push(
+      Details({
+        summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
+        body: projectResults.join("\n\n"),
+        indent: false,
+        open: worstRegression !== "success" && worstRegression !== "note" && !hasPending
+      })
+    );
+  }
+  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+  const diffTable = DiffSummaryTable(
+    projects.map(({ orgName, projectName, outcomes, baseOutcomes }) => ({
+      orgName,
+      projectName,
+      outcomes,
+      baseOutcomes
+    })),
+    isComplete
+  );
+  return [
+    INTERNAL_COMMENT_TITLE,
+    blocks.join("\n\n"),
+    diffTable,
+    Rule(),
+    COMMENT_FOOTER_DIVIDER,
+    Italic(`Last updated: ${dateString}`)
+  ].filter(Boolean).join("\n\n");
 }
 function areCommentsEqual(a, b) {
   return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
 }
-function commentThrottler(prNumber) {
+function commentThrottler() {
   let lastComment = null;
   let lastCommentTime = null;
   return async ({ body, force = false }) => {
     if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
-      await upsertComment(prNumber, { body });
+      await upsertComment({ body });
       lastComment = body;
       lastCommentTime = /* @__PURE__ */ new Date();
     }
   };
 }
 
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/context.js
-var import_node_process = __toESM(require("node:process"), 1);
-var import_node_util = require("node:util");
-var getContext = (raw) => ({
-  start: import_node_process.default.hrtime.bigint(),
-  command: raw.map((part) => getCommandPart((0, import_node_util.stripVTControlCharacters)(part))).join(" "),
-  state: { stdout: "", stderr: "", output: "" }
-});
-var getCommandPart = (part) => /[^\w./-]/.test(part) ? `'${part.replaceAll("'", "'\\''")}'` : part;
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/options.js
-var import_node_path = __toESM(require("node:path"), 1);
-var import_node_url = require("node:url");
-var import_node_process2 = __toESM(require("node:process"), 1);
-var getOptions = ({
-  stdin,
-  stdout,
-  stderr,
-  stdio = [stdin, stdout, stderr],
-  env: envOption,
-  preferLocal,
-  cwd: cwdOption = ".",
-  ...options
-}) => {
-  const cwd = cwdOption instanceof URL ? (0, import_node_url.fileURLToPath)(cwdOption) : import_node_path.default.resolve(cwdOption);
-  const env = envOption ? { ...import_node_process2.default.env, ...envOption } : void 0;
-  const input = stdio[0]?.string;
-  return {
-    ...options,
-    input,
-    stdio: input === void 0 ? stdio : ["pipe", ...stdio.slice(1)],
-    env: preferLocal ? addLocalPath(env ?? import_node_process2.default.env, cwd) : env,
-    cwd
-  };
-};
-var addLocalPath = ({ Path: Path3 = "", PATH = Path3, ...env }, cwd) => {
-  const pathParts = PATH.split(import_node_path.default.delimiter);
-  const localPaths = getLocalPaths([], import_node_path.default.resolve(cwd)).map((localPath) => import_node_path.default.join(localPath, "node_modules/.bin")).filter((localPath) => !pathParts.includes(localPath));
-  return { ...env, PATH: [...localPaths, PATH].filter(Boolean).join(import_node_path.default.delimiter) };
-};
-var getLocalPaths = (localPaths, localPath) => localPaths.at(-1) === localPath ? localPaths : getLocalPaths([...localPaths, localPath], import_node_path.default.resolve(localPath, ".."));
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
-var import_node_child_process = require("node:child_process");
-var import_node_events2 = require("node:events");
-var import_node_process5 = __toESM(require("node:process"), 1);
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/windows.js
-var import_promises = __toESM(require("node:fs/promises"), 1);
-var import_node_path2 = __toESM(require("node:path"), 1);
-var import_node_process3 = __toESM(require("node:process"), 1);
-var applyForceShell = async (file, commandArguments, options) => await shouldForceShell(file, options) ? [escapeFile(file), commandArguments.map((argument) => escapeArgument(argument)), { ...options, shell: true }] : [file, commandArguments, options];
-var shouldForceShell = async (file, { shell, cwd, env = import_node_process3.default.env }) => import_node_process3.default.platform === "win32" && !shell && !await isExe(file, cwd, env);
-var isExe = (file, cwd, { Path: Path3 = "", PATH = Path3 }) => (
-  // If the *.exe or *.com file extension was not omitted.
-  // Windows common file systems are case-insensitive.
-  exeExtensions.some((extension) => file.toLowerCase().endsWith(extension)) || mIsExe(file, cwd, PATH)
-);
-var EXE_MEMO = {};
-var memoize = (function_) => (...arguments_) => (
-  // Use returned assignment to keep code small
-  EXE_MEMO[arguments_.join("\0")] ??= function_(...arguments_)
-);
-var access = memoize(import_promises.default.access);
-var mIsExe = memoize(async (file, cwd, PATH) => {
-  const parts = PATH.split(import_node_path2.default.delimiter).filter(Boolean).map((part) => part.replace(/^"(.*)"$/, "$1"));
-  try {
-    await Promise.any(
-      [cwd, ...parts].flatMap(
-        (part) => exeExtensions.map((extension) => access(`${import_node_path2.default.resolve(part, file)}${extension}`))
-      )
-    );
-  } catch {
-    return false;
-  }
-  return true;
-});
-var exeExtensions = [".exe", ".com"];
-var escapeArgument = (argument) => escapeFile(escapeFile(`"${argument.replaceAll(/(\\*)"/g, '$1$1\\"').replace(/(\\*)$/, "$1$1")}"`));
-var escapeFile = (file) => file.replaceAll(/([()\][%!^"`<>&|;, *?])/g, "^$1");
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/result.js
-var import_node_events = require("node:events");
-var import_node_process4 = __toESM(require("node:process"), 1);
-var getResult = async (nodeChildProcess, { input }, context) => {
-  const instance = await nodeChildProcess;
-  if (input !== void 0) {
-    instance.stdin.end(input);
-  }
-  const onClose = (0, import_node_events.once)(instance, "close");
-  try {
-    await Promise.race([
-      onClose,
-      ...instance.stdio.filter(Boolean).map((stream) => onStreamError(stream))
-    ]);
-    checkFailure(context, getErrorOutput(instance));
-    return getOutputs(context);
-  } catch (error) {
-    await Promise.allSettled([onClose]);
-    throw getResultError(error, instance, context);
-  }
-};
-var onStreamError = async (stream) => {
-  for await (const [error] of (0, import_node_events.on)(stream, "error")) {
-    if (!["ERR_STREAM_PREMATURE_CLOSE", "EPIPE"].includes(error?.code)) {
-      throw error;
-    }
-  }
-};
-var checkFailure = ({ command }, { exitCode, signalName }) => {
-  if (signalName !== void 0) {
-    throw new SubprocessError(`Command was terminated with ${signalName}: ${command}`);
-  }
-  if (exitCode !== void 0) {
-    throw new SubprocessError(`Command failed with exit code ${exitCode}: ${command}`);
-  }
-};
-var getResultError = (error, instance, context) => Object.assign(
-  getErrorInstance(error, context),
-  getErrorOutput(instance),
-  getOutputs(context)
-);
-var getErrorInstance = (error, { command }) => error instanceof SubprocessError ? error : new SubprocessError(`Command failed: ${command}`, { cause: error });
-var SubprocessError = class extends Error {
-  name = "SubprocessError";
-};
-var getErrorOutput = ({ exitCode, signalCode }) => ({
-  // `exitCode` can be a negative number (`errno`) when the `error` event is emitted on the `instance`
-  ...exitCode < 1 ? {} : { exitCode },
-  ...signalCode === null ? {} : { signalName: signalCode }
-});
-var getOutputs = ({ state: { stdout, stderr, output }, command, start }) => ({
-  stdout: getOutput(stdout),
-  stderr: getOutput(stderr),
-  output: getOutput(output),
-  command,
-  durationMs: Number(import_node_process4.default.hrtime.bigint() - start) / 1e6
-});
-var getOutput = (output) => output.at(-1) === "\n" ? output.slice(0, output.at(-2) === "\r" ? -2 : -1) : output;
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/spawn.js
-var spawnSubprocess = async (file, commandArguments, options, context) => {
-  try {
-    if (["node", "node.exe"].includes(file.toLowerCase())) {
-      file = import_node_process5.default.execPath;
-      commandArguments = [...import_node_process5.default.execArgv.filter((flag) => !flag.startsWith("--inspect")), ...commandArguments];
-    }
-    [file, commandArguments, options] = await applyForceShell(file, commandArguments, options);
-    [file, commandArguments, options] = concatenateShell(file, commandArguments, options);
-    const instance = (0, import_node_child_process.spawn)(file, commandArguments, options);
-    bufferOutput(instance.stdout, context, "stdout");
-    bufferOutput(instance.stderr, context, "stderr");
-    instance.once("error", () => {
-    });
-    await (0, import_node_events2.once)(instance, "spawn");
-    return instance;
-  } catch (error) {
-    throw getResultError(error, {}, context);
-  }
-};
-var concatenateShell = (file, commandArguments, options) => options.shell && commandArguments.length > 0 ? [[file, ...commandArguments].join(" "), [], options] : [file, commandArguments, options];
-var bufferOutput = (stream, { state }, streamName) => {
-  if (stream) {
-    stream.setEncoding("utf8");
-    if (!state.isIterating) {
-      state.isIterating = false;
-      stream.on("data", (chunk) => {
-        state[streamName] += chunk;
-        state.output += chunk;
-      });
-    }
-  }
-};
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/pipe.js
-var import_promises2 = require("node:stream/promises");
-var handlePipe = async (subprocesses) => {
-  const [[from, to]] = await Promise.all([Promise.allSettled(subprocesses), pipeStreams(subprocesses)]);
-  if (to.reason) {
-    to.reason.pipedFrom = from.reason ?? from.value;
-    throw to.reason;
-  }
-  if (from.reason) {
-    throw from.reason;
-  }
-  return { ...to.value, pipedFrom: from.value };
-};
-var pipeStreams = async (subprocesses) => {
-  try {
-    const [{ stdout }, { stdin }] = await Promise.all(subprocesses.map(({ nodeChildProcess }) => nodeChildProcess));
-    if (stdin === null) {
-      throw new Error('The "stdin" option must be set on the first "spawn()" call in the pipeline.');
-    }
-    if (stdout === null) {
-      throw new Error('The "stdout" option must be set on the last "spawn()" call in the pipeline.');
-    }
-    (0, import_promises2.pipeline)(stdout, stdin).catch(() => {
-    });
-  } catch (error) {
-    await Promise.allSettled(subprocesses.map(({ nodeChildProcess }) => closeStdin(nodeChildProcess)));
-    throw error;
-  }
-};
-var closeStdin = async (nodeChildProcess) => {
-  const { stdin } = await nodeChildProcess;
-  stdin.end();
-};
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/iterable.js
-var readline = __toESM(require("node:readline/promises"), 1);
-var lineIterator = async function* (subprocess, { state }, streamName) {
-  if (state.isIterating === false) {
-    throw new Error(`The subprocess must be iterated right away, for example:
-	for await (const line of spawn(...)) { ... }`);
-  }
-  state.isIterating = true;
-  try {
-    const { [streamName]: stream } = await subprocess.nodeChildProcess;
-    if (!stream) {
-      return;
-    }
-    handleErrors(subprocess);
-    yield* readline.createInterface({ input: stream });
-  } finally {
-    await subprocess;
-  }
-};
-var handleErrors = async (subprocess) => {
-  try {
-    await subprocess;
-  } catch {
-  }
-};
-var combineAsyncIterators = async function* (...iterators) {
-  try {
-    let promises = [];
-    while (iterators.length > 0) {
-      promises = iterators.map((iterator2, index2) => promises[index2] ?? getNext(iterator2));
-      const [{ value, done }, index] = await Promise.race(promises.map((promise, index2) => Promise.all([promise, index2])));
-      const [iterator] = iterators.splice(index, 1);
-      promises.splice(index, 1);
-      if (!done) {
-        iterators.push(iterator);
-        yield value;
-      }
-    }
-  } finally {
-    await Promise.all(iterators.map((iterator) => iterator.return()));
-  }
-};
-var getNext = async (iterator) => {
-  try {
-    return await iterator.next();
-  } catch (error) {
-    await iterator.throw(error);
-  }
-};
-
-// node_modules/.pnpm/nano-spawn@1.0.3/node_modules/nano-spawn/source/index.js
-function spawn2(file, second, third, previous) {
-  const [commandArguments = [], options = {}] = Array.isArray(second) ? [second, third] : [[], second];
-  const context = getContext([file, ...commandArguments]);
-  const spawnOptions = getOptions(options);
-  const nodeChildProcess = spawnSubprocess(file, commandArguments, spawnOptions, context);
-  let subprocess = getResult(nodeChildProcess, spawnOptions, context);
-  Object.assign(subprocess, { nodeChildProcess });
-  subprocess = previous ? handlePipe([previous, subprocess]) : subprocess;
-  const stdout = lineIterator(subprocess, context, "stdout");
-  const stderr = lineIterator(subprocess, context, "stderr");
-  return Object.assign(subprocess, {
-    nodeChildProcess,
-    stdout,
-    stderr,
-    [Symbol.asyncIterator]: () => combineAsyncIterators(stdout, stderr),
-    pipe: (file2, second2, third2) => spawn2(file2, second2, third2, subprocess)
-  });
-}
-
-// src/config.ts
-var fs4 = __toESM(require("node:fs"));
-var import_node_os = require("node:os");
-var path5 = __toESM(require("node:path"));
-function getSavedFilePath(file, sha, extension) {
-  return path5.join(
-    (0, import_node_os.tmpdir)(),
-    "stainless-generated-config",
-    `${file}-${sha}${extension}`
-  );
-}
-async function saveConfig({
-  oasPath,
-  configPath
-}) {
-  let hasOAS = false;
-  let hasConfig = false;
-  const savedSha = (await spawn2("git", ["rev-parse", "HEAD"])).stdout.trim();
-  if (!savedSha) {
-    throw new Error("Unable to determine current SHA; is there a git repo?");
-  }
-  logger.info("Saving generated config for", savedSha);
-  if (oasPath && fs4.existsSync(oasPath)) {
-    hasOAS = true;
-    const savedFilePath = getSavedFilePath(
-      "oas",
-      savedSha,
-      path5.extname(oasPath)
-    );
-    fs4.mkdirSync(path5.dirname(savedFilePath), { recursive: true });
-    fs4.copyFileSync(oasPath, savedFilePath);
-    fs4.rmSync(oasPath);
-    logger.info(`Saved OAS file to ${savedFilePath}`);
-  }
-  if (configPath && fs4.existsSync(configPath)) {
-    hasConfig = true;
-    const savedFilePath = getSavedFilePath(
-      "config",
-      savedSha,
-      path5.extname(configPath)
-    );
-    fs4.mkdirSync(path5.dirname(savedFilePath), { recursive: true });
-    fs4.copyFileSync(configPath, savedFilePath);
-    fs4.rmSync(configPath);
-    logger.info(`Saved config file to ${savedFilePath}`);
-  }
-  return { hasOAS, hasConfig, savedSha };
-}
-async function readConfig({
-  oasPath,
-  configPath,
-  sha,
-  required = false
-}) {
-  sha ??= (await spawn2("git", ["rev-parse", "HEAD"])).stdout;
-  if (!sha) {
-    throw new Error("Unable to determine current SHA; is there a git repo?");
-  }
-  logger.info("Reading config at SHA", sha);
-  const results = {};
-  const addToResults = async (file, filePath, via) => {
-    if (results[file]) {
-      return;
-    }
-    if (!filePath || !fs4.existsSync(filePath)) {
-      logger.debug(`Skipping missing ${file} at ${filePath}`);
-      return;
-    }
-    results[file] = fs4.readFileSync(filePath, "utf-8");
-    results[`${file}Hash`] = (await spawn2("md5sum", [filePath])).stdout.split(
-      " "
-    )[0];
-    logger.info(`Using ${file} via ${via}`, { hash: results[`${file}Hash`] });
-  };
-  try {
-    await spawn2("git", ["fetch", "--depth=1", "origin", sha]).catch(() => null);
-    await spawn2("git", ["checkout", sha, "--", "."]);
-  } catch {
-    logger.debug("Could not checkout", sha);
-  }
-  await addToResults("oas", oasPath, `git ${sha}`);
-  await addToResults("config", configPath, `git ${sha}`);
-  try {
-    await addToResults(
-      "oas",
-      getSavedFilePath("oas", sha, path5.extname(oasPath ?? "")),
-      `saved ${sha}`
-    );
-    await addToResults(
-      "config",
-      getSavedFilePath("config", sha, path5.extname(configPath ?? "")),
-      `saved ${sha}`
-    );
-  } catch (e) {
-    logger.info(`Could not get config from saved file path: ${e}`);
-    logger.debug("Could not get config from saved file path");
-  }
-  if (required) {
-    if (oasPath && !results.oas) {
-      throw new Error(`Missing OpenAPI spec at ${oasPath} for ${sha}`);
-    }
-    if (configPath && !results.config) {
-      throw new Error(`Missing config at ${configPath} for ${sha}`);
-    }
-  }
-  return results;
-}
-async function isConfigChanged({
-  before,
-  after
-}) {
-  let changed = false;
-  if (before.oasHash !== after.oasHash) {
-    logger.debug("OAS file changed");
-    changed = true;
-  }
-  if (before.configHash !== after.configHash) {
-    logger.debug("Config file changed");
-    changed = true;
-  }
-  return changed;
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/base.js
-var Diff = class {
-  diff(oldStr, newStr, options = {}) {
-    let callback;
-    if (typeof options === "function") {
-      callback = options;
-      options = {};
-    } else if ("callback" in options) {
-      callback = options.callback;
-    }
-    const oldString = this.castInput(oldStr, options);
-    const newString = this.castInput(newStr, options);
-    const oldTokens = this.removeEmpty(this.tokenize(oldString, options));
-    const newTokens = this.removeEmpty(this.tokenize(newString, options));
-    return this.diffWithOptionsObj(oldTokens, newTokens, options, callback);
-  }
-  diffWithOptionsObj(oldTokens, newTokens, options, callback) {
-    var _a2;
-    const done = (value) => {
-      value = this.postProcess(value, options);
-      if (callback) {
-        setTimeout(function() {
-          callback(value);
-        }, 0);
-        return void 0;
-      } else {
-        return value;
-      }
-    };
-    const newLen = newTokens.length, oldLen = oldTokens.length;
-    let editLength = 1;
-    let maxEditLength = newLen + oldLen;
-    if (options.maxEditLength != null) {
-      maxEditLength = Math.min(maxEditLength, options.maxEditLength);
-    }
-    const maxExecutionTime = (_a2 = options.timeout) !== null && _a2 !== void 0 ? _a2 : Infinity;
-    const abortAfterTimestamp = Date.now() + maxExecutionTime;
-    const bestPath = [{ oldPos: -1, lastComponent: void 0 }];
-    let newPos = this.extractCommon(bestPath[0], newTokens, oldTokens, 0, options);
-    if (bestPath[0].oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-      return done(this.buildValues(bestPath[0].lastComponent, newTokens, oldTokens));
-    }
-    let minDiagonalToConsider = -Infinity, maxDiagonalToConsider = Infinity;
-    const execEditLength = () => {
-      for (let diagonalPath = Math.max(minDiagonalToConsider, -editLength); diagonalPath <= Math.min(maxDiagonalToConsider, editLength); diagonalPath += 2) {
-        let basePath;
-        const removePath = bestPath[diagonalPath - 1], addPath = bestPath[diagonalPath + 1];
-        if (removePath) {
-          bestPath[diagonalPath - 1] = void 0;
-        }
-        let canAdd = false;
-        if (addPath) {
-          const addPathNewPos = addPath.oldPos - diagonalPath;
-          canAdd = addPath && 0 <= addPathNewPos && addPathNewPos < newLen;
-        }
-        const canRemove = removePath && removePath.oldPos + 1 < oldLen;
-        if (!canAdd && !canRemove) {
-          bestPath[diagonalPath] = void 0;
-          continue;
-        }
-        if (!canRemove || canAdd && removePath.oldPos < addPath.oldPos) {
-          basePath = this.addToPath(addPath, true, false, 0, options);
-        } else {
-          basePath = this.addToPath(removePath, false, true, 1, options);
-        }
-        newPos = this.extractCommon(basePath, newTokens, oldTokens, diagonalPath, options);
-        if (basePath.oldPos + 1 >= oldLen && newPos + 1 >= newLen) {
-          return done(this.buildValues(basePath.lastComponent, newTokens, oldTokens)) || true;
-        } else {
-          bestPath[diagonalPath] = basePath;
-          if (basePath.oldPos + 1 >= oldLen) {
-            maxDiagonalToConsider = Math.min(maxDiagonalToConsider, diagonalPath - 1);
-          }
-          if (newPos + 1 >= newLen) {
-            minDiagonalToConsider = Math.max(minDiagonalToConsider, diagonalPath + 1);
-          }
-        }
-      }
-      editLength++;
-    };
-    if (callback) {
-      (function exec() {
-        setTimeout(function() {
-          if (editLength > maxEditLength || Date.now() > abortAfterTimestamp) {
-            return callback(void 0);
-          }
-          if (!execEditLength()) {
-            exec();
-          }
-        }, 0);
-      })();
-    } else {
-      while (editLength <= maxEditLength && Date.now() <= abortAfterTimestamp) {
-        const ret = execEditLength();
-        if (ret) {
-          return ret;
-        }
-      }
-    }
-  }
-  addToPath(path7, added, removed, oldPosInc, options) {
-    const last = path7.lastComponent;
-    if (last && !options.oneChangePerToken && last.added === added && last.removed === removed) {
-      return {
-        oldPos: path7.oldPos + oldPosInc,
-        lastComponent: { count: last.count + 1, added, removed, previousComponent: last.previousComponent }
-      };
-    } else {
-      return {
-        oldPos: path7.oldPos + oldPosInc,
-        lastComponent: { count: 1, added, removed, previousComponent: last }
-      };
-    }
-  }
-  extractCommon(basePath, newTokens, oldTokens, diagonalPath, options) {
-    const newLen = newTokens.length, oldLen = oldTokens.length;
-    let oldPos = basePath.oldPos, newPos = oldPos - diagonalPath, commonCount = 0;
-    while (newPos + 1 < newLen && oldPos + 1 < oldLen && this.equals(oldTokens[oldPos + 1], newTokens[newPos + 1], options)) {
-      newPos++;
-      oldPos++;
-      commonCount++;
-      if (options.oneChangePerToken) {
-        basePath.lastComponent = { count: 1, previousComponent: basePath.lastComponent, added: false, removed: false };
-      }
-    }
-    if (commonCount && !options.oneChangePerToken) {
-      basePath.lastComponent = { count: commonCount, previousComponent: basePath.lastComponent, added: false, removed: false };
-    }
-    basePath.oldPos = oldPos;
-    return newPos;
-  }
-  equals(left, right, options) {
-    if (options.comparator) {
-      return options.comparator(left, right);
-    } else {
-      return left === right || !!options.ignoreCase && left.toLowerCase() === right.toLowerCase();
-    }
-  }
-  removeEmpty(array) {
-    const ret = [];
-    for (let i = 0; i < array.length; i++) {
-      if (array[i]) {
-        ret.push(array[i]);
-      }
-    }
-    return ret;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  castInput(value, options) {
-    return value;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  tokenize(value, options) {
-    return Array.from(value);
-  }
-  join(chars) {
-    return chars.join("");
-  }
-  postProcess(changeObjects, options) {
-    return changeObjects;
-  }
-  get useLongestToken() {
-    return false;
-  }
-  buildValues(lastComponent, newTokens, oldTokens) {
-    const components = [];
-    let nextComponent;
-    while (lastComponent) {
-      components.push(lastComponent);
-      nextComponent = lastComponent.previousComponent;
-      delete lastComponent.previousComponent;
-      lastComponent = nextComponent;
-    }
-    components.reverse();
-    const componentLen = components.length;
-    let componentPos = 0, newPos = 0, oldPos = 0;
-    for (; componentPos < componentLen; componentPos++) {
-      const component = components[componentPos];
-      if (!component.removed) {
-        if (!component.added && this.useLongestToken) {
-          let value = newTokens.slice(newPos, newPos + component.count);
-          value = value.map(function(value2, i) {
-            const oldValue = oldTokens[oldPos + i];
-            return oldValue.length > value2.length ? oldValue : value2;
-          });
-          component.value = this.join(value);
-        } else {
-          component.value = this.join(newTokens.slice(newPos, newPos + component.count));
-        }
-        newPos += component.count;
-        if (!component.added) {
-          oldPos += component.count;
-        }
-      } else {
-        component.value = this.join(oldTokens.slice(oldPos, oldPos + component.count));
-        oldPos += component.count;
-      }
-    }
-    return components;
-  }
-};
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/string.js
-function hasOnlyWinLineEndings(string) {
-  return string.includes("\r\n") && !string.startsWith("\n") && !string.match(/[^\r]\n/);
-}
-function hasOnlyUnixLineEndings(string) {
-  return !string.includes("\r\n") && string.includes("\n");
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/line.js
-var LineDiff = class extends Diff {
-  constructor() {
-    super(...arguments);
-    this.tokenize = tokenize;
-  }
-  equals(left, right, options) {
-    if (options.ignoreWhitespace) {
-      if (!options.newlineIsToken || !left.includes("\n")) {
-        left = left.trim();
-      }
-      if (!options.newlineIsToken || !right.includes("\n")) {
-        right = right.trim();
-      }
-    } else if (options.ignoreNewlineAtEof && !options.newlineIsToken) {
-      if (left.endsWith("\n")) {
-        left = left.slice(0, -1);
-      }
-      if (right.endsWith("\n")) {
-        right = right.slice(0, -1);
-      }
-    }
-    return super.equals(left, right, options);
-  }
-};
-var lineDiff = new LineDiff();
-function diffLines(oldStr, newStr, options) {
-  return lineDiff.diff(oldStr, newStr, options);
-}
-function tokenize(value, options) {
-  if (options.stripTrailingCr) {
-    value = value.replace(/\r\n/g, "\n");
-  }
-  const retLines = [], linesAndNewlines = value.split(/(\n|\r\n)/);
-  if (!linesAndNewlines[linesAndNewlines.length - 1]) {
-    linesAndNewlines.pop();
-  }
-  for (let i = 0; i < linesAndNewlines.length; i++) {
-    const line = linesAndNewlines[i];
-    if (i % 2 && !options.newlineIsToken) {
-      retLines[retLines.length - 1] += line;
-    } else {
-      retLines.push(line);
-    }
-  }
-  return retLines;
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/line-endings.js
-function unixToWin(patch) {
-  if (Array.isArray(patch)) {
-    return patch.map((p) => unixToWin(p));
-  }
-  return Object.assign(Object.assign({}, patch), { hunks: patch.hunks.map((hunk) => Object.assign(Object.assign({}, hunk), { lines: hunk.lines.map((line, i) => {
-    var _a2;
-    return line.startsWith("\\") || line.endsWith("\r") || ((_a2 = hunk.lines[i + 1]) === null || _a2 === void 0 ? void 0 : _a2.startsWith("\\")) ? line : line + "\r";
-  }) })) });
-}
-function winToUnix(patch) {
-  if (Array.isArray(patch)) {
-    return patch.map((p) => winToUnix(p));
-  }
-  return Object.assign(Object.assign({}, patch), { hunks: patch.hunks.map((hunk) => Object.assign(Object.assign({}, hunk), { lines: hunk.lines.map((line) => line.endsWith("\r") ? line.substring(0, line.length - 1) : line) })) });
-}
-function isUnix(patch) {
-  if (!Array.isArray(patch)) {
-    patch = [patch];
-  }
-  return !patch.some((index) => index.hunks.some((hunk) => hunk.lines.some((line) => !line.startsWith("\\") && line.endsWith("\r"))));
-}
-function isWin(patch) {
-  if (!Array.isArray(patch)) {
-    patch = [patch];
-  }
-  return patch.some((index) => index.hunks.some((hunk) => hunk.lines.some((line) => line.endsWith("\r")))) && patch.every((index) => index.hunks.every((hunk) => hunk.lines.every((line, i) => {
-    var _a2;
-    return line.startsWith("\\") || line.endsWith("\r") || ((_a2 = hunk.lines[i + 1]) === null || _a2 === void 0 ? void 0 : _a2.startsWith("\\"));
-  })));
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/parse.js
-function parsePatch(uniDiff) {
-  const diffstr = uniDiff.split(/\n/), list = [];
-  let i = 0;
-  function parseIndex() {
-    const index = {};
-    list.push(index);
-    while (i < diffstr.length) {
-      const line = diffstr[i];
-      if (/^(---|\+\+\+|@@)\s/.test(line)) {
-        break;
-      }
-      const headerMatch = /^(?:Index:|diff(?: -r \w+)+)\s+/.exec(line);
-      if (headerMatch) {
-        index.index = line.substring(headerMatch[0].length).trim();
-      }
-      i++;
-    }
-    parseFileHeader(index);
-    parseFileHeader(index);
-    index.hunks = [];
-    while (i < diffstr.length) {
-      const line = diffstr[i];
-      if (/^(Index:\s|diff\s|---\s|\+\+\+\s|===================================================================)/.test(line)) {
-        break;
-      } else if (/^@@/.test(line)) {
-        index.hunks.push(parseHunk());
-      } else if (line) {
-        throw new Error("Unknown line " + (i + 1) + " " + JSON.stringify(line));
-      } else {
-        i++;
-      }
-    }
-  }
-  function parseFileHeader(index) {
-    const fileHeaderMatch = /^(---|\+\+\+)\s+/.exec(diffstr[i]);
-    if (fileHeaderMatch) {
-      const prefix = fileHeaderMatch[1], data = diffstr[i].substring(3).trim().split("	", 2), header = (data[1] || "").trim();
-      let fileName = data[0].replace(/\\\\/g, "\\");
-      if (fileName.startsWith('"') && fileName.endsWith('"')) {
-        fileName = fileName.substr(1, fileName.length - 2);
-      }
-      if (prefix === "---") {
-        index.oldFileName = fileName;
-        index.oldHeader = header;
-      } else {
-        index.newFileName = fileName;
-        index.newHeader = header;
-      }
-      i++;
-    }
-  }
-  function parseHunk() {
-    var _a2;
-    const chunkHeaderIndex = i, chunkHeaderLine = diffstr[i++], chunkHeader = chunkHeaderLine.split(/@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/);
-    const hunk = {
-      oldStart: +chunkHeader[1],
-      oldLines: typeof chunkHeader[2] === "undefined" ? 1 : +chunkHeader[2],
-      newStart: +chunkHeader[3],
-      newLines: typeof chunkHeader[4] === "undefined" ? 1 : +chunkHeader[4],
-      lines: []
-    };
-    if (hunk.oldLines === 0) {
-      hunk.oldStart += 1;
-    }
-    if (hunk.newLines === 0) {
-      hunk.newStart += 1;
-    }
-    let addCount = 0, removeCount = 0;
-    for (; i < diffstr.length && (removeCount < hunk.oldLines || addCount < hunk.newLines || ((_a2 = diffstr[i]) === null || _a2 === void 0 ? void 0 : _a2.startsWith("\\"))); i++) {
-      const operation = diffstr[i].length == 0 && i != diffstr.length - 1 ? " " : diffstr[i][0];
-      if (operation === "+" || operation === "-" || operation === " " || operation === "\\") {
-        hunk.lines.push(diffstr[i]);
-        if (operation === "+") {
-          addCount++;
-        } else if (operation === "-") {
-          removeCount++;
-        } else if (operation === " ") {
-          addCount++;
-          removeCount++;
-        }
-      } else {
-        throw new Error(`Hunk at line ${chunkHeaderIndex + 1} contained invalid line ${diffstr[i]}`);
-      }
-    }
-    if (!addCount && hunk.newLines === 1) {
-      hunk.newLines = 0;
-    }
-    if (!removeCount && hunk.oldLines === 1) {
-      hunk.oldLines = 0;
-    }
-    if (addCount !== hunk.newLines) {
-      throw new Error("Added line count did not match for hunk at line " + (chunkHeaderIndex + 1));
-    }
-    if (removeCount !== hunk.oldLines) {
-      throw new Error("Removed line count did not match for hunk at line " + (chunkHeaderIndex + 1));
-    }
-    return hunk;
-  }
-  while (i < diffstr.length) {
-    parseIndex();
-  }
-  return list;
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/util/distance-iterator.js
-function distance_iterator_default(start, minLine, maxLine) {
-  let wantForward = true, backwardExhausted = false, forwardExhausted = false, localOffset = 1;
-  return function iterator() {
-    if (wantForward && !forwardExhausted) {
-      if (backwardExhausted) {
-        localOffset++;
-      } else {
-        wantForward = false;
-      }
-      if (start + localOffset <= maxLine) {
-        return start + localOffset;
-      }
-      forwardExhausted = true;
-    }
-    if (!backwardExhausted) {
-      if (!forwardExhausted) {
-        wantForward = true;
-      }
-      if (minLine <= start - localOffset) {
-        return start - localOffset++;
-      }
-      backwardExhausted = true;
-      return iterator();
-    }
-    return void 0;
-  };
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/apply.js
-function applyPatch(source, patch, options = {}) {
-  let patches;
-  if (typeof patch === "string") {
-    patches = parsePatch(patch);
-  } else if (Array.isArray(patch)) {
-    patches = patch;
-  } else {
-    patches = [patch];
-  }
-  if (patches.length > 1) {
-    throw new Error("applyPatch only works with a single input.");
-  }
-  return applyStructuredPatch(source, patches[0], options);
-}
-function applyStructuredPatch(source, patch, options = {}) {
-  if (options.autoConvertLineEndings || options.autoConvertLineEndings == null) {
-    if (hasOnlyWinLineEndings(source) && isUnix(patch)) {
-      patch = unixToWin(patch);
-    } else if (hasOnlyUnixLineEndings(source) && isWin(patch)) {
-      patch = winToUnix(patch);
-    }
-  }
-  const lines = source.split("\n"), hunks = patch.hunks, compareLine = options.compareLine || ((lineNumber, line, operation, patchContent) => line === patchContent), fuzzFactor = options.fuzzFactor || 0;
-  let minLine = 0;
-  if (fuzzFactor < 0 || !Number.isInteger(fuzzFactor)) {
-    throw new Error("fuzzFactor must be a non-negative integer");
-  }
-  if (!hunks.length) {
-    return source;
-  }
-  let prevLine = "", removeEOFNL = false, addEOFNL = false;
-  for (let i = 0; i < hunks[hunks.length - 1].lines.length; i++) {
-    const line = hunks[hunks.length - 1].lines[i];
-    if (line[0] == "\\") {
-      if (prevLine[0] == "+") {
-        removeEOFNL = true;
-      } else if (prevLine[0] == "-") {
-        addEOFNL = true;
-      }
-    }
-    prevLine = line;
-  }
-  if (removeEOFNL) {
-    if (addEOFNL) {
-      if (!fuzzFactor && lines[lines.length - 1] == "") {
-        return false;
-      }
-    } else if (lines[lines.length - 1] == "") {
-      lines.pop();
-    } else if (!fuzzFactor) {
-      return false;
-    }
-  } else if (addEOFNL) {
-    if (lines[lines.length - 1] != "") {
-      lines.push("");
-    } else if (!fuzzFactor) {
-      return false;
-    }
-  }
-  function applyHunk(hunkLines, toPos, maxErrors, hunkLinesI = 0, lastContextLineMatched = true, patchedLines = [], patchedLinesLength = 0) {
-    let nConsecutiveOldContextLines = 0;
-    let nextContextLineMustMatch = false;
-    for (; hunkLinesI < hunkLines.length; hunkLinesI++) {
-      const hunkLine = hunkLines[hunkLinesI], operation = hunkLine.length > 0 ? hunkLine[0] : " ", content = hunkLine.length > 0 ? hunkLine.substr(1) : hunkLine;
-      if (operation === "-") {
-        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
-          toPos++;
-          nConsecutiveOldContextLines = 0;
-        } else {
-          if (!maxErrors || lines[toPos] == null) {
-            return null;
-          }
-          patchedLines[patchedLinesLength] = lines[toPos];
-          return applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1);
-        }
-      }
-      if (operation === "+") {
-        if (!lastContextLineMatched) {
-          return null;
-        }
-        patchedLines[patchedLinesLength] = content;
-        patchedLinesLength++;
-        nConsecutiveOldContextLines = 0;
-        nextContextLineMustMatch = true;
-      }
-      if (operation === " ") {
-        nConsecutiveOldContextLines++;
-        patchedLines[patchedLinesLength] = lines[toPos];
-        if (compareLine(toPos + 1, lines[toPos], operation, content)) {
-          patchedLinesLength++;
-          lastContextLineMatched = true;
-          nextContextLineMustMatch = false;
-          toPos++;
-        } else {
-          if (nextContextLineMustMatch || !maxErrors) {
-            return null;
-          }
-          return lines[toPos] && (applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength + 1) || applyHunk(hunkLines, toPos + 1, maxErrors - 1, hunkLinesI, false, patchedLines, patchedLinesLength + 1)) || applyHunk(hunkLines, toPos, maxErrors - 1, hunkLinesI + 1, false, patchedLines, patchedLinesLength);
-        }
-      }
-    }
-    patchedLinesLength -= nConsecutiveOldContextLines;
-    toPos -= nConsecutiveOldContextLines;
-    patchedLines.length = patchedLinesLength;
-    return {
-      patchedLines,
-      oldLineLastI: toPos - 1
-    };
-  }
-  const resultLines = [];
-  let prevHunkOffset = 0;
-  for (let i = 0; i < hunks.length; i++) {
-    const hunk = hunks[i];
-    let hunkResult;
-    const maxLine = lines.length - hunk.oldLines + fuzzFactor;
-    let toPos;
-    for (let maxErrors = 0; maxErrors <= fuzzFactor; maxErrors++) {
-      toPos = hunk.oldStart + prevHunkOffset - 1;
-      const iterator = distance_iterator_default(toPos, minLine, maxLine);
-      for (; toPos !== void 0; toPos = iterator()) {
-        hunkResult = applyHunk(hunk.lines, toPos, maxErrors);
-        if (hunkResult) {
-          break;
-        }
-      }
-      if (hunkResult) {
-        break;
-      }
-    }
-    if (!hunkResult) {
-      return false;
-    }
-    for (let i2 = minLine; i2 < toPos; i2++) {
-      resultLines.push(lines[i2]);
-    }
-    for (let i2 = 0; i2 < hunkResult.patchedLines.length; i2++) {
-      const line = hunkResult.patchedLines[i2];
-      resultLines.push(line);
-    }
-    minLine = hunkResult.oldLineLastI + 1;
-    prevHunkOffset = toPos + 1 - hunk.oldStart;
-  }
-  for (let i = minLine; i < lines.length; i++) {
-    resultLines.push(lines[i]);
-  }
-  return resultLines.join("\n");
-}
-
-// node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/patch/create.js
-var INCLUDE_HEADERS = {
-  includeIndex: true,
-  includeUnderline: true,
-  includeFileHeaders: true
-};
-function structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
-  let optionsObj;
-  if (!options) {
-    optionsObj = {};
-  } else if (typeof options === "function") {
-    optionsObj = { callback: options };
-  } else {
-    optionsObj = options;
-  }
-  if (typeof optionsObj.context === "undefined") {
-    optionsObj.context = 4;
-  }
-  const context = optionsObj.context;
-  if (optionsObj.newlineIsToken) {
-    throw new Error("newlineIsToken may not be used with patch-generation functions, only with diffing functions");
-  }
-  if (!optionsObj.callback) {
-    return diffLinesResultToPatch(diffLines(oldStr, newStr, optionsObj));
-  } else {
-    const { callback } = optionsObj;
-    diffLines(oldStr, newStr, Object.assign(Object.assign({}, optionsObj), { callback: (diff) => {
-      const patch = diffLinesResultToPatch(diff);
-      callback(patch);
-    } }));
-  }
-  function diffLinesResultToPatch(diff) {
-    if (!diff) {
-      return;
-    }
-    diff.push({ value: "", lines: [] });
-    function contextLines(lines) {
-      return lines.map(function(entry) {
-        return " " + entry;
-      });
-    }
-    const hunks = [];
-    let oldRangeStart = 0, newRangeStart = 0, curRange = [], oldLine = 1, newLine = 1;
-    for (let i = 0; i < diff.length; i++) {
-      const current = diff[i], lines = current.lines || splitLines(current.value);
-      current.lines = lines;
-      if (current.added || current.removed) {
-        if (!oldRangeStart) {
-          const prev = diff[i - 1];
-          oldRangeStart = oldLine;
-          newRangeStart = newLine;
-          if (prev) {
-            curRange = context > 0 ? contextLines(prev.lines.slice(-context)) : [];
-            oldRangeStart -= curRange.length;
-            newRangeStart -= curRange.length;
-          }
-        }
-        for (const line of lines) {
-          curRange.push((current.added ? "+" : "-") + line);
-        }
-        if (current.added) {
-          newLine += lines.length;
-        } else {
-          oldLine += lines.length;
-        }
-      } else {
-        if (oldRangeStart) {
-          if (lines.length <= context * 2 && i < diff.length - 2) {
-            for (const line of contextLines(lines)) {
-              curRange.push(line);
-            }
-          } else {
-            const contextSize = Math.min(lines.length, context);
-            for (const line of contextLines(lines.slice(0, contextSize))) {
-              curRange.push(line);
-            }
-            const hunk = {
-              oldStart: oldRangeStart,
-              oldLines: oldLine - oldRangeStart + contextSize,
-              newStart: newRangeStart,
-              newLines: newLine - newRangeStart + contextSize,
-              lines: curRange
-            };
-            hunks.push(hunk);
-            oldRangeStart = 0;
-            newRangeStart = 0;
-            curRange = [];
-          }
-        }
-        oldLine += lines.length;
-        newLine += lines.length;
-      }
-    }
-    for (const hunk of hunks) {
-      for (let i = 0; i < hunk.lines.length; i++) {
-        if (hunk.lines[i].endsWith("\n")) {
-          hunk.lines[i] = hunk.lines[i].slice(0, -1);
-        } else {
-          hunk.lines.splice(i + 1, 0, "\\ No newline at end of file");
-          i++;
-        }
-      }
-    }
-    return {
-      oldFileName,
-      newFileName,
-      oldHeader,
-      newHeader,
-      hunks
-    };
-  }
-}
-function formatPatch(patch, headerOptions) {
-  if (!headerOptions) {
-    headerOptions = INCLUDE_HEADERS;
-  }
-  if (Array.isArray(patch)) {
-    if (patch.length > 1 && !headerOptions.includeFileHeaders) {
-      throw new Error("Cannot omit file headers on a multi-file patch. (The result would be unparseable; how would a tool trying to apply the patch know which changes are to which file?)");
-    }
-    return patch.map((p) => formatPatch(p, headerOptions)).join("\n");
-  }
-  const ret = [];
-  if (headerOptions.includeIndex && patch.oldFileName == patch.newFileName) {
-    ret.push("Index: " + patch.oldFileName);
-  }
-  if (headerOptions.includeUnderline) {
-    ret.push("===================================================================");
-  }
-  if (headerOptions.includeFileHeaders) {
-    ret.push("--- " + patch.oldFileName + (typeof patch.oldHeader === "undefined" ? "" : "	" + patch.oldHeader));
-    ret.push("+++ " + patch.newFileName + (typeof patch.newHeader === "undefined" ? "" : "	" + patch.newHeader));
-  }
-  for (let i = 0; i < patch.hunks.length; i++) {
-    const hunk = patch.hunks[i];
-    if (hunk.oldLines === 0) {
-      hunk.oldStart -= 1;
-    }
-    if (hunk.newLines === 0) {
-      hunk.newStart -= 1;
-    }
-    ret.push("@@ -" + hunk.oldStart + "," + hunk.oldLines + " +" + hunk.newStart + "," + hunk.newLines + " @@");
-    for (const line of hunk.lines) {
-      ret.push(line);
-    }
-  }
-  return ret.join("\n") + "\n";
-}
-function createTwoFilesPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options) {
-  if (typeof options === "function") {
-    options = { callback: options };
-  }
-  if (!(options === null || options === void 0 ? void 0 : options.callback)) {
-    const patchObj = structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, options);
-    if (!patchObj) {
-      return;
-    }
-    return formatPatch(patchObj, options === null || options === void 0 ? void 0 : options.headerOptions);
-  } else {
-    const { callback } = options;
-    structuredPatch(oldFileName, newFileName, oldStr, newStr, oldHeader, newHeader, Object.assign(Object.assign({}, options), { callback: (patchObj) => {
-      if (!patchObj) {
-        callback(void 0);
-      } else {
-        callback(formatPatch(patchObj, options.headerOptions));
-      }
-    } }));
-  }
-}
-function createPatch(fileName, oldStr, newStr, oldHeader, newHeader, options) {
-  return createTwoFilesPatch(fileName, fileName, oldStr, newStr, oldHeader, newHeader, options);
-}
-function splitLines(text) {
-  const hasTrailingNl = text.endsWith("\n");
-  const result = text.split("\n").map((line) => line + "\n");
-  if (hasTrailingNl) {
-    result.pop();
-  } else {
-    result.push(result.pop().slice(0, -1));
-  }
-  return result;
-}
+// src/internalPreview.ts
+var import_fs = require("fs");
+var import_os = require("os");
+var import_path686 = require("path");
 
 // node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet3(receiver, state, value, kind, f) {
@@ -18993,8 +17359,8 @@ var Page = class extends AbstractPage2 {
 // node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport3 = () => {
   if (typeof File === "undefined") {
-    const { process: process7 } = globalThis;
-    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    const { process: process2 } = globalThis;
+    const isOldNode = typeof process2?.versions?.node === "string" && parseInt(process2.versions.node.split(".")) < 20;
     throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
   }
 };
@@ -19071,12 +17437,12 @@ function encodeURIPath3(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
 var EMPTY3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
-var createPathTagFunction3 = (pathEncoder = encodeURIPath3) => function path7(statics, ...params) {
+var createPathTagFunction3 = (pathEncoder = encodeURIPath3) => function path4(statics, ...params) {
   if (statics.length === 1)
     return statics[0];
   let postPath = false;
   const invalidSegments = [];
-  const path8 = statics.reduce((previousValue, currentValue, index) => {
+  const path5 = statics.reduce((previousValue, currentValue, index) => {
     if (/[?#]/.test(currentValue)) {
       postPath = true;
     }
@@ -19093,7 +17459,7 @@ var createPathTagFunction3 = (pathEncoder = encodeURIPath3) => function path7(st
     }
     return previousValue + currentValue + (index === params.length ? "" : encoded);
   }, "");
-  const pathOnly = path8.split(/[?#]/, 1)[0];
+  const pathOnly = path5.split(/[?#]/, 1)[0];
   const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
   let match;
   while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
@@ -19114,12 +17480,12 @@ var createPathTagFunction3 = (pathEncoder = encodeURIPath3) => function path7(st
     }, "");
     throw new StainlessError(`Path parameters result in path with invalid segments:
 ${invalidSegments.map((e) => e.error).join("\n")}
-${path8}
+${path5}
 ${underline}`);
   }
-  return path8;
+  return path5;
 };
-var path6 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
+var path3 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
 
 // node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource3 {
@@ -19130,7 +17496,7 @@ var Diagnostics = class extends APIResource3 {
    * returned.
    */
   list(buildID, query = {}, options) {
-    return this._client.getAPIList(path6`/v0/builds/${buildID}/diagnostics`, Page, {
+    return this._client.getAPIList(path3`/v0/builds/${buildID}/diagnostics`, Page, {
       query,
       ...options
     });
@@ -19177,7 +17543,7 @@ var Builds2 = class extends APIResource3 {
    * Retrieve a build by its ID.
    */
   retrieve(buildID, options) {
-    return this._client.get(path6`/v0/builds/${buildID}`, options);
+    return this._client.get(path3`/v0/builds/${buildID}`, options);
   }
   /**
    * List user-triggered builds for a given project.
@@ -19214,7 +17580,7 @@ var Orgs3 = class extends APIResource3 {
    * Retrieve an organization by name.
    */
   retrieve(org, options) {
-    return this._client.get(path6`/v0/orgs/${org}`, options);
+    return this._client.get(path3`/v0/orgs/${org}`, options);
   }
   /**
    * List organizations accessible to the current authentication method.
@@ -19235,21 +17601,21 @@ var Branches3 = class extends APIResource3 {
    */
   create(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path6`/v0/projects/${project}/branches`, { body, ...options });
+    return this._client.post(path3`/v0/projects/${project}/branches`, { body, ...options });
   }
   /**
    * Retrieve a project branch by name.
    */
   retrieve(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path6`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.get(path3`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Retrieve a project branch by name.
    */
   list(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.getAPIList(path6`/v0/projects/${project}/branches`, Page, {
+    return this._client.getAPIList(path3`/v0/projects/${project}/branches`, Page, {
       query,
       ...options
     });
@@ -19259,7 +17625,7 @@ var Branches3 = class extends APIResource3 {
    */
   delete(branch, params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.delete(path6`/v0/projects/${project}/branches/${branch}`, options);
+    return this._client.delete(path3`/v0/projects/${project}/branches/${branch}`, options);
   }
   /**
    * Rebase a project branch.
@@ -19269,7 +17635,7 @@ var Branches3 = class extends APIResource3 {
    */
   rebase(branch, params = {}, options) {
     const { project = this._client.project, base } = params ?? {};
-    return this._client.put(path6`/v0/projects/${project}/branches/${branch}/rebase`, {
+    return this._client.put(path3`/v0/projects/${project}/branches/${branch}/rebase`, {
       query: { base },
       ...options
     });
@@ -19282,7 +17648,7 @@ var Branches3 = class extends APIResource3 {
    */
   reset(branch, params = {}, options) {
     const { project = this._client.project, target_config_sha } = params ?? {};
-    return this._client.put(path6`/v0/projects/${project}/branches/${branch}/reset`, {
+    return this._client.put(path3`/v0/projects/${project}/branches/${branch}/reset`, {
       query: { target_config_sha },
       ...options
     });
@@ -19296,14 +17662,14 @@ var Configs = class extends APIResource3 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project, ...query } = params ?? {};
-    return this._client.get(path6`/v0/projects/${project}/configs`, { query, ...options });
+    return this._client.get(path3`/v0/projects/${project}/configs`, { query, ...options });
   }
   /**
    * Generate suggestions for changes to config files based on an OpenAPI spec.
    */
   guess(params, options) {
     const { project = this._client.project, ...body } = params;
-    return this._client.post(path6`/v0/projects/${project}/configs/guess`, { body, ...options });
+    return this._client.post(path3`/v0/projects/${project}/configs/guess`, { body, ...options });
   }
 };
 
@@ -19325,14 +17691,14 @@ var Projects5 = class extends APIResource3 {
    */
   retrieve(params = {}, options) {
     const { project = this._client.project } = params ?? {};
-    return this._client.get(path6`/v0/projects/${project}`, options);
+    return this._client.get(path3`/v0/projects/${project}`, options);
   }
   /**
    * Update a project's properties.
    */
   update(params = {}, options) {
     const { project = this._client.project, ...body } = params ?? {};
-    return this._client.patch(path6`/v0/projects/${project}`, { body, ...options });
+    return this._client.patch(path3`/v0/projects/${project}`, { body, ...options });
   }
   /**
    * List projects in an organization, from oldest to newest.
@@ -19345,7 +17711,7 @@ var Projects5 = class extends APIResource3 {
    */
   generateCommitMessage(params, options) {
     const { project = this._client.project, target, ...body } = params;
-    return this._client.post(path6`/v0/projects/${project}/generate_commit_message`, {
+    return this._client.post(path3`/v0/projects/${project}/generate_commit_message`, {
       query: { target },
       body,
       ...options
@@ -19556,9 +17922,9 @@ var Stainless = class {
   makeStatusError(status, error, message, headers) {
     return APIError3.generate(status, error, message, headers);
   }
-  buildURL(path7, query, defaultBaseURL) {
+  buildURL(path4, query, defaultBaseURL) {
     const baseURL = !__classPrivateFieldGet3(this, _Stainless_instances, "m", _Stainless_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
-    const url = isAbsoluteURL3(path7) ? new URL(path7) : new URL(baseURL + (baseURL.endsWith("/") && path7.startsWith("/") ? path7.slice(1) : path7));
+    const url = isAbsoluteURL3(path4) ? new URL(path4) : new URL(baseURL + (baseURL.endsWith("/") && path4.startsWith("/") ? path4.slice(1) : path4));
     const defaultQuery = this.defaultQuery();
     if (!isEmptyObj3(defaultQuery)) {
       query = { ...defaultQuery, ...query };
@@ -19581,24 +17947,24 @@ var Stainless = class {
    */
   async prepareRequest(request, { url, options }) {
   }
-  get(path7, opts) {
-    return this.methodRequest("get", path7, opts);
+  get(path4, opts) {
+    return this.methodRequest("get", path4, opts);
   }
-  post(path7, opts) {
-    return this.methodRequest("post", path7, opts);
+  post(path4, opts) {
+    return this.methodRequest("post", path4, opts);
   }
-  patch(path7, opts) {
-    return this.methodRequest("patch", path7, opts);
+  patch(path4, opts) {
+    return this.methodRequest("patch", path4, opts);
   }
-  put(path7, opts) {
-    return this.methodRequest("put", path7, opts);
+  put(path4, opts) {
+    return this.methodRequest("put", path4, opts);
   }
-  delete(path7, opts) {
-    return this.methodRequest("delete", path7, opts);
+  delete(path4, opts) {
+    return this.methodRequest("delete", path4, opts);
   }
-  methodRequest(method, path7, opts) {
+  methodRequest(method, path4, opts) {
     return this.request(Promise.resolve(opts).then((opts2) => {
-      return { method, path: path7, ...opts2 };
+      return { method, path: path4, ...opts2 };
     }));
   }
   request(options, remainingRetries = null) {
@@ -19701,8 +18067,8 @@ var Stainless = class {
     }));
     return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
   }
-  getAPIList(path7, Page2, opts) {
-    return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path7, ...opts2 })) : { method: "get", path: path7, ...opts });
+  getAPIList(path4, Page2, opts) {
+    return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path4, ...opts2 })) : { method: "get", path: path4, ...opts });
   }
   requestAPIList(Page2, options) {
     const request = this.makeRequest(options, null, void 0);
@@ -19781,8 +18147,8 @@ var Stainless = class {
   }
   async buildRequest(inputOptions, { retryCount = 0 } = {}) {
     const options = { ...inputOptions };
-    const { method, path: path7, query, defaultBaseURL } = options;
-    const url = this.buildURL(path7, query, defaultBaseURL);
+    const { method, path: path4, query, defaultBaseURL } = options;
+    const url = this.buildURL(path4, query, defaultBaseURL);
     if ("timeout" in options)
       validatePositiveInteger3("timeout", options.timeout);
     options.timeout = options.timeout ?? this.timeout;
@@ -19913,7 +18279,7 @@ var package_default = {
   dependencies: {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
-    "@stainless-api/gitlab-internal": "^0.3.0",
+    "@stainless-api/gitlab-internal": "^0.2.0",
     "@stainless-api/sdk": "^0.3.0",
     diff: "^8.0.3",
     glob: "^11.0.0",
@@ -19962,284 +18328,11 @@ var accumulatedBuildIds = /* @__PURE__ */ new Set();
 function addBuildIdForTelemetry(buildId) {
   accumulatedBuildIds.add(buildId);
 }
-function wrapAction(actionType, fn) {
-  return async () => {
-    let stainless;
-    let projectName;
-    try {
-      projectName = getInput("project", { required: true });
-      const auth = await getStainlessAuth();
-      stainless = getStainlessClient(actionType, {
-        project: projectName,
-        apiKey: auth.key,
-        logLevel: "warn",
-        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
-      });
-      await fn(stainless);
-      await maybeReportResult({
-        stainless,
-        projectName,
-        actionType,
-        successOrError: { result: "success" }
-      });
-    } catch (error) {
-      logger.fatal("Error in action:", error);
-      if (stainless) {
-        await maybeReportResult({
-          stainless,
-          projectName,
-          actionType,
-          successOrError: serializeError(error)
-        });
-      }
-      process.exit(1);
-    }
-  };
-}
-function serializeError(error) {
-  const maybeTypedError = error instanceof Error ? error : void 0;
-  return {
-    result: "error",
-    error_message: maybeTypedError?.message ?? String(error),
-    error_name: maybeTypedError?.name,
-    error_stack: maybeTypedError?.stack
-  };
-}
-async function maybeReportResult({
-  stainless,
-  projectName,
-  actionType,
-  successOrError
-}) {
-  if (process.env.STAINLESS_DISABLE_TELEMETRY) {
-    return;
-  }
-  try {
-    const body = {
-      project: projectName,
-      build_ids: [...accumulatedBuildIds],
-      action_type: actionType,
-      ...successOrError
-    };
-    await stainless.post("/api/reports/action-result", {
-      body
-    });
-  } catch (error) {
-    logger.error("Error reporting result to Stainless", error);
-  }
-}
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
 var MAX_POLLING_SECONDS = 20 * 60;
-async function* runBuilds({
-  stainless,
-  projectName,
-  baseBranch,
-  mergeBranch,
-  branch,
-  branchFrom,
-  oasContent,
-  configContent,
-  baseOasContent,
-  baseConfigContent,
-  guessConfig = false,
-  commitMessage,
-  targetCommitMessages,
-  allowEmpty = true
-}) {
-  if (mergeBranch && (oasContent || configContent)) {
-    throw new Error(
-      "Cannot specify both merge_branch and oas_path or config_path"
-    );
-  }
-  if (guessConfig && (configContent || !oasContent)) {
-    throw new Error(
-      "If guess_config is true, must have oas_path and no config_path"
-    );
-  }
-  if (branchFrom && mergeBranch) {
-    throw new Error("Cannot specify both branch_from and merge_branch");
-  }
-  if (!branchFrom) {
-    const build = await stainless.builds.create(
-      {
-        project: projectName,
-        revision: mergeBranch ? `${branch}..${mergeBranch}` : {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage,
-        target_commit_messages: targetCommitMessages,
-        allow_empty: allowEmpty
-      },
-      {
-        // For very large specs, writing the config files can take a while.
-        timeout: 3 * 60 * 1e3
-      }
-    );
-    for await (const { outcomes, documentedSpec } of pollBuild({
-      stainless,
-      build,
-      projectName,
-      label: "head"
-    })) {
-      yield {
-        baseOutcomes: null,
-        outcomes,
-        documentedSpec
-      };
-    }
-    return;
-  }
-  let configPatch;
-  if (!configContent) {
-    const hasBranch = !!branch && !!await stainless.projects.branches.retrieve(branch).catch(() => null);
-    const hasBaseBranch = !!baseBranch && !!await stainless.projects.branches.retrieve(baseBranch).catch(() => null);
-    if (guessConfig) {
-      logger.debug("Guessing config before branch reset");
-      if (hasBranch) {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch,
-            spec: oasContent
-          })
-        )[0]?.content;
-      } else {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch: branchFrom,
-            spec: oasContent
-          })
-        )[0]?.content;
-      }
-    } else if (hasBranch && hasBaseBranch) {
-      logger.debug("Computing config patch before branch reset");
-      const oldBaseConfig = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch: baseBranch
-        })
-      )[0]?.content ?? "";
-      const oldHeadConfig = Object.values(
-        await stainless.projects.configs.retrieve({
-          branch
-        })
-      )[0]?.content ?? "";
-      if (oldBaseConfig !== oldHeadConfig) {
-        configPatch = createPatch(
-          "openapi.stainless.yml",
-          oldBaseConfig,
-          oldHeadConfig
-        );
-        logger.debug("Created config patch");
-      }
-    } else if (hasBranch) {
-      logger.debug("No base branch found, skipping config patch");
-    } else {
-      logger.debug("No existing branch found");
-    }
-  }
-  logger.info(`Hard resetting ${branch} and ${baseBranch} to ${branchFrom}`);
-  const { config_commit } = await stainless.projects.branches.create({
-    branch_from: branchFrom,
-    branch,
-    force: true
-  });
-  logger.debug(`Hard reset ${branch}, now at ${config_commit.sha}`);
-  const { config_commit: base_config_commit } = await stainless.projects.branches.create({
-    branch_from: branchFrom,
-    branch: baseBranch,
-    force: true
-  });
-  logger.debug(`Hard reset ${baseBranch}, now at ${base_config_commit.sha}`);
-  if (configPatch && !configContent) {
-    logger.debug("Applying config patch to new base");
-    const newBaseConfig = Object.values(
-      await stainless.projects.configs.retrieve({
-        branch
-      })
-    )[0]?.content ?? "";
-    const patchedConfig = applyPatch(newBaseConfig, configPatch);
-    if (patchedConfig === false) {
-      logger.warn("Config patch failed to apply, dropping customizations");
-    } else {
-      logger.debug("Config patch applied successfully");
-      configContent = patchedConfig;
-    }
-  }
-  const { base, head } = await stainless.builds.compare(
-    {
-      base: {
-        revision: {
-          ...baseOasContent && {
-            "openapi.yml": {
-              content: baseOasContent
-            }
-          },
-          ...baseConfigContent && {
-            "openapi.stainless.yml": {
-              content: baseConfigContent
-            }
-          }
-        },
-        branch: baseBranch,
-        commit_message: commitMessage
-      },
-      head: {
-        revision: {
-          ...oasContent && {
-            "openapi.yml": {
-              content: oasContent
-            }
-          },
-          ...configContent && {
-            "openapi.stainless.yml": {
-              content: configContent
-            }
-          }
-        },
-        branch,
-        commit_message: commitMessage
-      }
-    },
-    {
-      // For very large specs, writing the config files can take a while.
-      timeout: 3 * 60 * 1e3
-    }
-  );
-  let lastBaseOutcome = null;
-  let lastOutcome = null;
-  let lastDocumentedSpec = null;
-  for await (const { index, value } of combineAsyncIterators2(
-    pollBuild({ stainless, build: base, projectName, label: "base" }),
-    pollBuild({ stainless, build: head, projectName, label: "head" })
-  )) {
-    if (index === 0) {
-      lastBaseOutcome = value.outcomes;
-    } else {
-      lastOutcome = value.outcomes;
-      lastDocumentedSpec = value.documentedSpec;
-    }
-    if (lastOutcome) {
-      yield {
-        baseOutcomes: lastBaseOutcome,
-        outcomes: lastOutcome,
-        documentedSpec: lastDocumentedSpec
-      };
-    }
-  }
-  return;
-}
-async function* combineAsyncIterators2(...args) {
+async function* combineAsyncIterators(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;
   const never = new Promise(() => {
@@ -20371,161 +18464,312 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/merge.run.ts
-async function runMerge(stainless, params) {
-  const {
-    orgName,
-    projectName,
-    oasPath,
-    configPath,
-    defaultCommitMessage,
-    failRunOn,
-    makeComment,
-    baseSha,
-    baseRef,
-    defaultBranch,
-    headSha,
-    mergeBranch,
-    outputDir,
-    prNumber
-  } = params;
-  let { multipleCommitMessages } = params;
-  if (baseRef !== defaultBranch) {
-    logger.info("Not merging to default branch, skipping merge");
-    return;
-  }
-  if (makeComment && prNumber === null) {
-    throw new Error(
-      "This action requires a pull request number to make a comment."
-    );
-  }
-  if (makeComment && !orgName) {
-    throw new Error(
-      "This action requires an organization name to make a comment."
-    );
-  }
-  if (makeComment && api({ optional: true }) === null) {
-    throw new Error("This action requires an API token to make a comment.");
-  }
-  const { savedSha } = await saveConfig({
-    oasPath,
-    configPath
-  });
-  if (savedSha !== null && savedSha !== headSha) {
-    logger.warn(
-      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
-    );
-  }
-  const enableAiCommitMessages = orgName && await stainless.orgs.retrieve(orgName).then((org) => org.enable_ai_commit_messages).catch((err) => {
-    logger.warn(`Could not fetch data for ${orgName}.`, err);
-    return false;
-  });
-  if (enableAiCommitMessages) {
-    if (multipleCommitMessages === false) {
-      logger.warn(
-        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.'
-      );
-    } else if (multipleCommitMessages === void 0) {
-      logger.info(
-        'AI commit messages are enabled; setting "multiple_commit_messages" to true.'
+// src/internalPreview.ts
+function parseTargets(input, knownLanguages) {
+  const lines = input.split("\n").map((l) => l.trim()).filter(Boolean);
+  const grouped = /* @__PURE__ */ new Map();
+  for (const line of lines) {
+    const slashIdx = line.indexOf("/");
+    if (slashIdx === -1) {
+      throw new Error(
+        `Invalid target: "${line}". Expected format: {org}/{project} or {org}/{project}-{language}`
       );
     }
-    multipleCommitMessages = true;
-  }
-  const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
-  const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
-  const configChanged = await isConfigChanged({
-    before: baseConfig,
-    after: headConfig
-  });
-  if (!configChanged) {
-    logger.info("No config files changed, skipping merge");
-    return;
-  }
-  const comment = makeComment && prNumber ? await retrieveComment(prNumber) : null;
-  const commitMessage = comment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
-  const targetCommitMessages = multipleCommitMessages ? comment?.targetCommitMessages ?? {} : void 0;
-  if (targetCommitMessages) {
-    logger.info("Using commit messages:", targetCommitMessages);
-    logger.info("With default commit message:", commitMessage);
-  } else {
-    logger.info("Using commit message:", commitMessage);
-  }
-  const generator = runBuilds({
-    stainless,
-    projectName,
-    commitMessage,
-    targetCommitMessages,
-    // This action always merges to the Stainless `main` branch:
-    branch: "main",
-    mergeBranch,
-    guessConfig: false
-  });
-  let latestRun = null;
-  const upsert = prNumber ? commentThrottler(prNumber) : null;
-  while (true) {
-    const run = await generator.next();
-    if (run.value) {
-      latestRun = run.value;
-    }
-    if (makeComment && latestRun && upsert) {
-      const { outcomes } = latestRun;
-      const commentBody = printComment({
-        orgName,
-        projectName,
-        branch: "main",
-        commitMessage,
-        targetCommitMessages,
-        outcomes
-      });
-      await upsert({ body: commentBody, force: run.done });
-    }
-    if (run.done) {
-      if (!latestRun) {
-        throw new Error("No latest run found after build finish");
+    const org = line.slice(0, slashIdx);
+    const rest = line.slice(slashIdx + 1);
+    const lastHyphen = rest.lastIndexOf("-");
+    let project;
+    let language = null;
+    if (lastHyphen !== -1) {
+      const suffix = rest.slice(lastHyphen + 1);
+      if (knownLanguages.has(suffix)) {
+        project = rest.slice(0, lastHyphen);
+        language = suffix;
+      } else {
+        project = rest;
       }
-      const { outcomes, documentedSpec } = latestRun;
-      setOutput("outcomes", outcomes);
-      if (documentedSpec && outputDir) {
-        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-        fs5.mkdirSync(outputDir, { recursive: true });
-        fs5.writeFileSync(documentedSpecPath, documentedSpec);
-        setOutput("documented_spec_path", documentedSpecPath);
-      }
-      if (!shouldFailRun({ failRunOn, outcomes })) {
-        process.exit(1);
-      }
-      break;
+    } else {
+      project = rest;
     }
+    const key = `${org}/${project}`;
+    const existing = grouped.get(key);
+    if (existing) {
+      if (language) existing.languages.push(language);
+    } else {
+      grouped.set(key, { org, languages: language ? [language] : [] });
+    }
+  }
+  return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({
+    org,
+    project: key.split("/")[1],
+    languages
+  }));
+}
+function fetchDiffStats({
+  owner,
+  repo,
+  base,
+  head,
+  token
+}) {
+  const repoUrl = `https://x-access-token:${token}@github.com/${owner}/${repo}.git`;
+  const tmpDir = (0, import_fs.mkdtempSync)((0, import_path686.join)((0, import_os.tmpdir)(), "stl-diff-"));
+  try {
+    (0, import_child_process.execFileSync)("git", ["init", "--bare", tmpDir], { stdio: "pipe" });
+    (0, import_child_process.execFileSync)("git", ["-C", tmpDir, "remote", "add", "origin", repoUrl], {
+      stdio: "pipe"
+    });
+    (0, import_child_process.execFileSync)(
+      "git",
+      [
+        "-C",
+        tmpDir,
+        "fetch",
+        "--depth=1",
+        "--no-tags",
+        "origin",
+        `refs/heads/${base}:refs/heads/${base}`,
+        `refs/heads/${head}:refs/heads/${head}`
+      ],
+      { stdio: "pipe" }
+    );
+    const output = (0, import_child_process.execFileSync)(
+      "git",
+      ["-C", tmpDir, "diff", "--numstat", `${base}..${head}`],
+      { encoding: "utf8" }
+    );
+    const lines = output.trim().split("\n").filter(Boolean);
+    if (lines.length === 0) return null;
+    let additions = 0;
+    let deletions = 0;
+    for (const line of lines) {
+      const [add, del] = line.split("	");
+      if (add !== "-") additions += parseInt(add, 10);
+      if (del !== "-") deletions += parseInt(del, 10);
+    }
+    return { additions, deletions, changedFiles: lines.length };
+  } finally {
+    (0, import_fs.rmSync)(tmpDir, { recursive: true, force: true });
   }
 }
-
-// src/merge.ts
-var main = wrapAction("merge", async (stainless) => {
-  const params = {
-    orgName: getInput("org", { required: false }),
-    projectName: getInput("project", { required: true }),
-    oasPath: getInput("oas_path", { required: false }),
-    configPath: getInput("config_path", { required: false }),
-    defaultCommitMessage: getInput("commit_message", { required: true }),
-    failRunOn: getInput("fail_on", {
+async function main() {
+  try {
+    const targetsInput = getInput("targets", { required: true });
+    const languagesInput = getInput("languages", { required: true });
+    const failRunOn = getInput("fail_on", {
       choices: FailRunOn,
       required: true
-    }),
-    makeComment: getBooleanInput("make_comment", { required: true }),
-    multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
-      required: false
-    }),
-    baseSha: getInput("base_sha", { required: true }),
-    baseRef: getInput("base_ref", { required: true }),
-    defaultBranch: getInput("default_branch", { required: true }),
-    headSha: getInput("head_sha", { required: true }),
-    mergeBranch: getInput("merge_branch", { required: true }),
-    outputDir: getInput("output_dir", { required: false }),
-    prNumber: ctx().prNumber
-  };
-  await runMerge(stainless, params);
-});
+    });
+    const baseSha = getInput("base_sha", { required: true });
+    const headSha = getInput("head_sha", { required: true });
+    const baseBranch = getInput("base_branch", { required: true });
+    const branch = getInput("branch", { required: true });
+    const knownLanguages = new Set(JSON.parse(languagesInput));
+    const targetGroups = parseTargets(targetsInput, knownLanguages);
+    if (targetGroups.length === 0) {
+      throw new Error("No valid project tuples found in 'targets' input");
+    }
+    logger.info(
+      `Parsed ${targetGroups.length} project group(s): ${targetGroups.map((g) => `${g.org}/${g.project}${g.languages.length > 0 ? ` [${g.languages.join(", ")}]` : " [all targets]"}`).join("; ")}`
+    );
+    const auth = await getStainlessAuth();
+    const stainless = getStainlessClient("internal-preview", {
+      apiKey: auth.key,
+      logLevel: "warn",
+      fetch: createAutoRefreshFetch(auth, getStainlessAuth)
+    });
+    const githubToken = getInput("github_token");
+    const projectStates = targetGroups.map((group) => ({
+      group,
+      outcomes: null,
+      baseOutcomes: null,
+      // Keyed by lang. Populated once on first encounter of merge_conflict so
+      // the REST compare is called at most once per lang per run.
+      codegenDiffCache: {},
+      // Keyed by lang. Populated once when hasDiff is first detected for
+      // normal (non-merge-conflict) diffs.
+      normalDiffStatsCache: {}
+    }));
+    const pollIterators = [];
+    const compareResults = await Promise.all(
+      targetGroups.map(
+        (group) => stainless.builds.compare(
+          {
+            project: group.project,
+            ...group.languages.length > 0 && {
+              targets: group.languages
+            },
+            base: {
+              branch: baseBranch,
+              revision: "main",
+              codegen_version: baseSha
+            },
+            head: {
+              branch,
+              revision: "main",
+              codegen_version: headSha
+            }
+          },
+          { timeout: 3 * 60 * 1e3 }
+        )
+      )
+    );
+    for (let i = 0; i < compareResults.length; i++) {
+      const { base, head } = compareResults[i];
+      const projectName = targetGroups[i].project;
+      pollIterators.push({
+        iterator: pollBuild({
+          stainless,
+          build: base,
+          projectName,
+          label: "base"
+        }),
+        projectIndex: i,
+        isBase: true
+      });
+      pollIterators.push({
+        iterator: pollBuild({
+          stainless,
+          build: head,
+          projectName,
+          label: "head"
+        }),
+        projectIndex: i,
+        isBase: false
+      });
+    }
+    const indexedIterators = pollIterators.map((p) => p.iterator);
+    const upsert = commentThrottler();
+    let allBuildsComplete = false;
+    const updateComment = async (force) => {
+      if (!upsert) return;
+      const commentProjects = projectStates.filter((s) => s.outcomes).map((s) => ({
+        orgName: s.group.org,
+        projectName: s.group.project,
+        branch,
+        outcomes: s.outcomes,
+        baseOutcomes: s.baseOutcomes
+      }));
+      if (commentProjects.length === 0) return;
+      const body = printInternalComment(commentProjects, {
+        isComplete: allBuildsComplete
+      });
+      await upsert({ body, force });
+    };
+    for await (const { index, value } of combineAsyncIterators(
+      ...indexedIterators
+    )) {
+      const { projectIndex, isBase } = pollIterators[index];
+      const state = projectStates[projectIndex];
+      if (isBase) {
+        state.baseOutcomes = value.outcomes;
+      } else {
+        state.outcomes = value.outcomes;
+      }
+      if (state.outcomes && state.baseOutcomes) {
+        for (const [lang, head] of Object.entries(state.outcomes)) {
+          const base = state.baseOutcomes[lang];
+          if (head.commit?.conclusion === "merge_conflict") {
+            if (!base?.commit?.conclusion) continue;
+            if (!(lang in state.codegenDiffCache)) {
+              const conflictRepo = head.commit.merge_conflict_pr?.repo;
+              const owner = "stainless-sdks";
+              const repo = `${state.group.project}-${lang}`;
+              if (conflictRepo && githubToken) {
+                const compareUrl = `https://github.com/${owner}/${repo}/compare/codegen/${baseBranch}..codegen/${branch}`;
+                logger.info(
+                  `Fetching codegen diff stats: ${owner}/${repo} (${lang})`
+                );
+                const diffStats = fetchDiffStats({
+                  owner,
+                  repo,
+                  base: `codegen/${baseBranch}`,
+                  head: `codegen/${branch}`,
+                  token: githubToken
+                });
+                state.codegenDiffCache[lang] = {
+                  hasDiff: diffStats !== null,
+                  compareUrl,
+                  diffStats
+                };
+              } else {
+                state.codegenDiffCache[lang] = null;
+              }
+            }
+            const cached = state.codegenDiffCache[lang];
+            if (cached) {
+              head.hasDiff = cached.hasDiff;
+              head.codegenCompareUrl = cached.compareUrl;
+              head.diffStats = cached.diffStats ?? void 0;
+            }
+          } else {
+            const baseTreeOid = base?.commit?.completed?.commit?.tree_oid;
+            const headTreeOid = head.commit?.completed?.commit?.tree_oid;
+            if (baseTreeOid && headTreeOid) {
+              head.hasDiff = baseTreeOid !== headTreeOid;
+              if (head.hasDiff && !(lang in state.normalDiffStatsCache) && githubToken) {
+                const headCommit = head.commit?.completed?.commit;
+                const baseCommit = base.commit?.completed?.commit;
+                if (baseCommit && headCommit) {
+                  logger.info(
+                    `Fetching diff stats: ${headCommit.repo.owner}/${headCommit.repo.name} (${lang})`
+                  );
+                  const diffStats = fetchDiffStats({
+                    owner: headCommit.repo.owner,
+                    repo: headCommit.repo.name,
+                    base: baseCommit.repo.branch,
+                    head: headCommit.repo.branch,
+                    token: githubToken
+                  });
+                  state.normalDiffStatsCache[lang] = diffStats;
+                }
+              }
+              if (lang in state.normalDiffStatsCache) {
+                head.diffStats = state.normalDiffStatsCache[lang] ?? void 0;
+              }
+            }
+          }
+        }
+      }
+      if (state.outcomes) {
+        await updateComment(false);
+      }
+    }
+    allBuildsComplete = true;
+    await updateComment(true);
+    const allOutcomes = {};
+    for (const state of projectStates) {
+      const key = `${state.group.org}/${state.group.project}`;
+      if (state.outcomes) {
+        allOutcomes[key] = state.outcomes;
+      }
+    }
+    setOutput("outcomes", allOutcomes);
+    setOutput(
+      "diff_targets",
+      Object.entries(allOutcomes).flatMap(
+        ([project, outcomes]) => getDiffLanguages(outcomes).map((language) => ({ project, language }))
+      )
+    );
+    let shouldFail = false;
+    for (const state of projectStates) {
+      if (state.outcomes && !shouldFailRun({
+        failRunOn,
+        outcomes: state.outcomes,
+        baseOutcomes: state.baseOutcomes,
+        projectName: state.group.project
+      })) {
+        shouldFail = true;
+      }
+    }
+    if (shouldFail) {
+      process.exit(1);
+    }
+  } catch (error) {
+    logger.fatal("Error in internal-preview action:", error);
+    process.exit(1);
+  }
+}
 main();
 /*! Bundled license information:
 
