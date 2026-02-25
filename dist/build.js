@@ -16388,6 +16388,9 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
+// src/build.ts
+var import_node_os2 = require("node:os");
+
 // node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
@@ -18268,9 +18271,8 @@ Stainless.Builds = Builds;
 Stainless.Orgs = Orgs;
 Stainless.User = User;
 
-// src/build.ts
+// src/build.run.ts
 var fs5 = __toESM(require("node:fs"));
-var import_node_os2 = require("node:os");
 var import_yaml = __toESM(require_dist());
 
 // src/compat/input.ts
@@ -18495,20 +18497,6 @@ function createLogger(options = {}) {
   return createLoggerImpl({ minLevel, provider });
 }
 var logger = createLogger();
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
@@ -20261,22 +20249,22 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/build.ts
-var main = wrapAction("build", async (stainless) => {
+// src/build.run.ts
+async function runBuild(stainless, params) {
   try {
-    const oasPath = getInput("oas_path", { required: false }) || void 0;
-    const configPath = getInput("config_path", { required: false }) || void 0;
-    const projectName = getInput("project", { required: true });
-    const commitMessage = makeCommitMessageConventional(
-      getInput("commit_message", { required: false }) || void 0
-    );
-    const guessConfig = getBooleanInput("guess_config", { required: false }) || false;
-    const branch = getInput("branch", { required: false }) || "main";
-    const mergeBranch = getInput("merge_branch", { required: false }) || void 0;
-    const baseRevision = getInput("base_revision", { required: false }) || void 0;
-    const baseBranch = getInput("base_branch", { required: false }) || void 0;
-    const outputDir = getInput("output_dir", { required: false }) || (0, import_node_os2.tmpdir)();
-    const documentedSpecOutputPath = getInput("documented_spec_path", { required: false }) || void 0;
+    const {
+      oasPath,
+      configPath,
+      projectName,
+      commitMessage,
+      guessConfig,
+      branch,
+      mergeBranch,
+      baseRevision,
+      baseBranch,
+      outputDir,
+      documentedSpecOutputPath
+    } = params;
     const config = await readConfig({ oasPath, configPath, required: true });
     let lastValue;
     for await (const value of runBuilds({
@@ -20317,6 +20305,40 @@ var main = wrapAction("build", async (stainless) => {
       throw error;
     }
   }
+}
+
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
+// src/build.ts
+var main = wrapAction("build", async (stainless) => {
+  const params = {
+    oasPath: getInput("oas_path", { required: false }),
+    configPath: getInput("config_path", { required: false }),
+    projectName: getInput("project", { required: true }),
+    commitMessage: makeCommitMessageConventional(
+      getInput("commit_message", { required: false }) || void 0
+    ),
+    guessConfig: getBooleanInput("guess_config", { required: false }) || false,
+    branch: getInput("branch", { required: false }) || "main",
+    mergeBranch: getInput("merge_branch", { required: false }),
+    baseRevision: getInput("base_revision", { required: false }),
+    baseBranch: getInput("base_branch", { required: false }),
+    outputDir: getInput("output_dir", { required: false }) || (0, import_node_os2.tmpdir)(),
+    documentedSpecOutputPath: getInput("documented_spec_path", { required: false }) || void 0
+  };
+  await runBuild(stainless, params);
 });
 main();
 /*! Bundled license information:

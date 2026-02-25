@@ -9148,9 +9148,6 @@ var require_dist = __commonJS({
   }
 });
 
-// src/merge.ts
-var fs5 = __toESM(require("node:fs"));
-
 // src/compat/input.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
@@ -9373,20 +9370,6 @@ function createLogger(options = {}) {
   return createLoggerImpl({ minLevel, provider });
 }
 var logger = createLogger();
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
@@ -15645,6 +15628,23 @@ async function getStainlessAuth() {
   }
 }
 
+// src/merge.run.ts
+var fs5 = __toESM(require("node:fs"));
+
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
 // src/markdown.ts
 var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
@@ -19868,28 +19868,25 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/merge.ts
-var main = wrapAction("merge", async (stainless) => {
-  const orgName = getInput("org", { required: false });
-  const projectName = getInput("project", { required: true });
-  const oasPath = getInput("oas_path", { required: false });
-  const configPath = getInput("config_path", { required: false }) || void 0;
-  const defaultCommitMessage = getInput("commit_message", { required: true });
-  const failRunOn = getInput("fail_on", {
-    choices: FailRunOn,
-    required: true
-  });
-  const makeComment = getBooleanInput("make_comment", { required: true });
-  let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
-    required: false
-  });
-  const baseSha = getInput("base_sha", { required: true });
-  const baseRef = getInput("base_ref", { required: true });
-  const defaultBranch = getInput("default_branch", { required: true });
-  const headSha = getInput("head_sha", { required: true });
-  const mergeBranch = getInput("merge_branch", { required: true });
-  const outputDir = getInput("output_dir", { required: false }) || void 0;
-  const prNumber = ctx().prNumber;
+// src/merge.run.ts
+async function runMerge(stainless, params) {
+  const {
+    orgName,
+    projectName,
+    oasPath,
+    configPath,
+    defaultCommitMessage,
+    failRunOn,
+    makeComment,
+    baseSha,
+    baseRef,
+    defaultBranch,
+    headSha,
+    mergeBranch,
+    outputDir,
+    prNumber
+  } = params;
+  let { multipleCommitMessages } = params;
   if (baseRef !== defaultBranch) {
     logger.info("Not merging to default branch, skipping merge");
     return;
@@ -19998,6 +19995,33 @@ var main = wrapAction("merge", async (stainless) => {
       break;
     }
   }
+}
+
+// src/merge.ts
+var main = wrapAction("merge", async (stainless) => {
+  const params = {
+    orgName: getInput("org", { required: false }),
+    projectName: getInput("project", { required: true }),
+    oasPath: getInput("oas_path", { required: false }),
+    configPath: getInput("config_path", { required: false }),
+    defaultCommitMessage: getInput("commit_message", { required: true }),
+    failRunOn: getInput("fail_on", {
+      choices: FailRunOn,
+      required: true
+    }),
+    makeComment: getBooleanInput("make_comment", { required: true }),
+    multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+      required: false
+    }),
+    baseSha: getInput("base_sha", { required: true }),
+    baseRef: getInput("base_ref", { required: true }),
+    defaultBranch: getInput("default_branch", { required: true }),
+    headSha: getInput("head_sha", { required: true }),
+    mergeBranch: getInput("merge_branch", { required: true }),
+    outputDir: getInput("output_dir", { required: false }),
+    prNumber: ctx().prNumber
+  };
+  await runMerge(stainless, params);
 });
 main();
 /*! Bundled license information:
