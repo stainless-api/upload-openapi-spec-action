@@ -9148,9 +9148,6 @@ var require_dist = __commonJS({
   }
 });
 
-// src/preview.ts
-var fs5 = __toESM(require("node:fs"));
-
 // src/compat/input.ts
 function getInput(name, options) {
   const value = process.env[`${name.toUpperCase()}`] || process.env[`INPUT_${name.toUpperCase()}`];
@@ -9373,20 +9370,6 @@ function createLogger(options = {}) {
   return createLoggerImpl({ minLevel, provider });
 }
 var logger = createLogger();
-
-// src/commitMessage.ts
-var CONVENTIONAL_COMMIT_REGEX = new RegExp(
-  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
-);
-function makeCommitMessageConventional(message) {
-  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
-    logger.warn(
-      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
-    );
-    return `feat: ${message}`;
-  }
-  return message;
-}
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
 var APIResource = /* @__PURE__ */ (() => {
@@ -15645,68 +15628,6 @@ async function getStainlessAuth() {
   }
 }
 
-// src/markdown.ts
-var import_ts_dedent = __toESM(require_dist());
-var Symbol2 = {
-  Bulb: "\u{1F4A1}",
-  Exclamation: "\u2757",
-  Eyes: "\u{1F440}",
-  GreenSquare: "\u{1F7E9}",
-  HeavyAsterisk: "\u2731",
-  HourglassFlowingSand: "\u23F3",
-  MiddleDot: "\xB7",
-  RedSquare: "\u{1F7E5}",
-  RightwardsArrow: "\u2192",
-  Skipped: "\u23ED\uFE0F",
-  SpeechBalloon: "\u{1F4AC}",
-  Warning: "\u26A0\uFE0F",
-  WhiteCheckMark: "\u2705",
-  WhiteLargeSquare: "\u2B1C",
-  Zap: "\u26A1"
-};
-var Bold = (content) => `<b>${content}</b>`;
-var CodeInline = (content) => `<code>${content}</code>`;
-var Comment = (content) => `<!-- ${content} -->`;
-var Italic = (content) => `<i>${content}</i>`;
-function Dedent(templ, ...args) {
-  return (0, import_ts_dedent.dedent)(templ, ...args).trim().replaceAll(/\n\s*\n/gi, "\n\n");
-}
-var Blockquote = (content) => Dedent`
-    <blockquote>
-
-    ${content}
-
-    </blockquote>
-  `;
-var CodeBlock = (props) => {
-  const delimiter = "```";
-  const content = typeof props === "string" ? props : props.content;
-  const language = typeof props === "string" ? "" : props.language;
-  return Dedent`
-    ${delimiter}${language}
-    ${content}
-    ${delimiter}
-  `;
-};
-var Details = ({
-  summary,
-  body,
-  indent = true,
-  open = false
-}) => {
-  return Dedent`
-    <details${open ? " open" : ""}>
-    <summary>${summary}</summary>
-
-    ${indent ? Blockquote(body) : body}
-
-    </details>
-  `;
-};
-var Heading = (content) => `<h3>${content}</h3>`;
-var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
-var Rule = () => `<hr />`;
-
 // src/outcomes.ts
 var ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
 var FailRunOn = [
@@ -15928,6 +15849,85 @@ function getNewChecks(headChecks, baseChecks) {
   }
   return result;
 }
+
+// src/preview.run.ts
+var fs5 = __toESM(require("node:fs"));
+
+// src/commitMessage.ts
+var CONVENTIONAL_COMMIT_REGEX = new RegExp(
+  /^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\(.*\))?(!?): .*$/m
+);
+function makeCommitMessageConventional(message) {
+  if (message && !CONVENTIONAL_COMMIT_REGEX.test(message)) {
+    logger.warn(
+      `Commit message "${message}" is not in Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/. Prepending "feat:" and using anyway.`
+    );
+    return `feat: ${message}`;
+  }
+  return message;
+}
+
+// src/markdown.ts
+var import_ts_dedent = __toESM(require_dist());
+var Symbol2 = {
+  Bulb: "\u{1F4A1}",
+  Exclamation: "\u2757",
+  Eyes: "\u{1F440}",
+  GreenSquare: "\u{1F7E9}",
+  HeavyAsterisk: "\u2731",
+  HourglassFlowingSand: "\u23F3",
+  MiddleDot: "\xB7",
+  RedSquare: "\u{1F7E5}",
+  RightwardsArrow: "\u2192",
+  Skipped: "\u23ED\uFE0F",
+  SpeechBalloon: "\u{1F4AC}",
+  Warning: "\u26A0\uFE0F",
+  WhiteCheckMark: "\u2705",
+  WhiteLargeSquare: "\u2B1C",
+  Zap: "\u26A1"
+};
+var Bold = (content) => `<b>${content}</b>`;
+var CodeInline = (content) => `<code>${content}</code>`;
+var Comment = (content) => `<!-- ${content} -->`;
+var Italic = (content) => `<i>${content}</i>`;
+function Dedent(templ, ...args) {
+  return (0, import_ts_dedent.dedent)(templ, ...args).trim().replaceAll(/\n\s*\n/gi, "\n\n");
+}
+var Blockquote = (content) => Dedent`
+    <blockquote>
+
+    ${content}
+
+    </blockquote>
+  `;
+var CodeBlock = (props) => {
+  const delimiter = "```";
+  const content = typeof props === "string" ? props : props.content;
+  const language = typeof props === "string" ? "" : props.language;
+  return Dedent`
+    ${delimiter}${language}
+    ${content}
+    ${delimiter}
+  `;
+};
+var Details = ({
+  summary,
+  body,
+  indent = true,
+  open = false
+}) => {
+  return Dedent`
+    <details${open ? " open" : ""}>
+    <summary>${summary}</summary>
+
+    ${indent ? Blockquote(body) : body}
+
+    </details>
+  `;
+};
+var Heading = (content) => `<h3>${content}</h3>`;
+var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
+var Rule = () => `<hr />`;
 
 // src/comment.ts
 var COMMENT_TITLE = Heading(
@@ -19935,30 +19935,27 @@ async function* pollBuild({
   return { outcomes, documentedSpec };
 }
 
-// src/preview.ts
-var main = wrapAction("preview", async (stainless) => {
-  const orgName = getInput("org", { required: true });
-  const projectName = getInput("project", { required: true });
-  const oasPath = getInput("oas_path", { required: false });
-  const configPath = getInput("config_path", { required: false });
-  const defaultCommitMessage = getInput("commit_message", { required: true });
-  const guessConfig = getBooleanInput("guess_config", { required: false });
-  const failRunOn = getInput("fail_on", {
-    choices: FailRunOn,
-    required: true
-  });
-  const makeComment = getBooleanInput("make_comment", { required: true });
-  let multipleCommitMessages = getBooleanInput("multiple_commit_messages", {
-    required: false
-  });
-  const baseSha = getInput("base_sha", { required: true });
-  const baseRef = getInput("base_ref", { required: true });
-  const baseBranch = getInput("base_branch", { required: true });
-  const defaultBranch = getInput("default_branch", { required: true });
-  const headSha = getInput("head_sha", { required: true });
-  const branch = getInput("branch", { required: true });
-  const outputDir = getInput("output_dir", { required: false }) || void 0;
-  const prNumber = ctx().prNumber;
+// src/preview.run.ts
+async function runPreview(stainless, params) {
+  const {
+    orgName,
+    projectName,
+    oasPath,
+    configPath,
+    defaultCommitMessage,
+    guessConfig,
+    failRunOn,
+    makeComment,
+    baseSha,
+    baseRef,
+    baseBranch,
+    defaultBranch,
+    headSha,
+    branch,
+    outputDir,
+    prNumber
+  } = params;
+  let { multipleCommitMessages } = params;
   if (!prNumber) {
     throw new Error("This action must be run from a pull request.");
   }
@@ -20033,7 +20030,7 @@ var main = wrapAction("preview", async (stainless) => {
     configPath
   });
   logger.groupEnd();
-  const initialComment = makeComment && prNumber ? await retrieveComment(prNumber) : null;
+  const initialComment = makeComment ? await retrieveComment(prNumber) : null;
   let commitMessage = initialComment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
   let targetCommitMessages = multipleCommitMessages ? initialComment?.targetCommitMessages ?? {} : void 0;
   if (targetCommitMessages) {
@@ -20058,14 +20055,14 @@ var main = wrapAction("preview", async (stainless) => {
     targetCommitMessages
   });
   let latestRun = null;
-  const upsert = prNumber ? commentThrottler(prNumber) : null;
+  const upsert = commentThrottler(prNumber);
   let pendingAiCommitMessages;
   while (true) {
     const run = await generator.next();
     if (run.value) {
       latestRun = run.value;
     }
-    if (makeComment && latestRun && upsert) {
+    if (makeComment && latestRun) {
       const { outcomes, baseOutcomes } = latestRun;
       const comment = await retrieveComment(prNumber);
       commitMessage = comment?.commitMessage ?? commitMessage;
@@ -20126,7 +20123,7 @@ var main = wrapAction("preview", async (stainless) => {
       break;
     }
   }
-});
+}
 async function computeBranchFrom({
   stainless,
   projectName,
@@ -20177,6 +20174,35 @@ async function computeBranchFrom({
   logger.debug(`Found base via main branch: ${configCommit}`);
   return configCommit;
 }
+
+// src/preview.ts
+var main = wrapAction("preview", async (stainless) => {
+  const params = {
+    orgName: getInput("org", { required: true }),
+    projectName: getInput("project", { required: true }),
+    oasPath: getInput("oas_path", { required: false }),
+    configPath: getInput("config_path", { required: false }),
+    defaultCommitMessage: getInput("commit_message", { required: true }),
+    guessConfig: getBooleanInput("guess_config", { required: false }),
+    failRunOn: getInput("fail_on", {
+      choices: FailRunOn,
+      required: true
+    }),
+    makeComment: getBooleanInput("make_comment", { required: true }),
+    multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+      required: false
+    }),
+    baseSha: getInput("base_sha", { required: true }),
+    baseRef: getInput("base_ref", { required: true }),
+    baseBranch: getInput("base_branch", { required: true }),
+    defaultBranch: getInput("default_branch", { required: true }),
+    headSha: getInput("head_sha", { required: true }),
+    branch: getInput("branch", { required: true }),
+    outputDir: getInput("output_dir", { required: false }),
+    prNumber: ctx().prNumber
+  };
+  await runPreview(stainless, params);
+});
 main();
 /*! Bundled license information:
 
