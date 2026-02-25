@@ -98,6 +98,10 @@ class GitLabClient implements APIClient {
           base_ref: mergeRequest.target_branch,
           head_sha: mergeRequest.diff_refs.head_sha,
           head_ref: mergeRequest.source_branch,
+          merge_commit_sha:
+            mergeRequest.merge_commit_sha ||
+            mergeRequest.squash_commit_sha ||
+            null,
         };
       }
 

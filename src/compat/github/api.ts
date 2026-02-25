@@ -66,6 +66,7 @@ class GitHubClient implements APIClient {
       base_ref: data.base.ref,
       head_ref: data.head.ref,
       head_sha: data.head.sha,
+      merge_commit_sha: data.merge_commit_sha,
     };
   }
 
@@ -99,6 +100,7 @@ class GitHubClient implements APIClient {
       base_ref: pull.base.ref,
       head_ref: pull.head.ref,
       head_sha: pull.head.sha,
+      merge_commit_sha: pull.merge_commit_sha,
     };
   }
 }

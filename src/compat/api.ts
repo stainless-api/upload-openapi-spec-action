@@ -15,6 +15,7 @@ export interface PullRequest {
   base_ref: string;
   head_sha: string;
   head_ref: string;
+  merge_commit_sha: string | null;
 }
 
 export interface APIClient {

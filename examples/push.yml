@@ -1,6 +1,11 @@
 name: Build SDKs on branch push
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
   push:
     # Set this to the branch of the repository that the `main` Stainless branch
     # of your project gets its OpenAPI spec from. This is usually the default
@@ -13,6 +18,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Stainless organization name.
+  STAINLESS_ORG: YOUR_ORG
+
   # Stainless project name.
   STAINLESS_PROJECT: YOUR_PROJECT
 
@@ -44,6 +52,7 @@ jobs:
       - name: Run build
         uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
+          org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
