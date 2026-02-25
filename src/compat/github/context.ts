@@ -26,6 +26,7 @@ export function getGitHubContext(): GitHubContext {
   const apiURL = process.env.GITHUB_API_URL || "https://api.github.com";
   const runURL = `${host}/${owner}/${repo}/actions/runs/${runID}`;
 
+  let defaultBranch: string | null = null;
   let prNumber: number | null = null;
 
   try {
@@ -34,6 +35,10 @@ export function getGitHubContext(): GitHubContext {
       eventPath &&
       fs.existsSync(eventPath) &&
       JSON.parse(fs.readFileSync(eventPath, "utf-8"));
+    const maybeDefaultBranch = payload?.repository?.default_branch;
+    if (typeof maybeDefaultBranch === "string") {
+      defaultBranch = maybeDefaultBranch;
+    }
     const maybePRNumber = parseInt(
       payload?.pull_request?.number ?? process.env.PR_NUMBER ?? "",
       10,
@@ -45,14 +50,20 @@ export function getGitHubContext(): GitHubContext {
     throw new Error(`Failed to parse GitHub event: ${e}`);
   }
 
+  const refName = process.env.GITHUB_REF_NAME || null;
+  const sha = process.env.GITHUB_SHA || null;
+
   cachedContext = {
     provider: "github",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitHub Actions", pr: "PR" },
+    names: { ci: "GitHub Actions", pr: "PR", provider: "GitHub" },
+    defaultBranch,
     prNumber,
+    refName,
+    sha,
   };
 
   logger.debug("GitHub context", cachedContext);

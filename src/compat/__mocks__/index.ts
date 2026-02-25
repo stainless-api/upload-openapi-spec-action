@@ -13,7 +13,11 @@ export function ctx(): Context {
     names: {
       ci: "GitHub Actions",
       pr: "PR",
+      provider: "GitHub",
     },
+    defaultBranch: "main",
     prNumber: 123,
+    refName: "test-branch",
+    sha: "1234567890abcdef1234567890abcdef12345678",
   };
 }

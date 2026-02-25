@@ -30,7 +30,10 @@ export function getGitLabContext(): GitLabContext {
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10,
   );
+  const defaultBranch = process.env.CI_DEFAULT_BRANCH || null;
   const prNumber = Number.isInteger(maybePRNumber) ? maybePRNumber : null;
+  const refName = process.env.CI_COMMIT_REF_NAME || null;
+  const sha = process.env.CI_COMMIT_SHA || null;
 
   cachedContext = {
     provider: "gitlab",
@@ -38,9 +41,12 @@ export function getGitLabContext(): GitLabContext {
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitLab CI", pr: "MR" },
+    names: { ci: "GitLab CI", pr: "MR", provider: "GitLab" },
+    defaultBranch,
     prNumber,
     projectID,
+    refName,
+    sha,
   };
 
   logger.debug("GitLab context", cachedContext);
