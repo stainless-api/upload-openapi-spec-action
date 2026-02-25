@@ -2,12 +2,12 @@ import { APIError } from "@stainless-api/gitlab-internal/core/error";
 import type { APIEntitiesNote } from "@stainless-api/gitlab-internal/resources/projects/issues/notes/notes";
 import {
   APIEntitiesMergeRequest,
-  BaseMergeRequests as GitLabMergeRequests,
+  BaseMergeRequests,
 } from "@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests";
-import { BaseNotes as GitLabNotes } from "@stainless-api/gitlab-internal/resources/projects/merge-requests/notes";
-import { BaseCommits as GitLabCommits } from "@stainless-api/gitlab-internal/resources/projects/repository/commits";
+import { BaseNotes } from "@stainless-api/gitlab-internal/resources/projects/merge-requests/notes";
+import { BaseCommits } from "@stainless-api/gitlab-internal/resources/projects/repository/commits";
 import {
-  createClient as createGitLabClient,
+  createClient,
   PartialGitLab,
 } from "@stainless-api/gitlab-internal/tree-shakable";
 
@@ -19,16 +19,16 @@ import { getGitLabContext as ctx } from "./context";
 class GitLabClient implements APIClient {
   private client: PartialGitLab<{
     projects: {
-      repository: { commits: GitLabCommits };
-      mergeRequests: GitLabMergeRequests & { notes: GitLabNotes };
+      repository: { commits: BaseCommits };
+      mergeRequests: BaseMergeRequests & { notes: BaseNotes };
     };
   }>;
 
   constructor(token: string) {
-    this.client = createGitLabClient({
+    this.client = createClient({
       apiToken: token,
       baseURL: ctx().urls.api,
-      resources: [GitLabCommits, GitLabMergeRequests, GitLabNotes],
+      resources: [BaseCommits, BaseMergeRequests, BaseNotes],
     });
   }
 
@@ -68,15 +68,65 @@ class GitLabClient implements APIClient {
     return { id: data.id!, body: data.body! };
   }
 
+  async getPullRequest(number: number): Promise<PullRequest | null> {
+    /**
+     * Per GitLab docs, diff_refs is "Empty when the merge request is created,
+     * and populates asynchronously." So we poll until it's populated.
+     */
+    let mergeRequest: APIEntitiesMergeRequest | null = null;
+
+    let attempts = 0;
+    while (attempts++ < 3) {
+      mergeRequest = await this.client.projects.mergeRequests.retrieve(number, {
+        id: ctx().projectID,
+      });
+
+      if (
+        mergeRequest?.diff_refs?.start_sha &&
+        mergeRequest?.diff_refs?.head_sha
+      ) {
+        return {
+          number: mergeRequest.iid,
+          state:
+            mergeRequest.state === "opened"
+              ? "open"
+              : mergeRequest.state === "locked"
+                ? "closed"
+                : (mergeRequest.state as "closed" | "merged"),
+          title: mergeRequest.title,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch,
+        };
+      }
+
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), 1000 * (2 ** attempts + Math.random()));
+      });
+    }
+
+    logger.warn(
+      `Failed to find get diff_refs for merge request after ${attempts} attempts`,
+      { mergeRequestIID: number },
+    );
+
+    return null;
+  }
+
   async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
     const mergeRequests: APIEntitiesMergeRequest[] =
       await this.client.projects.repository.commits
         .retrieveMergeRequests(sha, {
           id: ctx().projectID,
         })
-        // The OAS claims it's a single object, but the docs claim it's an
-        // array? Just handle both.
-        .then((data) => (Array.isArray(data) ? data : [data]))
+        .then((data) =>
+          // The OAS claims it's a single object, but the docs claim it's an
+          // array? Just handle both.
+          (Array.isArray(data) ? data : [data]).filter(
+            (c) => c.state !== "closed" && c.state !== "locked",
+          ),
+        )
         .catch((err) => {
           if (err instanceof APIError && err.status === 404) {
             return [];
@@ -94,49 +144,9 @@ class GitLabClient implements APIClient {
     }
 
     const mergeRequestIID = mergeRequests[0]!.iid;
-    /**
-     * Per GitLab docs, diff_refs is "Empty when the merge request is created,
-     * and populates asynchronously." So we poll until it's populated.
-     */
-    let mergeRequest: APIEntitiesMergeRequest | null = null;
+    const mergeRequest = await this.getPullRequest(mergeRequestIID);
 
-    let attempts = 0;
-    while (attempts++ < 3) {
-      mergeRequest = await this.client.projects.mergeRequests.retrieve(
-        mergeRequestIID,
-        { id: ctx().projectID },
-      );
-
-      if (
-        mergeRequest?.diff_refs?.start_sha &&
-        mergeRequest?.diff_refs?.head_sha
-      ) {
-        return {
-          number: mergeRequest.iid,
-          state:
-            mergeRequest.state === "opened"
-              ? "open"
-              : mergeRequest.state === "locked"
-                ? "closed"
-                : (mergeRequest.state as "closed" | "merged"),
-          base_sha: mergeRequest.diff_refs.start_sha,
-          base_ref: mergeRequest.target_branch,
-          head_sha: mergeRequest.diff_refs.head_sha,
-          head_ref: mergeRequest.source_branch,
-        };
-      }
-
-      await new Promise<void>((resolve) => {
-        setTimeout(() => resolve(), 1000 * (2 ** attempts + Math.random()));
-      });
-    }
-
-    logger.warn(
-      `Failed to find merge request for commit after ${attempts} attempts`,
-      { commit: sha, mergeRequestIID },
-    );
-
-    return null;
+    return mergeRequest;
   }
 }
 

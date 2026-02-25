@@ -33,10 +33,28 @@ export type BaseContext = {
     ci: string;
     /** Abbreviation for pull-request-equivalent, e.g. `PR`. */
     pr: string;
+    /** Name of the provider, e.g. `GitHub`. */
+    provider: string;
   };
 
-  /** Associated PR number for this action run, if any. */
+  /** Default branch for the repository. */
+  defaultBranch: string | null;
+  /**
+   * Associated PR number for this action run, if any.
+   *
+   * Note that if the PR is inferred (like in the case of the build->preview
+   * dispatch), this will be null.
+   */
   prNumber: number | null;
+  /** Associated ref name (usually a branch) for this action run, if any. */
+  refName: string | null;
+  /**
+   * Associated SHA for this action run, if any.
+   *
+   * Be careful with this: it's not always the SHA of the commit that's
+   * currently checked out, nor is it the base SHA or the head SHA of a PR.
+   */
+  sha: string | null;
 };
 
 export type Context = GitHubContext | GitLabContext;

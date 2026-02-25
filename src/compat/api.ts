@@ -10,6 +10,7 @@ export interface Comment {
 export interface PullRequest {
   number: number;
   state: "open" | "closed" | "merged";
+  title: string;
   base_sha: string;
   base_ref: string;
   head_sha: string;
@@ -20,6 +21,8 @@ export interface APIClient {
   listComments(prNumber: number): Promise<Comment[]>;
   createComment(prNumber: number, props: Omit<Comment, "id">): Promise<Comment>;
   updateComment(prNumber: number, props: Comment): Promise<Comment>;
+
+  getPullRequest(number: number): Promise<PullRequest | null>;
 
   getPullRequestForCommit(sha: string): Promise<PullRequest | null>;
 }

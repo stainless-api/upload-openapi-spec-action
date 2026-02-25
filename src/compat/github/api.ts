@@ -1,7 +1,9 @@
-import { BaseCommits as GitHubCommits } from "@stainless-api/github-internal/resources/repos/commits";
-import { BaseComments as GitHubComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
+import { APIError } from "@stainless-api/github-internal/core/error";
+import { BaseCommits } from "@stainless-api/github-internal/resources/repos/commits";
+import { BaseComments } from "@stainless-api/github-internal/resources/repos/issues/comments";
+import { BasePulls } from "@stainless-api/github-internal/resources/repos/pulls";
 import {
-  createClient as createGitHubClient,
+  createClient,
   type PartialGitHub,
 } from "@stainless-api/github-internal/tree-shakable";
 import { logger } from "../../logger";
@@ -12,18 +14,19 @@ import { getGitHubContext as ctx } from "./context";
 class GitHubClient implements APIClient {
   private client: PartialGitHub<{
     repos: {
-      commits: GitHubCommits;
-      issues: { comments: GitHubComments };
+      commits: BaseCommits;
+      issues: { comments: BaseComments };
+      pulls: BasePulls;
     };
   }>;
 
   constructor(token: string) {
-    this.client = createGitHubClient({
+    this.client = createClient({
       authToken: token,
       baseURL: ctx().urls.api,
       owner: ctx().owner,
       repo: ctx().repo,
-      resources: [GitHubComments, GitHubCommits],
+      resources: [BaseCommits, BaseComments, BasePulls],
     });
   }
 
@@ -53,21 +56,45 @@ class GitHubClient implements APIClient {
     return { id: data.id, body: data.body! };
   }
 
+  async getPullRequest(number: number): Promise<PullRequest | null> {
+    const data = await this.client.repos.pulls.retrieve(number);
+    return {
+      number,
+      state: data.merged_at ? "merged" : (data.state as "open" | "closed"),
+      title: data.title,
+      base_sha: data.base.sha,
+      base_ref: data.base.ref,
+      head_ref: data.head.ref,
+      head_sha: data.head.sha,
+    };
+  }
+
   async getPullRequestForCommit(sha: string): Promise<PullRequest | null> {
-    const { data } = await this.client.repos.commits.listPullRequests(sha);
-    if (data.length === 0) {
+    const pullRequests = await this.client.repos.commits
+      .listPullRequests(sha)
+      .then(({ data }) =>
+        data.filter((c) => c.merged_at || c.state !== "closed"),
+      )
+      .catch((err) => {
+        if (err instanceof APIError && err.status === 404) {
+          return [];
+        }
+        throw err;
+      });
+    if (pullRequests.length === 0) {
       return null;
     }
-    if (data.length > 1) {
+    if (pullRequests.length > 1) {
       logger.warn(
         `Multiple pull requests found for commit; only using first.`,
-        { commit: sha, pulls: data.map((c) => c.number) },
+        { commit: sha, pulls: pullRequests.map((c) => c.number) },
       );
     }
-    const pull = data[0]!;
+    const pull = pullRequests[0]!;
     return {
       number: pull.number,
       state: pull.merged_at ? "merged" : (pull.state as "open" | "closed"),
+      title: pull.title,
       base_sha: pull.base.sha,
       base_ref: pull.base.ref,
       head_ref: pull.head.ref,

@@ -9371,35 +9371,6 @@ function createLogger(options = {}) {
 }
 var logger = createLogger();
 
-// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
-var APIResource = /* @__PURE__ */ (() => {
-  class APIResource4 {
-    constructor(client) {
-      this._client = client;
-    }
-  }
-  APIResource4._key = [];
-  return APIResource4;
-})();
-
-// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
-function __classPrivateFieldSet(receiver, state, value, kind, f) {
-  if (kind === "m")
-    throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
-}
-function __classPrivateFieldGet(receiver, state, kind, f) {
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}
-
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/errors.mjs
 function isAbortError(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
@@ -9522,6 +9493,35 @@ var RateLimitError = class extends APIError {
 };
 var InternalServerError = class extends APIError {
 };
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
+var APIResource = /* @__PURE__ */ (() => {
+  class APIResource4 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource4._key = [];
+  return APIResource4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
+function __classPrivateFieldSet(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp = /^[a-z][a-z0-9+.-]*:/i;
@@ -10394,6 +10394,433 @@ var BaseComments2 = /* @__PURE__ */ (() => {
     "comments"
   ]);
   return BaseComments8;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
+var BasePulls = /* @__PURE__ */ (() => {
+  class BasePulls2 extends APIResource {
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * To open or update a pull request in a public repository, you must have write
+     * access to the head or the source branch. For organization-owned repositories,
+     * you must be a member of the organization that owns the repository to open or
+     * update a pull request.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.create({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   base: 'master',
+     *   head: 'octocat:new-feature',
+     *   body: 'Please pull these awesome changes in!',
+     *   title: 'Amazing new feature',
+     * });
+     * ```
+     */
+    create(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/pulls`, { body, ...options });
+    }
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * Lists details of a pull request by providing its number.
+     *
+     * When you get,
+     * [create](https://docs.github.com/rest/pulls/pulls/#create-a-pull-request), or
+     * [edit](https://docs.github.com/rest/pulls/pulls#update-a-pull-request) a pull
+     * request, GitHub creates a merge commit to test whether the pull request can be
+     * automatically merged into the base branch. This test commit is not added to the
+     * base branch or the head branch. You can review the status of the test commit
+     * using the `mergeable` key. For more information, see
+     * "[Checking mergeability of pull requests](https://docs.github.com/rest/guides/getting-started-with-the-git-database-api#checking-mergeability-of-pull-requests)".
+     *
+     * The value of the `mergeable` attribute can be `true`, `false`, or `null`. If the
+     * value is `null`, then GitHub has started a background job to compute the
+     * mergeability. After giving the job time to complete, resubmit the request. When
+     * the job finishes, you will see a non-`null` value for the `mergeable` attribute
+     * in the response. If `mergeable` is `true`, then `merge_commit_sha` will be the
+     * SHA of the _test_ merge commit.
+     *
+     * The value of the `merge_commit_sha` attribute changes depending on the state of
+     * the pull request. Before merging a pull request, the `merge_commit_sha`
+     * attribute holds the SHA of the _test_ merge commit. After merging a pull
+     * request, the `merge_commit_sha` attribute changes depending on how you merged
+     * the pull request:
+     *
+     * - If merged as a
+     *   [merge commit](https://docs.github.com/articles/about-merge-methods-on-github/),
+     *   `merge_commit_sha` represents the SHA of the merge commit.
+     * - If merged via a
+     *   [squash](https://docs.github.com/articles/about-merge-methods-on-github/#squashing-your-merge-commits),
+     *   `merge_commit_sha` represents the SHA of the squashed commit on the base
+     *   branch.
+     * - If
+     *   [rebased](https://docs.github.com/articles/about-merge-methods-on-github/#rebasing-and-merging-your-commits),
+     *   `merge_commit_sha` represents the commit that the base branch was updated to.
+     *
+     * Pass the appropriate
+     * [media type](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)
+     * to fetch diff and patch formats.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     * - **`application/vnd.github.diff`**: For more information, see
+     *   "[git-diff](https://git-scm.com/docs/git-diff)" in the Git documentation. If a
+     *   diff is corrupt, contact us through the
+     *   [GitHub Support portal](https://support.github.com/). Include the repository
+     *   name and pull request ID in your message.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.retrieve(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    retrieve(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, options);
+    }
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * To open or update a pull request in a public repository, you must have write
+     * access to the head or the source branch. For organization-owned repositories,
+     * you must be a member of the organization that owns the repository to open or
+     * update a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.update(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   base: 'master',
+     *   body: 'updated body',
+     *   state: 'open',
+     *   title: 'new title',
+     * });
+     * ```
+     */
+    update(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
+      return this._client.patch(path`/repos/${owner}/${repo}/pulls/${pullNumber}`, { body, ...options });
+    }
+    /**
+     * Lists pull requests in a specified repository.
+     *
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullRequestSimple of client.repos.pulls.list(
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Creates a codespace owned by the authenticated user for the specified pull
+     * request.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `codespace` scope
+     * to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const codespace = await client.repos.pulls.createCodespace(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    createCodespace(pullNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/codespaces`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Creates a review comment on the diff of a specified pull request. To add a
+     * regular comment to a pull request timeline, see
+     * "[Create an issue comment](https://docs.github.com/rest/issues/comments#create-an-issue-comment)."
+     *
+     * If your comment applies to more than one line in the pull request diff, you
+     * should use the parameters `line`, `side`, and optionally `start_line` and
+     * `start_side` in your request.
+     *
+     * The `position` parameter is closing down. If you use `position`, the `line`,
+     * `side`, `start_line`, and `start_side` parameters are not required.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.pulls.createComment(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   body: 'Great stuff!',
+     *   commit_id: '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+     *   path: 'file1.txt',
+     *   line: 2,
+     *   side: 'RIGHT',
+     *   start_line: 1,
+     *   start_side: 'RIGHT',
+     * });
+     * ```
+     */
+    createComment(pullNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Lists all review comments for a specified pull request. By default, review
+     * comments are in ascending order by ID.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullListCommentsResponse of client.repos.pulls.listComments(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listComments(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists a maximum of 250 commits for a pull request. To receive a complete commit
+     * list for pull requests with more than 250 commits, use the
+     * [List commits](https://docs.github.com/rest/commits/commits#list-commits)
+     * endpoint.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commit of client.repos.pulls.listCommits(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listCommits(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/commits`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists the files in a specified pull request.
+     *
+     * > [!NOTE] Responses include a maximum of 3000 files. The paginated response
+     * > returns 30 files per page by default.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullListFilesResponse of client.repos.pulls.listFiles(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listFiles(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path`/repos/${owner}/${repo}/pulls/${pullNumber}/files`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Updates the pull request branch with the latest upstream changes by merging HEAD
+     * from the base branch into the pull request branch. Note: If making a request on
+     * behalf of a GitHub App you must also have permissions to write the contents of
+     * the head repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.pulls.updateBranch(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   expected_head_sha:
+     *     '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+     * });
+     * ```
+     */
+    updateBranch(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
+      return this._client.put(path`/repos/${owner}/${repo}/pulls/${pullNumber}/update-branch`, {
+        body,
+        ...options
+      });
+    }
+  }
+  BasePulls2._key = Object.freeze(["repos", "pulls"]);
+  return BasePulls2;
 })();
 
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
@@ -12797,10 +13224,15 @@ function getGitHubContext() {
   const host = process.env.GITHUB_SERVER_URL || "https://github.com";
   const apiURL = process.env.GITHUB_API_URL || "https://api.github.com";
   const runURL = `${host}/${owner}/${repo}/actions/runs/${runID}`;
+  let defaultBranch = null;
   let prNumber = null;
   try {
     const eventPath = process.env.GITHUB_EVENT_PATH;
     const payload = eventPath && fs.existsSync(eventPath) && JSON.parse(fs.readFileSync(eventPath, "utf-8"));
+    const maybeDefaultBranch = payload?.repository?.default_branch;
+    if (typeof maybeDefaultBranch === "string") {
+      defaultBranch = maybeDefaultBranch;
+    }
     const maybePRNumber = parseInt(
       payload?.pull_request?.number ?? process.env.PR_NUMBER ?? "",
       10
@@ -12811,14 +13243,19 @@ function getGitHubContext() {
   } catch (e) {
     throw new Error(`Failed to parse GitHub event: ${e}`);
   }
+  const refName = process.env.GITHUB_REF_NAME || null;
+  const sha = process.env.GITHUB_SHA || null;
   cachedContext = {
     provider: "github",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitHub Actions", pr: "PR" },
-    prNumber
+    names: { ci: "GitHub Actions", pr: "PR", provider: "GitHub" },
+    defaultBranch,
+    prNumber,
+    refName,
+    sha
   };
   logger.debug("GitHub context", cachedContext);
   return cachedContext;
@@ -12833,7 +13270,7 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseComments2, BaseCommits]
+      resources: [BaseCommits, BaseComments2, BasePulls]
     });
   }
   async listComments(prNumber) {
@@ -12853,21 +13290,41 @@ var GitHubClient = class {
     });
     return { id: data.id, body: data.body };
   }
+  async getPullRequest(number) {
+    const data = await this.client.repos.pulls.retrieve(number);
+    return {
+      number,
+      state: data.merged_at ? "merged" : data.state,
+      title: data.title,
+      base_sha: data.base.sha,
+      base_ref: data.base.ref,
+      head_ref: data.head.ref,
+      head_sha: data.head.sha
+    };
+  }
   async getPullRequestForCommit(sha) {
-    const { data } = await this.client.repos.commits.listPullRequests(sha);
-    if (data.length === 0) {
+    const pullRequests = await this.client.repos.commits.listPullRequests(sha).then(
+      ({ data }) => data.filter((c) => c.merged_at || c.state !== "closed")
+    ).catch((err) => {
+      if (err instanceof APIError && err.status === 404) {
+        return [];
+      }
+      throw err;
+    });
+    if (pullRequests.length === 0) {
       return null;
     }
-    if (data.length > 1) {
+    if (pullRequests.length > 1) {
       logger.warn(
         `Multiple pull requests found for commit; only using first.`,
-        { commit: sha, pulls: data.map((c) => c.number) }
+        { commit: sha, pulls: pullRequests.map((c) => c.number) }
       );
     }
-    const pull = data[0];
+    const pull = pullRequests[0];
     return {
       number: pull.number,
       state: pull.merged_at ? "merged" : pull.state,
+      title: pull.title,
       base_sha: pull.base.sha,
       base_ref: pull.base.ref,
       head_ref: pull.head.ref,
@@ -15412,16 +15869,22 @@ function getGitLabContext() {
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10
   );
+  const defaultBranch = process.env.CI_DEFAULT_BRANCH || null;
   const prNumber = Number.isInteger(maybePRNumber) ? maybePRNumber : null;
+  const refName = process.env.CI_COMMIT_REF_NAME || null;
+  const sha = process.env.CI_COMMIT_SHA || null;
   cachedContext2 = {
     provider: "gitlab",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitLab CI", pr: "MR" },
+    names: { ci: "GitLab CI", pr: "MR", provider: "GitLab" },
+    defaultBranch,
     prNumber,
-    projectID
+    projectID,
+    refName,
+    sha
   };
   logger.debug("GitLab context", cachedContext2);
   return cachedContext2;
@@ -15460,10 +15923,46 @@ var GitLabClient = class {
     );
     return { id: data.id, body: data.body };
   }
+  async getPullRequest(number) {
+    let mergeRequest = null;
+    let attempts = 0;
+    while (attempts++ < 3) {
+      mergeRequest = await this.client.projects.mergeRequests.retrieve(number, {
+        id: getGitLabContext().projectID
+      });
+      if (mergeRequest?.diff_refs?.start_sha && mergeRequest?.diff_refs?.head_sha) {
+        return {
+          number: mergeRequest.iid,
+          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
+          title: mergeRequest.title,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch
+        };
+      }
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
+      });
+    }
+    logger.warn(
+      `Failed to find get diff_refs for merge request after ${attempts} attempts`,
+      { mergeRequestIID: number }
+    );
+    return null;
+  }
   async getPullRequestForCommit(sha) {
     const mergeRequests = await this.client.projects.repository.commits.retrieveMergeRequests(sha, {
       id: getGitLabContext().projectID
-    }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
+    }).then(
+      (data) => (
+        // The OAS claims it's a single object, but the docs claim it's an
+        // array? Just handle both.
+        (Array.isArray(data) ? data : [data]).filter(
+          (c) => c.state !== "closed" && c.state !== "locked"
+        )
+      )
+    ).catch((err) => {
       if (err instanceof APIError2 && err.status === 404) {
         return [];
       }
@@ -15479,32 +15978,8 @@ var GitLabClient = class {
       );
     }
     const mergeRequestIID = mergeRequests[0].iid;
-    let mergeRequest = null;
-    let attempts = 0;
-    while (attempts++ < 3) {
-      mergeRequest = await this.client.projects.mergeRequests.retrieve(
-        mergeRequestIID,
-        { id: getGitLabContext().projectID }
-      );
-      if (mergeRequest?.diff_refs?.start_sha && mergeRequest?.diff_refs?.head_sha) {
-        return {
-          number: mergeRequest.iid,
-          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
-          base_sha: mergeRequest.diff_refs.start_sha,
-          base_ref: mergeRequest.target_branch,
-          head_sha: mergeRequest.diff_refs.head_sha,
-          head_ref: mergeRequest.source_branch
-        };
-      }
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
-      });
-    }
-    logger.warn(
-      `Failed to find merge request for commit after ${attempts} attempts`,
-      { commit: sha, mergeRequestIID }
-    );
-    return null;
+    const mergeRequest = await this.getPullRequest(mergeRequestIID);
+    return mergeRequest;
   }
 };
 var cachedClient2;

@@ -18566,10 +18566,15 @@ function getGitHubContext() {
   const host = process.env.GITHUB_SERVER_URL || "https://github.com";
   const apiURL = process.env.GITHUB_API_URL || "https://api.github.com";
   const runURL = `${host}/${owner}/${repo}/actions/runs/${runID}`;
+  let defaultBranch = null;
   let prNumber = null;
   try {
     const eventPath = process.env.GITHUB_EVENT_PATH;
     const payload = eventPath && fs.existsSync(eventPath) && JSON.parse(fs.readFileSync(eventPath, "utf-8"));
+    const maybeDefaultBranch = payload?.repository?.default_branch;
+    if (typeof maybeDefaultBranch === "string") {
+      defaultBranch = maybeDefaultBranch;
+    }
     const maybePRNumber = parseInt(
       payload?.pull_request?.number ?? process.env.PR_NUMBER ?? "",
       10
@@ -18580,14 +18585,19 @@ function getGitHubContext() {
   } catch (e) {
     throw new Error(`Failed to parse GitHub event: ${e}`);
   }
+  const refName = process.env.GITHUB_REF_NAME || null;
+  const sha = process.env.GITHUB_SHA || null;
   cachedContext = {
     provider: "github",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitHub Actions", pr: "PR" },
-    prNumber
+    names: { ci: "GitHub Actions", pr: "PR", provider: "GitHub" },
+    defaultBranch,
+    prNumber,
+    refName,
+    sha
   };
   logger.debug("GitHub context", cachedContext);
   return cachedContext;
@@ -18614,16 +18624,22 @@ function getGitLabContext() {
     process.env.CI_MERGE_REQUEST_IID || process.env.MR_NUMBER || "",
     10
   );
+  const defaultBranch = process.env.CI_DEFAULT_BRANCH || null;
   const prNumber = Number.isInteger(maybePRNumber) ? maybePRNumber : null;
+  const refName = process.env.CI_COMMIT_REF_NAME || null;
+  const sha = process.env.CI_COMMIT_SHA || null;
   cachedContext2 = {
     provider: "gitlab",
     host,
     owner,
     repo,
     urls: { api: apiURL, run: runURL },
-    names: { ci: "GitLab CI", pr: "MR" },
+    names: { ci: "GitLab CI", pr: "MR", provider: "GitLab" },
+    defaultBranch,
     prNumber,
-    projectID
+    projectID,
+    refName,
+    sha
   };
   logger.debug("GitLab context", cachedContext2);
   return cachedContext2;
