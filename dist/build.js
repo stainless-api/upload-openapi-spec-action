@@ -1132,16 +1132,16 @@ var require_stringifyString = __commonJS({
     function lineLengthOverLimit(str, lineWidth, indentLength) {
       if (!lineWidth || lineWidth < 0)
         return false;
-      const limit2 = lineWidth - indentLength;
+      const limit4 = lineWidth - indentLength;
       const strLen = str.length;
-      if (strLen <= limit2)
+      if (strLen <= limit4)
         return false;
       for (let i = 0, start = 0; i < strLen; ++i) {
         if (str[i] === "\n") {
-          if (i - start > limit2)
+          if (i - start > limit4)
             return true;
           start = i + 1;
-          if (strLen - start <= limit2)
+          if (strLen - start <= limit4)
             return false;
         }
       }
@@ -6865,14 +6865,14 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs6 = this.flowScalar(this.type);
+              const fs8 = this.flowScalar(this.type);
               if (atNextItem || it.value) {
-                map.items.push({ start, key: fs6, sep: [] });
+                map.items.push({ start, key: fs8, sep: [] });
                 this.onKeyLine = true;
               } else if (it.sep) {
-                this.stack.push(fs6);
+                this.stack.push(fs8);
               } else {
-                Object.assign(it, { key: fs6, sep: [] });
+                Object.assign(it, { key: fs8, sep: [] });
                 this.onKeyLine = true;
               }
               return;
@@ -7000,13 +7000,13 @@ var require_parser = __commonJS({
             case "scalar":
             case "single-quoted-scalar":
             case "double-quoted-scalar": {
-              const fs6 = this.flowScalar(this.type);
+              const fs8 = this.flowScalar(this.type);
               if (!it || it.value)
-                fc.items.push({ start: [], key: fs6, sep: [] });
+                fc.items.push({ start: [], key: fs8, sep: [] });
               else if (it.sep)
-                this.stack.push(fs6);
+                this.stack.push(fs8);
               else
-                Object.assign(it, { key: fs6, sep: [] });
+                Object.assign(it, { key: fs8, sep: [] });
               return;
             }
             case "flow-map-end":
@@ -16388,6 +16388,55 @@ var require_jsonwebtoken = __commonJS({
   }
 });
 
+// node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js
+var require_dist2 = __commonJS({
+  "node_modules/.pnpm/ts-dedent@2.2.0/node_modules/ts-dedent/dist/index.js"(exports2) {
+    "use strict";
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.dedent = void 0;
+    function dedent(templ) {
+      var values = [];
+      for (var _i = 1; _i < arguments.length; _i++) {
+        values[_i - 1] = arguments[_i];
+      }
+      var strings = Array.from(typeof templ === "string" ? [templ] : templ);
+      strings[strings.length - 1] = strings[strings.length - 1].replace(/\r?\n([\t ]*)$/, "");
+      var indentLengths = strings.reduce(function(arr, str) {
+        var matches = str.match(/\n([\t ]+|(?!\s).)/g);
+        if (matches) {
+          return arr.concat(matches.map(function(match) {
+            var _a2, _b;
+            return (_b = (_a2 = match.match(/[\t ]/g)) === null || _a2 === void 0 ? void 0 : _a2.length) !== null && _b !== void 0 ? _b : 0;
+          }));
+        }
+        return arr;
+      }, []);
+      if (indentLengths.length) {
+        var pattern_1 = new RegExp("\n[	 ]{" + Math.min.apply(Math, indentLengths) + "}", "g");
+        strings = strings.map(function(str) {
+          return str.replace(pattern_1, "\n");
+        });
+      }
+      strings[0] = strings[0].replace(/^\r?\n/, "");
+      var string = strings[0];
+      values.forEach(function(value, i) {
+        var endentations = string.match(/(?:^|\n)( *)$/);
+        var endentation = endentations ? endentations[1] : "";
+        var indentedValue = value;
+        if (typeof value === "string" && value.includes("\n")) {
+          indentedValue = String(value).split("\n").map(function(str, i2) {
+            return i2 === 0 ? str : "" + endentation + str;
+          }).join("\n");
+        }
+        string += indentedValue + strings[i + 1];
+      });
+      return string;
+    }
+    exports2.dedent = dedent;
+    exports2.default = dedent;
+  }
+});
+
 // src/build.ts
 var import_node_os2 = require("node:os");
 
@@ -18498,11 +18547,3841 @@ function createLogger(options = {}) {
 }
 var logger = createLogger();
 
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/errors.mjs
+function isAbortError2(err) {
+  return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
+  ("name" in err && err.name === "AbortError" || // Expo fetch
+  "message" in err && String(err.message).includes("FetchRequestCanceledException"));
+}
+var castToError2 = (err) => {
+  if (err instanceof Error)
+    return err;
+  if (typeof err === "object" && err !== null) {
+    try {
+      if (Object.prototype.toString.call(err) === "[object Error]") {
+        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
+        if (err.stack)
+          error.stack = err.stack;
+        if (err.cause && !error.cause)
+          error.cause = err.cause;
+        if (err.name)
+          error.name = err.name;
+        return error;
+      }
+    } catch {
+    }
+    try {
+      return new Error(JSON.stringify(err));
+    } catch {
+    }
+  }
+  return new Error(err);
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/error.mjs
+var GitHubError = /* @__PURE__ */ (() => {
+  class GitHubError2 extends Error {
+  }
+  return GitHubError2;
+})();
+var APIError2 = class _APIError extends GitHubError {
+  constructor(status, error, message, headers) {
+    super(`${_APIError.makeMessage(status, error, message)}`);
+    this.status = status;
+    this.headers = headers;
+    this.error = error;
+  }
+  static makeMessage(status, error, message) {
+    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
+    if (status && msg) {
+      return `${status} ${msg}`;
+    }
+    if (status) {
+      return `${status} status code (no body)`;
+    }
+    if (msg) {
+      return msg;
+    }
+    return "(no status code or body)";
+  }
+  static generate(status, errorResponse, message, headers) {
+    if (!status || !headers) {
+      return new APIConnectionError2({ message, cause: castToError2(errorResponse) });
+    }
+    const error = errorResponse;
+    if (status === 400) {
+      return new BadRequestError2(status, error, message, headers);
+    }
+    if (status === 401) {
+      return new AuthenticationError2(status, error, message, headers);
+    }
+    if (status === 403) {
+      return new PermissionDeniedError2(status, error, message, headers);
+    }
+    if (status === 404) {
+      return new NotFoundError2(status, error, message, headers);
+    }
+    if (status === 409) {
+      return new ConflictError2(status, error, message, headers);
+    }
+    if (status === 422) {
+      return new UnprocessableEntityError2(status, error, message, headers);
+    }
+    if (status === 429) {
+      return new RateLimitError2(status, error, message, headers);
+    }
+    if (status >= 500) {
+      return new InternalServerError2(status, error, message, headers);
+    }
+    return new _APIError(status, error, message, headers);
+  }
+};
+var APIUserAbortError2 = class extends APIError2 {
+  constructor({ message } = {}) {
+    super(void 0, void 0, message || "Request was aborted.", void 0);
+  }
+};
+var APIConnectionError2 = class extends APIError2 {
+  constructor({ message, cause }) {
+    super(void 0, void 0, message || "Connection error.", void 0);
+    if (cause)
+      this.cause = cause;
+  }
+};
+var APIConnectionTimeoutError2 = class extends APIConnectionError2 {
+  constructor({ message } = {}) {
+    super({ message: message ?? "Request timed out." });
+  }
+};
+var BadRequestError2 = class extends APIError2 {
+};
+var AuthenticationError2 = class extends APIError2 {
+};
+var PermissionDeniedError2 = class extends APIError2 {
+};
+var NotFoundError2 = class extends APIError2 {
+};
+var ConflictError2 = class extends APIError2 {
+};
+var UnprocessableEntityError2 = class extends APIError2 {
+};
+var RateLimitError2 = class extends APIError2 {
+};
+var InternalServerError2 = class extends APIError2 {
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/resource.mjs
+var APIResource2 = /* @__PURE__ */ (() => {
+  class APIResource4 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource4._key = [];
+  return APIResource4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/tslib.mjs
+function __classPrivateFieldSet2(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet2(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/values.mjs
+var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
+var isAbsoluteURL2 = (url) => {
+  return startsWithSchemeRegexp2.test(url);
+};
+var isArray2 = (val) => (isArray2 = Array.isArray, isArray2(val));
+var isReadonlyArray2 = isArray2;
+function maybeObj2(x) {
+  if (typeof x !== "object") {
+    return {};
+  }
+  return x ?? {};
+}
+function isEmptyObj2(obj) {
+  if (!obj)
+    return true;
+  for (const _k in obj)
+    return false;
+  return true;
+}
+function hasOwn2(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+var validatePositiveInteger2 = (name, n) => {
+  if (typeof n !== "number" || !Number.isInteger(n)) {
+    throw new GitHubError(`${name} must be an integer`);
+  }
+  if (n < 0) {
+    throw new GitHubError(`${name} must be a positive integer`);
+  }
+  return n;
+};
+var safeJSON2 = (text) => {
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return void 0;
+  }
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/log.mjs
+var levelNumbers2 = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel2 = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn2(levelNumbers2, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor2(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers2))}`);
+  return void 0;
+};
+function noop2() {
+}
+function makeLogFn2(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers2[fnLevel] > levelNumbers2[logLevel]) {
+    return noop2;
+  } else {
+    return logger2[fnLevel].bind(logger2);
+  }
+}
+var noopLogger2 = {
+  error: noop2,
+  warn: noop2,
+  info: noop2,
+  debug: noop2
+};
+var cachedLoggers2 = /* @__PURE__ */ new WeakMap();
+function loggerFor2(client) {
+  const logger2 = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger2) {
+    return noopLogger2;
+  }
+  const cachedLogger = cachedLoggers2.get(logger2);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn2("error", logger2, logLevel),
+    warn: makeLogFn2("warn", logger2, logLevel),
+    info: makeLogFn2("info", logger2, logLevel),
+    debug: makeLogFn2("debug", logger2, logLevel)
+  };
+  cachedLoggers2.set(logger2, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails2 = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/parse.mjs
+async function defaultParseResponse2(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const contentLength = response.headers.get("content-length");
+      if (contentLength === "0") {
+        return void 0;
+      }
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor2(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails2({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/api-promise.mjs
+var _APIPromise_client2;
+var APIPromise2 = /* @__PURE__ */ (() => {
+  class APIPromise4 extends Promise {
+    constructor(client, responsePromise, parseResponse = defaultParseResponse2) {
+      super((resolve) => {
+        resolve(null);
+      });
+      this.responsePromise = responsePromise;
+      this.parseResponse = parseResponse;
+      _APIPromise_client2.set(this, void 0);
+      __classPrivateFieldSet2(this, _APIPromise_client2, client, "f");
+    }
+    _thenUnwrap(transform) {
+      return new APIPromise4(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+    }
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    asResponse() {
+      return this.responsePromise.then((p) => p.response);
+    }
+    /**
+     * Gets the parsed response data and the raw `Response` instance.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    async withResponse() {
+      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+      return { data, response };
+    }
+    parse() {
+      if (!this.parsedPromise) {
+        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet2(this, _APIPromise_client2, "f"), data));
+      }
+      return this.parsedPromise;
+    }
+    then(onfulfilled, onrejected) {
+      return this.parse().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+      return this.parse().catch(onrejected);
+    }
+    finally(onfinally) {
+      return this.parse().finally(onfinally);
+    }
+  }
+  _APIPromise_client2 = /* @__PURE__ */ new WeakMap();
+  return APIPromise4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/core/pagination.mjs
+var _AbstractPage_client2;
+var AbstractPage2 = /* @__PURE__ */ (() => {
+  class AbstractPage3 {
+    constructor(client, response, body, options) {
+      _AbstractPage_client2.set(this, void 0);
+      __classPrivateFieldSet2(this, _AbstractPage_client2, client, "f");
+      this.options = options;
+      this.response = response;
+      this.body = body;
+    }
+    hasNextPage() {
+      const items = this.getPaginatedItems();
+      if (!items.length)
+        return false;
+      return this.nextPageRequestOptions() != null;
+    }
+    async getNextPage() {
+      const nextOptions = this.nextPageRequestOptions();
+      if (!nextOptions) {
+        throw new GitHubError("No next page expected; please check `.hasNextPage()` before calling `.getNextPage()`.");
+      }
+      return await __classPrivateFieldGet2(this, _AbstractPage_client2, "f").requestAPIList(this.constructor, nextOptions);
+    }
+    async *iterPages() {
+      let page = this;
+      yield page;
+      while (page.hasNextPage()) {
+        page = await page.getNextPage();
+        yield page;
+      }
+    }
+    async *[(_AbstractPage_client2 = /* @__PURE__ */ new WeakMap(), Symbol.asyncIterator)]() {
+      for await (const page of this.iterPages()) {
+        for (const item of page.getPaginatedItems()) {
+          yield item;
+        }
+      }
+    }
+  }
+  return AbstractPage3;
+})();
+var PagePromise2 = /* @__PURE__ */ (() => {
+  class PagePromise3 extends APIPromise2 {
+    constructor(client, request, Page2) {
+      super(client, request, async (client2, props) => new Page2(client2, props.response, await defaultParseResponse2(client2, props), props.options));
+    }
+    /**
+     * Allow auto-paginating iteration on an unawaited list call, eg:
+     *
+     *    for await (const item of client.items.list()) {
+     *      console.log(item)
+     *    }
+     */
+    async *[Symbol.asyncIterator]() {
+      const page = await this;
+      for await (const item of page) {
+        yield item;
+      }
+    }
+  }
+  return PagePromise3;
+})();
+var NumberedPage = class extends AbstractPage2 {
+  constructor(client, response, body, options) {
+    super(client, response, body, options);
+    this.data = body || [];
+  }
+  getPaginatedItems() {
+    return this.data ?? [];
+  }
+  nextPageRequestOptions() {
+    const query = this.options.query;
+    const currentPage = query?.page ?? 1;
+    return {
+      ...this.options,
+      query: {
+        ...maybeObj2(this.options.query),
+        page: currentPage + 1
+      }
+    };
+  }
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/path.mjs
+function encodeURIPath2(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction2 = (pathEncoder = encodeURIPath2) => function path7(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path8 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY2) ?? EMPTY2)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path8.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new GitHubError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path8}
+${underline}`);
+  }
+  return path8;
+};
+var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/commits/commits.mjs
+var BaseCommits = /* @__PURE__ */ (() => {
+  class BaseCommits4 extends APIResource2 {
+    /**
+     * Returns the contents of a single commit reference. You must have `read` access
+     * for the repository to use this endpoint.
+     *
+     * > [!NOTE] If there are more than 300 files in the commit diff and the default
+     * > JSON media type is requested, the response will include pagination link
+     * > headers for the remaining files, up to a limit of 3000 files. Each page
+     * > contains the static commit information, and the only changes are to the file
+     * > listing.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     * Pagination query parameters are not supported for these media types.
+     *
+     * - **`application/vnd.github.diff`**: Returns the diff of the commit. Larger
+     *   diffs may time out and return a 5xx status code.
+     * - **`application/vnd.github.patch`**: Returns the patch of the commit. Diffs
+     *   with binary data will have no `patch` property. Larger diffs may time out and
+     *   return a 5xx status code.
+     * - **`application/vnd.github.sha`**: Returns the commit's SHA-1 hash. You can use
+     *   this endpoint to check if a remote reference's SHA-1 hash is the same as your
+     *   local reference's SHA-1 hash by providing the local SHA-1 reference as the
+     *   ETag.
+     *
+     * **Signature verification object**
+     *
+     * The response will include a `verification` object that describes the result of
+     * verifying the commit's signature. The following fields are included in the
+     * `verification` object:
+     *
+     * | Name          | Type      | Description                                                                                      |
+     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
+     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
+     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
+     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
+     * | `payload`     | `string`  | The value that was signed.                                                                       |
+     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
+     *
+     * These are the possible values for `reason` in the `verification` object:
+     *
+     * | Value                    | Description                                                                                                                     |
+     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
+     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
+     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
+     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
+     * | `unsigned`               | The object does not include a signature.                                                                                        |
+     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
+     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
+     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
+     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
+     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
+     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
+     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
+     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
+     *
+     * @example
+     * ```ts
+     * const commit = await client.repos.commits.retrieve('ref', {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    retrieve(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}`, { query, ...options });
+    }
+    /**
+     * **Signature verification object**
+     *
+     * The response will include a `verification` object that describes the result of
+     * verifying the commit's signature. The following fields are included in the
+     * `verification` object:
+     *
+     * | Name          | Type      | Description                                                                                      |
+     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
+     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
+     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
+     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
+     * | `payload`     | `string`  | The value that was signed.                                                                       |
+     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
+     *
+     * These are the possible values for `reason` in the `verification` object:
+     *
+     * | Value                    | Description                                                                                                                     |
+     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
+     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
+     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
+     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
+     * | `unsigned`               | The object does not include a signature.                                                                                        |
+     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
+     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
+     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
+     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
+     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
+     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
+     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
+     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commit of client.repos.commits.list({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * })) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Protected branches are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, and in public and private repositories with
+     * GitHub Pro, GitHub Team, GitHub Enterprise Cloud, and GitHub Enterprise Server.
+     * For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * Returns all branches where the given commit SHA is the HEAD, or latest commit
+     * for the branch.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.repos.commits.listBranchesWhereHead(
+     *     'commit_sha',
+     *     { owner: 'owner', repo: 'repo' },
+     *   );
+     * ```
+     */
+    listBranchesWhereHead(commitSha, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/commits/${commitSha}/branches-where-head`, options);
+    }
+    /**
+     * Lists check runs for a commit ref. The `ref` can be a SHA, branch name, or a tag
+     * name.
+     *
+     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
+     * > where the check suite or check run were created. Pushes to a branch in a
+     * > forked repository are not detected and return an empty `pull_requests` array.
+     *
+     * If there are more than 1000 check suites on a single git reference, this
+     * endpoint will limit check runs to the 1000 most recent check suites. To iterate
+     * over all possible check runs, use the
+     * [List check suites for a Git reference](https://docs.github.com/rest/reference/checks#list-check-suites-for-a-git-reference)
+     * endpoint and provide the `check_suite_id` parameter to the
+     * [List check runs in a check suite](https://docs.github.com/rest/reference/checks#list-check-runs-in-a-check-suite)
+     * endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint on a private repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.listCheckRuns(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    listCheckRuns(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/check-runs`, { query, ...options });
+    }
+    /**
+     * Lists check suites for a commit `ref`. The `ref` can be a SHA, branch name, or a
+     * tag name.
+     *
+     * > [!NOTE] The endpoints to manage checks only look for pushes in the repository
+     * > where the check suite or check run were created. Pushes to a branch in a
+     * > forked repository are not detected and return an empty `pull_requests` array
+     * > and a `null` value for `head_branch`.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint on a private repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.listCheckSuites(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    listCheckSuites(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/check-suites`, { query, ...options });
+    }
+    /**
+     * Lists the merged pull request that introduced the commit to the repository. If
+     * the commit is not present in the default branch, it will return merged and open
+     * pull requests associated with the commit.
+     *
+     * To list the open or merged pull requests associated with a branch, you can set
+     * the `commit_sha` parameter to the branch name.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullRequestSimple of client.repos.commits.listPullRequests(
+     *   'commit_sha',
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listPullRequests(commitSha, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits/${commitSha}/pulls`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Users with pull access in a repository can view commit statuses for a given ref.
+     * The ref can be a SHA, a branch name, or a tag name. Statuses are returned in
+     * reverse chronological order. The first status in the list will be the latest
+     * one.
+     *
+     * This resource is also available via a legacy route:
+     * `GET /repos/:owner/:repo/statuses/:ref`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commitListStatusesResponse of client.repos.commits.listStatuses(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listStatuses(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/commits/${ref}/statuses`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Users with pull access in a repository can access a combined view of commit
+     * statuses for a given ref. The ref can be a SHA, a branch name, or a tag name.
+     *
+     * Additionally, a combined `state` is returned. The `state` is one of:
+     *
+     * - **failure** if any of the contexts report as `error` or `failure`
+     * - **pending** if there are no statuses or a context is `pending`
+     * - **success** if the latest status for all contexts is `success`
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.commits.retrieveStatus(
+     *   'ref',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    retrieveStatus(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/commits/${ref}/status`, { query, ...options });
+    }
+  }
+  BaseCommits4._key = Object.freeze(["repos", "commits"]);
+  return BaseCommits4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/headers.mjs
+var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders2(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders2 in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray2(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray2(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders2 = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders2(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/issues/comments/comments.mjs
+var BaseComments2 = /* @__PURE__ */ (() => {
+  class BaseComments8 extends APIResource2 {
+    /**
+     * You can use the REST API to create comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.create(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    create(issueNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * You can use the REST API to get comments on issues and pull requests. Every pull
+     * request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.retrieve(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *   });
+     * ```
+     */
+    retrieve(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, options);
+    }
+    /**
+     * You can use the REST API to update comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const issueComment =
+     *   await client.repos.issues.comments.update(0, {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     body: 'Me too',
+     *   });
+     * ```
+     */
+    update(commentID, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.patch(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        body,
+        ...options
+      });
+    }
+    async upsertBasedOnBodyMatch(issueNumber, { bodyIncludes, createParams, updateParams, options }) {
+      const comments = await this.list(issueNumber);
+      const match = comments.data.find((comment) => comment.body?.includes(bodyIncludes));
+      if (match) {
+        return this.update(match.id, updateParams, options);
+      } else {
+        return this.create(issueNumber, createParams, options);
+      }
+    }
+    /**
+     * You can use the REST API to list comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * Issue comments are ordered by ascending ID.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const issueComment of client.repos.issues.comments.list(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(issueNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/issues/${issueNumber}/comments`, NumberedPage, { query, ...options });
+    }
+    /**
+     * You can use the REST API to delete comments on issues and pull requests. Every
+     * pull request is an issue, but not every issue is a pull request.
+     *
+     * @example
+     * ```ts
+     * await client.repos.issues.comments.delete(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    delete(commentID, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.delete(path2`/repos/${owner}/${repo}/issues/comments/${commentID}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+  }
+  BaseComments8._key = Object.freeze([
+    "repos",
+    "issues",
+    "comments"
+  ]);
+  return BaseComments8;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/pulls/pulls.mjs
+var BasePulls = /* @__PURE__ */ (() => {
+  class BasePulls2 extends APIResource2 {
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * To open or update a pull request in a public repository, you must have write
+     * access to the head or the source branch. For organization-owned repositories,
+     * you must be a member of the organization that owns the repository to open or
+     * update a pull request.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.create({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   base: 'master',
+     *   head: 'octocat:new-feature',
+     *   body: 'Please pull these awesome changes in!',
+     *   title: 'Amazing new feature',
+     * });
+     * ```
+     */
+    create(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/pulls`, { body, ...options });
+    }
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * Lists details of a pull request by providing its number.
+     *
+     * When you get,
+     * [create](https://docs.github.com/rest/pulls/pulls/#create-a-pull-request), or
+     * [edit](https://docs.github.com/rest/pulls/pulls#update-a-pull-request) a pull
+     * request, GitHub creates a merge commit to test whether the pull request can be
+     * automatically merged into the base branch. This test commit is not added to the
+     * base branch or the head branch. You can review the status of the test commit
+     * using the `mergeable` key. For more information, see
+     * "[Checking mergeability of pull requests](https://docs.github.com/rest/guides/getting-started-with-the-git-database-api#checking-mergeability-of-pull-requests)".
+     *
+     * The value of the `mergeable` attribute can be `true`, `false`, or `null`. If the
+     * value is `null`, then GitHub has started a background job to compute the
+     * mergeability. After giving the job time to complete, resubmit the request. When
+     * the job finishes, you will see a non-`null` value for the `mergeable` attribute
+     * in the response. If `mergeable` is `true`, then `merge_commit_sha` will be the
+     * SHA of the _test_ merge commit.
+     *
+     * The value of the `merge_commit_sha` attribute changes depending on the state of
+     * the pull request. Before merging a pull request, the `merge_commit_sha`
+     * attribute holds the SHA of the _test_ merge commit. After merging a pull
+     * request, the `merge_commit_sha` attribute changes depending on how you merged
+     * the pull request:
+     *
+     * - If merged as a
+     *   [merge commit](https://docs.github.com/articles/about-merge-methods-on-github/),
+     *   `merge_commit_sha` represents the SHA of the merge commit.
+     * - If merged via a
+     *   [squash](https://docs.github.com/articles/about-merge-methods-on-github/#squashing-your-merge-commits),
+     *   `merge_commit_sha` represents the SHA of the squashed commit on the base
+     *   branch.
+     * - If
+     *   [rebased](https://docs.github.com/articles/about-merge-methods-on-github/#rebasing-and-merging-your-commits),
+     *   `merge_commit_sha` represents the commit that the base branch was updated to.
+     *
+     * Pass the appropriate
+     * [media type](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)
+     * to fetch diff and patch formats.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     * - **`application/vnd.github.diff`**: For more information, see
+     *   "[git-diff](https://git-scm.com/docs/git-diff)" in the Git documentation. If a
+     *   diff is corrupt, contact us through the
+     *   [GitHub Support portal](https://support.github.com/). Include the repository
+     *   name and pull request ID in your message.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.retrieve(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    retrieve(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/pulls/${pullNumber}`, options);
+    }
+    /**
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * To open or update a pull request in a public repository, you must have write
+     * access to the head or the source branch. For organization-owned repositories,
+     * you must be a member of the organization that owns the repository to open or
+     * update a pull request.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * const pullRequest = await client.repos.pulls.update(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   base: 'master',
+     *   body: 'updated body',
+     *   state: 'open',
+     *   title: 'new title',
+     * });
+     * ```
+     */
+    update(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
+      return this._client.patch(path2`/repos/${owner}/${repo}/pulls/${pullNumber}`, { body, ...options });
+    }
+    /**
+     * Lists pull requests in a specified repository.
+     *
+     * Draft pull requests are available in public repositories with GitHub Free and
+     * GitHub Free for organizations, GitHub Pro, and legacy per-repository billing
+     * plans, and in public and private repositories with GitHub Team and GitHub
+     * Enterprise Cloud. For more information, see
+     * [GitHub's products](https://docs.github.com/github/getting-started-with-github/githubs-products)
+     * in the GitHub Help documentation.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullRequestSimple of client.repos.pulls.list(
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Creates a codespace owned by the authenticated user for the specified pull
+     * request.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `codespace` scope
+     * to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const codespace = await client.repos.pulls.createCodespace(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    createCodespace(pullNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/codespaces`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Creates a review comment on the diff of a specified pull request. To add a
+     * regular comment to a pull request timeline, see
+     * "[Create an issue comment](https://docs.github.com/rest/issues/comments#create-an-issue-comment)."
+     *
+     * If your comment applies to more than one line in the pull request diff, you
+     * should use the parameters `line`, `side`, and optionally `start_line` and
+     * `start_side` in your request.
+     *
+     * The `position` parameter is closing down. If you use `position`, the `line`,
+     * `side`, `start_line`, and `start_side` parameters are not required.
+     *
+     * This endpoint triggers
+     * [notifications](https://docs.github.com/github/managing-subscriptions-and-notifications-on-github/about-notifications).
+     * Creating content too quickly using this endpoint may result in secondary rate
+     * limiting. For more information, see
+     * "[Rate limits for the API](https://docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api#about-secondary-rate-limits)"
+     * and
+     * "[Best practices for using the REST API](https://docs.github.com/rest/guides/best-practices-for-using-the-rest-api)."
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.pulls.createComment(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   body: 'Great stuff!',
+     *   commit_id: '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+     *   path: 'file1.txt',
+     *   line: 2,
+     *   side: 'RIGHT',
+     *   start_line: 1,
+     *   start_side: 'RIGHT',
+     * });
+     * ```
+     */
+    createComment(pullNumber, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Lists all review comments for a specified pull request. By default, review
+     * comments are in ascending order by ID.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github-commitcomment.raw+json`**: Returns the raw markdown
+     *   body. Response will include `body`. This is the default if you do not pass any
+     *   specific media type.
+     * - **`application/vnd.github-commitcomment.text+json`**: Returns a text only
+     *   representation of the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github-commitcomment.html+json`**: Returns HTML rendered
+     *   from the body's markdown. Response will include `body_html`.
+     * - **`application/vnd.github-commitcomment.full+json`**: Returns raw, text, and
+     *   HTML representations. Response will include `body`, `body_text`, and
+     *   `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullListCommentsResponse of client.repos.pulls.listComments(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listComments(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/comments`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists a maximum of 250 commits for a pull request. To receive a complete commit
+     * list for pull requests with more than 250 commits, use the
+     * [List commits](https://docs.github.com/rest/commits/commits#list-commits)
+     * endpoint.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const commit of client.repos.pulls.listCommits(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listCommits(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/commits`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists the files in a specified pull request.
+     *
+     * > [!NOTE] Responses include a maximum of 3000 files. The paginated response
+     * > returns 30 files per page by default.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const pullListFilesResponse of client.repos.pulls.listFiles(
+     *   0,
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listFiles(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/files`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Updates the pull request branch with the latest upstream changes by merging HEAD
+     * from the base branch into the pull request branch. Note: If making a request on
+     * behalf of a GitHub App you must also have permissions to write the contents of
+     * the head repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.pulls.updateBranch(0, {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   expected_head_sha:
+     *     '6dcb09b5b57875f334f61aebed695e2e4193db5e',
+     * });
+     * ```
+     */
+    updateBranch(pullNumber, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
+      return this._client.put(path2`/repos/${owner}/${repo}/pulls/${pullNumber}/update-branch`, {
+        body,
+        ...options
+      });
+    }
+  }
+  BasePulls2._key = Object.freeze(["repos", "pulls"]);
+  return BasePulls2;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/uuid.mjs
+var uuid42 = function() {
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid42 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/sleep.mjs
+var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/version.mjs
+var VERSION2 = "0.25.1";
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/detect-platform.mjs
+function getDetectedPlatform2() {
+  if (typeof Deno !== "undefined" && Deno.build != null) {
+    return "deno";
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return "edge";
+  }
+  if (Object.prototype.toString.call(typeof globalThis.process !== "undefined" ? globalThis.process : 0) === "[object process]") {
+    return "node";
+  }
+  return "unknown";
+}
+var getPlatformProperties2 = () => {
+  const detectedPlatform = getDetectedPlatform2();
+  if (detectedPlatform === "deno") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": normalizePlatform2(Deno.build.os),
+      "X-Stainless-Arch": normalizeArch2(Deno.build.arch),
+      "X-Stainless-Runtime": "deno",
+      "X-Stainless-Runtime-Version": typeof Deno.version === "string" ? Deno.version : Deno.version?.deno ?? "unknown"
+    };
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": `other:${EdgeRuntime}`,
+      "X-Stainless-Runtime": "edge",
+      "X-Stainless-Runtime-Version": globalThis.process.version
+    };
+  }
+  if (detectedPlatform === "node") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": normalizePlatform2(globalThis.process.platform ?? "unknown"),
+      "X-Stainless-Arch": normalizeArch2(globalThis.process.arch ?? "unknown"),
+      "X-Stainless-Runtime": "node",
+      "X-Stainless-Runtime-Version": globalThis.process.version ?? "unknown"
+    };
+  }
+  const browserInfo = getBrowserInfo2();
+  if (browserInfo) {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION2,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": "unknown",
+      "X-Stainless-Runtime": `browser:${browserInfo.browser}`,
+      "X-Stainless-Runtime-Version": browserInfo.version
+    };
+  }
+  return {
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Package-Version": VERSION2,
+    "X-Stainless-OS": "Unknown",
+    "X-Stainless-Arch": "unknown",
+    "X-Stainless-Runtime": "unknown",
+    "X-Stainless-Runtime-Version": "unknown"
+  };
+};
+function getBrowserInfo2() {
+  if (typeof navigator === "undefined" || !navigator) {
+    return null;
+  }
+  const browserPatterns = [
+    { key: "edge", pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "chrome", pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "firefox", pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "safari", pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ }
+  ];
+  for (const { key, pattern } of browserPatterns) {
+    const match = pattern.exec(navigator.userAgent);
+    if (match) {
+      const major = match[1] || 0;
+      const minor = match[2] || 0;
+      const patch = match[3] || 0;
+      return { browser: key, version: `${major}.${minor}.${patch}` };
+    }
+  }
+  return null;
+}
+var normalizeArch2 = (arch) => {
+  if (arch === "x32")
+    return "x32";
+  if (arch === "x86_64" || arch === "x64")
+    return "x64";
+  if (arch === "arm")
+    return "arm";
+  if (arch === "aarch64" || arch === "arm64")
+    return "arm64";
+  if (arch)
+    return `other:${arch}`;
+  return "unknown";
+};
+var normalizePlatform2 = (platform) => {
+  platform = platform.toLowerCase();
+  if (platform.includes("ios"))
+    return "iOS";
+  if (platform === "android")
+    return "Android";
+  if (platform === "darwin")
+    return "MacOS";
+  if (platform === "win32")
+    return "Windows";
+  if (platform === "freebsd")
+    return "FreeBSD";
+  if (platform === "openbsd")
+    return "OpenBSD";
+  if (platform === "linux")
+    return "Linux";
+  if (platform)
+    return `Other:${platform}`;
+  return "Unknown";
+};
+var _platformHeaders2;
+var getPlatformHeaders2 = () => {
+  return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/shims.mjs
+function getDefaultFetch2() {
+  if (typeof fetch !== "undefined") {
+    return fetch;
+  }
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitHub({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+}
+function makeReadableStream2(...args) {
+  const ReadableStream = globalThis.ReadableStream;
+  if (typeof ReadableStream === "undefined") {
+    throw new Error("`ReadableStream` is not defined as a global; You will need to polyfill it, `globalThis.ReadableStream = ReadableStream`");
+  }
+  return new ReadableStream(...args);
+}
+function ReadableStreamFrom2(iterable) {
+  let iter = Symbol.asyncIterator in iterable ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
+  return makeReadableStream2({
+    start() {
+    },
+    async pull(controller) {
+      const { done, value } = await iter.next();
+      if (done) {
+        controller.close();
+      } else {
+        controller.enqueue(value);
+      }
+    },
+    async cancel() {
+      await iter.return?.();
+    }
+  });
+}
+async function CancelReadableStream2(stream) {
+  if (stream === null || typeof stream !== "object")
+    return;
+  if (stream[Symbol.asyncIterator]) {
+    await stream[Symbol.asyncIterator]().return?.();
+    return;
+  }
+  const reader = stream.getReader();
+  const cancelPromise = reader.cancel();
+  reader.releaseLock();
+  await cancelPromise;
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/request-options.mjs
+var FallbackEncoder2 = ({ headers, body }) => {
+  return {
+    bodyHeaders: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  };
+};
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/formats.mjs
+var default_format2 = "RFC3986";
+var default_formatter2 = (v) => String(v);
+var formatters2 = {
+  RFC1738: (v) => String(v).replace(/%20/g, "+"),
+  RFC3986: default_formatter2
+};
+var RFC17382 = "RFC1738";
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/utils.mjs
+var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
+var hex_table2 = /* @__PURE__ */ (() => {
+  const array = [];
+  for (let i = 0; i < 256; ++i) {
+    array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
+  }
+  return array;
+})();
+var limit2 = 1024;
+var encode2 = (str, _defaultEncoder, charset, _kind, format) => {
+  if (str.length === 0) {
+    return str;
+  }
+  let string = str;
+  if (typeof str === "symbol") {
+    string = Symbol.prototype.toString.call(str);
+  } else if (typeof str !== "string") {
+    string = String(str);
+  }
+  if (charset === "iso-8859-1") {
+    return escape(string).replace(/%u[0-9a-f]{4}/gi, function($0) {
+      return "%26%23" + parseInt($0.slice(2), 16) + "%3B";
+    });
+  }
+  let out = "";
+  for (let j = 0; j < string.length; j += limit2) {
+    const segment = string.length >= limit2 ? string.slice(j, j + limit2) : string;
+    const arr = [];
+    for (let i = 0; i < segment.length; ++i) {
+      let c = segment.charCodeAt(i);
+      if (c === 45 || // -
+      c === 46 || // .
+      c === 95 || // _
+      c === 126 || // ~
+      c >= 48 && c <= 57 || // 0-9
+      c >= 65 && c <= 90 || // a-z
+      c >= 97 && c <= 122 || // A-Z
+      format === RFC17382 && (c === 40 || c === 41)) {
+        arr[arr.length] = segment.charAt(i);
+        continue;
+      }
+      if (c < 128) {
+        arr[arr.length] = hex_table2[c];
+        continue;
+      }
+      if (c < 2048) {
+        arr[arr.length] = hex_table2[192 | c >> 6] + hex_table2[128 | c & 63];
+        continue;
+      }
+      if (c < 55296 || c >= 57344) {
+        arr[arr.length] = hex_table2[224 | c >> 12] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
+        continue;
+      }
+      i += 1;
+      c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
+      arr[arr.length] = hex_table2[240 | c >> 18] + hex_table2[128 | c >> 12 & 63] + hex_table2[128 | c >> 6 & 63] + hex_table2[128 | c & 63];
+    }
+    out += arr.join("");
+  }
+  return out;
+};
+function is_buffer2(obj) {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+  return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
+}
+function maybe_map2(val, fn) {
+  if (isArray2(val)) {
+    const mapped = [];
+    for (let i = 0; i < val.length; i += 1) {
+      mapped.push(fn(val[i]));
+    }
+    return mapped;
+  }
+  return fn(val);
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/qs/stringify.mjs
+var array_prefix_generators2 = {
+  brackets(prefix) {
+    return String(prefix) + "[]";
+  },
+  comma: "comma",
+  indices(prefix, key) {
+    return String(prefix) + "[" + key + "]";
+  },
+  repeat(prefix) {
+    return String(prefix);
+  }
+};
+var push_to_array2 = function(arr, value_or_array) {
+  Array.prototype.push.apply(arr, isArray2(value_or_array) ? value_or_array : [value_or_array]);
+};
+var toISOString2;
+var defaults2 = {
+  addQueryPrefix: false,
+  allowDots: false,
+  allowEmptyArrays: false,
+  arrayFormat: "indices",
+  charset: "utf-8",
+  charsetSentinel: false,
+  delimiter: "&",
+  encode: true,
+  encodeDotInKeys: false,
+  encoder: encode2,
+  encodeValuesOnly: false,
+  format: default_format2,
+  formatter: default_formatter2,
+  /** @deprecated */
+  indices: false,
+  serializeDate(date) {
+    return (toISOString2 ?? (toISOString2 = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
+  },
+  skipNulls: false,
+  strictNullHandling: false
+};
+function is_non_nullish_primitive2(v) {
+  return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
+}
+var sentinel2 = {};
+function inner_stringify2(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
+  let obj = object;
+  let tmp_sc = sideChannel;
+  let step = 0;
+  let find_flag = false;
+  while ((tmp_sc = tmp_sc.get(sentinel2)) !== void 0 && !find_flag) {
+    const pos = tmp_sc.get(object);
+    step += 1;
+    if (typeof pos !== "undefined") {
+      if (pos === step) {
+        throw new RangeError("Cyclic object value");
+      } else {
+        find_flag = true;
+      }
+    }
+    if (typeof tmp_sc.get(sentinel2) === "undefined") {
+      step = 0;
+    }
+  }
+  if (typeof filter === "function") {
+    obj = filter(prefix, obj);
+  } else if (obj instanceof Date) {
+    obj = serializeDate?.(obj);
+  } else if (generateArrayPrefix === "comma" && isArray2(obj)) {
+    obj = maybe_map2(obj, function(value) {
+      if (value instanceof Date) {
+        return serializeDate?.(value);
+      }
+      return value;
+    });
+  }
+  if (obj === null) {
+    if (strictNullHandling) {
+      return encoder && !encodeValuesOnly ? (
+        // @ts-expect-error
+        encoder(prefix, defaults2.encoder, charset, "key", format)
+      ) : prefix;
+    }
+    obj = "";
+  }
+  if (is_non_nullish_primitive2(obj) || is_buffer2(obj)) {
+    if (encoder) {
+      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults2.encoder, charset, "key", format);
+      return [
+        formatter?.(key_value) + "=" + // @ts-expect-error
+        formatter?.(encoder(obj, defaults2.encoder, charset, "value", format))
+      ];
+    }
+    return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
+  }
+  const values = [];
+  if (typeof obj === "undefined") {
+    return values;
+  }
+  let obj_keys;
+  if (generateArrayPrefix === "comma" && isArray2(obj)) {
+    if (encodeValuesOnly && encoder) {
+      obj = maybe_map2(obj, encoder);
+    }
+    obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : void 0 }];
+  } else if (isArray2(filter)) {
+    obj_keys = filter;
+  } else {
+    const keys = Object.keys(obj);
+    obj_keys = sort ? keys.sort(sort) : keys;
+  }
+  const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
+  const adjusted_prefix = commaRoundTrip && isArray2(obj) && obj.length === 1 ? encoded_prefix + "[]" : encoded_prefix;
+  if (allowEmptyArrays && isArray2(obj) && obj.length === 0) {
+    return adjusted_prefix + "[]";
+  }
+  for (let j = 0; j < obj_keys.length; ++j) {
+    const key = obj_keys[j];
+    const value = (
+      // @ts-ignore
+      typeof key === "object" && typeof key.value !== "undefined" ? key.value : obj[key]
+    );
+    if (skipNulls && value === null) {
+      continue;
+    }
+    const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, "%2E") : key;
+    const key_prefix = isArray2(obj) ? typeof generateArrayPrefix === "function" ? generateArrayPrefix(adjusted_prefix, encoded_key) : adjusted_prefix : adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
+    sideChannel.set(object, step);
+    const valueSideChannel = /* @__PURE__ */ new WeakMap();
+    valueSideChannel.set(sentinel2, sideChannel);
+    push_to_array2(values, inner_stringify2(
+      value,
+      key_prefix,
+      generateArrayPrefix,
+      commaRoundTrip,
+      allowEmptyArrays,
+      strictNullHandling,
+      skipNulls,
+      encodeDotInKeys,
+      // @ts-ignore
+      generateArrayPrefix === "comma" && encodeValuesOnly && isArray2(obj) ? null : encoder,
+      filter,
+      sort,
+      allowDots,
+      serializeDate,
+      format,
+      formatter,
+      encodeValuesOnly,
+      charset,
+      valueSideChannel
+    ));
+  }
+  return values;
+}
+function normalize_stringify_options2(opts = defaults2) {
+  if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
+    throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
+  }
+  if (typeof opts.encodeDotInKeys !== "undefined" && typeof opts.encodeDotInKeys !== "boolean") {
+    throw new TypeError("`encodeDotInKeys` option can only be `true` or `false`, when provided");
+  }
+  if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
+    throw new TypeError("Encoder has to be a function.");
+  }
+  const charset = opts.charset || defaults2.charset;
+  if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
+    throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
+  }
+  let format = default_format2;
+  if (typeof opts.format !== "undefined") {
+    if (!has2(formatters2, opts.format)) {
+      throw new TypeError("Unknown format option provided.");
+    }
+    format = opts.format;
+  }
+  const formatter = formatters2[format];
+  let filter = defaults2.filter;
+  if (typeof opts.filter === "function" || isArray2(opts.filter)) {
+    filter = opts.filter;
+  }
+  let arrayFormat;
+  if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators2) {
+    arrayFormat = opts.arrayFormat;
+  } else if ("indices" in opts) {
+    arrayFormat = opts.indices ? "indices" : "repeat";
+  } else {
+    arrayFormat = defaults2.arrayFormat;
+  }
+  if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
+    throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
+  }
+  const allowDots = typeof opts.allowDots === "undefined" ? !!opts.encodeDotInKeys === true ? true : defaults2.allowDots : !!opts.allowDots;
+  return {
+    addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults2.addQueryPrefix,
+    // @ts-ignore
+    allowDots,
+    allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults2.allowEmptyArrays,
+    arrayFormat,
+    charset,
+    charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults2.charsetSentinel,
+    commaRoundTrip: !!opts.commaRoundTrip,
+    delimiter: typeof opts.delimiter === "undefined" ? defaults2.delimiter : opts.delimiter,
+    encode: typeof opts.encode === "boolean" ? opts.encode : defaults2.encode,
+    encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults2.encodeDotInKeys,
+    encoder: typeof opts.encoder === "function" ? opts.encoder : defaults2.encoder,
+    encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults2.encodeValuesOnly,
+    filter,
+    format,
+    formatter,
+    serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults2.serializeDate,
+    skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults2.skipNulls,
+    // @ts-ignore
+    sort: typeof opts.sort === "function" ? opts.sort : null,
+    strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults2.strictNullHandling
+  };
+}
+function stringify2(object, opts = {}) {
+  let obj = object;
+  const options = normalize_stringify_options2(opts);
+  let obj_keys;
+  let filter;
+  if (typeof options.filter === "function") {
+    filter = options.filter;
+    obj = filter("", obj);
+  } else if (isArray2(options.filter)) {
+    filter = options.filter;
+    obj_keys = filter;
+  }
+  const keys = [];
+  if (typeof obj !== "object" || obj === null) {
+    return "";
+  }
+  const generateArrayPrefix = array_prefix_generators2[options.arrayFormat];
+  const commaRoundTrip = generateArrayPrefix === "comma" && options.commaRoundTrip;
+  if (!obj_keys) {
+    obj_keys = Object.keys(obj);
+  }
+  if (options.sort) {
+    obj_keys.sort(options.sort);
+  }
+  const sideChannel = /* @__PURE__ */ new WeakMap();
+  for (let i = 0; i < obj_keys.length; ++i) {
+    const key = obj_keys[i];
+    if (options.skipNulls && obj[key] === null) {
+      continue;
+    }
+    push_to_array2(keys, inner_stringify2(
+      obj[key],
+      key,
+      // @ts-expect-error
+      generateArrayPrefix,
+      commaRoundTrip,
+      options.allowEmptyArrays,
+      options.strictNullHandling,
+      options.skipNulls,
+      options.encodeDotInKeys,
+      options.encode ? options.encoder : null,
+      options.filter,
+      options.sort,
+      options.allowDots,
+      options.serializeDate,
+      options.format,
+      options.formatter,
+      options.encodeValuesOnly,
+      options.charset,
+      sideChannel
+    ));
+  }
+  const joined = keys.join(options.delimiter);
+  let prefix = options.addQueryPrefix === true ? "?" : "";
+  if (options.charsetSentinel) {
+    if (options.charset === "iso-8859-1") {
+      prefix += "utf8=%26%2310003%3B&";
+    } else {
+      prefix += "utf8=%E2%9C%93&";
+    }
+  }
+  return joined.length > 0 ? prefix + joined : "";
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/apps/installations/installations.mjs
+var BaseInstallations = /* @__PURE__ */ (() => {
+  class BaseInstallations4 extends APIResource2 {
+    /**
+     * Enables an authenticated GitHub App to find an installation's information using
+     * the installation id.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * const installation =
+     *   await client.apps.installations.retrieve(0);
+     * ```
+     */
+    retrieve(installationID, options) {
+      return this._client.get(path2`/app/installations/${installationID}`, options);
+    }
+    /**
+     * The permissions the installation has are included under the `permissions` key.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const installation of client.apps.installations.list()) {
+     *   // ...
+     * }
+     * ```
+     */
+    list(query = {}, options) {
+      return this._client.getAPIList("/app/installations", NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Uninstalls a GitHub App on a user, organization, or enterprise account. If you
+     * prefer to temporarily suspend an app's access to your account's resources, then
+     * we recommend the
+     * "[Suspend an app installation](https://docs.github.com/rest/apps/apps#suspend-an-app-installation)"
+     * endpoint.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * await client.apps.installations.delete(0);
+     * ```
+     */
+    delete(installationID, options) {
+      return this._client.delete(path2`/app/installations/${installationID}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Creates an installation access token that enables a GitHub App to make
+     * authenticated API requests for the app's installation on an organization or
+     * individual account. Installation tokens expire one hour from the time you create
+     * them. Using an expired token produces a status code of `401 - Unauthorized`, and
+     * requires creating a new installation token. By default the installation token
+     * has access to all repositories that the installation can access.
+     *
+     * Optionally, you can use the `repositories` or `repository_ids` body parameters
+     * to specify individual repositories that the installation access token can
+     * access. If you don't use `repositories` or `repository_ids` to grant access to
+     * specific repositories, the installation access token will have access to all
+     * repositories that the installation was granted access to. The installation
+     * access token cannot be granted access to repositories that the installation was
+     * not granted access to. Up to 500 repositories can be listed in this manner.
+     *
+     * Optionally, use the `permissions` body parameter to specify the permissions that
+     * the installation access token should have. If `permissions` is not specified,
+     * the installation access token will have all of the permissions that were granted
+     * to the app. The installation access token cannot be granted permissions that the
+     * app was not granted.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.apps.installations.createAccessToken(0, {
+     *     permissions: { issues: 'write', contents: 'read' },
+     *     repositories: ['Hello-World'],
+     *   });
+     * ```
+     */
+    createAccessToken(installationID, body = {}, options) {
+      return this._client.post(path2`/app/installations/${installationID}/access_tokens`, { body, ...options });
+    }
+  }
+  BaseInstallations4._key = Object.freeze([
+    "apps",
+    "installations"
+  ]);
+  return BaseInstallations4;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/orgs/orgs.mjs
+var BaseOrgs = /* @__PURE__ */ (() => {
+  class BaseOrgs3 extends APIResource2 {
+    /**
+     * Gets information about an organization.
+     *
+     * When the value of `two_factor_requirement_enabled` is `true`, the organization
+     * requires all members, billing managers, outside collaborators, guest
+     * collaborators, repository collaborators, or everyone with access to any
+     * repository within the organization to enable
+     * [two-factor authentication](https://docs.github.com/articles/securing-your-account-with-two-factor-authentication-2fa/).
+     *
+     * To see the full details about an organization, the authenticated user must be an
+     * organization owner.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `admin:org` scope
+     * to see the full details about an organization.
+     *
+     * To see information about an organization's GitHub plan, GitHub Apps need the
+     * `Organization plan` permission.
+     *
+     * @example
+     * ```ts
+     * const org = await client.orgs.retrieve('org');
+     * ```
+     */
+    retrieve(org, options) {
+      return this._client.get(path2`/orgs/${org}`, options);
+    }
+    /**
+     * > [!WARNING] > **Closing down notice:** GitHub will replace and discontinue
+     * > `members_allowed_repository_creation_type` in favor of more granular
+     * > permissions. The new input parameters are
+     * > `members_can_create_public_repositories`,
+     * > `members_can_create_private_repositories` for all organizations and
+     * > `members_can_create_internal_repositories` for organizations associated with
+     * > an enterprise account using GitHub Enterprise Cloud or GitHub Enterprise
+     * > Server 2.20+. For more information, see the
+     * > [blog post](https://developer.github.com/changes/2019-12-03-internal-visibility-changes).
+     *
+     * > [!WARNING] > **Closing down notice:** Code security product enablement for new
+     * > repositories through the organization API is closing down. Please use
+     * > [code security configurations](https://docs.github.com/rest/code-security/configurations#set-a-code-security-configuration-as-a-default-for-an-organization)
+     * > to set defaults instead. For more information on setting a default security
+     * > configuration, see the
+     * > [changelog](https://github.blog/changelog/2024-07-09-sunsetting-security-settings-defaults-parameters-in-the-organizations-rest-api/).
+     *
+     * Updates the organization's profile and member privileges.
+     *
+     * The authenticated user must be an organization owner to use this endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `admin:org` or
+     * `repo` scope to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const org = await client.orgs.update('org', {
+     *   billing_email: 'mona@github.com',
+     *   company: 'GitHub',
+     *   default_repository_permission: 'read',
+     *   description: 'GitHub, the company.',
+     *   email: 'mona@github.com',
+     *   location: 'San Francisco',
+     *   members_allowed_repository_creation_type: 'all',
+     *   members_can_create_repositories: true,
+     *   name: 'github',
+     *   twitter_username: 'github',
+     * });
+     * ```
+     */
+    update(org, body = {}, options) {
+      return this._client.patch(path2`/orgs/${org}`, { body, ...options });
+    }
+    /**
+     * Deletes an organization and all its repositories.
+     *
+     * The organization login will be unavailable for 90 days after deletion.
+     *
+     * Please review the Terms of Service regarding account deletion before using this
+     * endpoint:
+     *
+     * https://docs.github.com/site-policy/github-terms/github-terms-of-service
+     *
+     * @example
+     * ```ts
+     * const org = await client.orgs.delete('org');
+     * ```
+     */
+    delete(org, options) {
+      return this._client.delete(path2`/orgs/${org}`, options);
+    }
+    /**
+     * List a collection of artifact attestations with a given subject digest that are
+     * associated with repositories owned by an organization.
+     *
+     * The collection of attestations returned by this endpoint is filtered according
+     * to the authenticated user's permissions; if the authenticated user cannot read a
+     * repository, the attestations associated with that repository will not be
+     * included in the response. In addition, when using a fine-grained access token
+     * the `attestations:read` permission is required.
+     *
+     * **Please note:** in order to offer meaningful security benefits, an
+     * attestation's signature and timestamps **must** be cryptographically verified,
+     * and the identity of the attestation signer **must** be validated. Attestations
+     * can be verified using the
+     * [GitHub CLI `attestation verify` command](https://cli.github.com/manual/gh_attestation_verify).
+     * For more information, see
+     * [our guide on how to use artifact attestations to establish a build's provenance](https://docs.github.com/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds).
+     *
+     * @example
+     * ```ts
+     * const response = await client.orgs.listAttestations(
+     *   'subject_digest',
+     *   { org: 'org' },
+     * );
+     * ```
+     */
+    listAttestations(subjectDigest, params, options) {
+      const { org, ...query } = params;
+      return this._client.get(path2`/orgs/${org}/attestations/${subjectDigest}`, { query, ...options });
+    }
+    /**
+     * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
+     * > time of day, event latency can be anywhere from 30s to 6h.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const orgListEventsResponse of client.orgs.listEvents(
+     *   'org',
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listEvents(org, query = {}, options) {
+      return this._client.getAPIList(path2`/orgs/${org}/events`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * The return hash contains `failed_at` and `failed_reason` fields which represent
+     * the time at which the invitation failed and the reason for the failure.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const orgListFailedInvitationsResponse of client.orgs.listFailedInvitations(
+     *   'org',
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listFailedInvitations(org, query = {}, options) {
+      return this._client.getAPIList(path2`/orgs/${org}/failed_invitations`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists all GitHub Apps in an organization. The installation count includes all
+     * GitHub Apps installed on repositories in the organization.
+     *
+     * The authenticated user must be an organization owner to use this endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `admin:read`
+     * scope to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const response = await client.orgs.listInstallations('org');
+     * ```
+     */
+    listInstallations(org, query = {}, options) {
+      return this._client.get(path2`/orgs/${org}/installations`, { query, ...options });
+    }
+    /**
+     * List issues in an organization assigned to the authenticated user.
+     *
+     * > [!NOTE] GitHub's REST API considers every pull request an issue, but not every
+     * > issue is a pull request. For this reason, "Issues" endpoints may return both
+     * > issues and pull requests in the response. You can identify pull requests by
+     * > the `pull_request` key. Be aware that the `id` of a pull request returned from
+     * > "Issues" endpoints will be an _issue id_. To find out the pull request id, use
+     * > the
+     * > "[List pull requests](https://docs.github.com/rest/pulls/pulls#list-pull-requests)"
+     * > endpoint.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw markdown body. Response
+     *   will include `body`. This is the default if you do not pass any specific media
+     *   type.
+     * - **`application/vnd.github.text+json`**: Returns a text only representation of
+     *   the markdown body. Response will include `body_text`.
+     * - **`application/vnd.github.html+json`**: Returns HTML rendered from the body's
+     *   markdown. Response will include `body_html`.
+     * - **`application/vnd.github.full+json`**: Returns raw, text, and HTML
+     *   representations. Response will include `body`, `body_text`, and `body_html`.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const issue of client.orgs.listIssues('org')) {
+     *   // ...
+     * }
+     * ```
+     */
+    listIssues(org, query = {}, options) {
+      return this._client.getAPIList(path2`/orgs/${org}/issues`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Lists repository security advisories for an organization.
+     *
+     * The authenticated user must be an owner or security manager for the organization
+     * to use this endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` or
+     * `repository_advisories:write` scope to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const response = await client.orgs.listSecurityAdvisories(
+     *   'org',
+     * );
+     * ```
+     */
+    listSecurityAdvisories(org, query = {}, options) {
+      return this._client.get(path2`/orgs/${org}/security-advisories`, { query, ...options });
+    }
+    /**
+     * Enables an authenticated GitHub App to find the organization's installation
+     * information.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * const installation = await client.orgs.retrieveInstallation(
+     *   'org',
+     * );
+     * ```
+     */
+    retrieveInstallation(org, options) {
+      return this._client.get(path2`/orgs/${org}/installation`, options);
+    }
+  }
+  BaseOrgs3._key = Object.freeze(["orgs"]);
+  return BaseOrgs3;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/search.mjs
+var BaseSearch = /* @__PURE__ */ (() => {
+  class BaseSearch6 extends APIResource2 {
+    /**
+     * Searches for query terms inside of a file. This method returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     *
+     * When searching for code, you can get text match metadata for the file
+     * **content** and file **path** fields when you pass the `text-match` media type.
+     * For more details about how to receive highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you want to find the definition of the `addClass` function
+     * inside [jQuery](https://github.com/jquery/jquery) repository, your query would
+     * look something like this:
+     *
+     * `q=addClass+in:file+language:js+repo:jquery/jquery`
+     *
+     * This query searches for the keyword `addClass` within a file's contents. The
+     * query limits the search to files where the language is JavaScript in the
+     * `jquery/jquery` repository.
+     *
+     * Considerations for code search:
+     *
+     * Due to the complexity of searching code, there are a few restrictions on how
+     * searches are performed:
+     *
+     * - Only the _default branch_ is considered. In most cases, this will be the
+     *   `master` branch.
+     * - Only files smaller than 384 KB are searchable.
+     * - You must always include at least one search term when searching source code.
+     *   For example, searching for
+     *   [`language:go`](https://github.com/search?utf8=%E2%9C%93&q=language%3Ago&type=Code)
+     *   is not valid, while
+     *   [`amazing language:go`](https://github.com/search?utf8=%E2%9C%93&q=amazing+language%3Ago&type=Code)
+     *   is.
+     *
+     * This endpoint requires you to authenticate and limits you to 10 requests per
+     * minute.
+     */
+    codeSearch(query, options) {
+      return this._client.get("/search/code", { query, ...options });
+    }
+    /**
+     * Find commits via various criteria on the default branch (usually `main`). This
+     * method returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     *
+     * When searching for commits, you can get text match metadata for the **message**
+     * field when you provide the `text-match` media type. For more details about how
+     * to receive highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you want to find commits related to CSS in the
+     * [octocat/Spoon-Knife](https://github.com/octocat/Spoon-Knife) repository. Your
+     * query would look something like this:
+     *
+     * `q=repo:octocat/Spoon-Knife+css`
+     */
+    commitSearch(query, options) {
+      return this._client.get("/search/commits", { query, ...options });
+    }
+    /**
+     * > [!WARNING] > **Notice:** Search for issues and pull requests will be
+     * > overridden by advanced search on November 4, 2025. You can read more about
+     * > this change on
+     * > [the GitHub blog](https://github.blog/changelog/2025-03-06-github-issues-projects-api-support-for-issues-advanced-search-and-more/).
+     *
+     * @deprecated
+     */
+    issueSearch(query, options) {
+      return this._client.get("/search/issues", { query, ...options });
+    }
+    /**
+     * Find labels in a repository with names or descriptions that match search
+     * keywords. Returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     *
+     * When searching for labels, you can get text match metadata for the label
+     * **name** and **description** fields when you pass the `text-match` media type.
+     * For more details about how to receive highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you want to find labels in the `linguist` repository that match
+     * `bug`, `defect`, or `enhancement`. Your query might look like this:
+     *
+     * `q=bug+defect+enhancement&repository_id=64778136`
+     *
+     * The labels that best match the query appear first in the search results.
+     */
+    labelSearch(query, options) {
+      return this._client.get("/search/labels", { query, ...options });
+    }
+    /**
+     * Find repositories via various criteria. This method returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     *
+     * When searching for repositories, you can get text match metadata for the
+     * **name** and **description** fields when you pass the `text-match` media type.
+     * For more details about how to receive highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you want to search for popular Tetris repositories written in
+     * assembly code, your query might look like this:
+     *
+     * `q=tetris+language:assembly&sort=stars&order=desc`
+     *
+     * This query searches for repositories with the word `tetris` in the name, the
+     * description, or the README. The results are limited to repositories where the
+     * primary language is assembly. The results are sorted by stars in descending
+     * order, so that the most popular repositories appear first in the search results.
+     */
+    repositorySearch(query, options) {
+      return this._client.get("/search/repositories", { query, ...options });
+    }
+    /**
+     * Find topics via various criteria. Results are sorted by best match. This method
+     * returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     * See "[Searching topics](https://docs.github.com/articles/searching-topics/)" for
+     * a detailed list of qualifiers.
+     *
+     * When searching for topics, you can get text match metadata for the topic's
+     * **short_description**, **description**, **name**, or **display_name** field when
+     * you pass the `text-match` media type. For more details about how to receive
+     * highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you want to search for topics related to Ruby that are featured
+     * on https://github.com/topics. Your query might look like this:
+     *
+     * `q=ruby+is:featured`
+     *
+     * This query searches for topics with the keyword `ruby` and limits the results to
+     * find only topics that are featured. The topics that are the best match for the
+     * query appear first in the search results.
+     */
+    topicSearch(query, options) {
+      return this._client.get("/search/topics", { query, ...options });
+    }
+    /**
+     * Find users via various criteria. This method returns up to 100 results
+     * [per page](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api).
+     *
+     * When searching for users, you can get text match metadata for the issue
+     * **login**, public **email**, and **name** fields when you pass the `text-match`
+     * media type. For more details about highlighting search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     * For more details about how to receive highlighted search results, see
+     * [Text match metadata](https://docs.github.com/rest/search/search#text-match-metadata).
+     *
+     * For example, if you're looking for a list of popular users, you might try this
+     * query:
+     *
+     * `q=tom+repos:%3E42+followers:%3E1000`
+     *
+     * This query searches for users with the name `tom`. The results are restricted to
+     * users with more than 42 repositories and over 1,000 followers.
+     *
+     * This endpoint does not accept authentication and will only include publicly
+     * visible users. As an alternative, you can use the GraphQL API. The GraphQL API
+     * requires authentication and will return private users, including Enterprise
+     * Managed Users (EMUs), that you are authorized to view. For more information, see
+     * "[GraphQL Queries](https://docs.github.com/graphql/reference/queries#search)."
+     */
+    userSearch(query, options) {
+      return this._client.get("/search/users", { query, ...options });
+    }
+  }
+  BaseSearch6._key = Object.freeze(["search"]);
+  return BaseSearch6;
+})();
+var Search = class extends BaseSearch {
+};
+
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/lib/secrets.mjs
 var import_libsodium_wrappers = __toESM(require_libsodium_wrappers(), 1);
 
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/resources/repos/repos.mjs
+var BaseRepos3 = /* @__PURE__ */ (() => {
+  class BaseRepos6 extends APIResource2 {
+    constructor() {
+      super(...arguments);
+      this._client_search = new Search(this._client);
+      this.search = {
+        codeSearch: (params, options) => {
+          const { owner = this._client.owner, repo = this._client.repo, ...query } = params;
+          query.q = `repo:${owner}/${repo} ${query.q}`;
+          return this._client_search.codeSearch(query, options);
+        },
+        commitSearch: (params, options) => {
+          const { owner = this._client.owner, repo = this._client.repo, ...query } = params;
+          query.q = `repo:${owner}/${repo} ${query.q}`;
+          return this._client_search.commitSearch(query, options);
+        },
+        issueSearch: (params, options) => {
+          const { owner = this._client.owner, repo = this._client.repo, ...query } = params;
+          query.q = `repo:${owner}/${repo} ${query.q}`;
+          return this._client_search.issueSearch(query, options);
+        },
+        labelSearch: (params, options) => {
+          const { owner = this._client.owner, repo = this._client.repo, ...query } = params;
+          query.q = `repo:${owner}/${repo} ${query.q}`;
+          return this._client_search.labelSearch(query, options);
+        }
+      };
+    }
+    /**
+     * Creates a new repository for the authenticated user.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `public_repo` or
+     * `repo` scope to create a public repository, and `repo` scope to create a private
+     * repository.
+     *
+     * @example
+     * ```ts
+     * const fullRepository = await client.repos.create({
+     *   name: 'Hello-World',
+     *   description: 'This is your first repo!',
+     *   homepage: 'https://github.com',
+     *   is_template: true,
+     * });
+     * ```
+     */
+    create(body, options) {
+      return this._client.post("/user/repos", { body, ...options });
+    }
+    /**
+     * The `parent` and `source` objects are present when the repository is a fork.
+     * `parent` is the repository this repository was forked from, `source` is the
+     * ultimate source for the network.
+     *
+     * > [!NOTE]
+     * >
+     * > - In order to see the `security_and_analysis` block for a repository you must
+     * >   have admin permissions for the repository or be an owner or security manager
+     * >   for the organization that owns the repository. For more information, see
+     * >   "[Managing security managers in your organization](https://docs.github.com/organizations/managing-peoples-access-to-your-organization-with-roles/managing-security-managers-in-your-organization)."
+     * > - To view merge-related settings, you must have the `contents:read` and
+     * >   `contents:write` permissions.
+     *
+     * @example
+     * ```ts
+     * const fullRepository = await client.repos.retrieve({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    retrieve(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}`, options);
+    }
+    /**
+     * **Note**: To edit a repository's topics, use the
+     * [Replace all repository topics](https://docs.github.com/rest/repos/repos#replace-all-repository-topics)
+     * endpoint.
+     *
+     * @example
+     * ```ts
+     * const fullRepository = await client.repos.update({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   description: 'This is your first repository',
+     *   has_issues: true,
+     *   has_projects: true,
+     *   has_wiki: true,
+     *   homepage: 'https://github.com',
+     *   name: 'Hello-World',
+     *   private: true,
+     * });
+     * ```
+     */
+    update(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params ?? {};
+      return this._client.patch(path2`/repos/${owner}/${repo}`, { body, ...options });
+    }
+    /**
+     * Deleting a repository requires admin access.
+     *
+     * If an organization owner has configured the organization to prevent members from
+     * deleting organization-owned repositories, you will get a `403 Forbidden`
+     * response.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `delete_repo`
+     * scope to use this endpoint.
+     *
+     * @example
+     * ```ts
+     * await client.repos.delete({ owner: 'owner', repo: 'repo' });
+     * ```
+     */
+    delete(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.delete(path2`/repos/${owner}/${repo}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Whether the authenticated user has starred the repository.
+     *
+     * @example
+     * ```ts
+     * await client.repos.checkStarred({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    checkStarred(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/user/starred/${owner}/${repo}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Compares two commits against one another. You can compare refs (branches or
+     * tags) and commit SHAs in the same repository, or you can compare refs and commit
+     * SHAs that exist in different repositories within the same repository network,
+     * including fork branches. For more information about how to view a repository's
+     * network, see
+     * "[Understanding connections between repositories](https://docs.github.com/repositories/viewing-activity-and-data-for-your-repository/understanding-connections-between-repositories)."
+     *
+     * This endpoint is equivalent to running the `git log BASE..HEAD` command, but it
+     * returns commits in a different order. The `git log BASE..HEAD` command returns
+     * commits in reverse chronological order, whereas the API returns commits in
+     * chronological order.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.diff`**: Returns the diff of the commit.
+     * - **`application/vnd.github.patch`**: Returns the patch of the commit. Diffs
+     *   with binary data will have no `patch` property.
+     *
+     * The API response includes details about the files that were changed between the
+     * two commits. This includes the status of the change (if a file was added,
+     * removed, modified, or renamed), and details of the change itself. For example,
+     * files with a `renamed` status have a `previous_filename` field showing the
+     * previous filename of the file, and files with a `modified` status have a `patch`
+     * field showing the changes made to the file.
+     *
+     * When calling this endpoint without any paging parameter (`per_page` or `page`),
+     * the returned list is limited to 250 commits, and the last commit in the list is
+     * the most recent of the entire comparison.
+     *
+     * **Working with large comparisons**
+     *
+     * To process a response with a large number of commits, use a query parameter
+     * (`per_page` or `page`) to paginate the results. When using pagination:
+     *
+     * - The list of changed files is only shown on the first page of results, and it
+     *   includes up to 300 changed files for the entire comparison.
+     * - The results are returned in chronological order, but the last commit in the
+     *   returned list may not be the most recent one in the entire set if there are
+     *   more pages of results.
+     *
+     * For more information on working with pagination, see
+     * "[Using pagination in the REST API](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api)."
+     *
+     * **Signature verification object**
+     *
+     * The response will include a `verification` object that describes the result of
+     * verifying the commit's signature. The `verification` object includes the
+     * following fields:
+     *
+     * | Name          | Type      | Description                                                                                      |
+     * | ------------- | --------- | ------------------------------------------------------------------------------------------------ |
+     * | `verified`    | `boolean` | Indicates whether GitHub considers the signature in this commit to be verified.                  |
+     * | `reason`      | `string`  | The reason for verified value. Possible values and their meanings are enumerated in table below. |
+     * | `signature`   | `string`  | The signature that was extracted from the commit.                                                |
+     * | `payload`     | `string`  | The value that was signed.                                                                       |
+     * | `verified_at` | `string`  | The date the signature was verified by GitHub.                                                   |
+     *
+     * These are the possible values for `reason` in the `verification` object:
+     *
+     * | Value                    | Description                                                                                                                     |
+     * | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+     * | `expired_key`            | The key that made the signature is expired.                                                                                     |
+     * | `not_signing_key`        | The "signing" flag is not among the usage flags in the GPG key that made the signature.                                         |
+     * | `gpgverify_error`        | There was an error communicating with the signature verification service.                                                       |
+     * | `gpgverify_unavailable`  | The signature verification service is currently unavailable.                                                                    |
+     * | `unsigned`               | The object does not include a signature.                                                                                        |
+     * | `unknown_signature_type` | A non-PGP signature was found in the commit.                                                                                    |
+     * | `no_user`                | No user was associated with the `committer` email address in the commit.                                                        |
+     * | `unverified_email`       | The `committer` email address in the commit was associated with a user, but the email address is not verified on their account. |
+     * | `bad_email`              | The `committer` email address in the commit is not included in the identities of the PGP key that made the signature.           |
+     * | `unknown_key`            | The key that made the signature has not been registered with any user's account.                                                |
+     * | `malformed_signature`    | There was an error parsing the signature.                                                                                       |
+     * | `invalid`                | The signature could not be cryptographically verified using the key whose key-id was found in the signature.                    |
+     * | `valid`                  | None of the above errors applied, so the signature is considered to be verified.                                                |
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.compareCommits(
+     *   'basehead',
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    compareCommits(basehead, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/compare/${basehead}`, { query, ...options });
+    }
+    /**
+     * Users with push access in a repository can create commit statuses for a given
+     * SHA.
+     *
+     * Note: there is a limit of 1000 statuses per `sha` and `context` within a
+     * repository. Attempts to create more than 1000 statuses will result in a
+     * validation error.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.createCommitStatus(
+     *   'sha',
+     *   {
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *     state: 'success',
+     *     context: 'continuous-integration/jenkins',
+     *     description: 'The build succeeded!',
+     *     target_url: 'https://example.com/build/status',
+     *   },
+     * );
+     * ```
+     */
+    createCommitStatus(sha, params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/statuses/${sha}`, { body, ...options });
+    }
+    /**
+     * You can use this endpoint to trigger a webhook event called
+     * `repository_dispatch` when you want activity that happens outside of GitHub to
+     * trigger a GitHub Actions workflow or GitHub App webhook. You must configure your
+     * GitHub Actions workflow or GitHub App to run when the `repository_dispatch`
+     * event occurs. For an example `repository_dispatch` webhook payload, see
+     * "[RepositoryDispatchEvent](https://docs.github.com/webhooks/event-payloads/#repository_dispatch)."
+     *
+     * The `client_payload` parameter is available for any extra information that your
+     * workflow might need. This parameter is a JSON payload that will be passed on
+     * when the webhook event is dispatched. For example, the `client_payload` can
+     * include a message that a user would like to send using a GitHub Actions
+     * workflow. Or the `client_payload` can be used as a test to debug your workflow.
+     *
+     * This input example shows how you can use the `client_payload` as a test to debug
+     * your workflow.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint.
+     *
+     * @example
+     * ```ts
+     * await client.repos.createDispatchEvent({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   event_type: 'on-demand-test',
+     *   client_payload: { unit: false, integration: true },
+     * });
+     * ```
+     */
+    createDispatchEvent(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/dispatches`, {
+        body,
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Creates a new repository in the specified organization. The authenticated user
+     * must be a member of the organization.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `public_repo` or
+     * `repo` scope to create a public repository, and `repo` scope to create a private
+     * repository.
+     *
+     * @example
+     * ```ts
+     * const fullRepository = await client.repos.createForOrg(
+     *   'org',
+     *   {
+     *     name: 'Hello-World',
+     *     description: 'This is your first repository',
+     *     has_issues: true,
+     *     has_projects: true,
+     *     has_wiki: true,
+     *     homepage: 'https://github.com',
+     *   },
+     * );
+     * ```
+     */
+    createForOrg(org, body, options) {
+      return this._client.post(path2`/orgs/${org}/repos`, { body, ...options });
+    }
+    /**
+     * Creates a new repository using a repository template. Use the `template_owner`
+     * and `template_repo` route parameters to specify the repository to use as the
+     * template. If the repository is not public, the authenticated user must own or be
+     * a member of an organization that owns the repository. To check if a repository
+     * is available to use as a template, get the repository's information using the
+     * [Get a repository](https://docs.github.com/rest/repos/repos#get-a-repository)
+     * endpoint and check that the `is_template` key is `true`.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `public_repo` or
+     * `repo` scope to create a public repository, and `repo` scope to create a private
+     * repository.
+     *
+     * @example
+     * ```ts
+     * const fullRepository =
+     *   await client.repos.createFromTemplate('template_repo', {
+     *     template_owner: 'template_owner',
+     *     name: 'Hello-World',
+     *     description: 'This is your first repository',
+     *     owner: 'octocat',
+     *   });
+     * ```
+     */
+    createFromTemplate(templateRepo, params, options) {
+      const { template_owner, ...body } = params;
+      return this._client.post(path2`/repos/${template_owner}/${templateRepo}/generate`, { body, ...options });
+    }
+    /**
+     * Gets a redirect URL to download a tar archive for a repository. If you omit
+     * `:ref`, the repository’s default branch (usually `main`) will be used. Please
+     * make sure your HTTP framework is configured to follow redirects or you will need
+     * to use the `Location` header to make a second `GET` request.
+     *
+     * > [!NOTE] For private repositories, these links are temporary and expire after
+     * > five minutes.
+     *
+     * @example
+     * ```ts
+     * await client.repos.downloadTarball('ref', {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    downloadTarball(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/tarball/${ref}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Gets a redirect URL to download a zip archive for a repository. If you omit
+     * `:ref`, the repository’s default branch (usually `main`) will be used. Please
+     * make sure your HTTP framework is configured to follow redirects or you will need
+     * to use the `Location` header to make a second `GET` request.
+     *
+     * > [!NOTE] For private repositories, these links are temporary and expire after
+     * > five minutes. If the repository is empty, you will receive a 404 when you
+     * > follow the redirect.
+     *
+     * @example
+     * ```ts
+     * await client.repos.downloadZipball('ref', {
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    downloadZipball(ref, params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/zipball/${ref}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Enables an authenticated GitHub App to find the repository's installation
+     * information. The installation's account type will be either an organization or a
+     * user account, depending which account the repository belongs to.
+     *
+     * You must use a
+     * [JWT](https://docs.github.com/apps/building-github-apps/authenticating-with-github-apps/#authenticating-as-a-github-app)
+     * to access this endpoint.
+     *
+     * @example
+     * ```ts
+     * const installation = await client.repos.getInstallationInfo(
+     *   { owner: 'owner', repo: 'repo' },
+     * );
+     * ```
+     */
+    getInstallationInfo(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/installation`, options);
+    }
+    /**
+     * This method returns the contents of the repository's license file, if one is
+     * detected.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.raw+json`**: Returns the raw contents of the
+     *   license.
+     * - **`application/vnd.github.html+json`**: Returns the license contents in HTML.
+     *   Markup languages are rendered to HTML using GitHub's open-source
+     *   [Markup library](https://github.com/github/markup).
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.getLicense({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    getLicense(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/license`, { query, ...options });
+    }
+    /**
+     * Get the code security configuration that manages a repository's code security
+     * settings.
+     *
+     * The authenticated user must be an administrator or security manager for the
+     * organization to use this endpoint.
+     *
+     * OAuth app tokens and personal access tokens (classic) need the `repo` scope to
+     * use this endpoint.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.repos.getSecurityConfiguration({
+     *     owner: 'owner',
+     *     repo: 'repo',
+     *   });
+     * ```
+     */
+    getSecurityConfiguration(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/code-security-configuration`, options);
+    }
+    /**
+     * Lists a detailed history of changes to a repository, such as pushes, merges,
+     * force pushes, and branch changes, and associates these changes with commits and
+     * users.
+     *
+     * For more information about viewing repository activity, see
+     * "[Viewing activity and data for your repository](https://docs.github.com/repositories/viewing-activity-and-data-for-your-repository)."
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.listActivity({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    listActivity(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/activity`, { query, ...options });
+    }
+    /**
+     * > [!NOTE] This API is not built to serve real-time use cases. Depending on the
+     * > time of day, event latency can be anywhere from 30s to 6h.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const repoListEventsResponse of client.repos.listEvents(
+     *   { owner: 'owner', repo: 'repo' },
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listEvents(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/events`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists repositories that the authenticated user has explicit permission (`:read`,
+     * `:write`, or `:admin`) to access.
+     *
+     * The authenticated user has explicit permission to access repositories they own,
+     * repositories where they are a collaborator, and repositories that they can
+     * access through an organization membership.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const repository of client.repos.listForCurrentUser()) {
+     *   // ...
+     * }
+     * ```
+     */
+    listForCurrentUser(query = {}, options) {
+      return this._client.getAPIList("/user/repos", NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists repositories for the specified organization.
+     *
+     * > [!NOTE] In order to see the `security_and_analysis` block for a repository you
+     * > must have admin permissions for the repository or be an owner or security
+     * > manager for the organization that owns the repository. For more information,
+     * > see
+     * > "[Managing security managers in your organization](https://docs.github.com/organizations/managing-peoples-access-to-your-organization-with-roles/managing-security-managers-in-your-organization)."
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const minimalRepository of client.repos.listForOrg(
+     *   'org',
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listForOrg(org, query = {}, options) {
+      return this._client.getAPIList(path2`/orgs/${org}/repos`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Lists public repositories for the specified user.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const minimalRepository of client.repos.listForUser(
+     *   'username',
+     * )) {
+     *   // ...
+     * }
+     * ```
+     */
+    listForUser(username, query = {}, options) {
+      return this._client.getAPIList(path2`/users/${username}/repos`, NumberedPage, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Lists all public repositories in the order that they were created.
+     *
+     * Note:
+     *
+     * - For GitHub Enterprise Server, this endpoint will only list repositories
+     *   available to all users on the enterprise.
+     * - Pagination is powered exclusively by the `since` parameter. Use the
+     *   [Link header](https://docs.github.com/rest/guides/using-pagination-in-the-rest-api#using-link-headers)
+     *   to get the URL for the next page of repositories.
+     *
+     * @example
+     * ```ts
+     * const minimalRepositories = await client.repos.listPublic();
+     * ```
+     */
+    listPublic(query = {}, options) {
+      return this._client.get("/repositories", { query, ...options });
+    }
+    /**
+     * Lists the people that have starred the repository.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.star+json`**: Includes a timestamp of when the star
+     *   was created.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.listStargazers({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * });
+     * ```
+     */
+    listStargazers(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.get(path2`/repos/${owner}/${repo}/stargazers`, { query, ...options });
+    }
+    /**
+     * Lists repositories the authenticated user has starred.
+     *
+     * This endpoint supports the following custom media types. For more information,
+     * see
+     * "[Media types](https://docs.github.com/rest/using-the-rest-api/getting-started-with-the-rest-api#media-types)."
+     *
+     * - **`application/vnd.github.star+json`**: Includes a timestamp of when the star
+     *   was created.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const repository of client.repos.listStarred()) {
+     *   // ...
+     * }
+     * ```
+     */
+    listStarred(query = {}, options) {
+      return this._client.getAPIList("/user/starred", NumberedPage, { query, ...options });
+    }
+    /**
+     * Lists the people watching the specified repository.
+     *
+     * @example
+     * ```ts
+     * // Automatically fetches more pages as needed.
+     * for await (const simpleUser of client.repos.listWatchers({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     * })) {
+     *   // ...
+     * }
+     * ```
+     */
+    listWatchers(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...query } = params ?? {};
+      return this._client.getAPIList(path2`/repos/${owner}/${repo}/subscribers`, NumberedPage, { query, ...options });
+    }
+    /**
+     * Merge a branch
+     *
+     * @example
+     * ```ts
+     * const commit = await client.repos.mergeBranch({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   base: 'master',
+     *   head: 'cool_feature',
+     *   commit_message: 'Shipped cool_feature!',
+     * });
+     * ```
+     */
+    mergeBranch(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/merges`, { body, ...options });
+    }
+    /**
+     * Note that you'll need to set `Content-Length` to zero when calling out to this
+     * endpoint. For more information, see
+     * "[HTTP method](https://docs.github.com/rest/guides/getting-started-with-the-rest-api#http-method)."
+     *
+     * @example
+     * ```ts
+     * await client.repos.star({ owner: 'owner', repo: 'repo' });
+     * ```
+     */
+    star(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.put(path2`/user/starred/${owner}/${repo}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Sync a branch of a forked repository to keep it up-to-date with the upstream
+     * repository.
+     *
+     * @example
+     * ```ts
+     * const response = await client.repos.syncFork({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   branch: 'main',
+     * });
+     * ```
+     */
+    syncFork(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/merge-upstream`, { body, ...options });
+    }
+    /**
+     * A transfer request will need to be accepted by the new owner when transferring a
+     * personal repository to another user. The response will contain the original
+     * `owner`, and the transfer will continue asynchronously. For more details on the
+     * requirements to transfer personal and organization-owned repositories, see
+     * [about repository transfers](https://docs.github.com/articles/about-repository-transfers/).
+     *
+     * @example
+     * ```ts
+     * const minimalRepository = await client.repos.transfer({
+     *   owner: 'owner',
+     *   repo: 'repo',
+     *   new_owner: 'github',
+     *   new_name: 'octorepo',
+     *   team_ids: [12, 345],
+     * });
+     * ```
+     */
+    transfer(params, options) {
+      const { owner = this._client.owner, repo = this._client.repo, ...body } = params;
+      return this._client.post(path2`/repos/${owner}/${repo}/transfer`, { body, ...options });
+    }
+    /**
+     * Unstar a repository that the authenticated user has previously starred.
+     *
+     * @example
+     * ```ts
+     * await client.repos.unstar({ owner: 'owner', repo: 'repo' });
+     * ```
+     */
+    unstar(params = {}, options) {
+      const { owner = this._client.owner, repo = this._client.repo } = params ?? {};
+      return this._client.delete(path2`/user/starred/${owner}/${repo}`, {
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+  }
+  BaseRepos6._key = Object.freeze(["repos"]);
+  return BaseRepos6;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/internal/utils/env.mjs
+var readEnv2 = (env) => {
+  if (typeof globalThis.process !== "undefined") {
+    return globalThis.process.env?.[env]?.trim() ?? void 0;
+  }
+  if (typeof globalThis.Deno !== "undefined") {
+    return globalThis.Deno.env?.get?.(env)?.trim();
+  }
+  return void 0;
+};
+
 // node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/lib/auth.mjs
 var import_jsonwebtoken = __toESM(require_jsonwebtoken(), 1);
+async function getAuthToken({ authMethods, owner, repo, logger: logger2 }) {
+  const method = authMethods.find((method2) => method2.owner === owner) ?? authMethods.at(-1);
+  if (!method || method.owner !== owner && method.owner !== "*") {
+    throw new Error("No matching auth method found. Did you set a fallback auth method, with owner *?");
+  }
+  if ("token" in method) {
+    return { authToken: method.token, expires: method.expires };
+  }
+  const appAuth = await getAppToken(method);
+  const client = createClient({
+    owner,
+    repo,
+    authToken: appAuth.authToken,
+    resources: [BaseRepos3, BaseOrgs, BaseInstallations]
+  });
+  let installationId = method.installationId;
+  try {
+    if (!installationId) {
+      if (repo) {
+        const { id } = await client.repos.getInstallationInfo();
+        installationId = id;
+      } else {
+        const { id } = await client.orgs.retrieveInstallation(owner);
+        installationId = id;
+      }
+    }
+  } catch (e) {
+    logger2?.warn(`No installation ID found for ${owner}/${repo}, using app token instead`, e);
+  }
+  if (!installationId) {
+    return appAuth;
+  }
+  try {
+    const { token, expires_at } = await client.apps.installations.createAccessToken(installationId);
+    return { authToken: token, expires: new Date(expires_at) };
+  } catch (e) {
+    logger2?.warn(`Failed to get installation token for ${installationId}, using app token instead`, e);
+  }
+  return appAuth;
+}
+async function getAppToken(method) {
+  const iat = Math.floor(Date.now() / 1e3) - 30;
+  const exp = iat + 60 * 10;
+  const appToken = import_jsonwebtoken.default.sign({ iat, exp, iss: method.appId }, method.privateKey, {
+    algorithm: "RS256"
+  });
+  const appTokenExpires = new Date(exp * 1e3);
+  return { authToken: appToken, expires: appTokenExpires };
+}
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/client.mjs
+var _BaseGitHub_instances;
+var _BaseGitHub_encoder;
+var _BaseGitHub_baseURLOverridden;
+var BaseGitHub = /* @__PURE__ */ (() => {
+  class BaseGitHub3 {
+    /**
+     * API Client for interfacing with the GitHub API.
+     *
+     * @param {string | null | undefined} [opts.authToken=process.env['GITHUB_AUTH_TOKEN'] ?? null]
+     * @param {string | null | undefined} [opts.owner]
+     * @param {string | null | undefined} [opts.repo]
+     * @param {string | null | undefined} [opts.webhookSecret=process.env['GITHUB_WEBHOOK_SECRET'] ?? null]
+     * @param {string} [opts.baseURL=process.env['GITHUB_BASE_URL'] ?? https://api.github.com] - Override the default base URL for the API.
+     * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+     * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+     */
+    constructor({ baseURL = readEnv2("GITHUB_BASE_URL"), authToken = readEnv2("GITHUB_AUTH_TOKEN") ?? null, owner = null, repo = null, webhookSecret = readEnv2("GITHUB_WEBHOOK_SECRET") ?? null, ...opts } = {}) {
+      _BaseGitHub_instances.add(this);
+      _BaseGitHub_encoder.set(this, void 0);
+      const options = {
+        authToken,
+        owner,
+        repo,
+        webhookSecret,
+        ...opts,
+        baseURL: baseURL || `https://api.github.com`
+      };
+      this.baseURL = options.baseURL;
+      this.timeout = options.timeout ?? BaseGitHub3.DEFAULT_TIMEOUT;
+      this.logger = options.logger ?? console;
+      const defaultLogLevel = "warn";
+      this.logLevel = defaultLogLevel;
+      this.logLevel = parseLogLevel2(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel2(readEnv2("GITHUB_LOG"), "process.env['GITHUB_LOG']", this) ?? defaultLogLevel;
+      this.fetchOptions = options.fetchOptions;
+      this.maxRetries = options.maxRetries ?? 2;
+      this.fetch = options.fetch ?? getDefaultFetch2();
+      __classPrivateFieldSet2(this, _BaseGitHub_encoder, FallbackEncoder2, "f");
+      this._options = options;
+      this.authToken = authToken;
+      this.owner = owner;
+      this.repo = repo;
+      this.webhookSecret = webhookSecret;
+    }
+    /**
+     * Create a new client instance re-using the same options given to the current client with optional overriding.
+     */
+    withOptions(options) {
+      const client = new this.constructor({
+        ...this._options,
+        baseURL: this.baseURL,
+        maxRetries: this.maxRetries,
+        timeout: this.timeout,
+        logger: this.logger,
+        logLevel: this.logLevel,
+        fetch: this.fetch,
+        fetchOptions: this.fetchOptions,
+        authToken: this.authToken,
+        owner: this.owner,
+        repo: this.repo,
+        webhookSecret: this.webhookSecret,
+        ...options
+      });
+      return client;
+    }
+    /**
+     * Get Hypermedia links to resources accessible in GitHub's REST API
+     */
+    retrieve(options) {
+      return this.get("/", options);
+    }
+    /**
+     * Get a random sentence from the Zen of GitHub
+     */
+    zen(options) {
+      return this.get("/zen", {
+        ...options,
+        headers: buildHeaders2([{ Accept: "text/plain" }, options?.headers])
+      });
+    }
+    defaultQuery() {
+      return this._options.defaultQuery;
+    }
+    validateHeaders({ values, nulls }) {
+      return;
+    }
+    async authHeaders(opts) {
+      if (this.authToken == null) {
+        return void 0;
+      }
+      return buildHeaders2([{ Authorization: `Bearer ${this.authToken}` }]);
+    }
+    /**
+     * Given a list of available auth methods, get an auth token to access the
+     * given GitHub `owner` (and optionally `repo`), and set it on this client.
+     */
+    async getAuthToken(opts) {
+      if (this.authToken != null) {
+        return this.authToken;
+      }
+      const owner = opts.owner ?? this.owner;
+      const repo = opts.repo ?? this.repo;
+      if (owner == null) {
+        throw new Error("Specify an owner to get a token for.");
+      }
+      const { authToken } = await getAuthToken({
+        authMethods: opts.authMethods,
+        owner,
+        repo,
+        logger: this.logger
+      });
+      this.authToken = authToken;
+      return authToken;
+    }
+    stringifyQuery(query) {
+      return stringify2(query, { arrayFormat: "comma" });
+    }
+    getUserAgent() {
+      return `${this.constructor.name}/JS ${VERSION2}`;
+    }
+    defaultIdempotencyKey() {
+      return `stainless-node-retry-${uuid42()}`;
+    }
+    makeStatusError(status, error, message, headers) {
+      return APIError2.generate(status, error, message, headers);
+    }
+    buildURL(path7, query, defaultBaseURL) {
+      const baseURL = !__classPrivateFieldGet2(this, _BaseGitHub_instances, "m", _BaseGitHub_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+      const url = isAbsoluteURL2(path7) ? new URL(path7) : new URL(baseURL + (baseURL.endsWith("/") && path7.startsWith("/") ? path7.slice(1) : path7));
+      const defaultQuery = this.defaultQuery();
+      if (!isEmptyObj2(defaultQuery)) {
+        query = { ...defaultQuery, ...query };
+      }
+      if (typeof query === "object" && query && !Array.isArray(query)) {
+        url.search = this.stringifyQuery(query);
+      }
+      return url.toString();
+    }
+    /**
+     * Used as a callback for mutating the given `FinalRequestOptions` object.
+     */
+    async prepareOptions(options) {
+    }
+    /**
+     * Used as a callback for mutating the given `RequestInit` object.
+     *
+     * This is useful for cases where you want to add certain headers based off of
+     * the request properties, e.g. `method` or `url`.
+     */
+    async prepareRequest(request, { url, options }) {
+    }
+    get(path7, opts) {
+      return this.methodRequest("get", path7, opts);
+    }
+    post(path7, opts) {
+      return this.methodRequest("post", path7, opts);
+    }
+    patch(path7, opts) {
+      return this.methodRequest("patch", path7, opts);
+    }
+    put(path7, opts) {
+      return this.methodRequest("put", path7, opts);
+    }
+    delete(path7, opts) {
+      return this.methodRequest("delete", path7, opts);
+    }
+    methodRequest(method, path7, opts) {
+      return this.request(Promise.resolve(opts).then((opts2) => {
+        return { method, path: path7, ...opts2 };
+      }));
+    }
+    request(options, remainingRetries = null) {
+      return new APIPromise2(this, this.makeRequest(options, remainingRetries, void 0));
+    }
+    async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
+      const options = await optionsInput;
+      const maxRetries = options.maxRetries ?? this.maxRetries;
+      if (retriesRemaining == null) {
+        retriesRemaining = maxRetries;
+      }
+      await this.prepareOptions(options);
+      const { req, url, timeout } = await this.buildRequest(options, {
+        retryCount: maxRetries - retriesRemaining
+      });
+      await this.prepareRequest(req, { url, options });
+      const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
+      const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
+      const startTime = Date.now();
+      loggerFor2(this).debug(`[${requestLogID}] sending request`, formatRequestDetails2({
+        retryOfRequestLogID,
+        method: options.method,
+        url,
+        options,
+        headers: req.headers
+      }));
+      if (options.signal?.aborted) {
+        throw new APIUserAbortError2();
+      }
+      const controller = new AbortController();
+      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError2);
+      const headersTime = Date.now();
+      if (response instanceof globalThis.Error) {
+        const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+        if (options.signal?.aborted) {
+          throw new APIUserAbortError2();
+        }
+        const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+        if (retriesRemaining) {
+          loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+          loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails2({
+            retryOfRequestLogID,
+            url,
+            durationMs: headersTime - startTime,
+            message: response.message
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
+        }
+        loggerFor2(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+        loggerFor2(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails2({
+          retryOfRequestLogID,
+          url,
+          durationMs: headersTime - startTime,
+          message: response.message
+        }));
+        if (isTimeout) {
+          throw new APIConnectionTimeoutError2();
+        }
+        throw new APIConnectionError2({ cause: response });
+      }
+      const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
+      if (!response.ok) {
+        const shouldRetry = await this.shouldRetry(response);
+        if (retriesRemaining && shouldRetry) {
+          const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
+          await CancelReadableStream2(response.body);
+          loggerFor2(this).info(`${responseInfo} - ${retryMessage2}`);
+          loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails2({
+            retryOfRequestLogID,
+            url: response.url,
+            status: response.status,
+            headers: response.headers,
+            durationMs: headersTime - startTime
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+        }
+        const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
+        loggerFor2(this).info(`${responseInfo} - ${retryMessage}`);
+        const errText = await response.text().catch((err2) => castToError2(err2).message);
+        const errJSON = safeJSON2(errText);
+        const errMessage = errJSON ? void 0 : errText;
+        loggerFor2(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails2({
+          retryOfRequestLogID,
+          url: response.url,
+          status: response.status,
+          headers: response.headers,
+          message: errMessage,
+          durationMs: Date.now() - startTime
+        }));
+        const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
+        throw err;
+      }
+      loggerFor2(this).info(responseInfo);
+      loggerFor2(this).debug(`[${requestLogID}] response start`, formatRequestDetails2({
+        retryOfRequestLogID,
+        url: response.url,
+        status: response.status,
+        headers: response.headers,
+        durationMs: headersTime - startTime
+      }));
+      return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
+    }
+    getAPIList(path7, Page2, opts) {
+      return this.requestAPIList(Page2, opts && "then" in opts ? opts.then((opts2) => ({ method: "get", path: path7, ...opts2 })) : { method: "get", path: path7, ...opts });
+    }
+    requestAPIList(Page2, options) {
+      const request = this.makeRequest(options, null, void 0);
+      return new PagePromise2(this, request, Page2);
+    }
+    async fetchWithTimeout(url, init, ms, controller) {
+      const { signal, method, ...options } = init || {};
+      const abort = this._makeAbort(controller);
+      if (signal)
+        signal.addEventListener("abort", abort, { once: true });
+      const timeout = setTimeout(abort, ms);
+      const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
+      const fetchOptions = {
+        signal: controller.signal,
+        ...isReadableBody ? { duplex: "half" } : {},
+        method: "GET",
+        ...options
+      };
+      if (method) {
+        fetchOptions.method = method.toUpperCase();
+      }
+      try {
+        return await this.fetch.call(void 0, url, fetchOptions);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    async shouldRetry(response) {
+      const shouldRetryHeader = response.headers.get("x-should-retry");
+      if (shouldRetryHeader === "true")
+        return true;
+      if (shouldRetryHeader === "false")
+        return false;
+      if (response.status === 408)
+        return true;
+      if (response.status === 409)
+        return true;
+      if (response.status === 429)
+        return true;
+      if (response.status >= 500)
+        return true;
+      return false;
+    }
+    async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
+      let timeoutMillis;
+      const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
+      if (retryAfterMillisHeader) {
+        const timeoutMs = parseFloat(retryAfterMillisHeader);
+        if (!Number.isNaN(timeoutMs)) {
+          timeoutMillis = timeoutMs;
+        }
+      }
+      const retryAfterHeader = responseHeaders?.get("retry-after");
+      if (retryAfterHeader && !timeoutMillis) {
+        const timeoutSeconds = parseFloat(retryAfterHeader);
+        if (!Number.isNaN(timeoutSeconds)) {
+          timeoutMillis = timeoutSeconds * 1e3;
+        } else {
+          timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+        }
+      }
+      if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
+        const maxRetries = options.maxRetries ?? this.maxRetries;
+        timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+      }
+      await sleep2(timeoutMillis);
+      return this.makeRequest(options, retriesRemaining - 1, requestLogID);
+    }
+    calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+      const initialRetryDelay = 0.5;
+      const maxRetryDelay = 8;
+      const numRetries = maxRetries - retriesRemaining;
+      const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+      const jitter = 1 - Math.random() * 0.25;
+      return sleepSeconds * jitter * 1e3;
+    }
+    async buildRequest(inputOptions, { retryCount = 0 } = {}) {
+      const options = { ...inputOptions };
+      const { method, path: path7, query, defaultBaseURL } = options;
+      const url = this.buildURL(path7, query, defaultBaseURL);
+      if ("timeout" in options)
+        validatePositiveInteger2("timeout", options.timeout);
+      options.timeout = options.timeout ?? this.timeout;
+      const { bodyHeaders, body } = this.buildBody({ options });
+      const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+      const req = {
+        method,
+        headers: reqHeaders,
+        ...options.signal && { signal: options.signal },
+        ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
+        ...body && { body },
+        ...this.fetchOptions ?? {},
+        ...options.fetchOptions ?? {}
+      };
+      return { req, url, timeout: options.timeout };
+    }
+    async buildHeaders({ options, method, bodyHeaders, retryCount }) {
+      let idempotencyHeaders = {};
+      if (this.idempotencyHeader && method !== "get") {
+        if (!options.idempotencyKey)
+          options.idempotencyKey = this.defaultIdempotencyKey();
+        idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
+      }
+      const headers = buildHeaders2([
+        idempotencyHeaders,
+        {
+          Accept: "application/json",
+          "User-Agent": this.getUserAgent(),
+          "X-Stainless-Retry-Count": String(retryCount),
+          ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
+          ...getPlatformHeaders2()
+        },
+        await this.authHeaders(options),
+        this._options.defaultHeaders,
+        bodyHeaders,
+        options.headers
+      ]);
+      this.validateHeaders(headers);
+      return headers.values;
+    }
+    _makeAbort(controller) {
+      return () => controller.abort();
+    }
+    buildBody({ options: { body, headers: rawHeaders } }) {
+      if (!body) {
+        return { bodyHeaders: void 0, body: void 0 };
+      }
+      const headers = buildHeaders2([rawHeaders]);
+      if (
+        // Pass raw type verbatim
+        ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
+        headers.values.has("content-type") || // `Blob` is superset of `File`
+        globalThis.Blob && body instanceof globalThis.Blob || // `FormData` -> `multipart/form-data`
+        body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
+        body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
+        globalThis.ReadableStream && body instanceof globalThis.ReadableStream
+      ) {
+        return { bodyHeaders: void 0, body };
+      } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
+        return { bodyHeaders: void 0, body: ReadableStreamFrom2(body) };
+      } else if (typeof body === "object" && headers.values.get("content-type") === "application/x-www-form-urlencoded") {
+        return {
+          bodyHeaders: { "content-type": "application/x-www-form-urlencoded" },
+          body: this.stringifyQuery(body)
+        };
+      } else {
+        return __classPrivateFieldGet2(this, _BaseGitHub_encoder, "f").call(this, { body, headers });
+      }
+    }
+  }
+  _BaseGitHub_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitHub_instances = /* @__PURE__ */ new WeakSet(), _BaseGitHub_baseURLOverridden = function _BaseGitHub_baseURLOverridden2() {
+    return this.baseURL !== "https://api.github.com";
+  };
+  BaseGitHub3.DEFAULT_TIMEOUT = 6e4;
+  return BaseGitHub3;
+})();
+
+// node_modules/.pnpm/@stainless-api+github-internal@0.25.1/node_modules/@stainless-api/github-internal/tree-shakable.mjs
+function createClient(options) {
+  const client = new BaseGitHub(options);
+  for (const ResourceClass of options.resources) {
+    const resourceInstance = new ResourceClass(client);
+    let object = client;
+    for (const part of ResourceClass._key.slice(0, -1)) {
+      if (hasOwn2(object, part)) {
+        object = object[part];
+      } else {
+        Object.defineProperty(object, part, {
+          value: object = {},
+          configurable: true,
+          enumerable: true,
+          writable: true
+        });
+      }
+    }
+    const name = ResourceClass._key.at(-1);
+    if (!hasOwn2(object, name)) {
+      Object.defineProperty(object, name, {
+        value: resourceInstance,
+        configurable: true,
+        enumerable: true,
+        writable: true
+      });
+    } else {
+      if (object[name] instanceof APIResource2) {
+        throw new TypeError(`Resource at ${ResourceClass._key.join(".")} already exists!`);
+      } else {
+        object[name] = Object.assign(resourceInstance, object[name]);
+      }
+    }
+  }
+  return client;
+}
 
 // src/compat/github/context.ts
 var fs = __toESM(require("node:fs"));
@@ -18558,6 +22437,2595 @@ function getGitHubContext() {
   return cachedContext;
 }
 
+// src/compat/github/api.ts
+var GitHubClient = class {
+  client;
+  constructor(token) {
+    this.client = createClient({
+      authToken: token,
+      baseURL: getGitHubContext().urls.api,
+      owner: getGitHubContext().owner,
+      repo: getGitHubContext().repo,
+      resources: [BaseCommits, BaseComments2, BasePulls]
+    });
+  }
+  async listComments(prNumber) {
+    const { data } = await this.client.repos.issues.comments.list(prNumber);
+    return data.map((c) => ({ id: c.id, body: c.body ?? "" }));
+  }
+  async createComment(prNumber, props) {
+    const data = await this.client.repos.issues.comments.create(
+      prNumber,
+      props
+    );
+    return { id: data.id, body: data.body };
+  }
+  async updateComment(_prNumber, { id, body }) {
+    const data = await this.client.repos.issues.comments.update(id, {
+      body
+    });
+    return { id: data.id, body: data.body };
+  }
+  async getPullRequest(number) {
+    const data = await this.client.repos.pulls.retrieve(number);
+    return {
+      number,
+      state: data.merged_at ? "merged" : data.state,
+      title: data.title,
+      base_sha: data.base.sha,
+      base_ref: data.base.ref,
+      head_ref: data.head.ref,
+      head_sha: data.head.sha,
+      merge_commit_sha: data.merge_commit_sha
+    };
+  }
+  async getPullRequestForCommit(sha) {
+    const pullRequests = await this.client.repos.commits.listPullRequests(sha).then(
+      ({ data }) => data.filter((c) => c.merged_at || c.state !== "closed")
+    ).catch((err) => {
+      if (err instanceof APIError2 && err.status === 404) {
+        return [];
+      }
+      throw err;
+    });
+    if (pullRequests.length === 0) {
+      return null;
+    }
+    if (pullRequests.length > 1) {
+      logger.warn(
+        `Multiple pull requests found for commit; only using first.`,
+        { commit: sha, pulls: pullRequests.map((c) => c.number) }
+      );
+    }
+    const pull = pullRequests[0];
+    return {
+      number: pull.number,
+      state: pull.merged_at ? "merged" : pull.state,
+      title: pull.title,
+      base_sha: pull.base.sha,
+      base_ref: pull.base.ref,
+      head_ref: pull.head.ref,
+      head_sha: pull.head.sha,
+      merge_commit_sha: pull.merge_commit_sha
+    };
+  }
+};
+var cachedClient;
+function getGitHubClient() {
+  if (cachedClient !== void 0) {
+    return cachedClient;
+  }
+  const token = getInput("github_token");
+  if (token) {
+    cachedClient = new GitHubClient(token);
+  } else {
+    logger.info("No GitHub token found via input 'github_token'.");
+    cachedClient = null;
+  }
+  return cachedClient;
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
+function isAbortError3(err) {
+  return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
+  ("name" in err && err.name === "AbortError" || // Expo fetch
+  "message" in err && String(err.message).includes("FetchRequestCanceledException"));
+}
+var castToError3 = (err) => {
+  if (err instanceof Error)
+    return err;
+  if (typeof err === "object" && err !== null) {
+    try {
+      if (Object.prototype.toString.call(err) === "[object Error]") {
+        const error = new Error(err.message, err.cause ? { cause: err.cause } : {});
+        if (err.stack)
+          error.stack = err.stack;
+        if (err.cause && !error.cause)
+          error.cause = err.cause;
+        if (err.name)
+          error.name = err.name;
+        return error;
+      }
+    } catch {
+    }
+    try {
+      return new Error(JSON.stringify(err));
+    } catch {
+    }
+  }
+  return new Error(err);
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
+var GitLabError = /* @__PURE__ */ (() => {
+  class GitLabError2 extends Error {
+  }
+  return GitLabError2;
+})();
+var APIError3 = class _APIError extends GitLabError {
+  constructor(status, error, message, headers) {
+    super(`${_APIError.makeMessage(status, error, message)}`);
+    this.status = status;
+    this.headers = headers;
+    this.error = error;
+  }
+  static makeMessage(status, error, message) {
+    const msg = error?.message ? typeof error.message === "string" ? error.message : JSON.stringify(error.message) : error ? JSON.stringify(error) : message;
+    if (status && msg) {
+      return `${status} ${msg}`;
+    }
+    if (status) {
+      return `${status} status code (no body)`;
+    }
+    if (msg) {
+      return msg;
+    }
+    return "(no status code or body)";
+  }
+  static generate(status, errorResponse, message, headers) {
+    if (!status || !headers) {
+      return new APIConnectionError3({ message, cause: castToError3(errorResponse) });
+    }
+    const error = errorResponse;
+    if (status === 400) {
+      return new BadRequestError3(status, error, message, headers);
+    }
+    if (status === 401) {
+      return new AuthenticationError3(status, error, message, headers);
+    }
+    if (status === 403) {
+      return new PermissionDeniedError3(status, error, message, headers);
+    }
+    if (status === 404) {
+      return new NotFoundError3(status, error, message, headers);
+    }
+    if (status === 409) {
+      return new ConflictError3(status, error, message, headers);
+    }
+    if (status === 422) {
+      return new UnprocessableEntityError3(status, error, message, headers);
+    }
+    if (status === 429) {
+      return new RateLimitError3(status, error, message, headers);
+    }
+    if (status >= 500) {
+      return new InternalServerError3(status, error, message, headers);
+    }
+    return new _APIError(status, error, message, headers);
+  }
+};
+var APIUserAbortError3 = class extends APIError3 {
+  constructor({ message } = {}) {
+    super(void 0, void 0, message || "Request was aborted.", void 0);
+  }
+};
+var APIConnectionError3 = class extends APIError3 {
+  constructor({ message, cause }) {
+    super(void 0, void 0, message || "Connection error.", void 0);
+    if (cause)
+      this.cause = cause;
+  }
+};
+var APIConnectionTimeoutError3 = class extends APIConnectionError3 {
+  constructor({ message } = {}) {
+    super({ message: message ?? "Request timed out." });
+  }
+};
+var BadRequestError3 = class extends APIError3 {
+};
+var AuthenticationError3 = class extends APIError3 {
+};
+var PermissionDeniedError3 = class extends APIError3 {
+};
+var NotFoundError3 = class extends APIError3 {
+};
+var ConflictError3 = class extends APIError3 {
+};
+var UnprocessableEntityError3 = class extends APIError3 {
+};
+var RateLimitError3 = class extends APIError3 {
+};
+var InternalServerError3 = class extends APIError3 {
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
+var APIResource3 = /* @__PURE__ */ (() => {
+  class APIResource4 {
+    constructor(client) {
+      this._client = client;
+    }
+  }
+  APIResource4._key = [];
+  return APIResource4;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
+var startsWithSchemeRegexp3 = /^[a-z][a-z0-9+.-]*:/i;
+var isAbsoluteURL3 = (url) => {
+  return startsWithSchemeRegexp3.test(url);
+};
+var isArray3 = (val) => (isArray3 = Array.isArray, isArray3(val));
+var isReadonlyArray3 = isArray3;
+function isEmptyObj3(obj) {
+  if (!obj)
+    return true;
+  for (const _k in obj)
+    return false;
+  return true;
+}
+function hasOwn3(obj, key) {
+  return Object.prototype.hasOwnProperty.call(obj, key);
+}
+var validatePositiveInteger3 = (name, n) => {
+  if (typeof n !== "number" || !Number.isInteger(n)) {
+    throw new GitLabError(`${name} must be an integer`);
+  }
+  if (n < 0) {
+    throw new GitLabError(`${name} must be a positive integer`);
+  }
+  return n;
+};
+var safeJSON3 = (text) => {
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    return void 0;
+  }
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
+var brand_privateNullableHeaders3 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
+function* iterateHeaders3(headers) {
+  if (!headers)
+    return;
+  if (brand_privateNullableHeaders3 in headers) {
+    const { values, nulls } = headers;
+    yield* values.entries();
+    for (const name of nulls) {
+      yield [name, null];
+    }
+    return;
+  }
+  let shouldClear = false;
+  let iter;
+  if (headers instanceof Headers) {
+    iter = headers.entries();
+  } else if (isReadonlyArray3(headers)) {
+    iter = headers;
+  } else {
+    shouldClear = true;
+    iter = Object.entries(headers ?? {});
+  }
+  for (let row of iter) {
+    const name = row[0];
+    if (typeof name !== "string")
+      throw new TypeError("expected header name to be a string");
+    const values = isReadonlyArray3(row[1]) ? row[1] : [row[1]];
+    let didClear = false;
+    for (const value of values) {
+      if (value === void 0)
+        continue;
+      if (shouldClear && !didClear) {
+        didClear = true;
+        yield [name, null];
+      }
+      yield [name, value];
+    }
+  }
+}
+var buildHeaders3 = (newHeaders) => {
+  const targetHeaders = new Headers();
+  const nullHeaders = /* @__PURE__ */ new Set();
+  for (const headers of newHeaders) {
+    const seenHeaders = /* @__PURE__ */ new Set();
+    for (const [name, value] of iterateHeaders3(headers)) {
+      const lowerName = name.toLowerCase();
+      if (!seenHeaders.has(lowerName)) {
+        targetHeaders.delete(name);
+        seenHeaders.add(lowerName);
+      }
+      if (value === null) {
+        targetHeaders.delete(name);
+        nullHeaders.add(lowerName);
+      } else {
+        targetHeaders.append(name, value);
+        nullHeaders.delete(lowerName);
+      }
+    }
+  }
+  return { [brand_privateNullableHeaders3]: true, values: targetHeaders, nulls: nullHeaders };
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
+function encodeURIPath3(str) {
+  return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
+}
+var EMPTY3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.create(null));
+var createPathTagFunction3 = (pathEncoder = encodeURIPath3) => function path7(statics, ...params) {
+  if (statics.length === 1)
+    return statics[0];
+  let postPath = false;
+  const invalidSegments = [];
+  const path8 = statics.reduce((previousValue, currentValue, index) => {
+    if (/[?#]/.test(currentValue)) {
+      postPath = true;
+    }
+    const value = params[index];
+    let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
+    if (index !== params.length && (value == null || typeof value === "object" && // handle values from other realms
+    value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY3) ?? EMPTY3)?.toString)) {
+      encoded = value + "";
+      invalidSegments.push({
+        start: previousValue.length + currentValue.length,
+        length: encoded.length,
+        error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
+      });
+    }
+    return previousValue + currentValue + (index === params.length ? "" : encoded);
+  }, "");
+  const pathOnly = path8.split(/[?#]/, 1)[0];
+  const invalidSegmentPattern = /(?<=^|\/)(?:\.|%2e){1,2}(?=\/|$)/gi;
+  let match;
+  while ((match = invalidSegmentPattern.exec(pathOnly)) !== null) {
+    invalidSegments.push({
+      start: match.index,
+      length: match[0].length,
+      error: `Value "${match[0]}" can't be safely passed as a path parameter`
+    });
+  }
+  invalidSegments.sort((a, b) => a.start - b.start);
+  if (invalidSegments.length > 0) {
+    let lastEnd = 0;
+    const underline = invalidSegments.reduce((acc, segment) => {
+      const spaces = " ".repeat(segment.start - lastEnd);
+      const arrows = "^".repeat(segment.length);
+      lastEnd = segment.start + segment.length;
+      return acc + spaces + arrows;
+    }, "");
+    throw new GitLabError(`Path parameters result in path with invalid segments:
+${invalidSegments.map((e) => e.error).join("\n")}
+${path8}
+${underline}`);
+  }
+  return path8;
+};
+var path3 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
+var BaseNotes2 = /* @__PURE__ */ (() => {
+  class BaseNotes13 extends APIResource3 {
+    /**
+     * Create a new merge request note
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesNote =
+     *   await client.projects.mergeRequests.notes.create(0, {
+     *     id: 'id',
+     *     body: 'body',
+     *   });
+     * ```
+     */
+    create(noteableID, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${noteableID}/notes`, { body, ...options });
+    }
+    /**
+     * Get a single merge request note
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesNote =
+     *   await client.projects.mergeRequests.notes.retrieve(0, {
+     *     id: 'id',
+     *     noteable_id: 0,
+     *   });
+     * ```
+     */
+    retrieve(noteID, params, options) {
+      const { id, noteable_id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+    }
+    /**
+     * Update an existing merge request note
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesNote =
+     *   await client.projects.mergeRequests.notes.update(0, {
+     *     id: 'id',
+     *     noteable_id: 0,
+     *   });
+     * ```
+     */
+    update(noteID, params, options) {
+      const { id, noteable_id, ...body } = params;
+      return this._client.put(path3`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Get a list of merge request notes
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesNote =
+     *   await client.projects.mergeRequests.notes.list(0, {
+     *     id: 'id',
+     *   });
+     * ```
+     */
+    list(noteableID, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${noteableID}/notes`, { query, ...options });
+    }
+    /**
+     * Delete a merge request note
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesNote =
+     *   await client.projects.mergeRequests.notes.delete(0, {
+     *     id: 'id',
+     *     noteable_id: 0,
+     *   });
+     * ```
+     */
+    delete(noteID, params, options) {
+      const { id, noteable_id } = params;
+      return this._client.delete(path3`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+    }
+  }
+  BaseNotes13._key = Object.freeze([
+    "projects",
+    "mergeRequests",
+    "notes"
+  ]);
+  return BaseNotes13;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
+var BaseMergeRequests = /* @__PURE__ */ (() => {
+  class BaseMergeRequests3 extends APIResource3 {
+    /**
+     * Create a new merge request.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.create('string', {
+     *     source_branch: 'source_branch',
+     *     target_branch: 'target_branch',
+     *     title: 'title',
+     *   });
+     * ```
+     */
+    create(id, body, options) {
+      return this._client.post(path3`/projects/${id}/merge_requests`, { body, ...options });
+    }
+    /**
+     * Shows information about a single merge request. Note: the `changes_count` value
+     * in the response is a string, not an integer. This is because when an merge
+     * request has too many changes to display and store, it is capped at 1,000. In
+     * that case, the API returns the string `"1000+"` for the changes count.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.retrieve(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieve(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}`, { query, ...options });
+    }
+    /**
+     * Updates an existing merge request. You can change the target branch, title, or
+     * even close the merge request.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.update(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    update(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.put(path3`/projects/${id}/merge_requests/${mergeRequestIid}`, { body, ...options });
+    }
+    /**
+     * Get all merge requests for this project.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequestBasics =
+     *   await client.projects.mergeRequests.list('string');
+     * ```
+     */
+    list(id, query = {}, options) {
+      return this._client.get(path3`/projects/${id}/merge_requests`, { query, ...options });
+    }
+    /**
+     * Only for administrators and project owners. Deletes the merge request in
+     * question.
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.delete(0, {
+     *   id: 'string',
+     * });
+     * ```
+     */
+    delete(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.delete(path3`/projects/${id}/merge_requests/${mergeRequestIid}`, {
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Adds spent time for this merge_request.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesIssuableTimeStats =
+     *   await client.projects.mergeRequests.addSpentTime(0, {
+     *     id: 'string',
+     *     duration: 'duration',
+     *   });
+     * ```
+     */
+    addSpentTime(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/add_spent_time`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Approve a merge request
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequestApprovals =
+     *   await client.projects.mergeRequests.approve(0, {
+     *     id: 'id',
+     *   });
+     * ```
+     */
+    approve(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/approve`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Cancel merge if "Merge When Pipeline Succeeds" is enabled
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.cancelMergeWhenPipelineSucceeds(
+     *     0,
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    cancelMergeWhenPipelineSucceeds(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/cancel_merge_when_pipeline_succeeds`, options);
+    }
+    /**
+     * Resets the total spent time for this merge_request to 0 seconds.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesIssuableTimeStats =
+     *   await client.projects.mergeRequests.resetSpentTime(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    resetSpentTime(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/reset_spent_time`, options);
+    }
+    /**
+     * Resets the estimated time for this merge_request to 0 seconds.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesIssuableTimeStats =
+     *   await client.projects.mergeRequests.resetTimeEstimate(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    resetTimeEstimate(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/reset_time_estimate`, options);
+    }
+    /**
+     * List approval rules for merge request
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.retrieveApprovalSettings(
+     *   0,
+     *   { id: 'string' },
+     * );
+     * ```
+     */
+    retrieveApprovalSettings(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/approval_settings`, {
+        query,
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Get approval state of merge request
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.mergeRequests.retrieveApprovalState(
+     *     0,
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveApprovalState(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/approval_state`, options);
+    }
+    /**
+     * Get all merge requests are blockees for this merge request
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequestDependency =
+     *   await client.projects.mergeRequests.retrieveBlockees(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveBlockees(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/blockees`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Shows information about the merge request including its files and changes.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.mergeRequests.retrieveChanges(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveChanges(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/changes`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Get all the issues that would be closed by merging the provided merge request.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.mergeRequests.retrieveClosesIssues(
+     *     0,
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveClosesIssues(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/closes_issues`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Get a list of merge request commits.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommit =
+     *   await client.projects.mergeRequests.retrieveCommits(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveCommits(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/commits`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Get a list of merge request diffs.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesDiff =
+     *   await client.projects.mergeRequests.retrieveDiffs(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveDiffs(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/diffs`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * Returns the up to date merge-ref HEAD commit
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.retrieveMergeRef(0, {
+     *   id: 'string',
+     * });
+     * ```
+     */
+    retrieveMergeRef(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/merge_ref`, {
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Get a list of merge request participants.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesUserBasic =
+     *   await client.projects.mergeRequests.retrieveParticipants(
+     *     0,
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveParticipants(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/participants`, options);
+    }
+    /**
+     * Get the raw diffs of a merge request that can used programmatically.
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.retrieveRawDiffs(0, {
+     *   id: 'string',
+     * });
+     * ```
+     */
+    retrieveRawDiffs(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/raw_diffs`, {
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Get all the related issues from title, description, commits, comments and
+     * discussions of the merge request.
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.retrieveRelatedIssues(
+     *   0,
+     *   { id: 'string' },
+     * );
+     * ```
+     */
+    retrieveRelatedIssues(mergeRequestIid, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/related_issues`, {
+        query,
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Get a list of merge request reviewers.
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.mergeRequests.retrieveReviewers(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveReviewers(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/reviewers`, options);
+    }
+    /**
+     * Get time tracking stats
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesIssuableTimeStats =
+     *   await client.projects.mergeRequests.retrieveTimeStats(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieveTimeStats(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/merge_requests/${mergeRequestIid}/time_stats`, options);
+    }
+    /**
+     * Set status of an external status check
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.mergeRequests.statusCheckResponses(
+     *     1,
+     *     {
+     *       id: '1',
+     *       external_status_check_id: 1,
+     *       sha: '5957a570eee0ac4580ec027fb874ad7514d1e576',
+     *       status: 'passed',
+     *     },
+     *   );
+     * ```
+     */
+    statusCheckResponses(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/status_check_responses`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Subscribe to a resource
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.subscribe(
+     *     'subscribable_id',
+     *     { id: 'id' },
+     *   );
+     * ```
+     */
+    subscribe(subscribableID, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${subscribableID}/subscribe`, options);
+    }
+    /**
+     * Sets an estimated time of work for this merge_request.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesIssuableTimeStats =
+     *   await client.projects.mergeRequests.timeEstimate(0, {
+     *     id: 'string',
+     *     duration: '3h30m',
+     *   });
+     * ```
+     */
+    timeEstimate(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/time_estimate`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Create a to-do item on an issuable
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesTodo =
+     *   await client.projects.mergeRequests.todo(0, { id: 'id' });
+     * ```
+     */
+    todo(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/todo`, options);
+    }
+    /**
+     * Remove an approval from a merge request
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequestApprovals =
+     *   await client.projects.mergeRequests.unapprove(0, {
+     *     id: 'id',
+     *   });
+     * ```
+     */
+    unapprove(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${mergeRequestIid}/unapprove`, options);
+    }
+    /**
+     * Unsubscribe from a resource
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.unsubscribe(
+     *     'subscribable_id',
+     *     { id: 'id' },
+     *   );
+     * ```
+     */
+    unsubscribe(subscribableID, params, options) {
+      const { id } = params;
+      return this._client.post(path3`/projects/${id}/merge_requests/${subscribableID}/unsubscribe`, options);
+    }
+    /**
+     * Accept and merge changes submitted with the merge request using this API.
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequest =
+     *   await client.projects.mergeRequests.updateMerge(0, {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    updateMerge(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.put(path3`/projects/${id}/merge_requests/${mergeRequestIid}/merge`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Automatically rebase the `source_branch` of the merge request against its
+     * `target_branch`. This feature was added in GitLab 11.6
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.updateRebase(0, {
+     *   id: 'string',
+     * });
+     * ```
+     */
+    updateRebase(mergeRequestIid, params, options) {
+      const { id, ...body } = params;
+      return this._client.put(path3`/projects/${id}/merge_requests/${mergeRequestIid}/rebase`, {
+        body,
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Clear all approvals of merge request. This feature was added in GitLab 15.4
+     *
+     * @example
+     * ```ts
+     * await client.projects.mergeRequests.updateResetApprovals(
+     *   0,
+     *   { id: 'id' },
+     * );
+     * ```
+     */
+    updateResetApprovals(mergeRequestIid, params, options) {
+      const { id } = params;
+      return this._client.put(path3`/projects/${id}/merge_requests/${mergeRequestIid}/reset_approvals`, {
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+  }
+  BaseMergeRequests3._key = Object.freeze([
+    "projects",
+    "mergeRequests"
+  ]);
+  return BaseMergeRequests3;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
+function getDefaultFetch3() {
+  if (typeof fetch !== "undefined") {
+    return fetch;
+  }
+  throw new Error("`fetch` is not defined as a global; Either pass `fetch` to the client, `new GitLab({ fetch })` or polyfill the global, `globalThis.fetch = fetch`");
+}
+function makeReadableStream3(...args) {
+  const ReadableStream = globalThis.ReadableStream;
+  if (typeof ReadableStream === "undefined") {
+    throw new Error("`ReadableStream` is not defined as a global; You will need to polyfill it, `globalThis.ReadableStream = ReadableStream`");
+  }
+  return new ReadableStream(...args);
+}
+function ReadableStreamFrom3(iterable) {
+  let iter = Symbol.asyncIterator in iterable ? iterable[Symbol.asyncIterator]() : iterable[Symbol.iterator]();
+  return makeReadableStream3({
+    start() {
+    },
+    async pull(controller) {
+      const { done, value } = await iter.next();
+      if (done) {
+        controller.close();
+      } else {
+        controller.enqueue(value);
+      }
+    },
+    async cancel() {
+      await iter.return?.();
+    }
+  });
+}
+async function CancelReadableStream3(stream) {
+  if (stream === null || typeof stream !== "object")
+    return;
+  if (stream[Symbol.asyncIterator]) {
+    await stream[Symbol.asyncIterator]().return?.();
+    return;
+  }
+  const reader = stream.getReader();
+  const cancelPromise = reader.cancel();
+  reader.releaseLock();
+  await cancelPromise;
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
+var checkFileSupport3 = () => {
+  if (typeof File === "undefined") {
+    const { process: process7 } = globalThis;
+    const isOldNode = typeof process7?.versions?.node === "string" && parseInt(process7.versions.node.split(".")) < 20;
+    throw new Error("`File` is not defined as a global, which is required for file uploads." + (isOldNode ? " Update to Node 20 LTS or newer, or set `globalThis.File` to `import('node:buffer').File`." : ""));
+  }
+};
+function makeFile3(fileBits, fileName, options) {
+  checkFileSupport3();
+  return new File(fileBits, fileName ?? "unknown_file", options);
+}
+function getName3(value) {
+  return (typeof value === "object" && value !== null && ("name" in value && value.name && String(value.name) || "url" in value && value.url && String(value.url) || "filename" in value && value.filename && String(value.filename) || "path" in value && value.path && String(value.path)) || "").split(/[\\/]/).pop() || void 0;
+}
+var isAsyncIterable3 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
+var multipartFormRequestOptions = async (opts, fetch2) => {
+  return { ...opts, body: await createForm(opts.body, fetch2) };
+};
+var supportsFormDataMap = /* @__PURE__ */ new WeakMap();
+function supportsFormData(fetchObject) {
+  const fetch2 = typeof fetchObject === "function" ? fetchObject : fetchObject.fetch;
+  const cached = supportsFormDataMap.get(fetch2);
+  if (cached)
+    return cached;
+  const promise = (async () => {
+    try {
+      const FetchResponse = "Response" in fetch2 ? fetch2.Response : (await fetch2("data:,")).constructor;
+      const data = new FormData();
+      if (data.toString() === await new FetchResponse(data).text()) {
+        return false;
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  })();
+  supportsFormDataMap.set(fetch2, promise);
+  return promise;
+}
+var createForm = async (body, fetch2) => {
+  if (!await supportsFormData(fetch2)) {
+    throw new TypeError("The provided fetch function does not support file uploads with the current global FormData class.");
+  }
+  const form = new FormData();
+  await Promise.all(Object.entries(body || {}).map(([key, value]) => addFormValue(form, key, value)));
+  return form;
+};
+var isNamedBlob = (value) => value instanceof Blob && "name" in value;
+var addFormValue = async (form, key, value) => {
+  if (value === void 0)
+    return;
+  if (value == null) {
+    throw new TypeError(`Received null for "${key}"; to pass null in FormData, you must use the string 'null'`);
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    form.append(key, String(value));
+  } else if (value instanceof Response) {
+    form.append(key, makeFile3([await value.blob()], getName3(value)));
+  } else if (isAsyncIterable3(value)) {
+    form.append(key, makeFile3([await new Response(ReadableStreamFrom3(value)).blob()], getName3(value)));
+  } else if (isNamedBlob(value)) {
+    form.append(key, value, getName3(value));
+  } else if (Array.isArray(value)) {
+    await Promise.all(value.map((entry) => addFormValue(form, key + "[]", entry)));
+  } else if (typeof value === "object") {
+    await Promise.all(Object.entries(value).map(([name, prop]) => addFormValue(form, `${key}[${name}]`, prop)));
+  } else {
+    throw new TypeError(`Invalid value given to form, expected a string, number, boolean, object, Array, File or Blob but got ${value} instead`);
+  }
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
+var BaseCommits3 = /* @__PURE__ */ (() => {
+  class BaseCommits4 extends APIResource3 {
+    /**
+     * This feature was introduced in GitLab 8.13
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommitDetail =
+     *   await client.projects.repository.commits.create(
+     *     'string',
+     *     { file: fs.createReadStream('path/to/file') },
+     *   );
+     * ```
+     */
+    create(id, body, options) {
+      return this._client.post(path3`/projects/${id}/repository/commits`, multipartFormRequestOptions({ body, ...options }, this._client));
+    }
+    /**
+     * Get a specific commit of a project
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommitDetail =
+     *   await client.projects.repository.commits.retrieve('sha', {
+     *     id: 'string',
+     *   });
+     * ```
+     */
+    retrieve(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}`, { query, ...options });
+    }
+    /**
+     * Get a project repository commits
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommits =
+     *   await client.projects.repository.commits.list('string');
+     * ```
+     */
+    list(id, query = {}, options) {
+      return this._client.get(path3`/projects/${id}/repository/commits`, { query, ...options });
+    }
+    /**
+     * Authorize commits upload
+     *
+     * @example
+     * ```ts
+     * await client.projects.repository.commits.authorize(
+     *   'string',
+     * );
+     * ```
+     */
+    authorize(id, options) {
+      return this._client.post(path3`/projects/${id}/repository/commits/authorize`, {
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * This feature was introduced in GitLab 8.15
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommit =
+     *   await client.projects.repository.commits.cherryPick(
+     *     'sha',
+     *     { id: 'string', branch: 'master' },
+     *   );
+     * ```
+     */
+    cherryPick(sha, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/repository/commits/${sha}/cherry_pick`, {
+        body,
+        ...options
+      });
+    }
+    /**
+     * Get the diff for a specific commit of a project
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesDiffs =
+     *   await client.projects.repository.commits.retrieveDiff(
+     *     'sha',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveDiff(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/diff`, { query, ...options });
+    }
+    /**
+     * Get Merge Requests associated with a commit
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesMergeRequestBasic =
+     *   await client.projects.repository.commits.retrieveMergeRequests(
+     *     'sha',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveMergeRequests(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/merge_requests`, {
+        query,
+        ...options
+      });
+    }
+    /**
+     * This feature was introduced in GitLab 10.6
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.repository.commits.retrieveRefs(
+     *     'sha',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveRefs(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/refs`, { query, ...options });
+    }
+    /**
+     * Get the sequence count of a commit SHA
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.repository.commits.retrieveSequence(
+     *     'sha',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveSequence(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/sequence`, { query, ...options });
+    }
+    /**
+     * Get a commit's signature
+     *
+     * @example
+     * ```ts
+     * const response =
+     *   await client.projects.repository.commits.retrieveSignature(
+     *     'sha',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveSignature(sha, params, options) {
+      const { id } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/signature`, options);
+    }
+    /**
+     * Get a commit's statuses
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommitStatus =
+     *   await client.projects.repository.commits.retrieveStatuses(
+     *     '18f3e63d05582537db6d183d9d557be09e1f90c8',
+     *     { id: 'string' },
+     *   );
+     * ```
+     */
+    retrieveStatuses(sha, params, options) {
+      const { id, ...query } = params;
+      return this._client.get(path3`/projects/${id}/repository/commits/${sha}/statuses`, { query, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 11.5
+     *
+     * @example
+     * ```ts
+     * const apiEntitiesCommit =
+     *   await client.projects.repository.commits.revert('sha', {
+     *     id: 'string',
+     *     branch: 'master',
+     *   });
+     * ```
+     */
+    revert(sha, params, options) {
+      const { id, ...body } = params;
+      return this._client.post(path3`/projects/${id}/repository/commits/${sha}/revert`, { body, ...options });
+    }
+  }
+  BaseCommits4._key = Object.freeze([
+    "projects",
+    "repository",
+    "commits"
+  ]);
+  return BaseCommits4;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
+function __classPrivateFieldSet3(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}
+function __classPrivateFieldGet3(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
+var uuid43 = function() {
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid43 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
+  }
+  const u8 = new Uint8Array(1);
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
+var sleep3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/version.mjs
+var VERSION3 = "0.3.0";
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
+function getDetectedPlatform3() {
+  if (typeof Deno !== "undefined" && Deno.build != null) {
+    return "deno";
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return "edge";
+  }
+  if (Object.prototype.toString.call(typeof globalThis.process !== "undefined" ? globalThis.process : 0) === "[object process]") {
+    return "node";
+  }
+  return "unknown";
+}
+var getPlatformProperties3 = () => {
+  const detectedPlatform = getDetectedPlatform3();
+  if (detectedPlatform === "deno") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION3,
+      "X-Stainless-OS": normalizePlatform3(Deno.build.os),
+      "X-Stainless-Arch": normalizeArch3(Deno.build.arch),
+      "X-Stainless-Runtime": "deno",
+      "X-Stainless-Runtime-Version": typeof Deno.version === "string" ? Deno.version : Deno.version?.deno ?? "unknown"
+    };
+  }
+  if (typeof EdgeRuntime !== "undefined") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION3,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": `other:${EdgeRuntime}`,
+      "X-Stainless-Runtime": "edge",
+      "X-Stainless-Runtime-Version": globalThis.process.version
+    };
+  }
+  if (detectedPlatform === "node") {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION3,
+      "X-Stainless-OS": normalizePlatform3(globalThis.process.platform ?? "unknown"),
+      "X-Stainless-Arch": normalizeArch3(globalThis.process.arch ?? "unknown"),
+      "X-Stainless-Runtime": "node",
+      "X-Stainless-Runtime-Version": globalThis.process.version ?? "unknown"
+    };
+  }
+  const browserInfo = getBrowserInfo3();
+  if (browserInfo) {
+    return {
+      "X-Stainless-Lang": "js",
+      "X-Stainless-Package-Version": VERSION3,
+      "X-Stainless-OS": "Unknown",
+      "X-Stainless-Arch": "unknown",
+      "X-Stainless-Runtime": `browser:${browserInfo.browser}`,
+      "X-Stainless-Runtime-Version": browserInfo.version
+    };
+  }
+  return {
+    "X-Stainless-Lang": "js",
+    "X-Stainless-Package-Version": VERSION3,
+    "X-Stainless-OS": "Unknown",
+    "X-Stainless-Arch": "unknown",
+    "X-Stainless-Runtime": "unknown",
+    "X-Stainless-Runtime-Version": "unknown"
+  };
+};
+function getBrowserInfo3() {
+  if (typeof navigator === "undefined" || !navigator) {
+    return null;
+  }
+  const browserPatterns = [
+    { key: "edge", pattern: /Edge(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /MSIE(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "ie", pattern: /Trident(?:.*rv\:(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "chrome", pattern: /Chrome(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "firefox", pattern: /Firefox(?:\W+(\d+)\.(\d+)(?:\.(\d+))?)?/ },
+    { key: "safari", pattern: /(?:Version\W+(\d+)\.(\d+)(?:\.(\d+))?)?(?:\W+Mobile\S*)?\W+Safari/ }
+  ];
+  for (const { key, pattern } of browserPatterns) {
+    const match = pattern.exec(navigator.userAgent);
+    if (match) {
+      const major = match[1] || 0;
+      const minor = match[2] || 0;
+      const patch = match[3] || 0;
+      return { browser: key, version: `${major}.${minor}.${patch}` };
+    }
+  }
+  return null;
+}
+var normalizeArch3 = (arch) => {
+  if (arch === "x32")
+    return "x32";
+  if (arch === "x86_64" || arch === "x64")
+    return "x64";
+  if (arch === "arm")
+    return "arm";
+  if (arch === "aarch64" || arch === "arm64")
+    return "arm64";
+  if (arch)
+    return `other:${arch}`;
+  return "unknown";
+};
+var normalizePlatform3 = (platform) => {
+  platform = platform.toLowerCase();
+  if (platform.includes("ios"))
+    return "iOS";
+  if (platform === "android")
+    return "Android";
+  if (platform === "darwin")
+    return "MacOS";
+  if (platform === "win32")
+    return "Windows";
+  if (platform === "freebsd")
+    return "FreeBSD";
+  if (platform === "openbsd")
+    return "OpenBSD";
+  if (platform === "linux")
+    return "Linux";
+  if (platform)
+    return `Other:${platform}`;
+  return "Unknown";
+};
+var _platformHeaders3;
+var getPlatformHeaders3 = () => {
+  return _platformHeaders3 ?? (_platformHeaders3 = getPlatformProperties3());
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
+var FallbackEncoder3 = ({ headers, body }) => {
+  return {
+    bodyHeaders: {
+      "content-type": "application/json"
+    },
+    body: JSON.stringify(body)
+  };
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
+var default_format3 = "RFC3986";
+var default_formatter3 = (v) => String(v);
+var formatters3 = {
+  RFC1738: (v) => String(v).replace(/%20/g, "+"),
+  RFC3986: default_formatter3
+};
+var RFC17383 = "RFC1738";
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
+var has3 = (obj, key) => (has3 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has3(obj, key));
+var hex_table3 = /* @__PURE__ */ (() => {
+  const array = [];
+  for (let i = 0; i < 256; ++i) {
+    array.push("%" + ((i < 16 ? "0" : "") + i.toString(16)).toUpperCase());
+  }
+  return array;
+})();
+var limit3 = 1024;
+var encode3 = (str, _defaultEncoder, charset, _kind, format) => {
+  if (str.length === 0) {
+    return str;
+  }
+  let string = str;
+  if (typeof str === "symbol") {
+    string = Symbol.prototype.toString.call(str);
+  } else if (typeof str !== "string") {
+    string = String(str);
+  }
+  if (charset === "iso-8859-1") {
+    return escape(string).replace(/%u[0-9a-f]{4}/gi, function($0) {
+      return "%26%23" + parseInt($0.slice(2), 16) + "%3B";
+    });
+  }
+  let out = "";
+  for (let j = 0; j < string.length; j += limit3) {
+    const segment = string.length >= limit3 ? string.slice(j, j + limit3) : string;
+    const arr = [];
+    for (let i = 0; i < segment.length; ++i) {
+      let c = segment.charCodeAt(i);
+      if (c === 45 || // -
+      c === 46 || // .
+      c === 95 || // _
+      c === 126 || // ~
+      c >= 48 && c <= 57 || // 0-9
+      c >= 65 && c <= 90 || // a-z
+      c >= 97 && c <= 122 || // A-Z
+      format === RFC17383 && (c === 40 || c === 41)) {
+        arr[arr.length] = segment.charAt(i);
+        continue;
+      }
+      if (c < 128) {
+        arr[arr.length] = hex_table3[c];
+        continue;
+      }
+      if (c < 2048) {
+        arr[arr.length] = hex_table3[192 | c >> 6] + hex_table3[128 | c & 63];
+        continue;
+      }
+      if (c < 55296 || c >= 57344) {
+        arr[arr.length] = hex_table3[224 | c >> 12] + hex_table3[128 | c >> 6 & 63] + hex_table3[128 | c & 63];
+        continue;
+      }
+      i += 1;
+      c = 65536 + ((c & 1023) << 10 | segment.charCodeAt(i) & 1023);
+      arr[arr.length] = hex_table3[240 | c >> 18] + hex_table3[128 | c >> 12 & 63] + hex_table3[128 | c >> 6 & 63] + hex_table3[128 | c & 63];
+    }
+    out += arr.join("");
+  }
+  return out;
+};
+function is_buffer3(obj) {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+  return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
+}
+function maybe_map3(val, fn) {
+  if (isArray3(val)) {
+    const mapped = [];
+    for (let i = 0; i < val.length; i += 1) {
+      mapped.push(fn(val[i]));
+    }
+    return mapped;
+  }
+  return fn(val);
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
+var array_prefix_generators3 = {
+  brackets(prefix) {
+    return String(prefix) + "[]";
+  },
+  comma: "comma",
+  indices(prefix, key) {
+    return String(prefix) + "[" + key + "]";
+  },
+  repeat(prefix) {
+    return String(prefix);
+  }
+};
+var push_to_array3 = function(arr, value_or_array) {
+  Array.prototype.push.apply(arr, isArray3(value_or_array) ? value_or_array : [value_or_array]);
+};
+var toISOString3;
+var defaults3 = {
+  addQueryPrefix: false,
+  allowDots: false,
+  allowEmptyArrays: false,
+  arrayFormat: "indices",
+  charset: "utf-8",
+  charsetSentinel: false,
+  delimiter: "&",
+  encode: true,
+  encodeDotInKeys: false,
+  encoder: encode3,
+  encodeValuesOnly: false,
+  format: default_format3,
+  formatter: default_formatter3,
+  /** @deprecated */
+  indices: false,
+  serializeDate(date) {
+    return (toISOString3 ?? (toISOString3 = Function.prototype.call.bind(Date.prototype.toISOString)))(date);
+  },
+  skipNulls: false,
+  strictNullHandling: false
+};
+function is_non_nullish_primitive3(v) {
+  return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
+}
+var sentinel3 = {};
+function inner_stringify3(object, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
+  let obj = object;
+  let tmp_sc = sideChannel;
+  let step = 0;
+  let find_flag = false;
+  while ((tmp_sc = tmp_sc.get(sentinel3)) !== void 0 && !find_flag) {
+    const pos = tmp_sc.get(object);
+    step += 1;
+    if (typeof pos !== "undefined") {
+      if (pos === step) {
+        throw new RangeError("Cyclic object value");
+      } else {
+        find_flag = true;
+      }
+    }
+    if (typeof tmp_sc.get(sentinel3) === "undefined") {
+      step = 0;
+    }
+  }
+  if (typeof filter === "function") {
+    obj = filter(prefix, obj);
+  } else if (obj instanceof Date) {
+    obj = serializeDate?.(obj);
+  } else if (generateArrayPrefix === "comma" && isArray3(obj)) {
+    obj = maybe_map3(obj, function(value) {
+      if (value instanceof Date) {
+        return serializeDate?.(value);
+      }
+      return value;
+    });
+  }
+  if (obj === null) {
+    if (strictNullHandling) {
+      return encoder && !encodeValuesOnly ? (
+        // @ts-expect-error
+        encoder(prefix, defaults3.encoder, charset, "key", format)
+      ) : prefix;
+    }
+    obj = "";
+  }
+  if (is_non_nullish_primitive3(obj) || is_buffer3(obj)) {
+    if (encoder) {
+      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults3.encoder, charset, "key", format);
+      return [
+        formatter?.(key_value) + "=" + // @ts-expect-error
+        formatter?.(encoder(obj, defaults3.encoder, charset, "value", format))
+      ];
+    }
+    return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
+  }
+  const values = [];
+  if (typeof obj === "undefined") {
+    return values;
+  }
+  let obj_keys;
+  if (generateArrayPrefix === "comma" && isArray3(obj)) {
+    if (encodeValuesOnly && encoder) {
+      obj = maybe_map3(obj, encoder);
+    }
+    obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : void 0 }];
+  } else if (isArray3(filter)) {
+    obj_keys = filter;
+  } else {
+    const keys = Object.keys(obj);
+    obj_keys = sort ? keys.sort(sort) : keys;
+  }
+  const encoded_prefix = encodeDotInKeys ? String(prefix).replace(/\./g, "%2E") : String(prefix);
+  const adjusted_prefix = commaRoundTrip && isArray3(obj) && obj.length === 1 ? encoded_prefix + "[]" : encoded_prefix;
+  if (allowEmptyArrays && isArray3(obj) && obj.length === 0) {
+    return adjusted_prefix + "[]";
+  }
+  for (let j = 0; j < obj_keys.length; ++j) {
+    const key = obj_keys[j];
+    const value = (
+      // @ts-ignore
+      typeof key === "object" && typeof key.value !== "undefined" ? key.value : obj[key]
+    );
+    if (skipNulls && value === null) {
+      continue;
+    }
+    const encoded_key = allowDots && encodeDotInKeys ? key.replace(/\./g, "%2E") : key;
+    const key_prefix = isArray3(obj) ? typeof generateArrayPrefix === "function" ? generateArrayPrefix(adjusted_prefix, encoded_key) : adjusted_prefix : adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
+    sideChannel.set(object, step);
+    const valueSideChannel = /* @__PURE__ */ new WeakMap();
+    valueSideChannel.set(sentinel3, sideChannel);
+    push_to_array3(values, inner_stringify3(
+      value,
+      key_prefix,
+      generateArrayPrefix,
+      commaRoundTrip,
+      allowEmptyArrays,
+      strictNullHandling,
+      skipNulls,
+      encodeDotInKeys,
+      // @ts-ignore
+      generateArrayPrefix === "comma" && encodeValuesOnly && isArray3(obj) ? null : encoder,
+      filter,
+      sort,
+      allowDots,
+      serializeDate,
+      format,
+      formatter,
+      encodeValuesOnly,
+      charset,
+      valueSideChannel
+    ));
+  }
+  return values;
+}
+function normalize_stringify_options3(opts = defaults3) {
+  if (typeof opts.allowEmptyArrays !== "undefined" && typeof opts.allowEmptyArrays !== "boolean") {
+    throw new TypeError("`allowEmptyArrays` option can only be `true` or `false`, when provided");
+  }
+  if (typeof opts.encodeDotInKeys !== "undefined" && typeof opts.encodeDotInKeys !== "boolean") {
+    throw new TypeError("`encodeDotInKeys` option can only be `true` or `false`, when provided");
+  }
+  if (opts.encoder !== null && typeof opts.encoder !== "undefined" && typeof opts.encoder !== "function") {
+    throw new TypeError("Encoder has to be a function.");
+  }
+  const charset = opts.charset || defaults3.charset;
+  if (typeof opts.charset !== "undefined" && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
+    throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
+  }
+  let format = default_format3;
+  if (typeof opts.format !== "undefined") {
+    if (!has3(formatters3, opts.format)) {
+      throw new TypeError("Unknown format option provided.");
+    }
+    format = opts.format;
+  }
+  const formatter = formatters3[format];
+  let filter = defaults3.filter;
+  if (typeof opts.filter === "function" || isArray3(opts.filter)) {
+    filter = opts.filter;
+  }
+  let arrayFormat;
+  if (opts.arrayFormat && opts.arrayFormat in array_prefix_generators3) {
+    arrayFormat = opts.arrayFormat;
+  } else if ("indices" in opts) {
+    arrayFormat = opts.indices ? "indices" : "repeat";
+  } else {
+    arrayFormat = defaults3.arrayFormat;
+  }
+  if ("commaRoundTrip" in opts && typeof opts.commaRoundTrip !== "boolean") {
+    throw new TypeError("`commaRoundTrip` must be a boolean, or absent");
+  }
+  const allowDots = typeof opts.allowDots === "undefined" ? !!opts.encodeDotInKeys === true ? true : defaults3.allowDots : !!opts.allowDots;
+  return {
+    addQueryPrefix: typeof opts.addQueryPrefix === "boolean" ? opts.addQueryPrefix : defaults3.addQueryPrefix,
+    // @ts-ignore
+    allowDots,
+    allowEmptyArrays: typeof opts.allowEmptyArrays === "boolean" ? !!opts.allowEmptyArrays : defaults3.allowEmptyArrays,
+    arrayFormat,
+    charset,
+    charsetSentinel: typeof opts.charsetSentinel === "boolean" ? opts.charsetSentinel : defaults3.charsetSentinel,
+    commaRoundTrip: !!opts.commaRoundTrip,
+    delimiter: typeof opts.delimiter === "undefined" ? defaults3.delimiter : opts.delimiter,
+    encode: typeof opts.encode === "boolean" ? opts.encode : defaults3.encode,
+    encodeDotInKeys: typeof opts.encodeDotInKeys === "boolean" ? opts.encodeDotInKeys : defaults3.encodeDotInKeys,
+    encoder: typeof opts.encoder === "function" ? opts.encoder : defaults3.encoder,
+    encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults3.encodeValuesOnly,
+    filter,
+    format,
+    formatter,
+    serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults3.serializeDate,
+    skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults3.skipNulls,
+    // @ts-ignore
+    sort: typeof opts.sort === "function" ? opts.sort : null,
+    strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults3.strictNullHandling
+  };
+}
+function stringify3(object, opts = {}) {
+  let obj = object;
+  const options = normalize_stringify_options3(opts);
+  let obj_keys;
+  let filter;
+  if (typeof options.filter === "function") {
+    filter = options.filter;
+    obj = filter("", obj);
+  } else if (isArray3(options.filter)) {
+    filter = options.filter;
+    obj_keys = filter;
+  }
+  const keys = [];
+  if (typeof obj !== "object" || obj === null) {
+    return "";
+  }
+  const generateArrayPrefix = array_prefix_generators3[options.arrayFormat];
+  const commaRoundTrip = generateArrayPrefix === "comma" && options.commaRoundTrip;
+  if (!obj_keys) {
+    obj_keys = Object.keys(obj);
+  }
+  if (options.sort) {
+    obj_keys.sort(options.sort);
+  }
+  const sideChannel = /* @__PURE__ */ new WeakMap();
+  for (let i = 0; i < obj_keys.length; ++i) {
+    const key = obj_keys[i];
+    if (options.skipNulls && obj[key] === null) {
+      continue;
+    }
+    push_to_array3(keys, inner_stringify3(
+      obj[key],
+      key,
+      // @ts-expect-error
+      generateArrayPrefix,
+      commaRoundTrip,
+      options.allowEmptyArrays,
+      options.strictNullHandling,
+      options.skipNulls,
+      options.encodeDotInKeys,
+      options.encode ? options.encoder : null,
+      options.filter,
+      options.sort,
+      options.allowDots,
+      options.serializeDate,
+      options.format,
+      options.formatter,
+      options.encodeValuesOnly,
+      options.charset,
+      sideChannel
+    ));
+  }
+  const joined = keys.join(options.delimiter);
+  let prefix = options.addQueryPrefix === true ? "?" : "";
+  if (options.charsetSentinel) {
+    if (options.charset === "iso-8859-1") {
+      prefix += "utf8=%26%2310003%3B&";
+    } else {
+      prefix += "utf8=%E2%9C%93&";
+    }
+  }
+  return joined.length > 0 ? prefix + joined : "";
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
+var levelNumbers3 = {
+  off: 0,
+  error: 200,
+  warn: 300,
+  info: 400,
+  debug: 500
+};
+var parseLogLevel3 = (maybeLevel, sourceName, client) => {
+  if (!maybeLevel) {
+    return void 0;
+  }
+  if (hasOwn3(levelNumbers3, maybeLevel)) {
+    return maybeLevel;
+  }
+  loggerFor3(client).warn(`${sourceName} was set to ${JSON.stringify(maybeLevel)}, expected one of ${JSON.stringify(Object.keys(levelNumbers3))}`);
+  return void 0;
+};
+function noop3() {
+}
+function makeLogFn3(fnLevel, logger2, logLevel) {
+  if (!logger2 || levelNumbers3[fnLevel] > levelNumbers3[logLevel]) {
+    return noop3;
+  } else {
+    return logger2[fnLevel].bind(logger2);
+  }
+}
+var noopLogger3 = {
+  error: noop3,
+  warn: noop3,
+  info: noop3,
+  debug: noop3
+};
+var cachedLoggers3 = /* @__PURE__ */ new WeakMap();
+function loggerFor3(client) {
+  const logger2 = client.logger;
+  const logLevel = client.logLevel ?? "off";
+  if (!logger2) {
+    return noopLogger3;
+  }
+  const cachedLogger = cachedLoggers3.get(logger2);
+  if (cachedLogger && cachedLogger[0] === logLevel) {
+    return cachedLogger[1];
+  }
+  const levelLogger = {
+    error: makeLogFn3("error", logger2, logLevel),
+    warn: makeLogFn3("warn", logger2, logLevel),
+    info: makeLogFn3("info", logger2, logLevel),
+    debug: makeLogFn3("debug", logger2, logLevel)
+  };
+  cachedLoggers3.set(logger2, [logLevel, levelLogger]);
+  return levelLogger;
+}
+var formatRequestDetails3 = (details) => {
+  if (details.options) {
+    details.options = { ...details.options };
+    delete details.options["headers"];
+  }
+  if (details.headers) {
+    details.headers = Object.fromEntries((details.headers instanceof Headers ? [...details.headers] : Object.entries(details.headers)).map(([name, value]) => [
+      name,
+      name.toLowerCase() === "authorization" || name.toLowerCase() === "cookie" || name.toLowerCase() === "set-cookie" ? "***" : value
+    ]));
+  }
+  if ("retryOfRequestLogID" in details) {
+    if (details.retryOfRequestLogID) {
+      details.retryOf = details.retryOfRequestLogID;
+    }
+    delete details.retryOfRequestLogID;
+  }
+  return details;
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
+async function defaultParseResponse3(client, props) {
+  const { response, requestLogID, retryOfRequestLogID, startTime } = props;
+  const body = await (async () => {
+    if (response.status === 204) {
+      return null;
+    }
+    if (props.options.__binaryResponse) {
+      return response;
+    }
+    const contentType = response.headers.get("content-type");
+    const mediaType = contentType?.split(";")[0]?.trim();
+    const isJSON = mediaType?.includes("application/json") || mediaType?.endsWith("+json");
+    if (isJSON) {
+      const contentLength = response.headers.get("content-length");
+      if (contentLength === "0") {
+        return void 0;
+      }
+      const json = await response.json();
+      return json;
+    }
+    const text = await response.text();
+    return text;
+  })();
+  loggerFor3(client).debug(`[${requestLogID}] response parsed`, formatRequestDetails3({
+    retryOfRequestLogID,
+    url: response.url,
+    status: response.status,
+    body,
+    durationMs: Date.now() - startTime
+  }));
+  return body;
+}
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
+var _APIPromise_client3;
+var APIPromise3 = /* @__PURE__ */ (() => {
+  class APIPromise4 extends Promise {
+    constructor(client, responsePromise, parseResponse = defaultParseResponse3) {
+      super((resolve) => {
+        resolve(null);
+      });
+      this.responsePromise = responsePromise;
+      this.parseResponse = parseResponse;
+      _APIPromise_client3.set(this, void 0);
+      __classPrivateFieldSet3(this, _APIPromise_client3, client, "f");
+    }
+    _thenUnwrap(transform) {
+      return new APIPromise4(__classPrivateFieldGet3(this, _APIPromise_client3, "f"), this.responsePromise, async (client, props) => transform(await this.parseResponse(client, props), props));
+    }
+    /**
+     * Gets the raw `Response` instance instead of parsing the response
+     * data.
+     *
+     * If you want to parse the response body but still get the `Response`
+     * instance, you can use {@link withResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    asResponse() {
+      return this.responsePromise.then((p) => p.response);
+    }
+    /**
+     * Gets the parsed response data and the raw `Response` instance.
+     *
+     * If you just want to get the raw `Response` instance without parsing it,
+     * you can use {@link asResponse()}.
+     *
+     * 👋 Getting the wrong TypeScript type for `Response`?
+     * Try setting `"moduleResolution": "NodeNext"` or add `"lib": ["DOM"]`
+     * to your `tsconfig.json`.
+     */
+    async withResponse() {
+      const [data, response] = await Promise.all([this.parse(), this.asResponse()]);
+      return { data, response };
+    }
+    parse() {
+      if (!this.parsedPromise) {
+        this.parsedPromise = this.responsePromise.then((data) => this.parseResponse(__classPrivateFieldGet3(this, _APIPromise_client3, "f"), data));
+      }
+      return this.parsedPromise;
+    }
+    then(onfulfilled, onrejected) {
+      return this.parse().then(onfulfilled, onrejected);
+    }
+    catch(onrejected) {
+      return this.parse().catch(onrejected);
+    }
+    finally(onfinally) {
+      return this.parse().finally(onfinally);
+    }
+  }
+  _APIPromise_client3 = /* @__PURE__ */ new WeakMap();
+  return APIPromise4;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
+var readEnv3 = (env) => {
+  if (typeof globalThis.process !== "undefined") {
+    return globalThis.process.env?.[env]?.trim() ?? void 0;
+  }
+  if (typeof globalThis.Deno !== "undefined") {
+    return globalThis.Deno.env?.get?.(env)?.trim();
+  }
+  return void 0;
+};
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/client.mjs
+var _BaseGitLab_instances;
+var _BaseGitLab_encoder;
+var _BaseGitLab_baseURLOverridden;
+var BaseGitLab = /* @__PURE__ */ (() => {
+  class BaseGitLab2 {
+    /**
+     * API Client for interfacing with the GitLab API.
+     *
+     * @param {string | undefined} [opts.apiToken=process.env['GITLAB_API_TOKEN'] ?? undefined]
+     * @param {string} [opts.baseURL=process.env['GITLAB_BASE_URL'] ?? https://gitlab.com/api/v4] - Override the default base URL for the API.
+     * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+     * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
+     * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
+     * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
+     * @param {HeadersLike} opts.defaultHeaders - Default headers to include with every request to the API.
+     * @param {Record<string, string | undefined>} opts.defaultQuery - Default query parameters to include with every request to the API.
+     */
+    constructor({ baseURL = readEnv3("GITLAB_BASE_URL"), apiToken = readEnv3("GITLAB_API_TOKEN"), ...opts } = {}) {
+      _BaseGitLab_instances.add(this);
+      _BaseGitLab_encoder.set(this, void 0);
+      if (apiToken === void 0) {
+        throw new GitLabError("The GITLAB_API_TOKEN environment variable is missing or empty; either provide it, or instantiate the GitLab client with an apiToken option, like new GitLab({ apiToken: 'My API Token' }).");
+      }
+      const options = {
+        apiToken,
+        ...opts,
+        baseURL: baseURL || `https://gitlab.com/api/v4`
+      };
+      this.baseURL = options.baseURL;
+      this.timeout = options.timeout ?? BaseGitLab2.DEFAULT_TIMEOUT;
+      this.logger = options.logger ?? console;
+      const defaultLogLevel = "warn";
+      this.logLevel = defaultLogLevel;
+      this.logLevel = parseLogLevel3(options.logLevel, "ClientOptions.logLevel", this) ?? parseLogLevel3(readEnv3("GITLAB_LOG"), "process.env['GITLAB_LOG']", this) ?? defaultLogLevel;
+      this.fetchOptions = options.fetchOptions;
+      this.maxRetries = options.maxRetries ?? 2;
+      this.fetch = options.fetch ?? getDefaultFetch3();
+      __classPrivateFieldSet3(this, _BaseGitLab_encoder, FallbackEncoder3, "f");
+      this._options = options;
+      this.apiToken = apiToken;
+    }
+    /**
+     * Create a new client instance re-using the same options given to the current client with optional overriding.
+     */
+    withOptions(options) {
+      const client = new this.constructor({
+        ...this._options,
+        baseURL: this.baseURL,
+        maxRetries: this.maxRetries,
+        timeout: this.timeout,
+        logger: this.logger,
+        logLevel: this.logLevel,
+        fetch: this.fetch,
+        fetchOptions: this.fetchOptions,
+        apiToken: this.apiToken,
+        ...options
+      });
+      return client;
+    }
+    /**
+     * Execute a GLQL (GitLab Query Language) query
+     */
+    glql(body, options) {
+      return this.post("/glql", { body, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 11.0.
+     */
+    markdown(body, options) {
+      return this.post("/markdown", { body, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 17.5. \
+     *  This feature is currently in an experimental state. \
+     *  This feature is behind the `allow_organization_creation` feature flag. \
+     *  In GitLab 18.3, feature flag changed to `organization_switching`.
+     */
+    organizations(body, options) {
+      return this.post("/organizations", multipartFormRequestOptions({ body, ...options }, this));
+    }
+    /**
+     * Return avatar url for a user
+     */
+    retrieveAvatar(query, options) {
+      return this.get("/avatar", { query, ...options });
+    }
+    /**
+     * Get a list of all deploy tokens across the GitLab instance. This endpoint
+     * requires administrator access. This feature was introduced in GitLab 12.9.
+     */
+    retrieveDeployTokens(query = {}, options) {
+      return this.get("/deploy_tokens", { query, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 17.9. It will be removed in 18.0.
+     */
+    retrieveDiscoverCertBasedClusters(query, options) {
+      return this.get("/discover-cert-based-clusters", { query, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 9.3.
+     */
+    retrieveEvents(query = {}, options) {
+      return this.get("/events", { query, ...options });
+    }
+    /**
+     * Get a list of all experiments. Each experiment has an enabled status that
+     * indicates whetherthe experiment is enabled globally, or only in specific
+     * contexts.
+     */
+    retrieveExperiments(options) {
+      return this.get("/experiments", options);
+    }
+    /**
+     * Get currently authenticated user's issues statistics
+     */
+    retrieveIssuesStatistics(query = {}, options) {
+      return this.get("/issues_statistics", {
+        query,
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Get a list of licenses
+     */
+    retrieveLicenses(options) {
+      return this.get("/licenses", options);
+    }
+    /**
+     * Get all merge requests the authenticated user has access to. By default it
+     * returns only merge requests created by the current user. To get all merge
+     * requests, use parameter `scope=all`.
+     */
+    retrieveMergeRequests(query = {}, options) {
+      return this.get("/merge_requests", { query, ...options });
+    }
+    /**
+     * This feature was introduced in GitLab 15.2.
+     */
+    retrieveMetadata(options) {
+      return this.get("/metadata", options);
+    }
+    /**
+     * This feature was introduced in GitLab 10.5.
+     */
+    retrieveSearch(query, options) {
+      return this.get("/search", {
+        query,
+        ...options,
+        headers: buildHeaders3([{ Accept: "*/*" }, options?.headers])
+      });
+    }
+    /**
+     * Assigned open issues, assigned MRs and pending todos count
+     */
+    retrieveUserCounts(options) {
+      return this.get("/user_counts", options);
+    }
+    /**
+     * This feature was introduced in GitLab 8.13 and deprecated in 15.5. We recommend
+     * you instead use the Metadata API.
+     */
+    retrieveVersion(options) {
+      return this.get("/version", options);
+    }
+    defaultQuery() {
+      return this._options.defaultQuery;
+    }
+    validateHeaders({ values, nulls }) {
+      return;
+    }
+    async authHeaders(opts) {
+      return buildHeaders3([{ Authorization: `Bearer ${this.apiToken}` }]);
+    }
+    stringifyQuery(query) {
+      return stringify3(query, { arrayFormat: "comma" });
+    }
+    getUserAgent() {
+      return `${this.constructor.name}/JS ${VERSION3}`;
+    }
+    defaultIdempotencyKey() {
+      return `stainless-node-retry-${uuid43()}`;
+    }
+    makeStatusError(status, error, message, headers) {
+      return APIError3.generate(status, error, message, headers);
+    }
+    buildURL(path7, query, defaultBaseURL) {
+      const baseURL = !__classPrivateFieldGet3(this, _BaseGitLab_instances, "m", _BaseGitLab_baseURLOverridden).call(this) && defaultBaseURL || this.baseURL;
+      const url = isAbsoluteURL3(path7) ? new URL(path7) : new URL(baseURL + (baseURL.endsWith("/") && path7.startsWith("/") ? path7.slice(1) : path7));
+      const defaultQuery = this.defaultQuery();
+      if (!isEmptyObj3(defaultQuery)) {
+        query = { ...defaultQuery, ...query };
+      }
+      if (typeof query === "object" && query && !Array.isArray(query)) {
+        url.search = this.stringifyQuery(query);
+      }
+      return url.toString();
+    }
+    /**
+     * Used as a callback for mutating the given `FinalRequestOptions` object.
+     */
+    async prepareOptions(options) {
+    }
+    /**
+     * Used as a callback for mutating the given `RequestInit` object.
+     *
+     * This is useful for cases where you want to add certain headers based off of
+     * the request properties, e.g. `method` or `url`.
+     */
+    async prepareRequest(request, { url, options }) {
+    }
+    get(path7, opts) {
+      return this.methodRequest("get", path7, opts);
+    }
+    post(path7, opts) {
+      return this.methodRequest("post", path7, opts);
+    }
+    patch(path7, opts) {
+      return this.methodRequest("patch", path7, opts);
+    }
+    put(path7, opts) {
+      return this.methodRequest("put", path7, opts);
+    }
+    delete(path7, opts) {
+      return this.methodRequest("delete", path7, opts);
+    }
+    methodRequest(method, path7, opts) {
+      return this.request(Promise.resolve(opts).then((opts2) => {
+        return { method, path: path7, ...opts2 };
+      }));
+    }
+    request(options, remainingRetries = null) {
+      return new APIPromise3(this, this.makeRequest(options, remainingRetries, void 0));
+    }
+    async makeRequest(optionsInput, retriesRemaining, retryOfRequestLogID) {
+      const options = await optionsInput;
+      const maxRetries = options.maxRetries ?? this.maxRetries;
+      if (retriesRemaining == null) {
+        retriesRemaining = maxRetries;
+      }
+      await this.prepareOptions(options);
+      const { req, url, timeout } = await this.buildRequest(options, {
+        retryCount: maxRetries - retriesRemaining
+      });
+      await this.prepareRequest(req, { url, options });
+      const requestLogID = "log_" + (Math.random() * (1 << 24) | 0).toString(16).padStart(6, "0");
+      const retryLogStr = retryOfRequestLogID === void 0 ? "" : `, retryOf: ${retryOfRequestLogID}`;
+      const startTime = Date.now();
+      loggerFor3(this).debug(`[${requestLogID}] sending request`, formatRequestDetails3({
+        retryOfRequestLogID,
+        method: options.method,
+        url,
+        options,
+        headers: req.headers
+      }));
+      if (options.signal?.aborted) {
+        throw new APIUserAbortError3();
+      }
+      const controller = new AbortController();
+      const response = await this.fetchWithTimeout(url, req, timeout, controller).catch(castToError3);
+      const headersTime = Date.now();
+      if (response instanceof globalThis.Error) {
+        const retryMessage = `retrying, ${retriesRemaining} attempts remaining`;
+        if (options.signal?.aborted) {
+          throw new APIUserAbortError3();
+        }
+        const isTimeout = isAbortError3(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+        if (retriesRemaining) {
+          loggerFor3(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
+          loggerFor3(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails3({
+            retryOfRequestLogID,
+            url,
+            durationMs: headersTime - startTime,
+            message: response.message
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
+        }
+        loggerFor3(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - error; no more retries left`);
+        loggerFor3(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (error; no more retries left)`, formatRequestDetails3({
+          retryOfRequestLogID,
+          url,
+          durationMs: headersTime - startTime,
+          message: response.message
+        }));
+        if (isTimeout) {
+          throw new APIConnectionTimeoutError3();
+        }
+        throw new APIConnectionError3({ cause: response });
+      }
+      const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? "succeeded" : "failed"} with status ${response.status} in ${headersTime - startTime}ms`;
+      if (!response.ok) {
+        const shouldRetry = await this.shouldRetry(response);
+        if (retriesRemaining && shouldRetry) {
+          const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
+          await CancelReadableStream3(response.body);
+          loggerFor3(this).info(`${responseInfo} - ${retryMessage2}`);
+          loggerFor3(this).debug(`[${requestLogID}] response error (${retryMessage2})`, formatRequestDetails3({
+            retryOfRequestLogID,
+            url: response.url,
+            status: response.status,
+            headers: response.headers,
+            durationMs: headersTime - startTime
+          }));
+          return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+        }
+        const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
+        loggerFor3(this).info(`${responseInfo} - ${retryMessage}`);
+        const errText = await response.text().catch((err2) => castToError3(err2).message);
+        const errJSON = safeJSON3(errText);
+        const errMessage = errJSON ? void 0 : errText;
+        loggerFor3(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails3({
+          retryOfRequestLogID,
+          url: response.url,
+          status: response.status,
+          headers: response.headers,
+          message: errMessage,
+          durationMs: Date.now() - startTime
+        }));
+        const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
+        throw err;
+      }
+      loggerFor3(this).info(responseInfo);
+      loggerFor3(this).debug(`[${requestLogID}] response start`, formatRequestDetails3({
+        retryOfRequestLogID,
+        url: response.url,
+        status: response.status,
+        headers: response.headers,
+        durationMs: headersTime - startTime
+      }));
+      return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
+    }
+    async fetchWithTimeout(url, init, ms, controller) {
+      const { signal, method, ...options } = init || {};
+      const abort = this._makeAbort(controller);
+      if (signal)
+        signal.addEventListener("abort", abort, { once: true });
+      const timeout = setTimeout(abort, ms);
+      const isReadableBody = globalThis.ReadableStream && options.body instanceof globalThis.ReadableStream || typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body;
+      const fetchOptions = {
+        signal: controller.signal,
+        ...isReadableBody ? { duplex: "half" } : {},
+        method: "GET",
+        ...options
+      };
+      if (method) {
+        fetchOptions.method = method.toUpperCase();
+      }
+      try {
+        return await this.fetch.call(void 0, url, fetchOptions);
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+    async shouldRetry(response) {
+      const shouldRetryHeader = response.headers.get("x-should-retry");
+      if (shouldRetryHeader === "true")
+        return true;
+      if (shouldRetryHeader === "false")
+        return false;
+      if (response.status === 408)
+        return true;
+      if (response.status === 409)
+        return true;
+      if (response.status === 429)
+        return true;
+      if (response.status >= 500)
+        return true;
+      return false;
+    }
+    async retryRequest(options, retriesRemaining, requestLogID, responseHeaders) {
+      let timeoutMillis;
+      const retryAfterMillisHeader = responseHeaders?.get("retry-after-ms");
+      if (retryAfterMillisHeader) {
+        const timeoutMs = parseFloat(retryAfterMillisHeader);
+        if (!Number.isNaN(timeoutMs)) {
+          timeoutMillis = timeoutMs;
+        }
+      }
+      const retryAfterHeader = responseHeaders?.get("retry-after");
+      if (retryAfterHeader && !timeoutMillis) {
+        const timeoutSeconds = parseFloat(retryAfterHeader);
+        if (!Number.isNaN(timeoutSeconds)) {
+          timeoutMillis = timeoutSeconds * 1e3;
+        } else {
+          timeoutMillis = Date.parse(retryAfterHeader) - Date.now();
+        }
+      }
+      if (!(timeoutMillis && 0 <= timeoutMillis && timeoutMillis < 60 * 1e3)) {
+        const maxRetries = options.maxRetries ?? this.maxRetries;
+        timeoutMillis = this.calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries);
+      }
+      await sleep3(timeoutMillis);
+      return this.makeRequest(options, retriesRemaining - 1, requestLogID);
+    }
+    calculateDefaultRetryTimeoutMillis(retriesRemaining, maxRetries) {
+      const initialRetryDelay = 0.5;
+      const maxRetryDelay = 8;
+      const numRetries = maxRetries - retriesRemaining;
+      const sleepSeconds = Math.min(initialRetryDelay * Math.pow(2, numRetries), maxRetryDelay);
+      const jitter = 1 - Math.random() * 0.25;
+      return sleepSeconds * jitter * 1e3;
+    }
+    async buildRequest(inputOptions, { retryCount = 0 } = {}) {
+      const options = { ...inputOptions };
+      const { method, path: path7, query, defaultBaseURL } = options;
+      const url = this.buildURL(path7, query, defaultBaseURL);
+      if ("timeout" in options)
+        validatePositiveInteger3("timeout", options.timeout);
+      options.timeout = options.timeout ?? this.timeout;
+      const { bodyHeaders, body } = this.buildBody({ options });
+      const reqHeaders = await this.buildHeaders({ options: inputOptions, method, bodyHeaders, retryCount });
+      const req = {
+        method,
+        headers: reqHeaders,
+        ...options.signal && { signal: options.signal },
+        ...globalThis.ReadableStream && body instanceof globalThis.ReadableStream && { duplex: "half" },
+        ...body && { body },
+        ...this.fetchOptions ?? {},
+        ...options.fetchOptions ?? {}
+      };
+      return { req, url, timeout: options.timeout };
+    }
+    async buildHeaders({ options, method, bodyHeaders, retryCount }) {
+      let idempotencyHeaders = {};
+      if (this.idempotencyHeader && method !== "get") {
+        if (!options.idempotencyKey)
+          options.idempotencyKey = this.defaultIdempotencyKey();
+        idempotencyHeaders[this.idempotencyHeader] = options.idempotencyKey;
+      }
+      const headers = buildHeaders3([
+        idempotencyHeaders,
+        {
+          Accept: "application/json",
+          "User-Agent": this.getUserAgent(),
+          "X-Stainless-Retry-Count": String(retryCount),
+          ...options.timeout ? { "X-Stainless-Timeout": String(Math.trunc(options.timeout / 1e3)) } : {},
+          ...getPlatformHeaders3()
+        },
+        await this.authHeaders(options),
+        this._options.defaultHeaders,
+        bodyHeaders,
+        options.headers
+      ]);
+      this.validateHeaders(headers);
+      return headers.values;
+    }
+    _makeAbort(controller) {
+      return () => controller.abort();
+    }
+    buildBody({ options: { body, headers: rawHeaders } }) {
+      if (!body) {
+        return { bodyHeaders: void 0, body: void 0 };
+      }
+      const headers = buildHeaders3([rawHeaders]);
+      if (
+        // Pass raw type verbatim
+        ArrayBuffer.isView(body) || body instanceof ArrayBuffer || body instanceof DataView || typeof body === "string" && // Preserve legacy string encoding behavior for now
+        headers.values.has("content-type") || // `Blob` is superset of `File`
+        globalThis.Blob && body instanceof globalThis.Blob || // `FormData` -> `multipart/form-data`
+        body instanceof FormData || // `URLSearchParams` -> `application/x-www-form-urlencoded`
+        body instanceof URLSearchParams || // Send chunked stream (each chunk has own `length`)
+        globalThis.ReadableStream && body instanceof globalThis.ReadableStream
+      ) {
+        return { bodyHeaders: void 0, body };
+      } else if (typeof body === "object" && (Symbol.asyncIterator in body || Symbol.iterator in body && "next" in body && typeof body.next === "function")) {
+        return { bodyHeaders: void 0, body: ReadableStreamFrom3(body) };
+      } else if (typeof body === "object" && headers.values.get("content-type") === "application/x-www-form-urlencoded") {
+        return {
+          bodyHeaders: { "content-type": "application/x-www-form-urlencoded" },
+          body: this.stringifyQuery(body)
+        };
+      } else {
+        return __classPrivateFieldGet3(this, _BaseGitLab_encoder, "f").call(this, { body, headers });
+      }
+    }
+  }
+  _BaseGitLab_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitLab_instances = /* @__PURE__ */ new WeakSet(), _BaseGitLab_baseURLOverridden = function _BaseGitLab_baseURLOverridden2() {
+    return this.baseURL !== "https://gitlab.com/api/v4";
+  };
+  BaseGitLab2.DEFAULT_TIMEOUT = 6e4;
+  return BaseGitLab2;
+})();
+
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
+function createClient2(options) {
+  const client = new BaseGitLab(options);
+  for (const ResourceClass of options.resources) {
+    const resourceInstance = new ResourceClass(client);
+    let object = client;
+    for (const part of ResourceClass._key.slice(0, -1)) {
+      if (hasOwn3(object, part)) {
+        object = object[part];
+      } else {
+        Object.defineProperty(object, part, {
+          value: object = {},
+          configurable: true,
+          enumerable: true,
+          writable: true
+        });
+      }
+    }
+    const name = ResourceClass._key.at(-1);
+    if (!hasOwn3(object, name)) {
+      Object.defineProperty(object, name, {
+        value: resourceInstance,
+        configurable: true,
+        enumerable: true,
+        writable: true
+      });
+    } else {
+      if (object[name] instanceof APIResource3) {
+        throw new TypeError(`Resource at ${ResourceClass._key.join(".")} already exists!`);
+      } else {
+        object[name] = Object.assign(resourceInstance, object[name]);
+      }
+    }
+  }
+  return client;
+}
+
 // src/compat/gitlab/context.ts
 var cachedContext2;
 function getGitLabContext() {
@@ -18598,6 +25066,142 @@ function getGitLabContext() {
   };
   logger.debug("GitLab context", cachedContext2);
   return cachedContext2;
+}
+
+// src/compat/gitlab/api.ts
+var GitLabClient = class {
+  client;
+  constructor(token) {
+    this.client = createClient2({
+      apiToken: token,
+      baseURL: getGitLabContext().urls.api,
+      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
+    });
+  }
+  async listComments(prNumber) {
+    const comments = await this.client.projects.mergeRequests.notes.list(prNumber, { id: getGitLabContext().projectID }).then((data) => Array.isArray(data) ? data : [data]).catch((err) => {
+      if (err instanceof APIError3 && err.status === 404) {
+        return [];
+      }
+      throw err;
+    });
+    return comments.map((c) => ({ id: c.id, body: c.body ?? "" }));
+  }
+  async createComment(prNumber, props) {
+    const data = await this.client.projects.mergeRequests.notes.create(
+      prNumber,
+      { ...props, id: getGitLabContext().projectID }
+    );
+    return { id: data.id, body: data.body };
+  }
+  async updateComment(prNumber, props) {
+    const data = await this.client.projects.mergeRequests.notes.update(
+      props.id,
+      { ...props, id: getGitLabContext().projectID, noteable_id: prNumber }
+    );
+    return { id: data.id, body: data.body };
+  }
+  async getPullRequest(number) {
+    let mergeRequest = null;
+    let attempts = 0;
+    while (attempts++ < 3) {
+      mergeRequest = await this.client.projects.mergeRequests.retrieve(number, {
+        id: getGitLabContext().projectID
+      });
+      if (mergeRequest?.diff_refs?.start_sha && mergeRequest?.diff_refs?.head_sha) {
+        return {
+          number: mergeRequest.iid,
+          state: mergeRequest.state === "opened" ? "open" : mergeRequest.state === "locked" ? "closed" : mergeRequest.state,
+          title: mergeRequest.title,
+          base_sha: mergeRequest.diff_refs.start_sha,
+          base_ref: mergeRequest.target_branch,
+          head_sha: mergeRequest.diff_refs.head_sha,
+          head_ref: mergeRequest.source_branch,
+          merge_commit_sha: mergeRequest.merge_commit_sha || mergeRequest.squash_commit_sha || null
+        };
+      }
+      await new Promise((resolve) => {
+        setTimeout(() => resolve(), 1e3 * (2 ** attempts + Math.random()));
+      });
+    }
+    logger.warn(
+      `Failed to find get diff_refs for merge request after ${attempts} attempts`,
+      { mergeRequestIID: number }
+    );
+    return null;
+  }
+  async getPullRequestForCommit(sha) {
+    const mergeRequests = await this.client.projects.repository.commits.retrieveMergeRequests(sha, {
+      id: getGitLabContext().projectID
+    }).then(
+      (data) => (
+        // The OAS claims it's a single object, but the docs claim it's an
+        // array? Just handle both.
+        (Array.isArray(data) ? data : [data]).filter(
+          (c) => c.state !== "closed" && c.state !== "locked"
+        )
+      )
+    ).catch((err) => {
+      if (err instanceof APIError3 && err.status === 404) {
+        return [];
+      }
+      throw err;
+    });
+    if (mergeRequests.length === 0) {
+      return null;
+    }
+    if (mergeRequests.length > 1) {
+      logger.warn(
+        `Multiple merge requests found for commit; only using first.`,
+        { commit: sha, mergeRequests: mergeRequests.map((c) => c.iid) }
+      );
+    }
+    const mergeRequestIID = mergeRequests[0].iid;
+    const mergeRequest = await this.getPullRequest(mergeRequestIID);
+    return mergeRequest;
+  }
+};
+var cachedClient2;
+function getGitLabClient() {
+  if (cachedClient2 !== void 0) {
+    return cachedClient2;
+  }
+  const token = getInput("GITLAB_TOKEN");
+  if (token?.startsWith("$")) {
+    throw new Error(
+      `Input GITLAB_TOKEN starts with '$'; expected token to start with 'gl'. Does the CI have access to the variable?`
+    );
+  }
+  if (token) {
+    cachedClient2 = new GitLabClient(token);
+  } else {
+    logger.info("No GitLab token found in input 'GITLAB_TOKEN'.");
+    cachedClient2 = null;
+  }
+  return cachedClient2;
+}
+
+// src/compat/api.ts
+function api(options) {
+  let client;
+  switch (getProvider()) {
+    case "github": {
+      client = getGitHubClient();
+      break;
+    }
+    case "gitlab": {
+      client = getGitLabClient();
+      break;
+    }
+  }
+  if (!client) {
+    if (options?.optional) {
+      return null;
+    } else {
+      throw new Error("Failed to get API client.");
+    }
+  }
+  return client;
 }
 
 // src/compat/context.ts
@@ -18967,6 +25571,43 @@ function getSavedFilePath(file, sha, extension) {
     `${file}-${sha}${extension}`
   );
 }
+async function saveConfig({
+  oasPath,
+  configPath
+}) {
+  let hasOAS = false;
+  let hasConfig = false;
+  const savedSha = (await spawn2("git", ["rev-parse", "HEAD"])).stdout.trim();
+  if (!savedSha) {
+    throw new Error("Unable to determine current SHA; is there a git repo?");
+  }
+  logger.info("Saving generated config for", savedSha);
+  if (oasPath && fs4.existsSync(oasPath)) {
+    hasOAS = true;
+    const savedFilePath = getSavedFilePath(
+      "oas",
+      savedSha,
+      path6.extname(oasPath)
+    );
+    fs4.mkdirSync(path6.dirname(savedFilePath), { recursive: true });
+    fs4.copyFileSync(oasPath, savedFilePath);
+    fs4.rmSync(oasPath);
+    logger.info(`Saved OAS file to ${savedFilePath}`);
+  }
+  if (configPath && fs4.existsSync(configPath)) {
+    hasConfig = true;
+    const savedFilePath = getSavedFilePath(
+      "config",
+      savedSha,
+      path6.extname(configPath)
+    );
+    fs4.mkdirSync(path6.dirname(savedFilePath), { recursive: true });
+    fs4.copyFileSync(configPath, savedFilePath);
+    fs4.rmSync(configPath);
+    logger.info(`Saved config file to ${savedFilePath}`);
+  }
+  return { hasOAS, hasConfig, savedSha };
+}
 async function readConfig({
   oasPath,
   configPath,
@@ -19025,6 +25666,88 @@ async function readConfig({
     }
   }
   return results;
+}
+async function getMergeBase({
+  baseSha,
+  headSha
+}) {
+  try {
+    await spawn2("git", ["fetch", "--depth=1", "origin", baseSha, headSha]);
+  } catch {
+    throw new Error(
+      `Cannot fetch ${baseSha} or ${headSha} from origin. Is there a git repo?`
+    );
+  }
+  let mergeBaseSha;
+  try {
+    const output = await spawn2("git", ["merge-base", headSha, baseSha]);
+    mergeBaseSha = output.stdout.trim();
+  } catch {
+  }
+  const deepenAmounts = [50, 100, 200, 400];
+  for (const deepenAmount of deepenAmounts) {
+    if (mergeBaseSha) break;
+    try {
+      await spawn2("git", [
+        "fetch",
+        "--quiet",
+        `--deepen=${deepenAmount}`,
+        "origin"
+      ]);
+    } catch {
+    }
+    try {
+      const output = await spawn2("git", ["merge-base", headSha, baseSha]);
+      mergeBaseSha = output.stdout.trim();
+      if (mergeBaseSha) break;
+    } catch {
+    }
+  }
+  if (!mergeBaseSha) {
+    console.log("Deepening did not find merge base, trying unshallow fetch...");
+    try {
+      await spawn2("git", ["fetch", "--quiet", "--unshallow", "origin"]);
+    } catch {
+    }
+    try {
+      const output = await spawn2("git", ["merge-base", headSha, baseSha]);
+      mergeBaseSha = output.stdout.trim();
+    } catch {
+    }
+  }
+  if (!mergeBaseSha) {
+    throw new Error(
+      `Could not determine merge base SHA between ${headSha} and ${baseSha}. This may happen if the branches have completely diverged or if there is insufficient git history. Try using 'fetch-depth: 0' in your checkout step.`
+    );
+  }
+  logger.debug(`Merge base: ${mergeBaseSha}`);
+  return { mergeBaseSha };
+}
+async function getNonMainBaseRef({
+  baseRef,
+  defaultBranch
+}) {
+  let nonMainBaseRef;
+  if (baseRef !== defaultBranch) {
+    nonMainBaseRef = `preview/${baseRef}`;
+    logger.debug(`Non-main base ref: ${nonMainBaseRef}`);
+  }
+  return { nonMainBaseRef };
+}
+async function isConfigChanged({
+  before,
+  after
+}) {
+  let changed = false;
+  if (before.oasHash !== after.oasHash) {
+    logger.debug("OAS file changed");
+    changed = true;
+  }
+  if (before.configHash !== after.configHash) {
+    logger.debug("Config file changed");
+    changed = true;
+  }
+  return changed;
 }
 
 // node_modules/.pnpm/diff@8.0.3/node_modules/diff/libesm/diff/base.js
@@ -20337,6 +27060,1083 @@ function makeCommitMessageConventional(message) {
   return message;
 }
 
+// src/merge.run.ts
+var fs6 = __toESM(require("node:fs"));
+
+// src/markdown.ts
+var import_ts_dedent = __toESM(require_dist2());
+var Symbol2 = {
+  Bulb: "\u{1F4A1}",
+  Exclamation: "\u2757",
+  Eyes: "\u{1F440}",
+  GreenSquare: "\u{1F7E9}",
+  HeavyAsterisk: "\u2731",
+  HourglassFlowingSand: "\u23F3",
+  MiddleDot: "\xB7",
+  RedSquare: "\u{1F7E5}",
+  RightwardsArrow: "\u2192",
+  Skipped: "\u23ED\uFE0F",
+  SpeechBalloon: "\u{1F4AC}",
+  Warning: "\u26A0\uFE0F",
+  WhiteCheckMark: "\u2705",
+  WhiteLargeSquare: "\u2B1C",
+  Zap: "\u26A1"
+};
+var Bold = (content) => `<b>${content}</b>`;
+var CodeInline = (content) => `<code>${content}</code>`;
+var Comment = (content) => `<!-- ${content} -->`;
+var Italic = (content) => `<i>${content}</i>`;
+function Dedent(templ, ...args) {
+  return (0, import_ts_dedent.dedent)(templ, ...args).trim().replaceAll(/\n\s*\n/gi, "\n\n");
+}
+var Blockquote = (content) => Dedent`
+    <blockquote>
+
+    ${content}
+
+    </blockquote>
+  `;
+var CodeBlock = (props) => {
+  const delimiter = "```";
+  const content = typeof props === "string" ? props : props.content;
+  const language = typeof props === "string" ? "" : props.language;
+  return Dedent`
+    ${delimiter}${language}
+    ${content}
+    ${delimiter}
+  `;
+};
+var Details = ({
+  summary,
+  body,
+  indent = true,
+  open = false
+}) => {
+  return Dedent`
+    <details${open ? " open" : ""}>
+    <summary>${summary}</summary>
+
+    ${indent ? Blockquote(body) : body}
+
+    </details>
+  `;
+};
+var Heading = (content) => `<h3>${content}</h3>`;
+var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
+var Rule = () => `<hr />`;
+
+// src/outcomes.ts
+var ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
+var FailRunOn = [
+  "never",
+  "fatal",
+  "error",
+  "warning",
+  "note"
+];
+var OutcomeConclusion = [...FailRunOn, "success"];
+function shouldFailRun({
+  failRunOn,
+  outcomes,
+  baseOutcomes
+}) {
+  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
+    const categorized = categorizeOutcome({
+      outcome,
+      baseOutcome: baseOutcomes?.[language]
+    });
+    if (categorized.isPending) {
+      return [];
+    }
+    const { severity, isRegression, description } = categorized;
+    const didFail = isRegression !== false && severity && OutcomeConclusion.indexOf(severity) <= OutcomeConclusion.indexOf(failRunOn);
+    return didFail ? [
+      {
+        language,
+        reason: getReason({
+          description,
+          isRegression
+        })
+      }
+    ] : [];
+  });
+  if (failures.length > 0) {
+    logger.warn("The following languages did not build successfully:");
+    for (const { language, reason } of failures) {
+      logger.warn(`  ${language}: ${reason}`);
+    }
+    return false;
+  }
+  return true;
+}
+function categorizeOutcome({
+  outcome,
+  baseOutcome
+}) {
+  const baseConclusion = baseOutcome?.commit?.conclusion;
+  const headConclusion = outcome.commit?.conclusion;
+  if (!headConclusion || baseOutcome && !baseConclusion) {
+    return { isPending: true };
+  }
+  const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
+  const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
+  if ([...Object.values(headChecks), ...Object.values(baseChecks)].some(
+    (check) => check && check.status !== "completed"
+  )) {
+    return { isPending: true };
+  }
+  const newDiagnostics = sortDiagnostics(
+    baseOutcome ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics) : outcome.diagnostics
+  );
+  const conclusions = {
+    fatal: [
+      "fatal",
+      "payment_required",
+      "timed_out",
+      "upstream_merge_conflict",
+      "version_bump"
+    ],
+    conflict: ["merge_conflict"],
+    diagnostic: ["error", "warning", "note"],
+    success: ["success", "noop", "cancelled"]
+  };
+  const checks = getNewChecks(headChecks, baseChecks);
+  const checkFailures = CheckType.filter(
+    (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
+  );
+  if (conclusions.fatal.includes(headConclusion)) {
+    return {
+      isPending: false,
+      conclusion: "fatal",
+      severity: "fatal",
+      description: `had a "${headConclusion}" conclusion, and no code was generated`,
+      isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
+    };
+  }
+  if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
+    const categoryOutcome = conclusions.diagnostic.includes(headConclusion) ? {
+      severity: headConclusion,
+      description: `had at least one "${headConclusion}" diagnostic`,
+      isRegression: baseConclusion ? conclusions.success.includes(baseConclusion) || conclusions.diagnostic.indexOf(headConclusion) < conclusions.diagnostic.indexOf(baseConclusion) ? true : false : null,
+      rank: 1
+    } : null;
+    const diagnosticLevelOutcome = newDiagnostics.length > 0 ? {
+      severity: newDiagnostics[0].level,
+      description: `had at least one ${baseOutcome ? "new " : ""}${newDiagnostics[0].level} diagnostic`,
+      isRegression: baseOutcome ? true : null,
+      rank: 2
+    } : null;
+    let checkFailureOutcome;
+    for (const { step, severity } of [
+      { step: "build", severity: "error" },
+      { step: "lint", severity: "warning" },
+      { step: "test", severity: "warning" }
+    ]) {
+      if (checkFailures.includes(step)) {
+        checkFailureOutcome = {
+          severity,
+          description: `had a failure in the ${step} CI job`,
+          isRegression: baseChecks ? true : null,
+          rank: 3
+        };
+        break;
+      }
+    }
+    const worstOutcome = [
+      categoryOutcome,
+      diagnosticLevelOutcome,
+      checkFailureOutcome
+    ].filter((r) => r !== null).sort(
+      (a, b) => (
+        // sort by severity then rank
+        conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
+      )
+    )[0];
+    return {
+      isPending: false,
+      conclusion: headConclusion,
+      ...worstOutcome
+    };
+  }
+  if (conclusions.conflict.includes(headConclusion)) {
+    return {
+      isPending: false,
+      conclusion: "merge_conflict",
+      severity: baseConclusion !== "merge_conflict" ? "warning" : null,
+      description: "resulted in a merge conflict between your custom code and the newly generated changes",
+      isRegression: baseConclusion ? baseConclusion !== "merge_conflict" ? true : false : null
+    };
+  }
+  return {
+    isPending: false,
+    conclusion: headConclusion,
+    severity: null,
+    description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
+    isRegression: baseConclusion ? false : null
+  };
+}
+function getReason({
+  description,
+  isRegression
+}) {
+  return `Your SDK build ${description}${isRegression === true ? ", which is a regression from the base state" : isRegression === false ? ", but this did not represent a regression" : ""}.`;
+}
+var DiagnosticLevel = ["fatal", "error", "warning", "note"];
+function countDiagnosticLevels(diagnostics) {
+  return diagnostics.reduce(
+    (counts, diag) => {
+      counts[diag.level] = (counts[diag.level] || 0) + 1;
+      return counts;
+    },
+    {
+      fatal: 0,
+      error: 0,
+      warning: 0,
+      note: 0
+    }
+  );
+}
+function getNewDiagnostics(diagnostics, baseDiagnostics) {
+  if (!baseDiagnostics) {
+    return diagnostics;
+  }
+  return diagnostics.filter(
+    (d) => !baseDiagnostics.some(
+      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
+    )
+  );
+}
+function sortDiagnostics(diagnostics) {
+  return diagnostics.sort(
+    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
+  );
+}
+var CheckType = ["build", "lint", "test"];
+function getChecks(outcome) {
+  const results = {};
+  const commitCompletedMoreThanXSecsAgo = outcome.commit ? (/* @__PURE__ */ new Date()).getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1e3 : false;
+  for (const checkType of CheckType) {
+    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
+      outcome[checkType] = {
+        status: "completed",
+        conclusion: "skipped",
+        completed: {
+          conclusion: "skipped",
+          url: null
+        },
+        url: null
+      };
+    }
+    results[checkType] = outcome[checkType] || null;
+  }
+  return results;
+}
+function getNewChecks(headChecks, baseChecks) {
+  const result = {};
+  for (const checkType of CheckType) {
+    const headCheck = headChecks[checkType];
+    const baseCheck = baseChecks ? baseChecks[checkType] : null;
+    if (headCheck) {
+      const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
+      const conclusion = headCheck.status === "completed" && headCheck.conclusion;
+      if (!baseConclusion || baseConclusion !== conclusion) {
+        result[checkType] = headCheck;
+      }
+    }
+  }
+  return result;
+}
+
+// src/comment.ts
+var COMMENT_TITLE = Heading(
+  `${Symbol2.HeavyAsterisk} Stainless preview builds`
+);
+var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
+function printComment({
+  noChanges,
+  orgName,
+  projectName,
+  branch,
+  commitMessage,
+  targetCommitMessages,
+  pendingAiCommitMessages,
+  baseOutcomes,
+  outcomes
+}) {
+  const Blocks4 = (() => {
+    if (noChanges) {
+      return "No changes were made to the SDKs.";
+    }
+    const canEdit = !!baseOutcomes;
+    return [
+      Dedent`
+        This ${ctx().names.pr} will update the ${CodeInline(
+        projectName
+      )} SDKs with the following commit ${targetCommitMessages ? "messages" : "message"}.
+      `,
+      targetCommitMessages ? CommitMessagesSection({
+        targets: Object.keys(outcomes).sort(),
+        pendingAiCommitMessages,
+        targetCommitMessages,
+        commitMessage
+      }) : CodeBlock(commitMessage),
+      !canEdit ? null : targetCommitMessages ? "Edit this comment to update them. They will appear in their respective SDK's changelogs." : "Edit this comment to update it. It will appear in the SDK's changelogs.",
+      Results({ orgName, projectName, branch, outcomes, baseOutcomes })
+    ].filter((f) => f !== null).join(`
+
+`);
+  })();
+  const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
+  const fullComment = Dedent`
+    ${COMMENT_TITLE}
+
+    ${Blocks4}
+
+    ${Rule()}
+
+    ${COMMENT_FOOTER_DIVIDER}
+
+    ${Italic(
+    `This comment is auto-generated by ${ctx().names.ci} and is automatically kept up to date as you push.<br/>If you push custom code to the preview branch, ${Link({
+      text: `re-run this workflow`,
+      href: ctx().urls.run
+    })} to update the comment.<br/>Last updated: ${dateString}`
+  )}
+  `;
+  return fullComment;
+}
+function CommitMessagesSection({
+  targets,
+  pendingAiCommitMessages,
+  targetCommitMessages,
+  commitMessage
+}) {
+  return targets.map((target) => {
+    const statusText = pendingAiCommitMessages?.has(target) ? `${Symbol2.HourglassFlowingSand} (generating...)` : "";
+    const message = targetCommitMessages[target] ?? commitMessage;
+    return Dedent`
+        **${target}**
+        ${statusText}${CodeBlock(message)}
+      `;
+  }).join("\n");
+}
+var DiagnosticIcon = {
+  fatal: Symbol2.Exclamation,
+  error: Symbol2.Exclamation,
+  warning: Symbol2.Warning,
+  note: Symbol2.Bulb
+};
+function Results({
+  orgName,
+  projectName,
+  branch,
+  outcomes,
+  baseOutcomes
+}) {
+  const results = [];
+  let hasPending = false;
+  Object.entries(outcomes).forEach(([lang, head]) => {
+    const base = baseOutcomes?.[lang];
+    hasPending ||= categorizeOutcome({
+      outcome: head,
+      baseOutcome: base
+    }).isPending ?? false;
+    const result = Result({
+      orgName,
+      projectName,
+      branch,
+      lang,
+      head,
+      base
+    });
+    if (result) {
+      results.push(result);
+    }
+  });
+  if (hasPending) {
+    results.push(
+      Dedent`
+        ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
+      `
+    );
+  }
+  return results.join("\n\n");
+}
+function Result({
+  orgName,
+  projectName,
+  branch,
+  lang,
+  head,
+  base
+}) {
+  const categorized = categorizeOutcome({
+    outcome: head,
+    baseOutcome: base
+  });
+  const { ResultIcon, Description } = (() => {
+    if (categorized.isPending) {
+      return {
+        ResultIcon: Symbol2.HourglassFlowingSand,
+        Description: ""
+      };
+    }
+    const { severity, conclusion, isRegression, description } = categorized;
+    const reason = getReason({
+      description,
+      isRegression
+    });
+    if (isRegression !== false && severity === "fatal") {
+      return {
+        ResultIcon: Symbol2.Exclamation,
+        Description: Italic(reason)
+      };
+    }
+    if (isRegression !== false && conclusion === "merge_conflict") {
+      return {
+        ResultIcon: Symbol2.Zap,
+        Description: [
+          Italic(reason),
+          Italic(
+            `You don't need to resolve this conflict right now, but you will need to resolve it for your changes to be released to your users. Read more about why this happened ${Link({
+              text: "here",
+              href: "https://www.stainless.com/docs/guides/add-custom-code"
+            })}.`
+          )
+        ].join("\n")
+      };
+    }
+    if (isRegression !== false && severity !== "note" && severity !== null) {
+      return {
+        ResultIcon: Symbol2.Warning,
+        Description: Italic(reason)
+      };
+    }
+    return {
+      ResultIcon: Symbol2.WhiteCheckMark,
+      Description: Italic(reason)
+    };
+  })();
+  return Details({
+    summary: [
+      ResultIcon,
+      Bold(`${projectName}-${lang}`),
+      [
+        Link({
+          text: "studio",
+          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`
+        }),
+        GitHubLink(head),
+        base ? CompareLink(base, head) : null,
+        MergeConflictLink(head)
+      ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
+    ].join(" "),
+    body: [
+      Description,
+      StatusLine(base, head),
+      InstallationDetails(head, lang),
+      base ? DiagnosticsDetails(head, base) : null
+    ].filter((value) => Boolean(value)).join("\n"),
+    open: !categorized.isPending && categorized.isRegression !== false && categorized.severity !== "note" && categorized.severity !== null
+  });
+}
+function StatusLine(base, head) {
+  return [
+    StatusStep(base, head, "generate"),
+    StatusStep(base, head, "build"),
+    StatusStep(base, head, "lint"),
+    StatusStep(base, head, "test")
+  ].filter((value) => Boolean(value)).join(` ${Symbol2.RightwardsArrow} `);
+}
+function StatusStep(base, head, step) {
+  let baseStatus = base ? StatusSymbol(base, step) : null;
+  let headStatus = StatusSymbol(head, step);
+  if (!headStatus) {
+    return null;
+  }
+  if (baseStatus === Symbol2.HourglassFlowingSand || headStatus === Symbol2.HourglassFlowingSand) {
+    baseStatus = Symbol2.HourglassFlowingSand;
+    headStatus = Symbol2.HourglassFlowingSand;
+  }
+  const headText = CodeInline(`${step} ${headStatus}`);
+  const headURL = StatusURL(head, step);
+  const headLink = headURL ? Link({ text: headText, href: headURL }) : headText;
+  if (!baseStatus || baseStatus === headStatus) {
+    return headLink;
+  }
+  const baseText = CodeInline(`${step} ${baseStatus}`);
+  const baseURL = StatusURL(base, step);
+  const baseLink = baseURL ? Link({ text: baseText, href: baseURL }) : baseText;
+  return `${headLink} (prev: ${baseLink})`;
+}
+function StatusSymbol(outcome, step) {
+  if (!outcome.commit?.completed?.commit) {
+    return null;
+  }
+  if (step === "generate") {
+    switch (outcome.commit.completed.conclusion) {
+      case "fatal":
+      case "error":
+      case "cancelled":
+        return Symbol2.Exclamation;
+      case "merge_conflict":
+        return Symbol2.Zap;
+      case "upstream_merge_conflict":
+      case "warning":
+        return Symbol2.Warning;
+      default:
+        return Symbol2.WhiteCheckMark;
+    }
+  }
+  const stepData = outcome[step];
+  if (!stepData) {
+    return null;
+  }
+  if (stepData.status === "completed") {
+    return stepData.completed.conclusion === "success" ? Symbol2.WhiteCheckMark : stepData.completed.conclusion === "skipped" ? Symbol2.Skipped : Symbol2.Exclamation;
+  }
+  return Symbol2.HourglassFlowingSand;
+}
+function StatusURL(outcome, step) {
+  if (step === "generate" || !outcome[step] || outcome[step].status !== "completed") {
+    return null;
+  }
+  return outcome[step]?.completed?.url;
+}
+function GitHubLink(outcome) {
+  if (!outcome.commit?.completed?.commit) return null;
+  const {
+    repo: { owner, name, branch }
+  } = outcome.commit.completed.commit;
+  return Link({
+    text: "code",
+    // This is a staging repo, so it's always GitHub.
+    href: `https://github.com/${owner}/${name}/tree/${encodeURIComponent(branch)}`
+  });
+}
+function CompareLink(base, head) {
+  if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+    return null;
+  }
+  const { repo } = head.commit.completed.commit;
+  const baseBranch = base.commit.completed.commit.repo.branch;
+  const headBranch = head.commit.completed.commit.repo.branch;
+  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+  return Link({ text: "diff", href: compareURL });
+}
+function MergeConflictLink(outcome) {
+  if (!outcome.commit?.completed?.merge_conflict_pr) return null;
+  const {
+    repo: { owner, name },
+    number
+  } = outcome.commit.completed.merge_conflict_pr;
+  return Link({
+    text: "conflict",
+    href: `https://github.com/${owner}/${name}/pull/${number}`
+  });
+}
+function DiagnosticsDetails(head, base) {
+  if (!base.diagnostics || !head.diagnostics) return null;
+  const newDiagnostics = getNewDiagnostics(head.diagnostics, base.diagnostics);
+  if (newDiagnostics.length === 0) return null;
+  const levelCounts = countDiagnosticLevels(newDiagnostics);
+  const diagnosticCounts = Object.entries(levelCounts).filter(([, count]) => count > 0).map(([level, count]) => `${count} ${level}`);
+  const diagnosticList = sortDiagnostics(newDiagnostics).slice(0, 10).map((d) => `${DiagnosticIcon[d.level]} ${Bold(d.code)}: ${d.message}`).filter(Boolean);
+  const tableRows = diagnosticList.map((diagnostic) => `<tr>
+<td>${diagnostic}</td>
+</tr>`).join("\n");
+  const tableContent = `<table>
+${tableRows}
+</table>`;
+  return Details({
+    summary: `New diagnostics (${diagnosticCounts.join(", ")})`,
+    body: tableContent,
+    indent: false
+  });
+}
+function InstallationDetails(head, lang) {
+  let githubGoURL = null;
+  let installation = null;
+  if (head.commit?.completed.commit) {
+    const { repo, sha } = head.commit.completed.commit;
+    githubGoURL = `github.com/${repo.owner}/${repo.name}@${sha}`;
+  }
+  switch (lang) {
+    case "typescript":
+    case "node": {
+      if (head.install_url) {
+        installation = `npm install ${head.install_url}`;
+      }
+      break;
+    }
+    case "python": {
+      if (head.install_url) {
+        installation = `pip install ${head.install_url}`;
+      }
+      break;
+    }
+    case "go": {
+      if (githubGoURL) {
+        installation = `go get ${githubGoURL}`;
+      }
+      break;
+    }
+    case "java": {
+      if (head.install_url) {
+        installation = `Add the following URL as a Maven source: '${head.install_url}'`;
+      }
+      break;
+    }
+    case "cli": {
+      if (head.install_url) {
+        installation = `Download and unzip: '${head.install_url}'. On macOS, run \`xattr -d com.apple.quarantine {executable name}\`.`;
+      }
+      break;
+    }
+    default: {
+      return null;
+    }
+  }
+  if (!installation) return null;
+  return CodeBlock({ content: installation, language: "bash" });
+}
+function parseCommitMessages(body) {
+  if (!body) {
+    return {};
+  }
+  const targetCommitMessages = {};
+  const languageBlocks = body.matchAll(
+    /\*\*([a-z_]+)\*\*\s*\n```\s*\n([\s\S]*?)\n```/g
+  );
+  for (const match of languageBlocks) {
+    const language = match[1];
+    const message2 = match[2].trim();
+    if (message2) {
+      targetCommitMessages[language] = makeCommitMessageConventional(message2);
+    }
+  }
+  if (Object.keys(targetCommitMessages).length > 0) {
+    return { targetCommitMessages };
+  }
+  const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
+  return message ? { commitMessage: makeCommitMessageConventional(message) } : {};
+}
+async function retrieveComment(prNumber) {
+  const comments = await api().listComments(prNumber);
+  const existingComment = comments.find(
+    (comment) => comment.body?.includes(COMMENT_TITLE)
+  );
+  if (!existingComment) {
+    return null;
+  }
+  return {
+    id: existingComment.id,
+    ...parseCommitMessages(existingComment.body)
+  };
+}
+async function upsertComment(prNumber, {
+  body,
+  skipCreate = false
+}) {
+  logger.debug(`Upserting comment on ${ctx().names.pr} #${prNumber}`);
+  const comments = await api().listComments(prNumber);
+  const firstLine = body.trim().split("\n")[0];
+  const existingComment = comments.find(
+    (comment) => comment.body?.includes(firstLine)
+  );
+  if (existingComment) {
+    logger.debug("Updating existing comment:", existingComment.id);
+    await api().updateComment(prNumber, { ...existingComment, body });
+  } else if (!skipCreate) {
+    logger.debug("Creating new comment");
+    await api().createComment(prNumber, { body });
+  }
+}
+function areCommentsEqual(a, b) {
+  return a.slice(0, a.indexOf(COMMENT_FOOTER_DIVIDER)) === b.slice(0, b.indexOf(COMMENT_FOOTER_DIVIDER));
+}
+function commentThrottler(prNumber) {
+  let lastComment = null;
+  let lastCommentTime = null;
+  return async ({ body, force = false }) => {
+    if (force || !lastComment || !lastCommentTime || !areCommentsEqual(body, lastComment) && Date.now() - lastCommentTime.getTime() > 10 * 1e3 || Date.now() - lastCommentTime.getTime() > 30 * 1e3) {
+      await upsertComment(prNumber, { body });
+      lastComment = body;
+      lastCommentTime = /* @__PURE__ */ new Date();
+    }
+  };
+}
+
+// src/merge.run.ts
+async function runMerge(stainless, params) {
+  const {
+    orgName,
+    projectName,
+    oasPath,
+    configPath,
+    defaultCommitMessage,
+    failRunOn,
+    makeComment,
+    baseSha,
+    baseRef,
+    defaultBranch,
+    headSha,
+    mergeBranch,
+    outputDir,
+    prNumber
+  } = params;
+  let { multipleCommitMessages } = params;
+  if (baseRef !== defaultBranch) {
+    logger.info("Not merging to default branch, skipping merge");
+    return;
+  }
+  if (makeComment && prNumber === null) {
+    throw new Error(
+      "This action requires a pull request number to make a comment."
+    );
+  }
+  if (makeComment && !orgName) {
+    throw new Error(
+      "This action requires an organization name to make a comment."
+    );
+  }
+  if (makeComment && api({ optional: true }) === null) {
+    throw new Error("This action requires an API token to make a comment.");
+  }
+  const { savedSha } = await saveConfig({
+    oasPath,
+    configPath
+  });
+  if (savedSha !== null && savedSha !== headSha) {
+    logger.warn(
+      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
+    );
+  }
+  const enableAiCommitMessages = orgName && await stainless.orgs.retrieve(orgName).then((org) => org.enable_ai_commit_messages).catch((err) => {
+    logger.warn(`Could not fetch data for ${orgName}.`, err);
+    return false;
+  });
+  if (enableAiCommitMessages) {
+    if (multipleCommitMessages === false) {
+      logger.warn(
+        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.'
+      );
+    } else if (multipleCommitMessages === void 0) {
+      logger.info(
+        'AI commit messages are enabled; setting "multiple_commit_messages" to true.'
+      );
+    }
+    multipleCommitMessages = true;
+  }
+  const baseConfig = await readConfig({ oasPath, configPath, sha: baseSha });
+  const headConfig = await readConfig({ oasPath, configPath, sha: headSha });
+  const configChanged = await isConfigChanged({
+    before: baseConfig,
+    after: headConfig
+  });
+  if (!configChanged) {
+    logger.info("No config files changed, skipping merge");
+    return;
+  }
+  const comment = makeComment && prNumber ? await retrieveComment(prNumber) : null;
+  const commitMessage = comment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
+  const targetCommitMessages = multipleCommitMessages ? comment?.targetCommitMessages ?? {} : void 0;
+  if (targetCommitMessages) {
+    logger.info("Using commit messages:", targetCommitMessages);
+    logger.info("With default commit message:", commitMessage);
+  } else {
+    logger.info("Using commit message:", commitMessage);
+  }
+  const generator = runBuilds({
+    stainless,
+    projectName,
+    commitMessage,
+    targetCommitMessages,
+    // This action always merges to the Stainless `main` branch:
+    branch: "main",
+    mergeBranch,
+    guessConfig: false
+  });
+  let latestRun = null;
+  const upsert = prNumber ? commentThrottler(prNumber) : null;
+  while (true) {
+    const run = await generator.next();
+    if (run.value) {
+      latestRun = run.value;
+    }
+    if (makeComment && latestRun && upsert) {
+      const { outcomes } = latestRun;
+      const commentBody = printComment({
+        orgName,
+        projectName,
+        branch: "main",
+        commitMessage,
+        targetCommitMessages,
+        outcomes
+      });
+      await upsert({ body: commentBody, force: run.done });
+    }
+    if (run.done) {
+      if (!latestRun) {
+        throw new Error("No latest run found after build finish");
+      }
+      const { outcomes, documentedSpec } = latestRun;
+      setOutput("outcomes", outcomes);
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs6.mkdirSync(outputDir, { recursive: true });
+        fs6.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
+      if (!shouldFailRun({ failRunOn, outcomes })) {
+        process.exit(1);
+      }
+      break;
+    }
+  }
+}
+
+// src/preview.run.ts
+var fs7 = __toESM(require("node:fs"));
+async function runPreview(stainless, params) {
+  const {
+    orgName,
+    projectName,
+    oasPath,
+    configPath,
+    defaultCommitMessage,
+    guessConfig,
+    failRunOn,
+    makeComment,
+    baseSha,
+    baseRef,
+    baseBranch,
+    defaultBranch,
+    headSha,
+    branch,
+    outputDir,
+    prNumber
+  } = params;
+  let { multipleCommitMessages } = params;
+  if (!prNumber) {
+    throw new Error("This action must be run from a pull request.");
+  }
+  if (makeComment && api({ optional: true }) === null) {
+    throw new Error("This action requires an API token to make a comment.");
+  }
+  const { savedSha } = await saveConfig({
+    oasPath,
+    configPath
+  });
+  if (savedSha !== null && savedSha !== headSha) {
+    logger.warn(
+      `Expected HEAD to be ${headSha}, but was ${savedSha}. This might cause issues with getting the head revision.`
+    );
+  }
+  const enableAiCommitMessages = await stainless.orgs.retrieve(orgName).then((org) => org.enable_ai_commit_messages).catch((err) => {
+    logger.warn(`Could not fetch data for ${orgName}.`, err);
+    return false;
+  });
+  if (enableAiCommitMessages) {
+    if (multipleCommitMessages === false) {
+      logger.warn(
+        'AI commit messages are enabled, but "multiple_commit_messages" is set to false. Overriding to true.'
+      );
+    } else if (multipleCommitMessages === void 0) {
+      logger.info(
+        'AI commit messages are enabled; setting "multiple_commit_messages" to true.'
+      );
+    }
+    multipleCommitMessages = true;
+  }
+  logger.group("Getting parent revision");
+  const { mergeBaseSha } = await getMergeBase({ baseSha, headSha });
+  const { nonMainBaseRef } = await getNonMainBaseRef({
+    baseRef,
+    defaultBranch
+  });
+  const mergeBaseConfig = await readConfig({
+    oasPath,
+    configPath,
+    sha: mergeBaseSha
+  });
+  const headConfig = await readConfig({
+    oasPath,
+    configPath,
+    sha: headSha,
+    required: true
+  });
+  const configChanged = await isConfigChanged({
+    before: mergeBaseConfig,
+    after: headConfig
+  });
+  if (!configChanged) {
+    logger.info("No config files changed, skipping preview");
+    if (makeComment) {
+      logger.group("Updating comment");
+      const commentBody = printComment({ noChanges: true });
+      await upsertComment(prNumber, {
+        body: commentBody,
+        skipCreate: true
+      });
+      logger.groupEnd();
+    }
+    return;
+  }
+  const branchFrom = await computeBranchFrom({
+    stainless,
+    projectName,
+    mergeBaseConfig,
+    nonMainBaseRef,
+    oasPath,
+    configPath
+  });
+  logger.groupEnd();
+  const initialComment = makeComment ? await retrieveComment(prNumber) : null;
+  let commitMessage = initialComment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
+  let targetCommitMessages = multipleCommitMessages ? initialComment?.targetCommitMessages ?? {} : void 0;
+  if (targetCommitMessages) {
+    logger.info("Using commit messages:", targetCommitMessages);
+    logger.info("With default commit message:", commitMessage);
+  } else {
+    logger.info("Using commit message:", commitMessage);
+  }
+  const shouldGenerateAiCommitMessages = enableAiCommitMessages && Object.keys(targetCommitMessages ?? {}).length === 0;
+  const generator = runBuilds({
+    stainless,
+    oasContent: headConfig.oas,
+    configContent: headConfig.config,
+    baseOasContent: mergeBaseConfig.oas,
+    baseConfigContent: mergeBaseConfig.config,
+    projectName,
+    branchFrom,
+    baseBranch,
+    branch,
+    guessConfig: guessConfig ?? (!configPath && !!oasPath),
+    commitMessage,
+    targetCommitMessages
+  });
+  let latestRun = null;
+  const upsert = commentThrottler(prNumber);
+  let pendingAiCommitMessages;
+  while (true) {
+    const run = await generator.next();
+    if (run.value) {
+      latestRun = run.value;
+    }
+    if (makeComment && latestRun) {
+      const { outcomes, baseOutcomes } = latestRun;
+      const comment = await retrieveComment(prNumber);
+      commitMessage = comment?.commitMessage ?? commitMessage;
+      targetCommitMessages = comment?.targetCommitMessages ?? targetCommitMessages;
+      if (shouldGenerateAiCommitMessages) {
+        if (pendingAiCommitMessages === void 0) {
+          pendingAiCommitMessages = /* @__PURE__ */ new Set();
+          for (const lang of Object.keys(outcomes)) {
+            pendingAiCommitMessages.add(lang);
+          }
+        }
+        for (const lang of pendingAiCommitMessages) {
+          const commit = outcomes[lang].commit?.completed?.commit;
+          const baseCommit = baseOutcomes?.[lang]?.commit?.completed?.commit;
+          if (!commit || !baseCommit) {
+            continue;
+          }
+          targetCommitMessages[lang] = await stainless.projects.generateCommitMessage({
+            project: projectName,
+            target: lang,
+            base_ref: baseCommit.sha,
+            head_ref: commit.sha
+          }).then((result) => result.ai_commit_message).catch((err) => {
+            logger.error("Error in AI commit message generation:", err);
+            return commitMessage;
+          });
+          pendingAiCommitMessages.delete(lang);
+        }
+      }
+      const commentBody = printComment({
+        orgName,
+        projectName,
+        branch,
+        commitMessage,
+        targetCommitMessages,
+        pendingAiCommitMessages,
+        outcomes,
+        baseOutcomes
+      });
+      await upsert({ body: commentBody, force: run.done });
+    }
+    if (run.done) {
+      if (!latestRun) {
+        throw new Error("No latest run found after build finish");
+      }
+      const { outcomes, baseOutcomes, documentedSpec } = latestRun;
+      setOutput("outcomes", outcomes);
+      setOutput("base_outcomes", baseOutcomes);
+      if (documentedSpec && outputDir) {
+        const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
+        fs7.mkdirSync(outputDir, { recursive: true });
+        fs7.writeFileSync(documentedSpecPath, documentedSpec);
+        setOutput("documented_spec_path", documentedSpecPath);
+      }
+      if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
+        process.exit(1);
+      }
+      break;
+    }
+  }
+}
+async function computeBranchFrom({
+  stainless,
+  projectName,
+  mergeBaseConfig,
+  nonMainBaseRef,
+  oasPath,
+  configPath
+}) {
+  const hashes = {};
+  if (mergeBaseConfig.oasHash) {
+    hashes["openapi.yml"] = { hash: mergeBaseConfig.oasHash };
+  }
+  if (mergeBaseConfig.configHash) {
+    hashes["stainless.yml"] = { hash: mergeBaseConfig.configHash };
+  }
+  if (oasPath && !mergeBaseConfig.oasHash || configPath && !mergeBaseConfig.configHash) {
+  } else {
+    const configCommit2 = (await stainless.builds.list({
+      project: projectName,
+      branch: nonMainBaseRef ?? "main",
+      revision: hashes,
+      limit: 1
+    })).data[0]?.config_commit;
+    if (configCommit2) {
+      logger.debug(`Found base via merge base SHA: ${configCommit2}`);
+      return configCommit2;
+    }
+  }
+  if (nonMainBaseRef) {
+    const configCommit2 = (await stainless.builds.list({
+      project: projectName,
+      branch: nonMainBaseRef,
+      limit: 1
+    })).data[0]?.config_commit;
+    if (configCommit2) {
+      logger.debug(`Found base via non-main base ref: ${configCommit2}`);
+      return configCommit2;
+    }
+  }
+  const configCommit = (await stainless.builds.list({
+    project: projectName,
+    branch: "main",
+    limit: 1
+  })).data[0]?.config_commit;
+  if (!configCommit) {
+    throw new Error("Could not determine base revision");
+  }
+  logger.debug(`Found base via main branch: ${configCommit}`);
+  return configCommit;
+}
+
 // src/build.ts
 var main = wrapAction("build", async (stainless) => {
   const params = {
@@ -20344,17 +28144,119 @@ var main = wrapAction("build", async (stainless) => {
     configPath: getInput("config_path", { required: false }),
     projectName: getInput("project", { required: true }),
     commitMessage: makeCommitMessageConventional(
-      getInput("commit_message", { required: false }) || void 0
+      getInput("commit_message", { required: false })
     ),
     guessConfig: getBooleanInput("guess_config", { required: false }) || false,
-    branch: getInput("branch", { required: false }) || "main",
+    branch: getInput("branch", { required: false }),
     mergeBranch: getInput("merge_branch", { required: false }),
     baseRevision: getInput("base_revision", { required: false }),
     baseBranch: getInput("base_branch", { required: false }),
     outputDir: getInput("output_dir", { required: false }) || (0, import_node_os2.tmpdir)(),
-    documentedSpecOutputPath: getInput("documented_spec_path", { required: false }) || void 0
+    documentedSpecOutputPath: getInput("documented_spec_path", {
+      required: false
+    })
   };
-  await runBuild(stainless, params);
+  const inferredPR = ctx().prNumber !== null ? await api({ optional: true })?.getPullRequest(ctx().prNumber) : ctx().sha ? await api({ optional: true })?.getPullRequestForCommit(ctx().sha) : null;
+  if (inferredPR !== null) {
+    logger.debug("Found PR for commit", inferredPR);
+  }
+  const orgName = getInput("org", { required: false });
+  const defaultCommitMessage = params.commitMessage || inferredPR?.title;
+  const defaultBranch = getInput("default_branch", { required: false }) || ctx().defaultBranch;
+  if (!orgName || !defaultCommitMessage || !defaultBranch) {
+    logger.debug(
+      "No `org`, `commit_message`, or `default_branch` provided; not running preview / merge.",
+      { orgName, defaultCommitMessage, defaultBranch }
+    );
+  } else if (inferredPR?.state === "open") {
+    const previewParams = {
+      orgName,
+      projectName: params.projectName,
+      oasPath: params.oasPath,
+      configPath: params.configPath,
+      defaultCommitMessage,
+      guessConfig: params.guessConfig,
+      failRunOn: getInput("fail_on", {
+        choices: FailRunOn,
+        required: false
+      }) || "error",
+      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
+      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+        required: false
+      }),
+      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+      baseBranch: getInput("base_branch", { required: false }) ?? `preview/base/${inferredPR.head_ref}`,
+      defaultBranch,
+      headSha: getInput("head_sha", { required: false }) ?? inferredPR.head_sha,
+      branch: (params.branch === "main" ? void 0 : params.branch) ?? `preview/${inferredPR.head_ref}`,
+      outputDir: getInput("output_dir", { required: false }),
+      prNumber: inferredPR.number
+    };
+    logger.info("Found open PR; dispatching to `preview`.", previewParams);
+    return await runPreview(stainless, previewParams);
+  } else if (inferredPR?.state === "merged") {
+    const headSha = getInput("head_sha", { required: false }) ?? inferredPR.merge_commit_sha;
+    if (headSha === null) {
+      throw new Error("Expected merged PR to have a merge commit SHA.");
+    }
+    const mergeParams = {
+      orgName,
+      projectName: params.projectName,
+      oasPath: params.oasPath,
+      configPath: params.configPath,
+      defaultCommitMessage,
+      failRunOn: getInput("fail_on", {
+        choices: FailRunOn,
+        required: false
+      }) || "error",
+      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
+      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+        required: false
+      }),
+      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+      defaultBranch,
+      headSha,
+      mergeBranch: getInput("merge_branch", { required: false }) ?? `preview/${inferredPR.head_ref}`,
+      outputDir: getInput("output_dir", { required: false }),
+      prNumber: inferredPR.number
+    };
+    logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
+    return await runMerge(stainless, mergeParams);
+  }
+  if (ctx().refName === defaultBranch) {
+    if (params.branch === void 0 || params.branch === "main") {
+      logger.info(
+        "Push to default branch. Dispatching to `build` against `main`.",
+        { branch: params.branch, defaultBranch }
+      );
+      return await runBuild(stainless, { ...params, branch: "main" });
+    } else {
+      logger.warn(
+        "Push to default branch, but tried to build against non-main branch. This is likely a mistake; skipping.",
+        { branch: params.branch, defaultBranch }
+      );
+      return;
+    }
+  } else if (params.branch === "main") {
+    logger.warn(
+      "Push to non-default branch, but tried to build against main branch. This is likely a mistake; skipping.",
+      { branch: params.branch, defaultBranch }
+    );
+    return;
+  } else if (params.branch !== void 0) {
+    logger.info(
+      "Push to non-default branch. Dispatching to `build` against explicit branch.",
+      { branch: params.branch, defaultBranch }
+    );
+    return await runBuild(stainless, { ...params, branch: params.branch });
+  } else {
+    logger.info(
+      "Push to non-default branch without explicit branch. Skipping."
+    );
+    return;
+  }
 });
 main();
 /*! Bundled license information:

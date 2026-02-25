@@ -13299,7 +13299,8 @@ var GitHubClient = class {
       base_sha: data.base.sha,
       base_ref: data.base.ref,
       head_ref: data.head.ref,
-      head_sha: data.head.sha
+      head_sha: data.head.sha,
+      merge_commit_sha: data.merge_commit_sha
     };
   }
   async getPullRequestForCommit(sha) {
@@ -13328,7 +13329,8 @@ var GitHubClient = class {
       base_sha: pull.base.sha,
       base_ref: pull.base.ref,
       head_ref: pull.head.ref,
-      head_sha: pull.head.sha
+      head_sha: pull.head.sha,
+      merge_commit_sha: pull.merge_commit_sha
     };
   }
 };
@@ -15938,7 +15940,8 @@ var GitLabClient = class {
           base_sha: mergeRequest.diff_refs.start_sha,
           base_ref: mergeRequest.target_branch,
           head_sha: mergeRequest.diff_refs.head_sha,
-          head_ref: mergeRequest.source_branch
+          head_ref: mergeRequest.source_branch,
+          merge_commit_sha: mergeRequest.merge_commit_sha || mergeRequest.squash_commit_sha || null
         };
       }
       await new Promise((resolve) => {
