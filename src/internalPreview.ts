@@ -1,7 +1,7 @@
 import type { Target } from "@stainless-api/sdk/resources/shared";
 import { execFileSync } from "child_process";
 import { commentThrottler, printInternalComment } from "./comment";
-import { getInput, getStainlessAuth, setOutput } from "./compat";
+import { ctx, getInput, getStainlessAuth, setOutput } from "./compat";
 import { mkdtempSync, rmSync } from "fs";
 import { logger } from "./logger";
 import { tmpdir } from "os";
@@ -172,6 +172,11 @@ async function main() {
 
     const githubToken = getInput("github_token");
 
+    const prNumber = ctx().prNumber;
+    if (!prNumber) {
+      throw new Error("This action must be run in the context of a PR");
+    }
+
     const projectStates = targetGroups.map((group) => ({
       group,
       outcomes: null as Outcomes | null,
@@ -252,7 +257,7 @@ async function main() {
 
     const indexedIterators = pollIterators.map((p) => p.iterator);
 
-    const upsert = commentThrottler();
+    const upsert = commentThrottler(prNumber);
     let allBuildsComplete = false;
 
     const updateComment = async (force: boolean) => {
