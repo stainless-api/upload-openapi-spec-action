@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.13.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.12.0...v1.13.0) (2026-02-27)
+
+
+### Features
+
+* assume checks are skipped if they do not start for a while ([#194](https://github.com/stainless-api/upload-openapi-spec-action/issues/194)) ([aa5abca](https://github.com/stainless-api/upload-openapi-spec-action/commit/aa5abca0203e13c99cbf126523f4029f707e68c2))
+* **build:** combine build, preview, and merge ([efa0f49](https://github.com/stainless-api/upload-openapi-spec-action/commit/efa0f49c5cf79aec15452e15bc71412fbd7b4452))
+* **compat:** add more details to ctx ([9d434fc](https://github.com/stainless-api/upload-openapi-spec-action/commit/9d434fc769bded2cd620856508811787c3e5303a))
+* use severity as conclusion for diagnostic/check step cases ([#198](https://github.com/stainless-api/upload-openapi-spec-action/issues/198)) ([224c0e1](https://github.com/stainless-api/upload-openapi-spec-action/commit/224c0e1fa6641945612f9f9eb0b11e01b22560b3))
+
+
+### Bug Fixes
+
+* fix gitlab client usage ([#196](https://github.com/stainless-api/upload-openapi-spec-action/issues/196)) ([3fe4697](https://github.com/stainless-api/upload-openapi-spec-action/commit/3fe4697ea14e60c015fd1977761ba49afacb5ae1))
+
 ## [1.12.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.11.6...v1.12.0) (2026-02-20)
 
 
