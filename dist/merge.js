@@ -15853,7 +15853,7 @@ function categorizeOutcome({
     )[0];
     return {
       isPending: false,
-      conclusion: headConclusion,
+      conclusion: worstOutcome.severity,
       ...worstOutcome
     };
   }

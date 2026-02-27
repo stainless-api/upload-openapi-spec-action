@@ -218,7 +218,7 @@ export function categorizeOutcome({
 
     return {
       isPending: false,
-      conclusion: headConclusion,
+      conclusion: worstOutcome.severity,
       ...worstOutcome,
     };
   }
