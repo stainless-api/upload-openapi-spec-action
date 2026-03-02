@@ -6,6 +6,7 @@ include:
 build-sdk:
   extends: .build-sdk
   only:
+    - merge_requests
     # Set this to the branch of the repository that the `main` Stainless branch
     # of your project gets its OpenAPI spec from. This is usually the default
     # branch of your repository.
@@ -15,6 +16,9 @@ build-sdk:
     # dashboard. Add this to your CI/CD variables:
     # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
     STAINLESS_API_KEY: $STAINLESS_API_KEY
+
+    # Stainless organization name.
+    ORG: YOUR_ORG
 
     # Stainless project name.
     PROJECT: YOUR_PROJECT

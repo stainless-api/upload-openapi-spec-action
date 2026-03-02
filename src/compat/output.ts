@@ -1,14 +1,10 @@
-/**
- * Output handling for GitHub Actions and GitLab CI.
- */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
-import { isGitLabCI } from "./platform";
+import { getProvider } from "./provider";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function setOutput(name: string, value: any) {
-  if (isGitLabCI()) return;
+  if (getProvider() === "gitlab") return;
 
   const stringified =
     value === null || value === undefined

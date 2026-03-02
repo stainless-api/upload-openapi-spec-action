@@ -28,7 +28,7 @@ export async function* runBuilds({
   baseConfigContent,
   guessConfig = false,
   commitMessage,
-  commitMessages,
+  targetCommitMessages,
   allowEmpty = true,
 }: {
   stainless: Stainless;
@@ -43,7 +43,7 @@ export async function* runBuilds({
   baseConfigContent?: string;
   guessConfig?: boolean;
   commitMessage?: string;
-  commitMessages?: Record<string, string>;
+  targetCommitMessages?: Record<string, string>;
   allowEmpty?: boolean;
 }): AsyncGenerator<RunResult> {
   if (mergeBranch && (oasContent || configContent)) {
@@ -80,7 +80,7 @@ export async function* runBuilds({
             },
         branch,
         commit_message: commitMessage,
-        target_commit_messages: commitMessages,
+        target_commit_messages: targetCommitMessages,
         allow_empty: allowEmpty,
       },
       {
@@ -415,6 +415,7 @@ async function* pollBuild({
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
+    const now = new Date().toISOString();
     outcomes[language] = {
       object: "build_target",
       status: "completed",
@@ -426,10 +427,15 @@ async function* pollBuild({
       },
       commit: {
         status: "completed",
+        conclusion: "timed_out",
+        commit: null,
+        merge_conflict_pr: null,
+        completed_at: now,
         completed: {
           conclusion: "timed_out",
           commit: null,
           merge_conflict_pr: null,
+          completed_at: now,
         },
       },
       install_url: null,

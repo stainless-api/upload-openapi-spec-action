@@ -6,14 +6,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           # use a token so we trigger release-please if needed
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          cache: pnpm
+          node-version: "24"
       - name: Install dependencies
         run: ./scripts/bootstrap
       - name: Build TypeScript

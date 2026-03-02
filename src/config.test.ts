@@ -1,9 +1,9 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
-import { getMergeBase } from "./config";
+import spawn from "nano-spawn";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import spawn from "nano-spawn";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getMergeBase } from "./config";
 
 describe("getMergeBase", () => {
   let tempDir: string;

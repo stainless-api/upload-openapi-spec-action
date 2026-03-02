@@ -14,6 +14,9 @@ inputs:
       Stainless API key. Optional for GitHub Actions (will use OIDC authentication
       if not provided, requires 'id-token: write' permission). Required for GitLab CI.
     required: false
+  org:
+    description: Stainless organization name.
+    required: false
   project:
     description: Stainless project name.
     required: true
@@ -39,6 +42,30 @@ inputs:
       spec. Cannot be specified if `config_path` is specified.
     required: false
     default: false
+  fail_on:
+    description: >-
+      When to fail the run based on build conclusion. Options: 'note',
+      'warning', 'error', 'fatal', 'never'.
+    required: false
+    default: "error"
+  make_comment:
+    description: >-
+      If true, will comment on the pull request with the build results.
+    required: false
+    default: "true"
+  multiple_commit_messages:
+    description: >-
+      If true, the comment will display separate commit messages for each SDK,
+      instead of using a single commit message for all SDKs.
+    required: false
+    default: "false"
+  github_token:
+    description: >-
+      A GitHub token used for making comments on pull requests. Required if
+      `make_comment` is true. The token must have the `pull-requests: write`
+      permission. Defaults to the current workflow token.
+    required: false
+    default: ${{ github.token }}
   branch:
     description: Stainless branch to create the build on.
     required: false
@@ -59,6 +86,13 @@ inputs:
       Stainless branch to create the base build on. Must be specified if
       `base_revision` is specified.
     required: false
+  default_branch:
+    description: >-
+      The branch of the repository that the `main` Stainless branch of your
+      project gets its OpenAPI spec from. This is usually the default branch of
+      your repository. Used to determine whether the build should be skipped.
+    required: false
+    default: ${{ github.event.repository.default_branch }}
   output_dir:
     description: >-
       Directory to write output files to. Defaults to the runner's temporary

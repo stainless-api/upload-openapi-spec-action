@@ -1,92 +1,155 @@
-import { Stainless } from "@stainless-api/sdk";
-import * as fs from "node:fs";
 import { tmpdir } from "node:os";
-import YAML from "yaml";
+import type { BuildParams } from "./build.run";
+import { runBuild } from "./build.run";
 import { makeCommitMessageConventional } from "./commitMessage";
-import { getBooleanInput, getInput, setOutput } from "./compat";
+import { api, ctx, getBooleanInput, getInput } from "./compat";
 import { logger } from "./logger";
-import { readConfig } from "./config";
-import { runBuilds } from "./runBuilds";
-import type { RunResult } from "./runBuilds";
+import { type MergeParams, runMerge } from "./merge.run";
+import { FailRunOn } from "./outcomes";
+import { type PreviewParams, runPreview } from "./preview.run";
 import { wrapAction } from "./wrapAction";
 
 const main = wrapAction("build", async (stainless) => {
-  try {
-    const oasPath = getInput("oas_path", { required: false }) || undefined;
-    const configPath =
-      getInput("config_path", { required: false }) || undefined;
-    const projectName = getInput("project", { required: true });
-    const commitMessage = makeCommitMessageConventional(
-      getInput("commit_message", { required: false }) || undefined,
+  const params = {
+    oasPath: getInput("oas_path", { required: false }),
+    configPath: getInput("config_path", { required: false }),
+    projectName: getInput("project", { required: true }),
+    commitMessage: makeCommitMessageConventional(
+      getInput("commit_message", { required: false }),
+    ),
+    guessConfig: getBooleanInput("guess_config", { required: false }) || false,
+    branch: getInput("branch", { required: false }),
+    mergeBranch: getInput("merge_branch", { required: false }),
+    baseRevision: getInput("base_revision", { required: false }),
+    baseBranch: getInput("base_branch", { required: false }),
+    outputDir: getInput("output_dir", { required: false }) || tmpdir(),
+    documentedSpecOutputPath: getInput("documented_spec_path", {
+      required: false,
+    }),
+  } satisfies Omit<BuildParams, "branch"> & { branch?: string };
+
+  const inferredPR =
+    ctx().prNumber !== null
+      ? await api({ optional: true })?.getPullRequest(ctx().prNumber!)
+      : ctx().sha
+        ? await api({ optional: true })?.getPullRequestForCommit(ctx().sha!)
+        : null;
+
+  if (inferredPR !== null) {
+    logger.debug("Found PR for commit", inferredPR);
+  }
+
+  const orgName = getInput("org", { required: false });
+  const defaultCommitMessage = params.commitMessage || inferredPR?.title;
+  const defaultBranch =
+    getInput("default_branch", { required: false }) || ctx().defaultBranch;
+
+  if (!orgName || !defaultCommitMessage || !defaultBranch) {
+    logger.debug(
+      "No `org`, `commit_message`, or `default_branch` provided; not running preview / merge.",
+      { orgName, defaultCommitMessage, defaultBranch },
     );
-    const guessConfig =
-      getBooleanInput("guess_config", { required: false }) || false;
-    const branch = getInput("branch", { required: false }) || "main";
-    const mergeBranch =
-      getInput("merge_branch", { required: false }) || undefined;
-    const baseRevision =
-      getInput("base_revision", { required: false }) || undefined;
-    const baseBranch =
-      getInput("base_branch", { required: false }) || undefined;
-    const outputDir = getInput("output_dir", { required: false }) || tmpdir();
-    const documentedSpecOutputPath =
-      getInput("documented_spec_path", { required: false }) || undefined;
+  } else if (inferredPR?.state === "open") {
+    const previewParams = {
+      orgName,
+      projectName: params.projectName,
+      oasPath: params.oasPath,
+      configPath: params.configPath,
+      defaultCommitMessage,
+      guessConfig: params.guessConfig,
+      failRunOn:
+        getInput("fail_on", {
+          choices: FailRunOn,
+          required: false,
+        }) || "error",
+      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
+      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+        required: false,
+      }),
+      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+      baseBranch:
+        getInput("base_branch", { required: false }) ??
+        `preview/base/${inferredPR.head_ref}`,
+      defaultBranch,
+      headSha: getInput("head_sha", { required: false }) ?? inferredPR.head_sha,
+      branch:
+        (params.branch === "main" ? undefined : params.branch) ??
+        `preview/${inferredPR.head_ref}`,
+      outputDir: getInput("output_dir", { required: false }),
+      prNumber: inferredPR.number,
+    } satisfies PreviewParams;
 
-    const config = await readConfig({ oasPath, configPath, required: true });
-
-    let lastValue: RunResult;
-
-    for await (const value of runBuilds({
-      stainless,
-      projectName,
-      branchFrom: baseRevision,
-      baseBranch,
-      mergeBranch,
-      branch,
-      oasContent: config.oas,
-      configContent: config.config,
-      guessConfig,
-      commitMessage,
-      allowEmpty: false,
-    })) {
-      lastValue = value;
+    logger.info("Found open PR; dispatching to `preview`.", previewParams);
+    return await runPreview(stainless, previewParams);
+  } else if (inferredPR?.state === "merged") {
+    const headSha =
+      getInput("head_sha", { required: false }) ?? inferredPR.merge_commit_sha;
+    if (headSha === null) {
+      throw new Error("Expected merged PR to have a merge commit SHA.");
     }
 
-    const { baseOutcomes, outcomes, documentedSpec } = lastValue!;
+    const mergeParams = {
+      orgName,
+      projectName: params.projectName,
+      oasPath: params.oasPath,
+      configPath: params.configPath,
+      defaultCommitMessage,
+      failRunOn:
+        getInput("fail_on", {
+          choices: FailRunOn,
+          required: false,
+        }) || "error",
+      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
+      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+        required: false,
+      }),
+      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+      defaultBranch,
+      headSha,
+      mergeBranch:
+        getInput("merge_branch", { required: false }) ??
+        `preview/${inferredPR.head_ref}`,
+      outputDir: getInput("output_dir", { required: false }),
+      prNumber: inferredPR.number,
+    } satisfies MergeParams;
 
-    setOutput("outcomes", outcomes);
-    setOutput("base_outcomes", baseOutcomes);
+    logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
+    return await runMerge(stainless, mergeParams);
+  }
 
-    if (documentedSpec && outputDir) {
-      const documentedSpecPath = `${outputDir}/openapi.documented.yml`;
-      fs.mkdirSync(outputDir, { recursive: true });
-      fs.writeFileSync(documentedSpecPath, documentedSpec);
-      setOutput("documented_spec_path", documentedSpecPath);
-    }
-
-    if (documentedSpec && documentedSpecOutputPath) {
-      // Decorated spec is currently always YAML, so convert it to JSON if needed.
-      const documentedSpecOutput = !(
-        documentedSpecOutputPath.endsWith(".yml") ||
-        documentedSpecOutputPath.endsWith(".yaml")
-      )
-        ? JSON.stringify(YAML.parse(documentedSpec), null, 2)
-        : documentedSpec;
-
-      fs.writeFileSync(documentedSpecOutputPath, documentedSpecOutput);
-    } else if (documentedSpecOutputPath) {
-      logger.warn("No documented spec found.");
-    }
-  } catch (error) {
-    if (
-      error instanceof Stainless.BadRequestError &&
-      error.message.includes("No changes to commit")
-    ) {
-      logger.info("No changes to commit, skipping build.");
-      process.exit(0);
+  if (ctx().refName === defaultBranch) {
+    if (params.branch === undefined || params.branch === "main") {
+      logger.info(
+        "Push to default branch. Dispatching to `build` against `main`.",
+        { branch: params.branch, defaultBranch },
+      );
+      return await runBuild(stainless, { ...params, branch: "main" });
     } else {
-      throw error;
+      logger.warn(
+        "Push to default branch, but tried to build against non-main branch. This is likely a mistake; skipping.",
+        { branch: params.branch, defaultBranch },
+      );
+      return;
     }
+  } else if (params.branch === "main") {
+    logger.warn(
+      "Push to non-default branch, but tried to build against main branch. This is likely a mistake; skipping.",
+      { branch: params.branch, defaultBranch },
+    );
+    return;
+  } else if (params.branch !== undefined) {
+    logger.info(
+      "Push to non-default branch. Dispatching to `build` against explicit branch.",
+      { branch: params.branch, defaultBranch },
+    );
+    return await runBuild(stainless, { ...params, branch: params.branch! });
+  } else {
+    logger.info(
+      "Push to non-default branch without explicit branch. Skipping.",
+    );
+    return;
   }
 });
 
