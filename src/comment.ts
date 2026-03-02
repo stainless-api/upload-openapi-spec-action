@@ -267,7 +267,7 @@ function Result({
       [
         MD.Link({
           text: "studio",
-          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`,
+          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${encodeURIComponent(branch)}`,
         }),
         GitHubLink(head),
         base ? CompareLink(base, head) : null,
@@ -426,7 +426,7 @@ function CompareLink(
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
   // This is a staging repo, so it's always GitHub.
-  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+  const compareURL = `https://github.com/${repo.owner}/${repo.name}/compare/${encodeURIComponent(baseBranch)}..${encodeURIComponent(headBranch)}`;
   return MD.Link({ text: "diff", href: compareURL });
 }
 
