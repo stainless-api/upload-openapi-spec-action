@@ -7,8 +7,6 @@ import {
   findFiles,
   loadSpec,
   saveSpec,
-  countPaths,
-  combineOpenAPISpecs,
   addBaseToPath,
   slugify,
   deriveSlugs,
