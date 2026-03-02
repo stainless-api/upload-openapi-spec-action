@@ -16795,7 +16795,15 @@ function printInternalComment(projects, { isComplete = false } = {}) {
         `
       );
     }
-    const statusEmoji = hasPending ? Symbol2.HourglassFlowingSand : conclusionEmoji(worstRegression);
+    let statusEmoji;
+    if (hasPending) {
+      statusEmoji = Symbol2.HourglassFlowingSand;
+      if (worstRegression !== "success" && worstRegression !== "note") {
+        statusEmoji += conclusionEmoji(worstRegression);
+      }
+    } else {
+      statusEmoji = conclusionEmoji(worstRegression);
+    }
     const diffIndicator = projectHasDiff ? ` ${Symbol2.Eyes}` : "";
     blocks.push(
       Details({

@@ -771,9 +771,16 @@ export function printInternalComment(
       );
     }
 
-    const statusEmoji = hasPending
-      ? MD.Symbol.HourglassFlowingSand
-      : conclusionEmoji(worstRegression);
+    let statusEmoji: string;
+
+    if (hasPending) {
+      statusEmoji = MD.Symbol.HourglassFlowingSand;
+      if (worstRegression !== "success" && worstRegression !== "note") {
+        statusEmoji += conclusionEmoji(worstRegression);
+      }
+    } else {
+      statusEmoji = conclusionEmoji(worstRegression);
+    }
 
     const diffIndicator = projectHasDiff ? ` ${MD.Symbol.Eyes}` : "";
     blocks.push(
