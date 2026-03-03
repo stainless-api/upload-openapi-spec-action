@@ -274,7 +274,7 @@ export function Result({
       [
         MD.Link({
           text: "studio",
-          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${branch}`,
+          href: `https://app.stainless.com/${orgName}/${projectName}/studio?language=${lang}&branch=${encodeURIComponent(branch)}`,
         }),
         GitHubLink(head),
         base && hasDiff !== false
@@ -404,15 +404,13 @@ function StatusURL(
   outcome: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ) {
-  if (
-    step === "generate" ||
-    !outcome[step] ||
-    outcome[step].status !== "completed"
-  ) {
+  if (step === "generate" || !outcome[step]) {
     return null;
   }
 
-  return outcome[step]?.completed?.url;
+  if (outcome[step].status !== "not_started") {
+    return outcome[step].url;
+  }
 }
 
 function GitHubLink(outcome: Outcomes[string]): string | null {
@@ -439,7 +437,7 @@ function CompareUrl(
   const baseBranch = base.commit.completed.commit.repo.branch;
   const headBranch = head.commit.completed.commit.repo.branch;
   // This is a staging repo, so it's always GitHub.
-  return `https://github.com/${repo.owner}/${repo.name}/compare/${baseBranch}..${headBranch}`;
+  return `https://github.com/${repo.owner}/${repo.name}/compare/${encodeURIComponent(baseBranch)}..${encodeURIComponent(headBranch)}`;
 }
 
 function CompareLink(
