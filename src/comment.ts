@@ -390,15 +390,13 @@ function StatusURL(
   outcome: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ) {
-  if (
-    step === "generate" ||
-    !outcome[step] ||
-    outcome[step].status !== "completed"
-  ) {
+  if (step === "generate" || !outcome[step]) {
     return null;
   }
 
-  return outcome[step]?.completed?.url;
+  if (outcome[step].status !== "not_started") {
+    return outcome[step].url;
+  }
 }
 
 function GitHubLink(outcome: Outcomes[string]): string | null {
