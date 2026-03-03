@@ -150,7 +150,7 @@ export function categorizeOutcome({
       severity: "fatal",
       description: "timed out before completion",
       isRegression: null,
-    }
+    };
   }
 
   if (conclusions.fatal.includes(headConclusion)) {
