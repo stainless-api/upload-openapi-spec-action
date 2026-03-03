@@ -143,6 +143,16 @@ export function categorizeOutcome({
       ["failure", "timed_out"].includes(checks[checkType].completed.conclusion),
   );
 
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null,
+    }
+  }
+
   if (conclusions.fatal.includes(headConclusion)) {
     return {
       isPending: false,
@@ -245,7 +255,7 @@ export function categorizeOutcome({
       headConclusion === "success"
         ? "was successful"
         : `had a conclusion of ${headConclusion}`,
-    isRegression: baseConclusion ? false : null,
+    isRegression: null,
   };
 }
 

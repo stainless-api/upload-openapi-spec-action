@@ -16185,6 +16185,15 @@ function categorizeOutcome({
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
   );
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null
+    };
+  }
   if (conclusions.fatal.includes(headConclusion)) {
     return {
       isPending: false,
@@ -16253,7 +16262,7 @@ function categorizeOutcome({
     conclusion: headConclusion,
     severity: null,
     description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
-    isRegression: baseConclusion ? false : null
+    isRegression: null
   };
 }
 function getReason({
