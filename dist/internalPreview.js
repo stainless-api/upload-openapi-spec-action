@@ -18807,7 +18807,7 @@ function addBuildIdForTelemetry(buildId) {
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 20 * 60;
+var MAX_POLLING_SECONDS = 3 * 60 * 60;
 async function* combineAsyncIterators(...args) {
   const iters = Array.from(args, (o) => o[Symbol.asyncIterator]());
   let count = iters.length;

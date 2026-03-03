@@ -26664,7 +26664,7 @@ async function maybeReportResult({
 
 // src/runBuilds.ts
 var POLLING_INTERVAL_SECONDS = 5;
-var MAX_POLLING_SECONDS = 20 * 60;
+var MAX_POLLING_SECONDS = 3 * 60 * 60;
 async function* runBuilds({
   stainless,
   projectName,
