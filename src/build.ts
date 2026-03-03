@@ -1,3 +1,4 @@
+import { Stainless } from "@stainless-api/sdk";
 import { tmpdir } from "node:os";
 import type { BuildParams } from "./build.run";
 import { runBuild } from "./build.run";
@@ -58,10 +59,7 @@ const main = wrapAction("build", async (stainless) => {
       defaultCommitMessage,
       guessConfig: params.guessConfig,
       failRunOn:
-        getInput("fail_on", {
-          choices: FailRunOn,
-          required: false,
-        }) || "error",
+        getInput("fail_on", { choices: FailRunOn, required: false }) || "error",
       makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
       multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
         required: false,
@@ -89,34 +87,53 @@ const main = wrapAction("build", async (stainless) => {
       throw new Error("Expected merged PR to have a merge commit SHA.");
     }
 
-    const mergeParams = {
-      orgName,
-      projectName: params.projectName,
-      oasPath: params.oasPath,
-      configPath: params.configPath,
-      defaultCommitMessage,
-      failRunOn:
-        getInput("fail_on", {
-          choices: FailRunOn,
+    const mergeBranch =
+      getInput("merge_branch", { required: false }) ??
+      `preview/${inferredPR.head_ref}`;
+    const branchExists = await stainless.projects.branches
+      .retrieve(mergeBranch)
+      .then((branch) => !!branch)
+      .catch((error) => {
+        if (error instanceof Stainless.NotFoundError) {
+          return false;
+        }
+        throw error;
+      });
+    if (!branchExists) {
+      logger.debug("Merge branch does not exist; not running merge.");
+    } else {
+      const mergeParams = {
+        orgName,
+        projectName: params.projectName,
+        oasPath: params.oasPath,
+        configPath: params.configPath,
+        defaultCommitMessage,
+        failRunOn:
+          getInput("fail_on", {
+            choices: FailRunOn,
+            required: false,
+          }) || "error",
+        makeComment:
+          getBooleanInput("make_comment", { required: false }) ?? true,
+        multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
           required: false,
-        }) || "error",
-      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
-      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
-        required: false,
-      }),
-      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
-      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
-      defaultBranch,
-      headSha,
-      mergeBranch:
-        getInput("merge_branch", { required: false }) ??
-        `preview/${inferredPR.head_ref}`,
-      outputDir: getInput("output_dir", { required: false }),
-      prNumber: inferredPR.number,
-    } satisfies MergeParams;
+        }),
+        baseSha:
+          getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+        baseRef:
+          getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+        defaultBranch,
+        headSha,
+        mergeBranch:
+          getInput("merge_branch", { required: false }) ??
+          `preview/${inferredPR.head_ref}`,
+        outputDir: getInput("output_dir", { required: false }),
+        prNumber: inferredPR.number,
+      } satisfies MergeParams;
 
-    logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
-    return await runMerge(stainless, mergeParams);
+      logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
+      return await runMerge(stainless, mergeParams);
+    }
   }
 
   if (ctx().refName === defaultBranch) {
