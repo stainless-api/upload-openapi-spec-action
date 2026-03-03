@@ -390,10 +390,7 @@ function StatusURL(
   outcome: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ) {
-  if (
-    step === "generate" ||
-    !outcome[step]
-  ) {
+  if (step === "generate" || !outcome[step]) {
     return null;
   }
 
