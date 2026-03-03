@@ -30,7 +30,8 @@ class GitLabClient implements APIClient {
       apiToken: token,
       baseURL: ctx().urls.api,
       resources: [BaseCommits, BaseMergeRequests, BaseNotes],
-      logLevel: (getInput("log_level", { required: false }) ?? "warn") as LogLevel,
+      logLevel: (getInput("log_level", { required: false }) ??
+        "warn") as LogLevel,
       logger,
     });
   }

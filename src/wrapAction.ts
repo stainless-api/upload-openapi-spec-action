@@ -32,7 +32,8 @@ export function wrapAction(
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: (getInput("log_level", { required: false }) ?? "warn") as LogLevel,
+        logLevel: (getInput("log_level", { required: false }) ??
+          "warn") as LogLevel,
         logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth),
       });

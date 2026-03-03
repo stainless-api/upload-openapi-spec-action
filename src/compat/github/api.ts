@@ -28,7 +28,8 @@ class GitHubClient implements APIClient {
       owner: ctx().owner,
       repo: ctx().repo,
       resources: [BaseCommits, BaseComments, BasePulls],
-      logLevel: (getInput("log_level", { required: false }) ?? "warn") as LogLevel,
+      logLevel: (getInput("log_level", { required: false }) ??
+        "warn") as LogLevel,
       logger,
     });
   }
