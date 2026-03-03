@@ -13270,7 +13270,9 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseCommits, BaseComments2, BasePulls]
+      resources: [BaseCommits, BaseComments2, BasePulls],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -15899,7 +15901,9 @@ var GitLabClient = class {
     this.client = createClient2({
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
-      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
+      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -16188,6 +16192,15 @@ function categorizeOutcome({
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
   );
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null
+    };
+  }
   if (conclusions.fatal.includes(headConclusion)) {
     return {
       isPending: false,
@@ -16256,7 +16269,7 @@ function categorizeOutcome({
     conclusion: headConclusion,
     severity: null,
     description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
-    isRegression: baseConclusion ? false : null
+    isRegression: null
   };
 }
 function getReason({
@@ -20046,7 +20059,8 @@ function wrapAction(actionType, fn) {
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: "warn",
+        logLevel: getInput("log_level", { required: false }) ?? "warn",
+        logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth)
       });
       await fn(stainless);

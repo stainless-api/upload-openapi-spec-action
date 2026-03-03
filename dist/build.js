@@ -16437,9 +16437,6 @@ var require_dist2 = __commonJS({
   }
 });
 
-// src/build.ts
-var import_node_os2 = require("node:os");
-
 // node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
   if (kind === "m")
@@ -18324,6 +18321,9 @@ Stainless.Projects = Projects;
 Stainless.Builds = Builds;
 Stainless.Orgs = Orgs;
 Stainless.User = User;
+
+// src/build.ts
+var import_node_os2 = require("node:os");
 
 // src/build.run.ts
 var fs5 = __toESM(require("node:fs"));
@@ -22451,7 +22451,9 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseCommits, BaseComments2, BasePulls]
+      resources: [BaseCommits, BaseComments2, BasePulls],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -25080,7 +25082,9 @@ var GitLabClient = class {
     this.client = createClient2({
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
-      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
+      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -26605,7 +26609,8 @@ function wrapAction(actionType, fn) {
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: "warn",
+        logLevel: getInput("log_level", { required: false }) ?? "warn",
+        logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth)
       });
       await fn(stainless);
@@ -27223,6 +27228,15 @@ function categorizeOutcome({
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
   );
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null
+    };
+  }
   if (conclusions.fatal.includes(headConclusion)) {
     return {
       isPending: false,
@@ -27291,7 +27305,7 @@ function categorizeOutcome({
     conclusion: headConclusion,
     severity: null,
     description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
-    isRegression: baseConclusion ? false : null
+    isRegression: null
   };
 }
 function getReason({
@@ -28208,10 +28222,7 @@ var main = wrapAction("build", async (stainless) => {
       configPath: params.configPath,
       defaultCommitMessage,
       guessConfig: params.guessConfig,
-      failRunOn: getInput("fail_on", {
-        choices: FailRunOn,
-        required: false
-      }) || "error",
+      failRunOn: getInput("fail_on", { choices: FailRunOn, required: false }) || "error",
       makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
       multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
         required: false
@@ -28232,30 +28243,41 @@ var main = wrapAction("build", async (stainless) => {
     if (headSha === null) {
       throw new Error("Expected merged PR to have a merge commit SHA.");
     }
-    const mergeParams = {
-      orgName,
-      projectName: params.projectName,
-      oasPath: params.oasPath,
-      configPath: params.configPath,
-      defaultCommitMessage,
-      failRunOn: getInput("fail_on", {
-        choices: FailRunOn,
-        required: false
-      }) || "error",
-      makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
-      multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
-        required: false
-      }),
-      baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
-      baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
-      defaultBranch,
-      headSha,
-      mergeBranch: getInput("merge_branch", { required: false }) ?? `preview/${inferredPR.head_ref}`,
-      outputDir: getInput("output_dir", { required: false }),
-      prNumber: inferredPR.number
-    };
-    logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
-    return await runMerge(stainless, mergeParams);
+    const mergeBranch = getInput("merge_branch", { required: false }) ?? `preview/${inferredPR.head_ref}`;
+    const branchExists = await stainless.projects.branches.retrieve(mergeBranch).then((branch) => !!branch).catch((error) => {
+      if (error instanceof Stainless.NotFoundError) {
+        return false;
+      }
+      throw error;
+    });
+    if (!branchExists) {
+      logger.debug("Merge branch does not exist; not running merge.");
+    } else {
+      const mergeParams = {
+        orgName,
+        projectName: params.projectName,
+        oasPath: params.oasPath,
+        configPath: params.configPath,
+        defaultCommitMessage,
+        failRunOn: getInput("fail_on", {
+          choices: FailRunOn,
+          required: false
+        }) || "error",
+        makeComment: getBooleanInput("make_comment", { required: false }) ?? true,
+        multipleCommitMessages: getBooleanInput("multiple_commit_messages", {
+          required: false
+        }),
+        baseSha: getInput("base_sha", { required: false }) ?? inferredPR.base_sha,
+        baseRef: getInput("base_ref", { required: false }) ?? inferredPR.base_ref,
+        defaultBranch,
+        headSha,
+        mergeBranch: getInput("merge_branch", { required: false }) ?? `preview/${inferredPR.head_ref}`,
+        outputDir: getInput("output_dir", { required: false }),
+        prNumber: inferredPR.number
+      };
+      logger.info("Found merged PR; dispatching to `merge`.", mergeParams);
+      return await runMerge(stainless, mergeParams);
+    }
   }
   if (ctx().refName === defaultBranch) {
     if (params.branch === void 0 || params.branch === "main") {
