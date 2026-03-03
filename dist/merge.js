@@ -13349,7 +13349,7 @@ function getGitHubClient() {
   return cachedClient;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/errors.mjs
 function isAbortError2(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -13380,7 +13380,7 @@ var castToError2 = (err) => {
   return new Error(err);
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/error.mjs
 var GitLabError = /* @__PURE__ */ (() => {
   class GitLabError2 extends Error {
   }
@@ -13472,7 +13472,7 @@ var RateLimitError2 = class extends APIError2 {
 var InternalServerError2 = class extends APIError2 {
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/resource.mjs
 var APIResource2 = /* @__PURE__ */ (() => {
   class APIResource4 {
     constructor(client) {
@@ -13483,7 +13483,7 @@ var APIResource2 = /* @__PURE__ */ (() => {
   return APIResource4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/values.mjs
 var startsWithSchemeRegexp2 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL2 = (url) => {
   return startsWithSchemeRegexp2.test(url);
@@ -13517,7 +13517,7 @@ var safeJSON2 = (text) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/headers.mjs
 var brand_privateNullableHeaders2 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders2(headers) {
   if (!headers)
@@ -13580,7 +13580,7 @@ var buildHeaders2 = (newHeaders) => {
   return { [brand_privateNullableHeaders2]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/path.mjs
 function encodeURIPath2(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -13635,7 +13635,7 @@ ${underline}`);
 };
 var path2 = /* @__PURE__ */ createPathTagFunction2(encodeURIPath2);
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/notes/notes.mjs
 var BaseNotes2 = /* @__PURE__ */ (() => {
   class BaseNotes13 extends APIResource2 {
     /**
@@ -13652,10 +13652,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     create(noteableID, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${noteableID}/notes`, {
-        body,
-        ...options
-      });
+      return this._client.post(path2`/projects/${id}/merge_requests/${noteableID}/notes`, { body, ...options });
     }
     /**
      * Get a single merge request note
@@ -13671,7 +13668,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     retrieve(noteID, params, options) {
       const { id, noteable_id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+      return this._client.get(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
     }
     /**
      * Update an existing merge request note
@@ -13687,7 +13684,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     update(noteID, params, options) {
       const { id, noteable_id, ...body } = params;
-      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, {
+      return this._client.put(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, {
         body,
         ...options
       });
@@ -13705,10 +13702,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     list(noteableID, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${noteableID}/notes`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/merge_requests/${noteableID}/notes`, { query, ...options });
     }
     /**
      * Delete a merge request note
@@ -13724,7 +13718,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
      */
     delete(noteID, params, options) {
       const { id, noteable_id } = params;
-      return this._client.delete(path2`/api/v4/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
+      return this._client.delete(path2`/projects/${id}/merge_requests/${noteable_id}/notes/${noteID}`, options);
     }
   }
   BaseNotes13._key = Object.freeze([
@@ -13735,7 +13729,7 @@ var BaseNotes2 = /* @__PURE__ */ (() => {
   return BaseNotes13;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/merge-requests/merge-requests.mjs
 var BaseMergeRequests = /* @__PURE__ */ (() => {
   class BaseMergeRequests3 extends APIResource2 {
     /**
@@ -13752,7 +13746,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      * ```
      */
     create(id, body, options) {
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests`, { body, ...options });
+      return this._client.post(path2`/projects/${id}/merge_requests`, { body, ...options });
     }
     /**
      * Shows information about a single merge request. Note: the `changes_count` value
@@ -13770,10 +13764,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieve(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, { query, ...options });
     }
     /**
      * Updates an existing merge request. You can change the target branch, title, or
@@ -13789,10 +13780,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     update(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
-        body,
-        ...options
-      });
+      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, { body, ...options });
     }
     /**
      * Get all merge requests for this project.
@@ -13804,7 +13792,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      * ```
      */
     list(id, query = {}, options) {
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests`, { query, ...options });
+      return this._client.get(path2`/projects/${id}/merge_requests`, { query, ...options });
     }
     /**
      * Only for administrators and project owners. Deletes the merge request in
@@ -13819,7 +13807,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     delete(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.delete(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}`, {
+      return this._client.delete(path2`/projects/${id}/merge_requests/${mergeRequestIid}`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -13838,7 +13826,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     addSpentTime(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/add_spent_time`, {
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/add_spent_time`, {
         body,
         ...options
       });
@@ -13856,7 +13844,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     approve(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approve`, {
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approve`, {
         body,
         ...options
       });
@@ -13875,7 +13863,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     cancelMergeWhenPipelineSucceeds(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/cancel_merge_when_pipeline_succeeds`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/cancel_merge_when_pipeline_succeeds`, options);
     }
     /**
      * Resets the total spent time for this merge_request to 0 seconds.
@@ -13890,7 +13878,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     resetSpentTime(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_spent_time`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_spent_time`, options);
     }
     /**
      * Resets the estimated time for this merge_request to 0 seconds.
@@ -13905,7 +13893,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     resetTimeEstimate(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_time_estimate`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_time_estimate`, options);
     }
     /**
      * List approval rules for merge request
@@ -13920,7 +13908,11 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveApprovalSettings(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approval_settings`, { query, ...options, headers: buildHeaders2([{ Accept: "*/*" }, options?.headers]) });
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approval_settings`, {
+        query,
+        ...options,
+        headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
+      });
     }
     /**
      * Get approval state of merge request
@@ -13936,7 +13928,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveApprovalState(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/approval_state`, options);
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/approval_state`, options);
     }
     /**
      * Get all merge requests are blockees for this merge request
@@ -13951,7 +13943,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveBlockees(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/blockees`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/blockees`, {
         query,
         ...options
       });
@@ -13969,7 +13961,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveChanges(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/changes`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/changes`, {
         query,
         ...options
       });
@@ -13988,7 +13980,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveClosesIssues(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/closes_issues`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/closes_issues`, {
         query,
         ...options
       });
@@ -14006,7 +13998,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveCommits(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/commits`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/commits`, {
         query,
         ...options
       });
@@ -14024,7 +14016,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveDiffs(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/diffs`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/diffs`, {
         query,
         ...options
       });
@@ -14041,7 +14033,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveMergeRef(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/merge_ref`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/merge_ref`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14060,7 +14052,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveParticipants(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/participants`, options);
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/participants`, options);
     }
     /**
      * Get the raw diffs of a merge request that can used programmatically.
@@ -14074,7 +14066,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveRawDiffs(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/raw_diffs`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/raw_diffs`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14093,7 +14085,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveRelatedIssues(mergeRequestIid, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/related_issues`, {
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/related_issues`, {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -14112,7 +14104,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveReviewers(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reviewers`, options);
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reviewers`, options);
     }
     /**
      * Get time tracking stats
@@ -14127,7 +14119,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     retrieveTimeStats(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/time_stats`, options);
+      return this._client.get(path2`/projects/${id}/merge_requests/${mergeRequestIid}/time_stats`, options);
     }
     /**
      * Set status of an external status check
@@ -14148,7 +14140,10 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     statusCheckResponses(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/status_check_responses`, { body, ...options });
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/status_check_responses`, {
+        body,
+        ...options
+      });
     }
     /**
      * Subscribe to a resource
@@ -14164,7 +14159,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     subscribe(subscribableID, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${subscribableID}/subscribe`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${subscribableID}/subscribe`, options);
     }
     /**
      * Sets an estimated time of work for this merge_request.
@@ -14180,7 +14175,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     timeEstimate(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/time_estimate`, {
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/time_estimate`, {
         body,
         ...options
       });
@@ -14196,7 +14191,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     todo(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/todo`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/todo`, options);
     }
     /**
      * Remove an approval from a merge request
@@ -14211,7 +14206,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     unapprove(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/unapprove`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${mergeRequestIid}/unapprove`, options);
     }
     /**
      * Unsubscribe from a resource
@@ -14227,7 +14222,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     unsubscribe(subscribableID, params, options) {
       const { id } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/merge_requests/${subscribableID}/unsubscribe`, options);
+      return this._client.post(path2`/projects/${id}/merge_requests/${subscribableID}/unsubscribe`, options);
     }
     /**
      * Accept and merge changes submitted with the merge request using this API.
@@ -14242,7 +14237,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateMerge(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/merge`, {
+      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/merge`, {
         body,
         ...options
       });
@@ -14260,7 +14255,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateRebase(mergeRequestIid, params, options) {
       const { id, ...body } = params;
-      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/rebase`, {
+      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/rebase`, {
         body,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -14279,7 +14274,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
      */
     updateResetApprovals(mergeRequestIid, params, options) {
       const { id } = params;
-      return this._client.put(path2`/api/v4/projects/${id}/merge_requests/${mergeRequestIid}/reset_approvals`, {
+      return this._client.put(path2`/projects/${id}/merge_requests/${mergeRequestIid}/reset_approvals`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14292,7 +14287,7 @@ var BaseMergeRequests = /* @__PURE__ */ (() => {
   return BaseMergeRequests3;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/shims.mjs
 function getDefaultFetch2() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -14337,7 +14332,7 @@ async function CancelReadableStream2(stream) {
   await cancelPromise;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/uploads.mjs
 var checkFileSupport2 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -14409,7 +14404,7 @@ var addFormValue = async (form, key, value) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/resources/projects/repository/commits/commits.mjs
 var BaseCommits3 = /* @__PURE__ */ (() => {
   class BaseCommits4 extends APIResource2 {
     /**
@@ -14425,7 +14420,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     create(id, body, options) {
-      return this._client.post(path2`/api/v4/projects/${id}/repository/commits`, multipartFormRequestOptions({ body, ...options }, this._client));
+      return this._client.post(path2`/projects/${id}/repository/commits`, multipartFormRequestOptions({ body, ...options }, this._client));
     }
     /**
      * Get a specific commit of a project
@@ -14440,7 +14435,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieve(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}`, { query, ...options });
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}`, { query, ...options });
     }
     /**
      * Get a project repository commits
@@ -14452,7 +14447,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     list(id, query = {}, options) {
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits`, { query, ...options });
+      return this._client.get(path2`/projects/${id}/repository/commits`, { query, ...options });
     }
     /**
      * Authorize commits upload
@@ -14465,7 +14460,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      * ```
      */
     authorize(id, options) {
-      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/authorize`, {
+      return this._client.post(path2`/projects/${id}/repository/commits/authorize`, {
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
       });
@@ -14484,7 +14479,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     cherryPick(sha, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/${sha}/cherry_pick`, {
+      return this._client.post(path2`/projects/${id}/repository/commits/${sha}/cherry_pick`, {
         body,
         ...options
       });
@@ -14503,10 +14498,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveDiff(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/diff`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/diff`, { query, ...options });
     }
     /**
      * Get Merge Requests associated with a commit
@@ -14522,7 +14514,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveMergeRequests(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/merge_requests`, {
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/merge_requests`, {
         query,
         ...options
       });
@@ -14541,10 +14533,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveRefs(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/refs`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/refs`, { query, ...options });
     }
     /**
      * Get the sequence count of a commit SHA
@@ -14560,10 +14549,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveSequence(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/sequence`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/sequence`, { query, ...options });
     }
     /**
      * Get a commit's signature
@@ -14579,7 +14565,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveSignature(sha, params, options) {
       const { id } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/signature`, options);
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/signature`, options);
     }
     /**
      * Get a commit's statuses
@@ -14595,10 +14581,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     retrieveStatuses(sha, params, options) {
       const { id, ...query } = params;
-      return this._client.get(path2`/api/v4/projects/${id}/repository/commits/${sha}/statuses`, {
-        query,
-        ...options
-      });
+      return this._client.get(path2`/projects/${id}/repository/commits/${sha}/statuses`, { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 11.5
@@ -14614,10 +14597,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
      */
     revert(sha, params, options) {
       const { id, ...body } = params;
-      return this._client.post(path2`/api/v4/projects/${id}/repository/commits/${sha}/revert`, {
-        body,
-        ...options
-      });
+      return this._client.post(path2`/projects/${id}/repository/commits/${sha}/revert`, { body, ...options });
     }
   }
   BaseCommits4._key = Object.freeze([
@@ -14628,7 +14608,7 @@ var BaseCommits3 = /* @__PURE__ */ (() => {
   return BaseCommits4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/tslib.mjs
 function __classPrivateFieldSet2(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -14646,7 +14626,7 @@ function __classPrivateFieldGet2(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/uuid.mjs
 var uuid42 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -14658,13 +14638,13 @@ var uuid42 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/sleep.mjs
 var sleep2 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/version.mjs
-var VERSION2 = "0.2.0";
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/version.mjs
+var VERSION2 = "0.3.0";
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/detect-platform.mjs
 function getDetectedPlatform2() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -14790,7 +14770,7 @@ var getPlatformHeaders2 = () => {
   return _platformHeaders2 ?? (_platformHeaders2 = getPlatformProperties2());
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/request-options.mjs
 var FallbackEncoder2 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -14800,7 +14780,7 @@ var FallbackEncoder2 = ({ headers, body }) => {
   };
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/formats.mjs
 var default_format2 = "RFC3986";
 var default_formatter2 = (v) => String(v);
 var formatters2 = {
@@ -14809,7 +14789,7 @@ var formatters2 = {
 };
 var RFC17382 = "RFC1738";
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/utils.mjs
 var has2 = (obj, key) => (has2 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has2(obj, key));
 var hex_table2 = /* @__PURE__ */ (() => {
   const array = [];
@@ -14888,7 +14868,7 @@ function maybe_map2(val, fn) {
   return fn(val);
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/qs/stringify.mjs
 var array_prefix_generators2 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -15166,7 +15146,7 @@ function stringify2(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/log.mjs
 var levelNumbers2 = {
   off: 0,
   error: 200,
@@ -15239,7 +15219,7 @@ var formatRequestDetails2 = (details) => {
   return details;
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/parse.mjs
 async function defaultParseResponse2(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -15273,7 +15253,7 @@ async function defaultParseResponse2(client, props) {
   return body;
 }
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/core/api-promise.mjs
 var _APIPromise_client2;
 var APIPromise2 = /* @__PURE__ */ (() => {
   class APIPromise4 extends Promise {
@@ -15337,7 +15317,7 @@ var APIPromise2 = /* @__PURE__ */ (() => {
   return APIPromise4;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/internal/utils/env.mjs
 var readEnv2 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -15348,7 +15328,7 @@ var readEnv2 = (env) => {
   return void 0;
 };
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/client.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/client.mjs
 var _BaseGitLab_instances;
 var _BaseGitLab_encoder;
 var _BaseGitLab_baseURLOverridden;
@@ -15358,7 +15338,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * API Client for interfacing with the GitLab API.
      *
      * @param {string | undefined} [opts.apiToken=process.env['GITLAB_API_TOKEN'] ?? undefined]
-     * @param {string} [opts.baseURL=process.env['GITLAB_BASE_URL'] ?? https://gitlab.com/api] - Override the default base URL for the API.
+     * @param {string} [opts.baseURL=process.env['GITLAB_BASE_URL'] ?? https://gitlab.com/api/v4] - Override the default base URL for the API.
      * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
      * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
      * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
@@ -15375,7 +15355,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
       const options = {
         apiToken,
         ...opts,
-        baseURL: baseURL || `https://gitlab.com/api`
+        baseURL: baseURL || `https://gitlab.com/api/v4`
       };
       this.baseURL = options.baseURL;
       this.timeout = options.timeout ?? BaseGitLab2.DEFAULT_TIMEOUT;
@@ -15412,13 +15392,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Execute a GLQL (GitLab Query Language) query
      */
     glql(body, options) {
-      return this.post("/api/v4/glql", { body, ...options });
+      return this.post("/glql", { body, ...options });
     }
     /**
      * This feature was introduced in GitLab 11.0.
      */
     markdown(body, options) {
-      return this.post("/api/v4/markdown", { body, ...options });
+      return this.post("/markdown", { body, ...options });
     }
     /**
      * This feature was introduced in GitLab 17.5. \
@@ -15427,32 +15407,32 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      *  In GitLab 18.3, feature flag changed to `organization_switching`.
      */
     organizations(body, options) {
-      return this.post("/api/v4/organizations", multipartFormRequestOptions({ body, ...options }, this));
+      return this.post("/organizations", multipartFormRequestOptions({ body, ...options }, this));
     }
     /**
      * Return avatar url for a user
      */
     retrieveAvatar(query, options) {
-      return this.get("/api/v4/avatar", { query, ...options });
+      return this.get("/avatar", { query, ...options });
     }
     /**
      * Get a list of all deploy tokens across the GitLab instance. This endpoint
      * requires administrator access. This feature was introduced in GitLab 12.9.
      */
     retrieveDeployTokens(query = {}, options) {
-      return this.get("/api/v4/deploy_tokens", { query, ...options });
+      return this.get("/deploy_tokens", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 17.9. It will be removed in 18.0.
      */
     retrieveDiscoverCertBasedClusters(query, options) {
-      return this.get("/api/v4/discover-cert-based-clusters", { query, ...options });
+      return this.get("/discover-cert-based-clusters", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 9.3.
      */
     retrieveEvents(query = {}, options) {
-      return this.get("/api/v4/events", { query, ...options });
+      return this.get("/events", { query, ...options });
     }
     /**
      * Get a list of all experiments. Each experiment has an enabled status that
@@ -15460,13 +15440,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * contexts.
      */
     retrieveExperiments(options) {
-      return this.get("/api/v4/experiments", options);
+      return this.get("/experiments", options);
     }
     /**
      * Get currently authenticated user's issues statistics
      */
     retrieveIssuesStatistics(query = {}, options) {
-      return this.get("/api/v4/issues_statistics", {
+      return this.get("/issues_statistics", {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -15476,7 +15456,7 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Get a list of licenses
      */
     retrieveLicenses(options) {
-      return this.get("/api/v4/licenses", options);
+      return this.get("/licenses", options);
     }
     /**
      * Get all merge requests the authenticated user has access to. By default it
@@ -15484,19 +15464,19 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * requests, use parameter `scope=all`.
      */
     retrieveMergeRequests(query = {}, options) {
-      return this.get("/api/v4/merge_requests", { query, ...options });
+      return this.get("/merge_requests", { query, ...options });
     }
     /**
      * This feature was introduced in GitLab 15.2.
      */
     retrieveMetadata(options) {
-      return this.get("/api/v4/metadata", options);
+      return this.get("/metadata", options);
     }
     /**
      * This feature was introduced in GitLab 10.5.
      */
     retrieveSearch(query, options) {
-      return this.get("/api/v4/search", {
+      return this.get("/search", {
         query,
         ...options,
         headers: buildHeaders2([{ Accept: "*/*" }, options?.headers])
@@ -15506,14 +15486,14 @@ var BaseGitLab = /* @__PURE__ */ (() => {
      * Assigned open issues, assigned MRs and pending todos count
      */
     retrieveUserCounts(options) {
-      return this.get("/api/v4/user_counts", options);
+      return this.get("/user_counts", options);
     }
     /**
      * This feature was introduced in GitLab 8.13 and deprecated in 15.5. We recommend
      * you instead use the Metadata API.
      */
     retrieveVersion(options) {
-      return this.get("/api/v4/version", options);
+      return this.get("/version", options);
     }
     defaultQuery() {
       return this._options.defaultQuery;
@@ -15827,13 +15807,13 @@ var BaseGitLab = /* @__PURE__ */ (() => {
     }
   }
   _BaseGitLab_encoder = /* @__PURE__ */ new WeakMap(), _BaseGitLab_instances = /* @__PURE__ */ new WeakSet(), _BaseGitLab_baseURLOverridden = function _BaseGitLab_baseURLOverridden2() {
-    return this.baseURL !== "https://gitlab.com/api";
+    return this.baseURL !== "https://gitlab.com/api/v4";
   };
   BaseGitLab2.DEFAULT_TIMEOUT = 6e4;
   return BaseGitLab2;
 })();
 
-// node_modules/.pnpm/@stainless-api+gitlab-internal@0.2.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
+// node_modules/.pnpm/@stainless-api+gitlab-internal@0.3.0/node_modules/@stainless-api/gitlab-internal/tree-shakable.mjs
 function createClient2(options) {
   const client = new BaseGitLab(options);
   for (const ResourceClass of options.resources) {
@@ -16678,10 +16658,12 @@ function StatusSymbol(outcome, step) {
   return Symbol2.HourglassFlowingSand;
 }
 function StatusURL(outcome, step) {
-  if (step === "generate" || !outcome[step] || outcome[step].status !== "completed") {
+  if (step === "generate" || !outcome[step]) {
     return null;
   }
-  return outcome[step]?.completed?.url;
+  if (outcome[step].status !== "not_started") {
+    return outcome[step].url;
+  }
 }
 function GitHubLink(outcome) {
   if (!outcome.commit?.completed?.commit) return null;
@@ -18004,7 +17986,7 @@ function splitLines(text) {
   return result;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/tslib.mjs
 function __classPrivateFieldSet3(receiver, state, value, kind, f) {
   if (kind === "m")
     throw new TypeError("Private method is not writable");
@@ -18022,7 +18004,7 @@ function __classPrivateFieldGet3(receiver, state, kind, f) {
   return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/uuid.mjs
 var uuid43 = function() {
   const { crypto: crypto2 } = globalThis;
   if (crypto2?.randomUUID) {
@@ -18034,7 +18016,7 @@ var uuid43 = function() {
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/errors.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/errors.mjs
 function isAbortError3(err) {
   return typeof err === "object" && err !== null && // Spec-compliant fetch implementations
   ("name" in err && err.name === "AbortError" || // Expo fetch
@@ -18065,7 +18047,7 @@ var castToError3 = (err) => {
   return new Error(err);
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/error.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/core/error.mjs
 var StainlessError = class extends Error {
 };
 var APIError3 = class _APIError extends StainlessError {
@@ -18154,7 +18136,7 @@ var RateLimitError3 = class extends APIError3 {
 var InternalServerError3 = class extends APIError3 {
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/values.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/values.mjs
 var startsWithSchemeRegexp3 = /^[a-z][a-z0-9+.-]*:/i;
 var isAbsoluteURL3 = (url) => {
   return startsWithSchemeRegexp3.test(url);
@@ -18194,13 +18176,13 @@ var safeJSON3 = (text) => {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/sleep.mjs
 var sleep3 = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/version.mjs
-var VERSION3 = "0.3.0";
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/version.mjs
+var VERSION3 = "0.5.0";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/detect-platform.mjs
 function getDetectedPlatform3() {
   if (typeof Deno !== "undefined" && Deno.build != null) {
     return "deno";
@@ -18326,7 +18308,7 @@ var getPlatformHeaders3 = () => {
   return _platformHeaders3 ?? (_platformHeaders3 = getPlatformProperties3());
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/shims.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/shims.mjs
 function getDefaultFetch3() {
   if (typeof fetch !== "undefined") {
     return fetch;
@@ -18371,7 +18353,7 @@ async function CancelReadableStream3(stream) {
   await cancelPromise;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/request-options.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/request-options.mjs
 var FallbackEncoder3 = ({ headers, body }) => {
   return {
     bodyHeaders: {
@@ -18381,7 +18363,7 @@ var FallbackEncoder3 = ({ headers, body }) => {
   };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/qs/formats.mjs
 var default_format3 = "RFC3986";
 var default_formatter3 = (v) => String(v);
 var formatters3 = {
@@ -18390,7 +18372,7 @@ var formatters3 = {
 };
 var RFC17383 = "RFC1738";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/qs/utils.mjs
 var has3 = (obj, key) => (has3 = Object.hasOwn ?? Function.prototype.call.bind(Object.prototype.hasOwnProperty), has3(obj, key));
 var hex_table3 = /* @__PURE__ */ (() => {
   const array = [];
@@ -18469,7 +18451,7 @@ function maybe_map3(val, fn) {
   return fn(val);
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/qs/stringify.mjs
 var array_prefix_generators3 = {
   brackets(prefix) {
     return String(prefix) + "[]";
@@ -18747,7 +18729,12 @@ function stringify3(object, opts = {}) {
   return joined.length > 0 ? prefix + joined : "";
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/log.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/query.mjs
+function stringifyQuery(query) {
+  return stringify3(query, { arrayFormat: "comma" });
+}
+
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/log.mjs
 var levelNumbers3 = {
   off: 0,
   error: 200,
@@ -18820,7 +18807,7 @@ var formatRequestDetails3 = (details) => {
   return details;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/parse.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/parse.mjs
 async function defaultParseResponse3(client, props) {
   const { response, requestLogID, retryOfRequestLogID, startTime } = props;
   const body = await (async () => {
@@ -18854,7 +18841,7 @@ async function defaultParseResponse3(client, props) {
   return body;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/api-promise.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/core/api-promise.mjs
 var _APIPromise_client3;
 var APIPromise3 = class _APIPromise extends Promise {
   constructor(client, responsePromise, parseResponse = defaultParseResponse3) {
@@ -18915,7 +18902,7 @@ var APIPromise3 = class _APIPromise extends Promise {
 };
 _APIPromise_client3 = /* @__PURE__ */ new WeakMap();
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/pagination.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/core/pagination.mjs
 var _AbstractPage_client2;
 var AbstractPage2 = class {
   constructor(client, response, body, options) {
@@ -18996,7 +18983,7 @@ var Page = class extends AbstractPage2 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/uploads.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/uploads.mjs
 var checkFileSupport3 = () => {
   if (typeof File === "undefined") {
     const { process: process7 } = globalThis;
@@ -19013,7 +19000,7 @@ function getName3(value) {
 }
 var isAsyncIterable3 = (value) => value != null && typeof value === "object" && typeof value[Symbol.asyncIterator] === "function";
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/to-file.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/to-file.mjs
 var isBlobLike = (value) => value != null && typeof value === "object" && typeof value.size === "number" && typeof value.type === "string" && typeof value.text === "function" && typeof value.slice === "function" && typeof value.arrayBuffer === "function";
 var isFileLike = (value) => value != null && typeof value === "object" && typeof value.name === "string" && typeof value.lastModified === "number" && isBlobLike(value);
 var isResponseLike = (value) => value != null && typeof value === "object" && typeof value.url === "string" && typeof value.blob === "function";
@@ -19065,14 +19052,14 @@ function propsForError(value) {
   return `; props: [${props.map((p) => `"${p}"`).join(", ")}]`;
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/core/resource.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/core/resource.mjs
 var APIResource3 = class {
   constructor(client) {
     this._client = client;
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/path.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/path.mjs
 function encodeURIPath3(str) {
   return str.replace(/[^A-Za-z0-9\-._~!$&'()*+,;=:@]+/g, encodeURIComponent);
 }
@@ -19127,7 +19114,7 @@ ${underline}`);
 };
 var path6 = /* @__PURE__ */ createPathTagFunction3(encodeURIPath3);
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/builds/diagnostics.mjs
 var Diagnostics = class extends APIResource3 {
   /**
    * Get the list of diagnostics for a given build.
@@ -19143,7 +19130,7 @@ var Diagnostics = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/builds/target-outputs.mjs
 var TargetOutputs = class extends APIResource3 {
   /**
    * Retrieve a method to download an output for a given build target.
@@ -19162,7 +19149,7 @@ var TargetOutputs = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/builds/builds.mjs
 var Builds2 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -19214,7 +19201,7 @@ var Builds2 = class extends APIResource3 {
 Builds2.Diagnostics = Diagnostics;
 Builds2.TargetOutputs = TargetOutputs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/orgs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/orgs.mjs
 var Orgs3 = class extends APIResource3 {
   /**
    * Retrieve an organization by name.
@@ -19230,7 +19217,7 @@ var Orgs3 = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/projects/branches.mjs
 var Branches3 = class extends APIResource3 {
   /**
    * Create a new branch for a project.
@@ -19295,7 +19282,7 @@ var Branches3 = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/projects/configs.mjs
 var Configs = class extends APIResource3 {
   /**
    * Retrieve the configuration files for a given project.
@@ -19313,7 +19300,7 @@ var Configs = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/projects/projects.mjs
 var Projects5 = class extends APIResource3 {
   constructor() {
     super(...arguments);
@@ -19361,7 +19348,7 @@ var Projects5 = class extends APIResource3 {
 Projects5.Branches = Branches3;
 Projects5.Configs = Configs;
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/resources/user.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/resources/user.mjs
 var User = class extends APIResource3 {
   /**
    * Retrieve the currently authenticated user's information.
@@ -19371,7 +19358,7 @@ var User = class extends APIResource3 {
   }
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/headers.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/headers.mjs
 var brand_privateNullableHeaders3 = /* @__PURE__ */ Symbol("brand.privateNullableHeaders");
 function* iterateHeaders3(headers) {
   if (!headers)
@@ -19434,7 +19421,7 @@ var buildHeaders3 = (newHeaders) => {
   return { [brand_privateNullableHeaders3]: true, values: targetHeaders, nulls: nullHeaders };
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/internal/utils/env.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/internal/utils/env.mjs
 var readEnv3 = (env) => {
   if (typeof globalThis.process !== "undefined") {
     return globalThis.process.env?.[env]?.trim() ?? void 0;
@@ -19445,7 +19432,7 @@ var readEnv3 = (env) => {
   return void 0;
 };
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/lib/unwrap.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/lib/unwrap.mjs
 async function unwrapFile(value) {
   if (value === null) {
     return null;
@@ -19457,7 +19444,7 @@ async function unwrapFile(value) {
   return response.text();
 }
 
-// node_modules/.pnpm/@stainless-api+sdk@0.3.0/node_modules/@stainless-api/sdk/client.mjs
+// node_modules/.pnpm/@stainless-api+sdk@0.5.0/node_modules/@stainless-api/sdk/client.mjs
 var _Stainless_instances;
 var _a;
 var _Stainless_encoder;
@@ -19551,7 +19538,7 @@ var Stainless = class {
     return buildHeaders3([{ Authorization: `Bearer ${this.apiKey}` }]);
   }
   stringifyQuery(query) {
-    return stringify3(query, { arrayFormat: "comma" });
+    return stringifyQuery(query);
   }
   getUserAgent() {
     return `${this.constructor.name}/JS ${VERSION3}`;
@@ -19913,7 +19900,7 @@ var package_default = {
     "@redocly/cli": "^1.25.0",
     "@stainless-api/github-internal": "^0.25.1",
     "@stainless-api/gitlab-internal": "^0.3.0",
-    "@stainless-api/sdk": "^0.3.0",
+    "@stainless-api/sdk": "^0.5.0",
     diff: "^8.0.3",
     glob: "^11.0.0",
     "nano-spawn": "^1.0.3",

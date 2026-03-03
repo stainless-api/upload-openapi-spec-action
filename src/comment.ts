@@ -392,13 +392,14 @@ function StatusURL(
 ) {
   if (
     step === "generate" ||
-    !outcome[step] ||
-    outcome[step].status !== "completed"
+    !outcome[step]
   ) {
     return null;
   }
 
-  return outcome[step]?.completed?.url;
+  if (outcome[step].status !== "not_started") {
+    return outcome[step].url;
+  }
 }
 
 function GitHubLink(outcome: Outcomes[string]): string | null {
