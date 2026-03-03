@@ -3,6 +3,7 @@ import { getInput } from "./compat/input";
 import { getStainlessAuth } from "./compat";
 import { createAutoRefreshFetch, getStainlessClient } from "./stainless";
 import { logger } from "./logger";
+import { LogLevel } from "@stainless-api/sdk/client";
 
 const accumulatedBuildIds = new Set<string>();
 
@@ -31,7 +32,8 @@ export function wrapAction(
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: "warn",
+        logLevel: (getInput("log_level", { required: false }) ?? "warn") as LogLevel,
+        logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth),
       });
       await fn(stainless);

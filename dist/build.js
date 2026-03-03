@@ -22451,7 +22451,9 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseCommits, BaseComments2, BasePulls]
+      resources: [BaseCommits, BaseComments2, BasePulls],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -25080,7 +25082,9 @@ var GitLabClient = class {
     this.client = createClient2({
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
-      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
+      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -26598,7 +26602,8 @@ function wrapAction(actionType, fn) {
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: "warn",
+        logLevel: getInput("log_level", { required: false }) ?? "warn",
+        logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth)
       });
       await fn(stainless);
