@@ -27088,6 +27088,7 @@ var fs6 = __toESM(require("node:fs"));
 var import_ts_dedent = __toESM(require_dist2());
 var Symbol2 = {
   Bulb: "\u{1F4A1}",
+  Construction: "\u{1F6A7}",
   Exclamation: "\u2757",
   Eyes: "\u{1F440}",
   GreenSquare: "\u{1F7E9}",
@@ -27550,7 +27551,7 @@ function Result({
       };
     }
     return {
-      ResultIcon: Symbol2.WhiteCheckMark,
+      ResultIcon: severity === "fatal" ? Symbol2.Construction : Symbol2.WhiteCheckMark,
       Description: Italic(reason)
     };
   })();

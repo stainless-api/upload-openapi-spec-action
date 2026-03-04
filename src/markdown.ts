@@ -2,6 +2,7 @@ import { dedent as tsdedent } from "ts-dedent";
 
 export const Symbol = {
   Bulb: "💡",
+  Construction: "🚧",
   Exclamation: "❗",
   Eyes: "👀",
   GreenSquare: "🟩",
