@@ -794,9 +794,7 @@ export function printInternalComment(
         summary: `${statusEmoji} ${MD.Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
-        open:
-          worstRegression !== "success" &&
-          worstRegression !== "note"
+        open: worstRegression !== "success" && worstRegression !== "note",
       }),
     );
   }

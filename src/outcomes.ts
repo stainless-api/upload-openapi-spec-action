@@ -125,15 +125,13 @@ export function categorizeOutcome({
 
   // if there's no diff between head and base, there can't be a check regression
   const checkRegressionIsPossible = outcome.hasDiff !== false;
-  const checkIsPending = [...Object.values(headChecks), ...Object.values(baseChecks)].some(
-      (check) => check && check.status !== "completed",
-    )
+  const checkIsPending = [
+    ...Object.values(headChecks),
+    ...Object.values(baseChecks),
+  ].some((check) => check && check.status !== "completed");
 
   // wait for all checks to complete
-  if (
-    checkRegressionIsPossible &&
-    checkIsPending
-  ) {
+  if (checkRegressionIsPossible && checkIsPending) {
     return { isPending: true };
   }
 
