@@ -123,11 +123,16 @@ export function categorizeOutcome({
     ? getChecks(outcome)
     : ({} as Record<string, Stainless.Builds.CheckStep>);
 
-  // wait for all checks to complete
-  if (
-    [...Object.values(headChecks), ...Object.values(baseChecks)].some(
+  // if there's no diff between head and base, there can't be a check regression
+  const checkRegressionIsPossible = outcome.hasDiff !== false;
+  const checkIsPending = [...Object.values(headChecks), ...Object.values(baseChecks)].some(
       (check) => check && check.status !== "completed",
     )
+
+  // wait for all checks to complete
+  if (
+    checkRegressionIsPossible &&
+    checkIsPending
   ) {
     return { isPending: true };
   }
@@ -221,8 +226,8 @@ export function categorizeOutcome({
       if (checkFailures.includes(step)) {
         checkFailureOutcome = {
           severity: severity as Exclude<FailRunOn, "never">,
-          description: `had a failure in the ${step} CI job`,
-          isRegression: baseChecks ? true : null,
+          description: `had a failure in the ${step} CI job${!checkRegressionIsPossible ? " (but no diff was detected, so this is likely not a real regression)" : ""}`,
+          isRegression: checkRegressionIsPossible && baseChecks ? true : null,
           rank: 3,
         };
         break;
@@ -386,7 +391,7 @@ function getNewChecks(
       const conclusion =
         headCheck.status === "completed" && headCheck.conclusion;
 
-      if (!baseConclusion || baseConclusion !== conclusion) {
+      if (conclusion && baseConclusion && baseConclusion !== conclusion) {
         result[checkType] = headCheck;
       }
     }
