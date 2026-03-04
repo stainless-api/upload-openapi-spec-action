@@ -254,7 +254,10 @@ function Result({
       };
     }
     return {
-      ResultIcon: MD.Symbol.WhiteCheckMark,
+      ResultIcon:
+        severity === "fatal"
+          ? MD.Symbol.Construction
+          : MD.Symbol.WhiteCheckMark,
       Description: MD.Italic(reason),
     };
   })();
