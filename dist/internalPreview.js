@@ -13272,7 +13272,9 @@ var GitHubClient = class {
       baseURL: getGitHubContext().urls.api,
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
-      resources: [BaseCommits, BaseComments2, BasePulls]
+      resources: [BaseCommits, BaseComments2, BasePulls],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -15901,7 +15903,9 @@ var GitLabClient = class {
     this.client = createClient2({
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
-      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2]
+      resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
+      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logger
     });
   }
   async listComments(prNumber) {
@@ -16112,6 +16116,7 @@ async function getStainlessAuth() {
 var import_ts_dedent = __toESM(require_dist());
 var Symbol2 = {
   Bulb: "\u{1F4A1}",
+  Construction: "\u{1F6A7}",
   Exclamation: "\u2757",
   Eyes: "\u{1F440}",
   GreenSquare: "\u{1F7E9}",
@@ -16231,9 +16236,11 @@ function categorizeOutcome({
   }
   const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
   const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
-  if ([...Object.values(headChecks), ...Object.values(baseChecks)].some(
+  const checkRegressionIsPossible = outcome.hasDiff !== false;
+  const checkIsPending = [...Object.values(headChecks), ...Object.values(baseChecks)].some(
     (check) => check && check.status !== "completed"
-  )) {
+  );
+  if (checkRegressionIsPossible && checkIsPending) {
     return { isPending: true };
   }
   const newDiagnostics = sortDiagnostics(
@@ -16255,6 +16262,15 @@ function categorizeOutcome({
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
   );
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null
+    };
+  }
   if (conclusions.fatal.includes(headConclusion)) {
     return {
       isPending: false,
@@ -16286,8 +16302,8 @@ function categorizeOutcome({
       if (checkFailures.includes(step)) {
         checkFailureOutcome = {
           severity,
-          description: `had a failure in the ${step} CI job`,
-          isRegression: baseChecks ? true : null,
+          description: `had a failure in the ${step} CI job${!checkRegressionIsPossible ? " (but no diff was detected, so this is likely not a real regression)" : ""}`,
+          isRegression: checkRegressionIsPossible && baseChecks ? true : null,
           rank: 3
         };
         break;
@@ -16323,7 +16339,7 @@ function categorizeOutcome({
     conclusion: headConclusion,
     severity: null,
     description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
-    isRegression: baseConclusion ? false : null
+    isRegression: null
   };
 }
 function getReason({
@@ -16390,7 +16406,7 @@ function getNewChecks(headChecks, baseChecks) {
     if (headCheck) {
       const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
       const conclusion = headCheck.status === "completed" && headCheck.conclusion;
-      if (!baseConclusion || baseConclusion !== conclusion) {
+      if (conclusion && baseConclusion && baseConclusion !== conclusion) {
         result[checkType] = headCheck;
       }
     }
@@ -16464,7 +16480,7 @@ function Result({
       };
     }
     return {
-      ResultIcon: Symbol2.WhiteCheckMark,
+      ResultIcon: severity === "fatal" ? Symbol2.Construction : Symbol2.WhiteCheckMark,
       Description: Italic(reason)
     };
   })();
@@ -16737,9 +16753,9 @@ function printInternalComment(projects, { isComplete = false } = {}) {
     baseOutcomes
   } of projects) {
     const projectResults = [];
-    let hasPending = false;
     let worstRegression = "success";
     let projectHasDiff = false;
+    let numPending = 0;
     for (const [lang, head] of Object.entries(outcomes).sort(
       (a, b) => a[1].hasDiff === b[1].hasDiff ? 0 : a[1].hasDiff ? -1 : 1
     )) {
@@ -16748,7 +16764,7 @@ function printInternalComment(projects, { isComplete = false } = {}) {
         outcome: head,
         baseOutcome: base
       });
-      hasPending ||= categorized.isPending ?? false;
+      numPending += categorized.isPending ? 1 : 0;
       if (!categorized.isPending && categorized.isRegression === true && categorized.severity) {
         worstRegression = worstConclusion(
           worstRegression,
@@ -16770,7 +16786,7 @@ function printInternalComment(projects, { isComplete = false } = {}) {
         projectResults.push(`<li>${result}</li>`);
       }
     }
-    if (hasPending) {
+    if (numPending > 0) {
       projectResults.push(
         Dedent`
           ${Symbol2.HourglassFlowingSand} These are partial results; builds are still running.
@@ -16778,10 +16794,15 @@ function printInternalComment(projects, { isComplete = false } = {}) {
       );
     }
     let statusEmoji;
-    if (hasPending) {
+    if (numPending > 0) {
       statusEmoji = Symbol2.HourglassFlowingSand;
       if (worstRegression !== "success" && worstRegression !== "note") {
         statusEmoji += conclusionEmoji(worstRegression);
+      }
+      const numTotal = Object.keys(outcomes).length;
+      const numCompleted = numTotal - numPending;
+      if (numCompleted > 0) {
+        statusEmoji += ` (${numCompleted}/${numTotal} completed)`;
       }
     } else {
       statusEmoji = conclusionEmoji(worstRegression);
@@ -16792,7 +16813,7 @@ function printInternalComment(projects, { isComplete = false } = {}) {
         summary: `${statusEmoji} ${Bold(`${orgName}/${projectName}`)}${diffIndicator}`,
         body: projectResults.join("\n\n"),
         indent: false,
-        open: worstRegression !== "success" && worstRegression !== "note" && !hasPending
+        open: worstRegression !== "success" && worstRegression !== "note"
       })
     );
   }

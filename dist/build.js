@@ -27205,9 +27205,11 @@ function categorizeOutcome({
   }
   const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
   const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
-  if ([...Object.values(headChecks), ...Object.values(baseChecks)].some(
+  const checkRegressionIsPossible = outcome.hasDiff !== false;
+  const checkIsPending = [...Object.values(headChecks), ...Object.values(baseChecks)].some(
     (check) => check && check.status !== "completed"
-  )) {
+  );
+  if (checkRegressionIsPossible && checkIsPending) {
     return { isPending: true };
   }
   const newDiagnostics = sortDiagnostics(
@@ -27269,8 +27271,8 @@ function categorizeOutcome({
       if (checkFailures.includes(step)) {
         checkFailureOutcome = {
           severity,
-          description: `had a failure in the ${step} CI job`,
-          isRegression: baseChecks ? true : null,
+          description: `had a failure in the ${step} CI job${!checkRegressionIsPossible ? " (but no diff was detected, so this is likely not a real regression)" : ""}`,
+          isRegression: checkRegressionIsPossible && baseChecks ? true : null,
           rank: 3
         };
         break;
@@ -27373,7 +27375,7 @@ function getNewChecks(headChecks, baseChecks) {
     if (headCheck) {
       const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
       const conclusion = headCheck.status === "completed" && headCheck.conclusion;
-      if (!baseConclusion || baseConclusion !== conclusion) {
+      if (conclusion && baseConclusion && baseConclusion !== conclusion) {
         result[checkType] = headCheck;
       }
     }

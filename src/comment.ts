@@ -720,9 +720,9 @@ export function printInternalComment(
     baseOutcomes,
   } of projects) {
     const projectResults: string[] = [];
-    let hasPending = false;
     let worstRegression: OutcomeConclusion = "success";
     let projectHasDiff = false;
+    let numPending = 0;
 
     // show languagues with diffs first
     for (const [lang, head] of Object.entries(outcomes).sort((a, b) =>
@@ -734,7 +734,7 @@ export function printInternalComment(
         outcome: head,
         baseOutcome: base,
       });
-      hasPending ||= categorized.isPending ?? false;
+      numPending += categorized.isPending ? 1 : 0;
 
       if (
         !categorized.isPending &&
@@ -764,7 +764,7 @@ export function printInternalComment(
       }
     }
 
-    if (hasPending) {
+    if (numPending > 0) {
       projectResults.push(
         MD.Dedent`
           ${MD.Symbol.HourglassFlowingSand} These are partial results; builds are still running.
@@ -774,10 +774,15 @@ export function printInternalComment(
 
     let statusEmoji: string;
 
-    if (hasPending) {
+    if (numPending > 0) {
       statusEmoji = MD.Symbol.HourglassFlowingSand;
       if (worstRegression !== "success" && worstRegression !== "note") {
         statusEmoji += conclusionEmoji(worstRegression);
+      }
+      const numTotal = Object.keys(outcomes).length;
+      const numCompleted = numTotal - numPending;
+      if (numCompleted > 0) {
+        statusEmoji += ` (${numCompleted}/${numTotal} completed)`;
       }
     } else {
       statusEmoji = conclusionEmoji(worstRegression);
@@ -791,8 +796,7 @@ export function printInternalComment(
         indent: false,
         open:
           worstRegression !== "success" &&
-          worstRegression !== "note" &&
-          !hasPending,
+          worstRegression !== "note"
       }),
     );
   }
