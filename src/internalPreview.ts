@@ -8,6 +8,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 import {
   type Outcomes,
+  conclusions,
   FailRunOn,
   getDiffLanguages,
   shouldFailRun,
@@ -296,6 +297,16 @@ async function main() {
       if (state.outcomes && state.baseOutcomes) {
         for (const [lang, head] of Object.entries(state.outcomes)) {
           const base = state.baseOutcomes[lang];
+
+          if (
+            (head.commit?.conclusion &&
+              conclusions.fatal.includes(head.commit?.conclusion)) ||
+            (base.commit?.conclusion &&
+              conclusions.fatal.includes(base.commit?.conclusion))
+          ) {
+            // diff is indeterminate if either build failed fatally
+            continue;
+          }
 
           if (head.commit?.conclusion === "merge_conflict") {
             // Don't determine diff until base has also concluded so its

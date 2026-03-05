@@ -16225,6 +16225,18 @@ function shouldFailRun({
   }
   return true;
 }
+var conclusions = {
+  fatal: [
+    "fatal",
+    "payment_required",
+    "timed_out",
+    "upstream_merge_conflict",
+    "version_bump"
+  ],
+  conflict: ["merge_conflict"],
+  diagnostic: ["error", "warning", "note"],
+  success: ["success", "noop", "cancelled"]
+};
 function categorizeOutcome({
   outcome,
   baseOutcome
@@ -16237,27 +16249,16 @@ function categorizeOutcome({
   const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
   const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
   const checkRegressionIsPossible = outcome.hasDiff !== false;
-  const checkIsPending = [...Object.values(headChecks), ...Object.values(baseChecks)].some(
-    (check) => check && check.status !== "completed"
-  );
+  const checkIsPending = [
+    ...Object.values(headChecks),
+    ...Object.values(baseChecks)
+  ].some((check) => check && check.status !== "completed");
   if (checkRegressionIsPossible && checkIsPending) {
     return { isPending: true };
   }
   const newDiagnostics = sortDiagnostics(
     baseOutcome ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics) : outcome.diagnostics
   );
-  const conclusions = {
-    fatal: [
-      "fatal",
-      "payment_required",
-      "timed_out",
-      "upstream_merge_conflict",
-      "version_bump"
-    ],
-    conflict: ["merge_conflict"],
-    diagnostic: ["error", "warning", "note"],
-    success: ["success", "noop", "cancelled"]
-  };
   const checks = getNewChecks(headChecks, baseChecks);
   const checkFailures = CheckType.filter(
     (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
@@ -16278,6 +16279,15 @@ function categorizeOutcome({
       severity: "fatal",
       description: `had a "${headConclusion}" conclusion, and no code was generated`,
       isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
+    };
+  }
+  if (baseConclusion && conclusions.fatal.includes(baseConclusion)) {
+    return {
+      isPending: false,
+      conclusion: headConclusion,
+      severity: null,
+      description: `had a "${baseOutcome?.commit?.conclusion}" conclusion in the base build, which improved to "${headConclusion}"`,
+      isRegression: false
     };
   }
   if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
@@ -19170,6 +19180,9 @@ async function main() {
       if (state.outcomes && state.baseOutcomes) {
         for (const [lang, head] of Object.entries(state.outcomes)) {
           const base = state.baseOutcomes[lang];
+          if (head.commit?.conclusion && conclusions.fatal.includes(head.commit?.conclusion) || base.commit?.conclusion && conclusions.fatal.includes(base.commit?.conclusion)) {
+            continue;
+          }
           if (head.commit?.conclusion === "merge_conflict") {
             if (!base?.commit?.conclusion) continue;
             if (!(lang in state.codegenDiffCache)) {

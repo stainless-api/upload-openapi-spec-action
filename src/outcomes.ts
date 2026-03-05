@@ -91,6 +91,19 @@ export function shouldFailRun({
   return true;
 }
 
+export const conclusions = {
+  fatal: [
+    "fatal",
+    "payment_required",
+    "timed_out",
+    "upstream_merge_conflict",
+    "version_bump",
+  ],
+  conflict: ["merge_conflict"],
+  diagnostic: ["error", "warning", "note"],
+  success: ["success", "noop", "cancelled"],
+};
+
 export function categorizeOutcome({
   outcome,
   baseOutcome,
@@ -140,19 +153,6 @@ export function categorizeOutcome({
       ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics)
       : outcome.diagnostics,
   );
-
-  const conclusions = {
-    fatal: [
-      "fatal",
-      "payment_required",
-      "timed_out",
-      "upstream_merge_conflict",
-      "version_bump",
-    ],
-    conflict: ["merge_conflict"],
-    diagnostic: ["error", "warning", "note"],
-    success: ["success", "noop", "cancelled"],
-  };
 
   const checks = getNewChecks(headChecks, baseChecks);
   const checkFailures = CheckType.filter(
