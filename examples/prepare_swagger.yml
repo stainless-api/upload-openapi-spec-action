@@ -28,7 +28,7 @@ jobs:
       # IMPORTANT: Always checkout the repository first!
       # Without this step, the action cannot access your spec files.
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # Use the pull request head ref for PRs, otherwise use the default branch
           ref: ${{ github.head_ref || github.ref }}

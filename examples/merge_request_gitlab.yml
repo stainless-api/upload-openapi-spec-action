@@ -1,9 +1,27 @@
-include:
-  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/preview/gitlab-ci.yml"
-  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/merge/gitlab-ci.yml"
+# Add this to your .gitlab-ci.yml file.
 
-.common:
+include:
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/build/gitlab-ci.yml"
+
+build-sdk:
+  extends: .build-sdk
+  only:
+    - merge_requests
+    # Set this to the branch of the repository that the `main` Stainless branch
+    # of your project gets its OpenAPI spec from. This is usually the default
+    # branch of your repository.
+    - main
   variables:
+    # A Stainless API key, which you can generate on the Stainless organization
+    # dashboard. Add this to your CI/CD variables:
+    # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
+    STAINLESS_API_KEY: $STAINLESS_API_KEY
+
+    # A GitLab token with permissions to read and write merge request comments.
+    # Add this to your CI/CD variables:
+    # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
+    GITLAB_TOKEN: $GITLAB_TOKEN
+
     # Stainless organization name.
     ORG: YOUR_ORG
 
@@ -17,22 +35,14 @@ include:
     # to maintain the ground truth Stainless config in your own repo.
     CONFIG_PATH: YOUR_CONFIG_PATH
 
+    # The commit message to use for the SDK builds. Use a commit message in the
+    # conventional commits format: https://www.conventionalcommits.org/en/v1.0.0/
+    COMMIT_MESSAGE: "feat(api): update api"
+
     # When to fail the job based on build conclusion.
     # Options: "never" | "note" | "warning" | "error" | "fatal".
     FAIL_ON: error
 
-    # A Stainless API key, which you can generate on the Stainless organization dashboard
-    STAINLESS_API_KEY: $STAINLESS_API_KEY
-
-    # A GitLab token with permissions to read and write merge request comments.
-    GITLAB_TOKEN: $GITLAB_TOKEN
-
-preview:
-  extends: [.common, .preview]
-  only:
-    - merge_requests
-
-merge:
-  extends: [.common, .merge]
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    # Path to write a documented OpenAPI spec to. Optional; will only write if
+    # you code samples configured in your Stainless config.
+    DOCUMENTED_SPEC_PATH: YOUR_DOCUMENTED_SPEC_PATH

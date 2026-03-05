@@ -117,28 +117,24 @@ inputs:
 outputs:
   outcomes:
     description: >-
-      JSON-stringified object of the preview build outcomes. Keys are
-      languages, and values contain the `commit` result of the build for that
-      language. Will look like:
+      JSON-stringified object of build outcomes. Keys are languages, and values
+      contain the `commit` result of the build for that language. Will look
+      like:
 
       ```
       {
         "typescript": {
           "install_url": "https://pkg.stainless.com/...",
           "commit": {
-            "status": "completed",
-            "completed": {
-              "conclusion": "success",
-              "commit": {
-                "sha": "...",
-                "repo": {
-                  "branch": "...",
-                  "name": "...",
-                  "owner": "...",
-                  ...
-                },
+            "conclusion": "success",
+            "commit": {
+              "sha": "...",
+              "repo": {
+                "branch": "...",
+                "name": "...",
+                "owner": "...",
+                ...
               },
-              ...
             }
             ...
           },
@@ -148,28 +144,24 @@ outputs:
       ```
   base_outcomes:
     description: >-
-      JSON-stringified object of the base build outcomes. Keys are languages,
-      and values contain the `commit` result of the build for that language.
-      Will look like:
+      JSON-stringified object of base build outcomes. Present when
+      `base_revision` is specified. Keys are languages, and values contain the
+      `commit` result of the build for that language. Will look like:
 
       ```
       {
         "typescript": {
           "install_url": "https://pkg.stainless.com/...",
           "commit": {
-            "status": "completed",
-            "completed": {
-              "conclusion": "success",
-              "commit": {
-                "sha": "...",
-                "repo": {
-                  "branch": "...",
-                  "name": "...",
-                  "owner": "...",
-                  ...
-                },
+            "conclusion": "success",
+            "commit": {
+              "sha": "...",
+              "repo": {
+                "branch": "...",
+                "name": "...",
+                "owner": "...",
+                ...
               },
-              ...
             }
             ...
           },
