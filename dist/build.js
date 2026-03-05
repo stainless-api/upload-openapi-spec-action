@@ -26518,7 +26518,7 @@ function splitLines(text) {
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.12.0",
+  version: "1.13.0",
   main: "dist/index.js",
   scripts: {
     build: "./scripts/build",
