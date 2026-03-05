@@ -16292,6 +16292,15 @@ function categorizeOutcome({
       isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
     };
   }
+  if (baseConclusion && conclusions.fatal.includes(baseConclusion)) {
+    return {
+      isPending: false,
+      conclusion: headConclusion,
+      severity: null,
+      description: `had a "${baseOutcome?.commit?.conclusion}" conclusion in the base build, which improved to "${headConclusion}"`,
+      isRegression: false
+    };
+  }
   if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
     const categoryOutcome = conclusions.diagnostic.includes(headConclusion) ? {
       severity: headConclusion,
