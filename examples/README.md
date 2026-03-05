@@ -6,7 +6,7 @@ For authentication setup, see the [Authentication section](../README.md#authenti
 
 ## GitHub Actions
 
-The recommended workflow is [push.yml](./push.yml). It uses a single `build` job that runs on pull requests, pushes to your main branch, and manual triggers. On pull requests, the job creates a build of your SDK with the changes introduced by the pull request, and makes a comment with links to a GitHub diff and installation commands. On pushes to your main branch, the job creates a build of the SDK with the latest changes.
+We recommend you use [push.yml](./push.yml). It has a single `build` job that runs when you create or update pull requests and when you push to your main branch.  It can also be triggered manually if needed.  For pull requests, the `build` job creates a build of your SDK using the changes that will be introduced by the pull request, then it adds a comment to the pull request with links to a GitHub diff and installation commands. For pushes to your main branch, the `build` job creates a build of the SDK with the pushed changes.
 
 By default, the pull request workflow uses the title of the pull request as the commit message, but you can edit the comment on the pull request to change the commit message.
 
@@ -36,15 +36,15 @@ If you want to install and test SDK builds as part of your workflow, see [pull_r
 
 For GitLab projects, add the configuration from [push_gitlab.yml](./push_gitlab.yml) to your `.gitlab-ci.yml` file. The workflow uses a single `build-sdk` job that runs on merge requests and pushes to your main branch.
 
-If your OpenAPI spec is generated from your GitLab repo, see [merge_request_gitlab_generated.yml](./merge_request_gitlab_generated.yml) for the extra setup required.
+If your OpenAPI spec is in a GitLab repo, see [merge_request_gitlab_generated.yml](./merge_request_gitlab_generated.yml) for additional instructions.
 
 ## Integration with docs platforms
 
-If your Stainless config has code samples configured, the `build` action also outputs a `documented_spec_path` containing a path to your OpenAPI spec with SDK code samples.
+If your Stainless config has code samples configured, the `build` action also outputs a `documented_spec_path` containing a path to a version of your OpenAPI spec with SDK code samples included.
 
-If you sync your OpenAPI spec with a [ReadMe API Reference](https://readme.com/), you can use the [Sync to ReadMe](https://github.com/marketplace/actions/rdme-sync-to-readme) GitHub action to upload the documented spec to ReadMe. You can see examples of this in the [push_readme.yml](./push_readme.yml) file.
+If you sync your OpenAPI spec with a [ReadMe API Reference](https://readme.com/), use the [Sync to ReadMe](https://github.com/marketplace/actions/rdme-sync-to-readme) GitHub action to upload the documented spec to ReadMe. We have examples in the [push_readme.yml](./push_readme.yml) file.
 
-If you use [Mintlify's OpenAPI support](https://mintlify.com/docs/api-playground/openapi-setup#in-the-repo) for your API reference documentation, you can copy the documented spec to your Mintlify docs repo to update it. You can see examples of this in the [push_mintlify.yml](./push_mintlify.yml) file.
+If you use [Mintlify's OpenAPI support](https://mintlify.com/docs/api-playground/openapi-setup#in-the-repo) for your API reference documentation, copy the documented spec to your Mintlify docs repo to update it. We have examples in the [push_mintlify.yml](./push_mintlify.yml) file.
 
 ## Spec preparation
 
