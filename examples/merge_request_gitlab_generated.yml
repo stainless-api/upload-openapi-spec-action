@@ -1,6 +1,5 @@
 include:
-  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/preview/gitlab-ci.yml"
-  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/merge/gitlab-ci.yml"
+  - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/build/gitlab-ci.yml"
   - remote: "https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/checkout-pr-ref/gitlab-ci.yml"
 
 .common:
@@ -28,26 +27,29 @@ include:
     # A GitLab token with permissions to read and write merge request comments.
     GITLAB_TOKEN: $GITLAB_TOKEN
 
-preview:
-  extends: [.common, .preview]
+build-sdk:
+  extends: [.common, .build-sdk]
   script:
     - apk add --no-cache git
-    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/checkoutPRRef.js
 
-    - REF="base" node checkoutPRRef.js
-    # generate oas and save to OAS_PATH
-    # { insert your code here }
+    - |
+      if [ "$CI_PIPELINE_SOURCE" = "merge_request_event" ]; then
+        wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/checkoutPRRef.js
 
-    - REF="head" node checkoutPRRef.js
-    # generate oas and save to OAS_PATH
-    # { insert your code here }
+        REF="base" node checkoutPRRef.js
+        # generate oas and save to OAS_PATH
+        # { insert your code here }
 
-    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/preview.js
-    - node preview.js
+        REF="head" node checkoutPRRef.js
+        # generate oas and save to OAS_PATH
+        # { insert your code here }
+      else
+        # generate oas and save to OAS_PATH
+        # { insert your code here }
+      fi
+
+    - wget https://raw.githubusercontent.com/stainless-api/upload-openapi-spec-action/v1/dist/build.js
+    - node build.js
   only:
     - merge_requests
-
-merge:
-  extends: [.common, .merge]
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+    - main

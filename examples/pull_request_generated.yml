@@ -1,15 +1,17 @@
-name: Build SDKs for pull request
+name: Build Stainless SDKs (generated spec)
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - closed
+    types: [opened, synchronize, reopened]
+  push:
+    # Set this to the branch of the repository that the `main` Stainless branch
+    # of your project gets its OpenAPI spec from. This is usually the default
+    # branch of your repository.
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -31,8 +33,7 @@ env:
   FAIL_ON: error
 
 jobs:
-  preview:
-    if: github.event.action != 'closed'
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,11 +41,10 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+        uses: actions/checkout@v6
 
       - name: Checkout base ref
+        if: github.event_name == 'pull_request'
         uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
         with:
           ref: base
@@ -52,10 +52,12 @@ jobs:
           config_path: ${{ env.CONFIG_PATH }}
 
       - name: Generate old OpenAPI spec
+        if: github.event_name == 'pull_request'
         # Add a step that generates the OpenAPI spec, based on the checked-out
         # repo contents, to the OAS_PATH.
 
       - name: Checkout head ref
+        if: github.event_name == 'pull_request'
         uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
         with:
           ref: head
@@ -66,58 +68,8 @@ jobs:
         # Add a step that generates the OpenAPI spec, based on the checked-out
         # repo contents, to the OAS_PATH.
 
-      - name: Run preview builds
-        uses: stainless-api/upload-openapi-spec-action/preview@v1
-        with:
-          org: ${{ env.STAINLESS_ORG }}
-          project: ${{ env.STAINLESS_PROJECT }}
-          oas_path: ${{ env.OAS_PATH }}
-          config_path: ${{ env.CONFIG_PATH }}
-          fail_on: ${{ env.FAIL_ON }}
-
-  merge:
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Checkout base ref
-        uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
-        with:
-          ref: base
-          oas_path: ${{ env.OAS_PATH }}
-          config_path: ${{ env.CONFIG_PATH }}
-
-      - name: Generate old OpenAPI spec
-        # Add a step that generates the OpenAPI spec, based on the checked-out
-        # repo contents, to the OAS_PATH.
-
-      - name: Checkout head ref
-        uses: stainless-api/upload-openapi-spec-action/checkout-pr-ref@v1
-        with:
-          ref: head
-          oas_path: ${{ env.OAS_PATH }}
-          config_path: ${{ env.CONFIG_PATH }}
-
-      - name: Generate new OpenAPI spec
-        # Add a step that generates the OpenAPI spec, based on the checked-out
-        # repo contents, to the OAS_PATH.
-
-      # Note that this only merges in changes that happened on the last build on
-      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
-      # changes that haven't been built, if the preview-sdk job didn't finish
-      # before this step starts. In theory we want to wait for all builds
-      # against preview/${{ github.head_ref }} to complete, but assuming that
-      # the preview-sdk job happens before the PR merge, it should be fine.
-      - name: Run merge build
-        uses: stainless-api/upload-openapi-spec-action/merge@v1
+      - name: Run build
+        uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}

@@ -1,15 +1,17 @@
-name: Build SDKs for pull request
+name: Build Stainless SDKs (SDK usage)
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - closed
+    types: [opened, synchronize, reopened]
+  push:
+    # Set this to the branch of the repository that the `main` Stainless branch
+    # of your project gets its OpenAPI spec from. This is usually the default
+    # branch of your repository.
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -31,8 +33,7 @@ env:
   FAIL_ON: error
 
 jobs:
-  preview:
-    if: github.event.action != 'closed'
+  build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,13 +41,11 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+        uses: actions/checkout@v6
 
-      - name: Run preview builds
+      - name: Run build
         id: build
-        uses: stainless-api/upload-openapi-spec-action/preview@v1
+        uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
           org: ${{ env.STAINLESS_ORG }}
           project: ${{ env.STAINLESS_PROJECT }}
@@ -54,9 +53,9 @@ jobs:
           config_path: ${{ env.CONFIG_PATH }}
           fail_on: ${{ env.FAIL_ON }}
 
-      # Example: Extract install_url and test the preview build
+      # Example: Extract install_url and test the SDK build
       # This demonstrates how to use the install_url output to run integration tests
-      # against the preview build before merging.
+      # against the build.
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -77,56 +76,4 @@ jobs:
             echo "Preview SDK installed successfully!"
           else
             echo "No install_url found for TypeScript SDK"
-          fi
-
-  merge:
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      # Note that this only merges in changes that happened on the last build on
-      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
-      # changes that haven't been built, if the preview-sdk job didn't finish
-      # before this step starts. In theory we want to wait for all builds
-      # against preview/${{ github.head_ref }} to complete, but assuming that
-      # the preview-sdk job happens before the PR merge, it should be fine.
-      - name: Run merge build
-        id: build
-        uses: stainless-api/upload-openapi-spec-action/merge@v1
-        with:
-          org: ${{ env.STAINLESS_ORG }}
-          project: ${{ env.STAINLESS_PROJECT }}
-          oas_path: ${{ env.OAS_PATH }}
-          config_path: ${{ env.CONFIG_PATH }}
-          fail_on: ${{ env.FAIL_ON }}
-
-      # Example: Use install_url for post-merge operations
-      # This demonstrates using install_url to verify the merged SDK build
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.11"
-
-      - name: Verify merged Python SDK
-        run: |
-          # Extract the install_url for the Python SDK from the outcomes
-          INSTALL_URL=$(echo '${{ steps.build.outputs.outcomes }}' | jq -r '.python.install_url // empty')
-
-          if [ -n "$INSTALL_URL" ]; then
-            echo "Installing merged SDK from: $INSTALL_URL"
-            pip install "$INSTALL_URL"
-
-            # Verify the installation or run smoke tests
-            # python -c "import your_sdk; print(your_sdk.__version__)"
-            echo "Merged SDK installed successfully!"
-          else
-            echo "No install_url found for Python SDK"
           fi
