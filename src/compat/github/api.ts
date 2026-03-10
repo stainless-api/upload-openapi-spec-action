@@ -10,7 +10,6 @@ import { logger } from "../../logger";
 import type { APIClient, Comment, PullRequest } from "../api";
 import { getInput } from "../input";
 import { getGitHubContext as ctx } from "./context";
-import { LogLevel } from "@stainless-api/github-internal/client";
 
 class GitHubClient implements APIClient {
   private client: PartialGitHub<{
@@ -28,8 +27,7 @@ class GitHubClient implements APIClient {
       owner: ctx().owner,
       repo: ctx().repo,
       resources: [BaseCommits, BaseComments, BasePulls],
-      logLevel: (getInput("log_level", { required: false }) ??
-        "warn") as LogLevel,
+      logLevel: "warn",
       logger,
     });
   }

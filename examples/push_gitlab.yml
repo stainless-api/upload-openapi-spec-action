@@ -17,6 +17,11 @@ build-sdk:
     # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
     STAINLESS_API_KEY: $STAINLESS_API_KEY
 
+    # A GitLab token with permissions to read and write merge request comments.
+    # Add this to your CI/CD variables:
+    # https://docs.gitlab.com/ci/variables/#add-a-cicd-variable-to-a-project
+    GITLAB_TOKEN: $GITLAB_TOKEN
+
     # Stainless organization name.
     ORG: YOUR_ORG
 

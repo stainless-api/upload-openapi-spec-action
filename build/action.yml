@@ -124,19 +124,15 @@ outputs:
         "typescript": {
           "install_url": "https://pkg.stainless.com/...",
           "commit": {
-            "status": "completed",
-            "completed": {
-              "conclusion": "success",
-              "commit": {
-                "sha": "...",
-                "repo": {
-                  "branch": "...",
-                  "name": "...",
-                  "owner": "...",
-                  ...
-                },
+            "conclusion": "success",
+            "commit": {
+              "sha": "...",
+              "repo": {
+                "branch": "...",
+                "name": "...",
+                "owner": "...",
+                ...
               },
-              ...
             }
             ...
           },
@@ -155,19 +151,15 @@ outputs:
         "typescript": {
           "install_url": "https://pkg.stainless.com/...",
           "commit": {
-            "status": "completed",
-            "completed": {
-              "conclusion": "success",
-              "commit": {
-                "sha": "...",
-                "repo": {
-                  "branch": "...",
-                  "name": "...",
-                  "owner": "...",
-                  ...
-                },
+            "conclusion": "success",
+            "commit": {
+              "sha": "...",
+              "repo": {
+                "branch": "...",
+                "name": "...",
+                "owner": "...",
+                ...
               },
-              ...
             }
             ...
           },

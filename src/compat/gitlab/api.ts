@@ -15,7 +15,6 @@ import { logger } from "../../logger";
 import type { APIClient, Comment, PullRequest } from "../api";
 import { getInput } from "../input";
 import { getGitLabContext as ctx } from "./context";
-import { LogLevel } from "@stainless-api/gitlab-internal/client";
 
 class GitLabClient implements APIClient {
   private client: PartialGitLab<{
@@ -30,8 +29,7 @@ class GitLabClient implements APIClient {
       apiToken: token,
       baseURL: ctx().urls.api,
       resources: [BaseCommits, BaseMergeRequests, BaseNotes],
-      logLevel: (getInput("log_level", { required: false }) ??
-        "warn") as LogLevel,
+      logLevel: "warn",
       logger,
     });
   }

@@ -47,7 +47,7 @@ jobs:
       # IMPORTANT: Always checkout the repository first!
       # Without this step, the action cannot access your spec files.
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Combine OpenAPI specs
         id: combine

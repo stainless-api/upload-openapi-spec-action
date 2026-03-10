@@ -1,11 +1,8 @@
-name: Build SDKs on branch push
+name: Build Stainless SDKs
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+    types: [opened, synchronize, reopened]
   push:
     # Set this to the branch of the repository that the `main` Stainless branch
     # of your project gets its OpenAPI spec from. This is usually the default
@@ -14,7 +11,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -31,10 +28,6 @@ env:
   # to maintain the ground truth Stainless config in your own repo.
   CONFIG_PATH: YOUR_CONFIG_PATH
 
-  # The commit message to use for the SDK builds. Use a commit message in the
-  # conventional commits format: https://www.conventionalcommits.org/en/v1.0.0/
-  COMMIT_MESSAGE: "feat(api): update api"
-
   # When to fail the job based on build conclusion.
   # Options: "never" | "note" | "warning" | "error" | "fatal".
   FAIL_ON: error
@@ -44,10 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      pull-requests: write
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run build
         uses: stainless-api/upload-openapi-spec-action/build@v1
@@ -56,5 +50,4 @@ jobs:
           project: ${{ env.STAINLESS_PROJECT }}
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
-          commit_message: ${{ env.COMMIT_MESSAGE }}
           fail_on: ${{ env.FAIL_ON }}
