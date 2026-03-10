@@ -13271,7 +13271,7 @@ var GitHubClient = class {
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
       resources: [BaseCommits, BaseComments2, BasePulls],
-      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logLevel: "warn",
       logger
     });
   }
@@ -15902,7 +15902,7 @@ var GitLabClient = class {
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
       resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
-      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logLevel: "warn",
       logger
     });
   }
@@ -20048,7 +20048,7 @@ function wrapAction(actionType, fn) {
       stainless = getStainlessClient(actionType, {
         project: projectName,
         apiKey: auth.key,
-        logLevel: getInput("log_level", { required: false }) ?? "warn",
+        logLevel: "warn",
         logger,
         fetch: createAutoRefreshFetch(auth, getStainlessAuth)
       });
