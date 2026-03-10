@@ -13273,7 +13273,7 @@ var GitHubClient = class {
       owner: getGitHubContext().owner,
       repo: getGitHubContext().repo,
       resources: [BaseCommits, BaseComments2, BasePulls],
-      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logLevel: "warn",
       logger
     });
   }
@@ -15904,7 +15904,7 @@ var GitLabClient = class {
       apiToken: token,
       baseURL: getGitLabContext().urls.api,
       resources: [BaseCommits3, BaseMergeRequests, BaseNotes2],
-      logLevel: getInput("log_level", { required: false }) ?? "warn",
+      logLevel: "warn",
       logger
     });
   }
@@ -18754,7 +18754,7 @@ Stainless.User = User;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.12.0",
+  version: "1.13.0",
   main: "dist/index.js",
   scripts: {
     build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
