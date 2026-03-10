@@ -738,7 +738,7 @@ export function printInternalComment(
 
       if (
         !categorized.isPending &&
-        categorized.isRegression === true &&
+        categorized.isRegression !== false &&
         categorized.severity
       ) {
         worstRegression = worstConclusion(

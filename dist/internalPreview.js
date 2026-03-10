@@ -16775,7 +16775,7 @@ function printInternalComment(projects, { isComplete = false } = {}) {
         baseOutcome: base
       });
       numPending += categorized.isPending ? 1 : 0;
-      if (!categorized.isPending && categorized.isRegression === true && categorized.severity) {
+      if (!categorized.isPending && categorized.isRegression !== false && categorized.severity) {
         worstRegression = worstConclusion(
           worstRegression,
           categorized.severity
