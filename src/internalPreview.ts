@@ -347,6 +347,7 @@ async function main() {
             const cached = state.codegenDiffCache[lang];
             if (cached) {
               head.hasDiff = cached.hasDiff;
+              base.hasDiff = head.hasDiff;
               head.codegenCompareUrl = cached.compareUrl;
               head.diffStats = cached.diffStats ?? undefined;
             }
@@ -355,6 +356,7 @@ async function main() {
             const headTreeOid = head.commit?.completed?.commit?.tree_oid;
             if (baseTreeOid && headTreeOid) {
               head.hasDiff = baseTreeOid !== headTreeOid;
+              base.hasDiff = head.hasDiff;
 
               // On first detection of a diff, clone and diff the repo to get stats.
               if (
