@@ -1,7 +1,7 @@
 import { createPatch, applyPatch } from "diff";
 import { Stainless } from "@stainless-api/sdk";
 import { logger } from "./logger";
-import type { Outcomes } from "./outcomes";
+import { categorizeOutcome, type Outcomes } from "./outcomes";
 import { addBuildIdForTelemetry } from "./wrapAction";
 
 type Build = Stainless.Builds.Build;
@@ -339,8 +339,7 @@ async function* pollBuild({
 
   const pollingStart = Date.now();
   while (
-    Object.values(outcomes).filter(({ status }) => status === "completed")
-      .length < languages.length &&
+    Object.values(outcomes).length < languages.length || Object.values(outcomes).some((outcome) => categorizeOutcome({ outcome }).isPending) &&
     Date.now() - pollingStart < maxPollingSeconds * 1000
   ) {
     let hasChange = false;
@@ -411,7 +410,7 @@ async function* pollBuild({
 
   const languagesWithoutOutcome = languages.filter(
     (language) =>
-      !outcomes[language] || outcomes[language].commit?.status !== "completed",
+      !outcomes[language] || categorizeOutcome({ outcome: outcomes[language]! }).isPending,
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
