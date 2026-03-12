@@ -30,6 +30,29 @@ export function createAutoRefreshFetch(
   };
 }
 
+/**
+ * adds retries to a fetch function for 401 responses, as it seems that OIDC decode on the server can
+ * occasionally fail transiently
+ */
+export const addFetch401Retries = (
+  fetch: typeof globalThis.fetch,
+  { numRetries }: { numRetries: number },
+): typeof globalThis.fetch => {
+  return async (input, init) => {
+    let attempts = 0;
+    let response;
+    do {
+      response = await fetch(input, init);
+      if (response.status !== 401) {
+        break;
+      }
+      attempts++;
+      logger.warn("Received 401 response, retrying...");
+    } while (attempts <= numRetries);
+    return response;
+  };
+};
+
 export function getStainlessClient(
   action: string | undefined,
   opts: ClientOptions,

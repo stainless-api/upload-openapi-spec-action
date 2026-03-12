@@ -26515,6 +26515,252 @@ function splitLines(text) {
   return result;
 }
 
+// src/outcomes.ts
+var ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
+var FailRunOn = [
+  "never",
+  "fatal",
+  "error",
+  "warning",
+  "note"
+];
+var OutcomeConclusion = [...FailRunOn, "success"];
+function shouldFailRun({
+  failRunOn,
+  outcomes,
+  baseOutcomes,
+  projectName
+}) {
+  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
+    const categorized = categorizeOutcome({
+      outcome,
+      baseOutcome: baseOutcomes?.[language]
+    });
+    if (categorized.isPending) {
+      return [];
+    }
+    const { severity, isRegression, description } = categorized;
+    const didFail = isRegression !== false && severity && OutcomeConclusion.indexOf(severity) <= OutcomeConclusion.indexOf(failRunOn);
+    return didFail ? [
+      {
+        language,
+        reason: getReason({
+          description,
+          isRegression
+        })
+      }
+    ] : [];
+  });
+  if (failures.length > 0) {
+    logger.warn("The following languages did not build successfully:");
+    for (const { language, reason } of failures) {
+      logger.warn(
+        `${projectName ? `[${projectName}] ` : ""}${language}: ${reason}`
+      );
+    }
+    return false;
+  }
+  return true;
+}
+var conclusions = {
+  fatal: [
+    "fatal",
+    "payment_required",
+    "timed_out",
+    "upstream_merge_conflict",
+    "version_bump"
+  ],
+  conflict: ["merge_conflict"],
+  diagnostic: ["error", "warning", "note"],
+  success: ["success", "noop", "cancelled"]
+};
+function categorizeOutcome({
+  outcome,
+  baseOutcome
+}) {
+  const baseConclusion = baseOutcome?.commit?.conclusion;
+  const headConclusion = outcome.commit?.conclusion;
+  if (!headConclusion || baseOutcome && !baseConclusion) {
+    return { isPending: true };
+  }
+  const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
+  const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
+  const checkRegressionIsPossible = outcome.hasDiff !== false;
+  const checkIsPending = [
+    ...Object.values(headChecks),
+    ...Object.values(baseChecks)
+  ].some((check) => check && check.status !== "completed");
+  if (checkRegressionIsPossible && checkIsPending) {
+    return { isPending: true };
+  }
+  const newDiagnostics = sortDiagnostics(
+    baseOutcome ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics) : outcome.diagnostics
+  );
+  const checks = getNewChecks(headChecks, baseChecks);
+  const checkFailures = CheckType.filter(
+    (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
+  );
+  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
+    return {
+      isPending: false,
+      conclusion: "timed_out",
+      severity: "fatal",
+      description: "timed out before completion",
+      isRegression: null
+    };
+  }
+  if (conclusions.fatal.includes(headConclusion)) {
+    return {
+      isPending: false,
+      conclusion: "fatal",
+      severity: "fatal",
+      description: `had a "${headConclusion}" conclusion, and no code was generated`,
+      isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
+    };
+  }
+  if (baseConclusion && conclusions.fatal.includes(baseConclusion)) {
+    return {
+      isPending: false,
+      conclusion: headConclusion,
+      severity: null,
+      description: `had a "${baseOutcome?.commit?.conclusion}" conclusion in the base build, which improved to "${headConclusion}"`,
+      isRegression: false
+    };
+  }
+  if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
+    const categoryOutcome = conclusions.diagnostic.includes(headConclusion) ? {
+      severity: headConclusion,
+      description: `had at least one "${headConclusion}" diagnostic`,
+      isRegression: baseConclusion ? conclusions.success.includes(baseConclusion) || conclusions.diagnostic.indexOf(headConclusion) < conclusions.diagnostic.indexOf(baseConclusion) ? true : false : null,
+      rank: 1
+    } : null;
+    const diagnosticLevelOutcome = newDiagnostics.length > 0 ? {
+      severity: newDiagnostics[0].level,
+      description: `had at least one ${baseOutcome ? "new " : ""}${newDiagnostics[0].level} diagnostic`,
+      isRegression: baseOutcome ? true : null,
+      rank: 2
+    } : null;
+    let checkFailureOutcome;
+    for (const { step, severity } of [
+      { step: "build", severity: "error" },
+      { step: "lint", severity: "warning" },
+      { step: "test", severity: "warning" }
+    ]) {
+      if (checkFailures.includes(step)) {
+        checkFailureOutcome = {
+          severity,
+          description: `had a failure in the ${step} CI job${!checkRegressionIsPossible ? " (but no diff was detected, so this is likely not a real regression)" : ""}`,
+          isRegression: checkRegressionIsPossible && baseChecks ? true : null,
+          rank: 3
+        };
+        break;
+      }
+    }
+    const worstOutcome = [
+      categoryOutcome,
+      diagnosticLevelOutcome,
+      checkFailureOutcome
+    ].filter((r) => r !== null).sort(
+      (a, b) => (
+        // sort by severity then rank
+        conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
+      )
+    )[0];
+    return {
+      isPending: false,
+      conclusion: worstOutcome.severity,
+      ...worstOutcome
+    };
+  }
+  if (conclusions.conflict.includes(headConclusion)) {
+    return {
+      isPending: false,
+      conclusion: "merge_conflict",
+      severity: baseConclusion !== "merge_conflict" ? "warning" : null,
+      description: "resulted in a merge conflict between your custom code and the newly generated changes",
+      isRegression: baseConclusion ? baseConclusion !== "merge_conflict" ? true : false : null
+    };
+  }
+  return {
+    isPending: false,
+    conclusion: headConclusion,
+    severity: null,
+    description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
+    isRegression: null
+  };
+}
+function getReason({
+  description,
+  isRegression
+}) {
+  return `Your SDK build ${description}${isRegression === true ? ", which is a regression from the base state" : isRegression === false ? ", but this did not represent a regression" : ""}.`;
+}
+var DiagnosticLevel = ["fatal", "error", "warning", "note"];
+function countDiagnosticLevels(diagnostics) {
+  return diagnostics.reduce(
+    (counts, diag) => {
+      counts[diag.level] = (counts[diag.level] || 0) + 1;
+      return counts;
+    },
+    {
+      fatal: 0,
+      error: 0,
+      warning: 0,
+      note: 0
+    }
+  );
+}
+function getNewDiagnostics(diagnostics, baseDiagnostics) {
+  if (!baseDiagnostics) {
+    return diagnostics;
+  }
+  return diagnostics.filter(
+    (d) => !baseDiagnostics.some(
+      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
+    )
+  );
+}
+function sortDiagnostics(diagnostics) {
+  return diagnostics.sort(
+    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
+  );
+}
+var CheckType = ["build", "lint", "test"];
+function getChecks(outcome) {
+  const results = {};
+  const commitCompletedMoreThanXSecsAgo = outcome.commit ? (/* @__PURE__ */ new Date()).getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1e3 : false;
+  for (const checkType of CheckType) {
+    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
+      outcome[checkType] = {
+        status: "completed",
+        conclusion: "skipped",
+        completed: {
+          conclusion: "skipped",
+          url: null
+        },
+        url: null
+      };
+    }
+    results[checkType] = outcome[checkType] || null;
+  }
+  return results;
+}
+function getNewChecks(headChecks, baseChecks) {
+  const result = {};
+  for (const checkType of CheckType) {
+    const headCheck = headChecks[checkType];
+    const baseCheck = baseChecks ? baseChecks[checkType] : null;
+    if (headCheck) {
+      const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
+      const conclusion = headCheck.status === "completed" && headCheck.conclusion;
+      if (conclusion && baseConclusion && baseConclusion !== conclusion) {
+        result[checkType] = headCheck;
+      }
+    }
+  }
+  return result;
+}
+
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
@@ -26577,6 +26823,21 @@ function createAutoRefreshFetch(initialAuth, refreshAuth) {
     return fetch(input, { ...init, headers });
   };
 }
+var addFetch401Retries = (fetch2, { numRetries }) => {
+  return async (input, init) => {
+    let attempts = 0;
+    let response;
+    do {
+      response = await fetch2(input, init);
+      if (response.status !== 401) {
+        break;
+      }
+      attempts++;
+      logger.warn("Received 401 response, retrying...");
+    } while (attempts <= numRetries);
+    return response;
+  };
+};
 function getStainlessClient(action, opts) {
   const headers = {
     "User-Agent": `Stainless/Action ${package_default.version}`
@@ -26611,7 +26872,10 @@ function wrapAction(actionType, fn) {
         apiKey: auth.key,
         logLevel: "warn",
         logger,
-        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
+        fetch: addFetch401Retries(
+          createAutoRefreshFetch(auth, getStainlessAuth),
+          { numRetries: 2 }
+        )
       });
       await fn(stainless);
       await maybeReportResult({
@@ -26924,7 +27188,9 @@ async function* pollBuild({
     return;
   }
   const pollingStart = Date.now();
-  while (Object.values(outcomes).filter(({ status }) => status === "completed").length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while ((Object.values(outcomes).length < languages.length || Object.values(outcomes).some(
+    (outcome) => categorizeOutcome({ outcome }).isPending
+  )) && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
     let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {
@@ -26974,7 +27240,7 @@ async function* pollBuild({
     );
   }
   const languagesWithoutOutcome = languages.filter(
-    (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
+    (language) => !outcomes[language] || categorizeOutcome({ outcome: outcomes[language] }).isPending
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
@@ -27146,252 +27412,6 @@ var Details = ({
 var Heading = (content) => `<h3>${content}</h3>`;
 var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
 var Rule = () => `<hr />`;
-
-// src/outcomes.ts
-var ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS = 60;
-var FailRunOn = [
-  "never",
-  "fatal",
-  "error",
-  "warning",
-  "note"
-];
-var OutcomeConclusion = [...FailRunOn, "success"];
-function shouldFailRun({
-  failRunOn,
-  outcomes,
-  baseOutcomes,
-  projectName
-}) {
-  const failures = Object.entries(outcomes).flatMap(([language, outcome]) => {
-    const categorized = categorizeOutcome({
-      outcome,
-      baseOutcome: baseOutcomes?.[language]
-    });
-    if (categorized.isPending) {
-      return [];
-    }
-    const { severity, isRegression, description } = categorized;
-    const didFail = isRegression !== false && severity && OutcomeConclusion.indexOf(severity) <= OutcomeConclusion.indexOf(failRunOn);
-    return didFail ? [
-      {
-        language,
-        reason: getReason({
-          description,
-          isRegression
-        })
-      }
-    ] : [];
-  });
-  if (failures.length > 0) {
-    logger.warn("The following languages did not build successfully:");
-    for (const { language, reason } of failures) {
-      logger.warn(
-        `${projectName ? `[${projectName}] ` : ""}${language}: ${reason}`
-      );
-    }
-    return false;
-  }
-  return true;
-}
-var conclusions = {
-  fatal: [
-    "fatal",
-    "payment_required",
-    "timed_out",
-    "upstream_merge_conflict",
-    "version_bump"
-  ],
-  conflict: ["merge_conflict"],
-  diagnostic: ["error", "warning", "note"],
-  success: ["success", "noop", "cancelled"]
-};
-function categorizeOutcome({
-  outcome,
-  baseOutcome
-}) {
-  const baseConclusion = baseOutcome?.commit?.conclusion;
-  const headConclusion = outcome.commit?.conclusion;
-  if (!headConclusion || baseOutcome && !baseConclusion) {
-    return { isPending: true };
-  }
-  const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
-  const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
-  const checkRegressionIsPossible = outcome.hasDiff !== false;
-  const checkIsPending = [
-    ...Object.values(headChecks),
-    ...Object.values(baseChecks)
-  ].some((check) => check && check.status !== "completed");
-  if (checkRegressionIsPossible && checkIsPending) {
-    return { isPending: true };
-  }
-  const newDiagnostics = sortDiagnostics(
-    baseOutcome ? getNewDiagnostics(outcome.diagnostics, baseOutcome.diagnostics) : outcome.diagnostics
-  );
-  const checks = getNewChecks(headChecks, baseChecks);
-  const checkFailures = CheckType.filter(
-    (checkType) => checks[checkType] && checks[checkType].status === "completed" && ["failure", "timed_out"].includes(checks[checkType].completed.conclusion)
-  );
-  if (headConclusion === "timed_out" || baseConclusion === "timed_out") {
-    return {
-      isPending: false,
-      conclusion: "timed_out",
-      severity: "fatal",
-      description: "timed out before completion",
-      isRegression: null
-    };
-  }
-  if (conclusions.fatal.includes(headConclusion)) {
-    return {
-      isPending: false,
-      conclusion: "fatal",
-      severity: "fatal",
-      description: `had a "${headConclusion}" conclusion, and no code was generated`,
-      isRegression: baseConclusion ? conclusions.fatal.includes(baseConclusion) ? false : true : null
-    };
-  }
-  if (baseConclusion && conclusions.fatal.includes(baseConclusion)) {
-    return {
-      isPending: false,
-      conclusion: headConclusion,
-      severity: null,
-      description: `had a "${baseOutcome?.commit?.conclusion}" conclusion in the base build, which improved to "${headConclusion}"`,
-      isRegression: false
-    };
-  }
-  if (conclusions.diagnostic.includes(headConclusion) || newDiagnostics.length > 0 || checkFailures.length > 0) {
-    const categoryOutcome = conclusions.diagnostic.includes(headConclusion) ? {
-      severity: headConclusion,
-      description: `had at least one "${headConclusion}" diagnostic`,
-      isRegression: baseConclusion ? conclusions.success.includes(baseConclusion) || conclusions.diagnostic.indexOf(headConclusion) < conclusions.diagnostic.indexOf(baseConclusion) ? true : false : null,
-      rank: 1
-    } : null;
-    const diagnosticLevelOutcome = newDiagnostics.length > 0 ? {
-      severity: newDiagnostics[0].level,
-      description: `had at least one ${baseOutcome ? "new " : ""}${newDiagnostics[0].level} diagnostic`,
-      isRegression: baseOutcome ? true : null,
-      rank: 2
-    } : null;
-    let checkFailureOutcome;
-    for (const { step, severity } of [
-      { step: "build", severity: "error" },
-      { step: "lint", severity: "warning" },
-      { step: "test", severity: "warning" }
-    ]) {
-      if (checkFailures.includes(step)) {
-        checkFailureOutcome = {
-          severity,
-          description: `had a failure in the ${step} CI job${!checkRegressionIsPossible ? " (but no diff was detected, so this is likely not a real regression)" : ""}`,
-          isRegression: checkRegressionIsPossible && baseChecks ? true : null,
-          rank: 3
-        };
-        break;
-      }
-    }
-    const worstOutcome = [
-      categoryOutcome,
-      diagnosticLevelOutcome,
-      checkFailureOutcome
-    ].filter((r) => r !== null).sort(
-      (a, b) => (
-        // sort by severity then rank
-        conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
-      )
-    )[0];
-    return {
-      isPending: false,
-      conclusion: worstOutcome.severity,
-      ...worstOutcome
-    };
-  }
-  if (conclusions.conflict.includes(headConclusion)) {
-    return {
-      isPending: false,
-      conclusion: "merge_conflict",
-      severity: baseConclusion !== "merge_conflict" ? "warning" : null,
-      description: "resulted in a merge conflict between your custom code and the newly generated changes",
-      isRegression: baseConclusion ? baseConclusion !== "merge_conflict" ? true : false : null
-    };
-  }
-  return {
-    isPending: false,
-    conclusion: headConclusion,
-    severity: null,
-    description: headConclusion === "success" ? "was successful" : `had a conclusion of ${headConclusion}`,
-    isRegression: null
-  };
-}
-function getReason({
-  description,
-  isRegression
-}) {
-  return `Your SDK build ${description}${isRegression === true ? ", which is a regression from the base state" : isRegression === false ? ", but this did not represent a regression" : ""}.`;
-}
-var DiagnosticLevel = ["fatal", "error", "warning", "note"];
-function countDiagnosticLevels(diagnostics) {
-  return diagnostics.reduce(
-    (counts, diag) => {
-      counts[diag.level] = (counts[diag.level] || 0) + 1;
-      return counts;
-    },
-    {
-      fatal: 0,
-      error: 0,
-      warning: 0,
-      note: 0
-    }
-  );
-}
-function getNewDiagnostics(diagnostics, baseDiagnostics) {
-  if (!baseDiagnostics) {
-    return diagnostics;
-  }
-  return diagnostics.filter(
-    (d) => !baseDiagnostics.some(
-      (bd) => bd.code === d.code && bd.message === d.message && bd.config_ref === d.config_ref && bd.oas_ref === d.oas_ref
-    )
-  );
-}
-function sortDiagnostics(diagnostics) {
-  return diagnostics.sort(
-    (a, b) => DiagnosticLevel.indexOf(a.level) - DiagnosticLevel.indexOf(b.level)
-  );
-}
-var CheckType = ["build", "lint", "test"];
-function getChecks(outcome) {
-  const results = {};
-  const commitCompletedMoreThanXSecsAgo = outcome.commit ? (/* @__PURE__ */ new Date()).getTime() - new Date(outcome.commit.completed_at).getTime() > ASSUME_PENDING_CHECKS_SKIPPED_AFTER_SECS * 1e3 : false;
-  for (const checkType of CheckType) {
-    if (outcome[checkType]?.status === "not_started" && commitCompletedMoreThanXSecsAgo) {
-      outcome[checkType] = {
-        status: "completed",
-        conclusion: "skipped",
-        completed: {
-          conclusion: "skipped",
-          url: null
-        },
-        url: null
-      };
-    }
-    results[checkType] = outcome[checkType] || null;
-  }
-  return results;
-}
-function getNewChecks(headChecks, baseChecks) {
-  const result = {};
-  for (const checkType of CheckType) {
-    const headCheck = headChecks[checkType];
-    const baseCheck = baseChecks ? baseChecks[checkType] : null;
-    if (headCheck) {
-      const baseConclusion = baseCheck?.status === "completed" && baseCheck.conclusion;
-      const conclusion = headCheck.status === "completed" && headCheck.conclusion;
-      if (conclusion && baseConclusion && baseConclusion !== conclusion) {
-        result[checkType] = headCheck;
-      }
-    }
-  }
-  return result;
-}
 
 // src/comment.ts
 var COMMENT_TITLE = Heading(

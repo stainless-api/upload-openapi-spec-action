@@ -19973,6 +19973,21 @@ function createAutoRefreshFetch(initialAuth, refreshAuth) {
     return fetch(input, { ...init, headers });
   };
 }
+var addFetch401Retries = (fetch2, { numRetries }) => {
+  return async (input, init) => {
+    let attempts = 0;
+    let response;
+    do {
+      response = await fetch2(input, init);
+      if (response.status !== 401) {
+        break;
+      }
+      attempts++;
+      logger.warn("Received 401 response, retrying...");
+    } while (attempts <= numRetries);
+    return response;
+  };
+};
 function getStainlessClient(action, opts) {
   const headers = {
     "User-Agent": `Stainless/Action ${package_default.version}`
@@ -20007,7 +20022,10 @@ function wrapAction(actionType, fn) {
         apiKey: auth.key,
         logLevel: "warn",
         logger,
-        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
+        fetch: addFetch401Retries(
+          createAutoRefreshFetch(auth, getStainlessAuth),
+          { numRetries: 2 }
+        )
       });
       await fn(stainless);
       await maybeReportResult({
@@ -20320,7 +20338,9 @@ async function* pollBuild({
     return;
   }
   const pollingStart = Date.now();
-  while (Object.values(outcomes).filter(({ status }) => status === "completed").length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while ((Object.values(outcomes).length < languages.length || Object.values(outcomes).some(
+    (outcome) => categorizeOutcome({ outcome }).isPending
+  )) && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
     let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {
@@ -20370,7 +20390,7 @@ async function* pollBuild({
     );
   }
   const languagesWithoutOutcome = languages.filter(
-    (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
+    (language) => !outcomes[language] || categorizeOutcome({ outcome: outcomes[language] }).isPending
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
