@@ -27155,7 +27155,9 @@ async function* pollBuild({
     return;
   }
   const pollingStart = Date.now();
-  while (Object.values(outcomes).length < languages.length || Object.values(outcomes).some((outcome) => categorizeOutcome({ outcome }).isPending) && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while ((Object.values(outcomes).length < languages.length || Object.values(outcomes).some(
+    (outcome) => categorizeOutcome({ outcome }).isPending
+  )) && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
     let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {

@@ -339,11 +339,11 @@ async function* pollBuild({
 
   const pollingStart = Date.now();
   while (
-    Object.values(outcomes).length < languages.length ||
-    (Object.values(outcomes).some(
-      (outcome) => categorizeOutcome({ outcome }).isPending,
-    ) &&
-      Date.now() - pollingStart < maxPollingSeconds * 1000)
+    (Object.values(outcomes).length < languages.length ||
+      Object.values(outcomes).some(
+        (outcome) => categorizeOutcome({ outcome }).isPending,
+      )) &&
+    Date.now() - pollingStart < maxPollingSeconds * 1000
   ) {
     let hasChange = false;
     const build = await stainless.builds.retrieve(buildId);
