@@ -325,7 +325,7 @@ export async function* pollBuild({
   const outcomes: Outcomes = Object.fromEntries(
     languages.map((lang) => [
       lang,
-      { ...build.targets[lang]!, commit: null, diagnostics: [] },
+      { ...build.targets[lang]!, commit: null, diagnostics: [], buildId },
     ]),
   );
 
@@ -357,6 +357,7 @@ export async function* pollBuild({
 
       outcomes[language] = {
         ...buildOutput,
+        buildId,
         commit: existing.commit,
         diagnostics: existing.diagnostics,
       };
@@ -426,6 +427,7 @@ export async function* pollBuild({
     const now = new Date().toISOString();
     outcomes[language] = {
       object: "build_target",
+      buildId: outcomes[language]?.buildId ?? null,
       status: "completed",
       lint: {
         status: "not_started",

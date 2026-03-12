@@ -16509,7 +16509,9 @@ function Result({
           text: "(generated) diff",
           href: head.codegenCompareUrl
         }) : CompareLink(base, head) : null,
-        MergeConflictLink(head)
+        MergeConflictLink(head),
+        DatadogLogsLink(lang, base?.buildId, "base logs"),
+        DatadogLogsLink(lang, head.buildId, "head logs")
       ].filter((link) => link !== null).join(` ${Symbol2.MiddleDot} `)
     ].join(" "),
     body: [
@@ -16619,6 +16621,29 @@ function MergeConflictLink(outcome) {
   return Link({
     text: "conflict",
     href: `https://github.com/${owner}/${name}/pull/${number}`
+  });
+}
+function DatadogLogsLink(lang, buildId, text) {
+  if (!buildId) return null;
+  const query = `@jsonPayload.sdk.language:${lang} @jsonPayload.project_build.external_id:"${buildId}"`;
+  const params = new URLSearchParams({
+    query,
+    agg_m: "count",
+    agg_m_source: "base",
+    agg_t: "count",
+    clustering_pattern_field_path: "message",
+    cols: "host,service",
+    fromUser: "true",
+    messageDisplay: "inline",
+    refresh_mode: "paused",
+    storage: "hot",
+    stream_sort: "desc",
+    viz: "stream",
+    live: "false"
+  });
+  return Link({
+    text,
+    href: `https://app.datadoghq.com/logs?${params.toString()}`
   });
 }
 function DiagnosticsDetails(head, base) {
@@ -18872,7 +18897,7 @@ async function* pollBuild({
   const outcomes = Object.fromEntries(
     languages.map((lang) => [
       lang,
-      { ...build.targets[lang], commit: null, diagnostics: [] }
+      { ...build.targets[lang], commit: null, diagnostics: [], buildId }
     ])
   );
   if (buildId) {
@@ -18896,6 +18921,7 @@ async function* pollBuild({
       const buildOutput = build2.targets[language];
       outcomes[language] = {
         ...buildOutput,
+        buildId,
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
@@ -18945,6 +18971,7 @@ async function* pollBuild({
     const now = (/* @__PURE__ */ new Date()).toISOString();
     outcomes[language] = {
       object: "build_target",
+      buildId: outcomes[language]?.buildId ?? null,
       status: "completed",
       lint: {
         status: "not_started"
@@ -19005,7 +19032,10 @@ function parseTargets(input, knownLanguages) {
     if (existing) {
       if (language) existing.languages.add(language);
     } else {
-      grouped.set(key, { org, languages: language ? /* @__PURE__ */ new Set([language]) : /* @__PURE__ */ new Set() });
+      grouped.set(key, {
+        org,
+        languages: language ? /* @__PURE__ */ new Set([language]) : /* @__PURE__ */ new Set()
+      });
     }
   }
   return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({

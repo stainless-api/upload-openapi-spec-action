@@ -289,6 +289,8 @@ export function Result({
             : CompareLink(base, head)
           : null,
         MergeConflictLink(head),
+        DatadogLogsLink(lang, base?.buildId, "base logs"),
+        DatadogLogsLink(lang, head.buildId, "head logs"),
       ]
         .filter((link): link is string => link !== null)
         .join(` ${MD.Symbol.MiddleDot} `),
@@ -462,6 +464,34 @@ function MergeConflictLink(outcome: Outcomes[string]): string | null {
   return MD.Link({
     text: "conflict",
     href: `https://github.com/${owner}/${name}/pull/${number}`,
+  });
+}
+
+function DatadogLogsLink(
+  lang: string,
+  buildId: string | null | undefined,
+  text: string,
+): string | null {
+  if (!buildId) return null;
+  const query = `@jsonPayload.sdk.language:${lang} @jsonPayload.project_build.external_id:"${buildId}"`;
+  const params = new URLSearchParams({
+    query,
+    agg_m: "count",
+    agg_m_source: "base",
+    agg_t: "count",
+    clustering_pattern_field_path: "message",
+    cols: "host,service",
+    fromUser: "true",
+    messageDisplay: "inline",
+    refresh_mode: "paused",
+    storage: "hot",
+    stream_sort: "desc",
+    viz: "stream",
+    live: "false",
+  });
+  return MD.Link({
+    text,
+    href: `https://app.datadoghq.com/logs?${params.toString()}`,
   });
 }
 

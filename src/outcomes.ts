@@ -10,6 +10,7 @@ export type Outcomes = Record<
   Omit<Stainless.Builds.BuildTarget, "commit"> & {
     commit: Stainless.Builds.BuildTarget.Completed | null;
     diagnostics: Stainless.Builds.Diagnostics.BuildDiagnostic[];
+    buildId: string | null;
     hasDiff?: boolean;
     codegenCompareUrl?: string;
     diffStats?: { additions: number; deletions: number; changedFiles: number };
