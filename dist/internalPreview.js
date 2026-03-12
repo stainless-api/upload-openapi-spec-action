@@ -19213,6 +19213,7 @@ async function main() {
             const cached = state.codegenDiffCache[lang];
             if (cached) {
               head.hasDiff = cached.hasDiff;
+              base.hasDiff = head.hasDiff;
               head.codegenCompareUrl = cached.compareUrl;
               head.diffStats = cached.diffStats ?? void 0;
             }
@@ -19221,6 +19222,7 @@ async function main() {
             const headTreeOid = head.commit?.completed?.commit?.tree_oid;
             if (baseTreeOid && headTreeOid) {
               head.hasDiff = baseTreeOid !== headTreeOid;
+              base.hasDiff = head.hasDiff;
               if (head.hasDiff && !(lang in state.normalDiffStatsCache) && githubToken) {
                 const headCommit = head.commit?.completed?.commit;
                 const baseCommit = base.commit?.completed?.commit;
