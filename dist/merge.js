@@ -20312,7 +20312,9 @@ async function* pollBuild({
     return;
   }
   const pollingStart = Date.now();
-  while (Object.values(outcomes).filter(({ status }) => status === "completed").length < languages.length && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
+  while ((Object.values(outcomes).length < languages.length || Object.values(outcomes).some(
+    (outcome) => categorizeOutcome({ outcome }).isPending
+  )) && Date.now() - pollingStart < maxPollingSeconds * 1e3) {
     let hasChange = false;
     const build2 = await stainless.builds.retrieve(buildId);
     for (const language of languages) {
@@ -20360,7 +20362,7 @@ async function* pollBuild({
     );
   }
   const languagesWithoutOutcome = languages.filter(
-    (language) => !outcomes[language] || outcomes[language].commit?.status !== "completed"
+    (language) => !outcomes[language] || categorizeOutcome({ outcome: outcomes[language] }).isPending
   );
   for (const language of languagesWithoutOutcome) {
     log.warn(`Build for ${language} timed out after ${maxPollingSeconds}s`);
