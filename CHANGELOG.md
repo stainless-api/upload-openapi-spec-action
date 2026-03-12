@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.0...v1.13.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* slightly different polling termination condition ([#208](https://github.com/stainless-api/upload-openapi-spec-action/issues/208)) ([319cfc9](https://github.com/stainless-api/upload-openapi-spec-action/commit/319cfc9d3522edacb70de93393c572bcdbdf15ac))
+
 ## [1.13.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.12.0...v1.13.0) (2026-03-05)
 
 
