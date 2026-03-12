@@ -19003,15 +19003,15 @@ function parseTargets(input, knownLanguages) {
     const key = `${org}/${project}`;
     const existing = grouped.get(key);
     if (existing) {
-      if (language) existing.languages.push(language);
+      if (language) existing.languages.add(language);
     } else {
-      grouped.set(key, { org, languages: language ? [language] : [] });
+      grouped.set(key, { org, languages: language ? /* @__PURE__ */ new Set([language]) : /* @__PURE__ */ new Set() });
     }
   }
   return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({
     org,
     project: key.split("/")[1],
-    languages
+    languages: Array.from(languages)
   }));
 }
 function fetchDiffStats({

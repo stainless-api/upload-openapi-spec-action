@@ -31,7 +31,7 @@ function parseTargets(
     .map((l) => l.trim())
     .filter(Boolean);
 
-  const grouped = new Map<string, { org: string; languages: string[] }>();
+  const grouped = new Map<string, { org: string; languages: Set<string> }>();
 
   for (const line of lines) {
     const slashIdx = line.indexOf("/");
@@ -63,16 +63,19 @@ function parseTargets(
     const key = `${org}/${project}`;
     const existing = grouped.get(key);
     if (existing) {
-      if (language) existing.languages.push(language);
+      if (language) existing.languages.add(language);
     } else {
-      grouped.set(key, { org, languages: language ? [language] : [] });
+      grouped.set(key, {
+        org,
+        languages: language ? new Set([language]) : new Set(),
+      });
     }
   }
 
   return Array.from(grouped.entries()).map(([key, { org, languages }]) => ({
     org,
     project: key.split("/")[1],
-    languages,
+    languages: Array.from(languages),
   }));
 }
 
