@@ -26570,6 +26570,21 @@ function createAutoRefreshFetch(initialAuth, refreshAuth) {
     return fetch(input, { ...init, headers });
   };
 }
+var addFetch401Retries = (fetch2, { numRetries }) => {
+  return async (input, init) => {
+    let attempts = 0;
+    let response;
+    do {
+      response = await fetch2(input, init);
+      if (response.status !== 401) {
+        break;
+      }
+      attempts++;
+      logger.warn("Received 401 response, retrying...");
+    } while (attempts <= numRetries);
+    return response;
+  };
+};
 function getStainlessClient(action, opts) {
   const headers = {
     "User-Agent": `Stainless/Action ${package_default.version}`
@@ -26604,7 +26619,10 @@ function wrapAction(actionType, fn) {
         apiKey: auth.key,
         logLevel: "warn",
         logger,
-        fetch: createAutoRefreshFetch(auth, getStainlessAuth)
+        fetch: addFetch401Retries(
+          createAutoRefreshFetch(auth, getStainlessAuth),
+          { numRetries: 2 }
+        )
       });
       await fn(stainless);
       await maybeReportResult({
