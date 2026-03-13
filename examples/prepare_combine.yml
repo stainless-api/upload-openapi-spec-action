@@ -70,6 +70,12 @@ jobs:
           #     - https://users.api.example.com
           #     - https://billing.api.example.com
 
+          # Optional: Prefix tags and component names with each spec's info.title
+          # to avoid collisions across specs. Useful when multiple specs define
+          # tags or components with the same names.
+          #
+          # prefix_with_info: true
+
       - name: Build SDKs
         uses: stainless-api/upload-openapi-spec-action/build@v1
         with:
