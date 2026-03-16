@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.0...v1.13.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* catch guesser errors ([#211](https://github.com/stainless-api/upload-openapi-spec-action/issues/211)) ([85f07c6](https://github.com/stainless-api/upload-openapi-spec-action/commit/85f07c68c3e04d0237647300f884b1b9983aed75))
+* slightly different polling termination condition ([#208](https://github.com/stainless-api/upload-openapi-spec-action/issues/208)) ([319cfc9](https://github.com/stainless-api/upload-openapi-spec-action/commit/319cfc9d3522edacb70de93393c572bcdbdf15ac))
+
 ## [1.13.0](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.12.0...v1.13.0) (2026-03-05)
 
 

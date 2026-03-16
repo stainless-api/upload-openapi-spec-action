@@ -20006,7 +20006,7 @@ Stainless.User = User;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.13.0",
+  version: "1.13.1",
   main: "dist/index.js",
   scripts: {
     build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
@@ -20251,20 +20251,24 @@ async function* runBuilds({
     const hasBaseBranch = !!baseBranch && !!await stainless.projects.branches.retrieve(baseBranch).catch(() => null);
     if (guessConfig) {
       logger.debug("Guessing config before branch reset");
-      if (hasBranch) {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch,
-            spec: oasContent
-          })
-        )[0]?.content;
-      } else {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch: branchFrom,
-            spec: oasContent
-          })
-        )[0]?.content;
+      try {
+        if (hasBranch) {
+          configContent = Object.values(
+            await stainless.projects.configs.guess({
+              branch,
+              spec: oasContent
+            })
+          )[0]?.content;
+        } else {
+          configContent = Object.values(
+            await stainless.projects.configs.guess({
+              branch: branchFrom,
+              spec: oasContent
+            })
+          )[0]?.content;
+        }
+      } catch (e) {
+        logger.warn("Error guessing config, continuing anyways", e);
       }
     } else if (hasBranch && hasBaseBranch) {
       logger.debug("Computing config patch before branch reset");

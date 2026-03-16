@@ -122,20 +122,24 @@ export async function* runBuilds({
       logger.debug("Guessing config before branch reset");
       // If the `branch` already exists, we should guess against it, in case
       // there were changes made via the studio.
-      if (hasBranch) {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch,
-            spec: oasContent!,
-          }),
-        )[0]?.content;
-      } else {
-        configContent = Object.values(
-          await stainless.projects.configs.guess({
-            branch: branchFrom,
-            spec: oasContent!,
-          }),
-        )[0]?.content;
+      try {
+        if (hasBranch) {
+          configContent = Object.values(
+            await stainless.projects.configs.guess({
+              branch,
+              spec: oasContent!,
+            }),
+          )[0]?.content;
+        } else {
+          configContent = Object.values(
+            await stainless.projects.configs.guess({
+              branch: branchFrom,
+              spec: oasContent!,
+            }),
+          )[0]?.content;
+        }
+      } catch (e) {
+        logger.warn("Error guessing config, continuing anyways", e);
       }
     } else if (hasBranch && hasBaseBranch) {
       logger.debug("Computing config patch before branch reset");
