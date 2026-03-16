@@ -18289,7 +18289,7 @@ Stainless.User = User;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.13.0",
+  version: "1.13.1",
   main: "dist/index.js",
   scripts: {
     build: "./scripts/build",
