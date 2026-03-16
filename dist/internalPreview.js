@@ -18779,7 +18779,7 @@ Stainless.User = User;
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.13.0",
+  version: "1.13.1",
   main: "dist/index.js",
   scripts: {
     build: "npm run build:build && npm run build:checkout-pr-ref && npm run build:index && npm run build:internal-preview && npm run build:merge && npm run build:preview && npm run build:prepare-combine && npm run build:prepare-swagger",
@@ -19124,6 +19124,8 @@ async function main() {
     }
     const projectStates = targetGroups.map((group) => ({
       group,
+      headBuildId: null,
+      baseBuildId: null,
       outcomes: null,
       baseOutcomes: null,
       // Keyed by lang. Populated once on first encounter of merge_conflict so
@@ -19160,6 +19162,8 @@ async function main() {
     for (let i = 0; i < compareResults.length; i++) {
       const { base, head } = compareResults[i];
       const projectName = targetGroups[i].project;
+      projectStates[i].headBuildId = head.id;
+      projectStates[i].baseBuildId = base.id;
       pollIterators.push({
         iterator: pollBuild({
           stainless,
@@ -19214,6 +19218,17 @@ async function main() {
           const base = state.baseOutcomes[lang];
           if (head.commit?.conclusion && conclusions.fatal.includes(head.commit?.conclusion) || base.commit?.conclusion && conclusions.fatal.includes(base.commit?.conclusion)) {
             continue;
+          }
+          for (const { outcome, buildId } of [
+            { outcome: head, buildId: state.headBuildId },
+            { outcome: base, buildId: state.baseBuildId }
+          ]) {
+            if (outcome.commit?.conclusion === "merge_conflict" && buildId && !outcome.build && !outcome.lint && !outcome.test) {
+              const generatedChecks = await stainless.get(`/api/builds/${buildId}/language/${lang}/generated-checks`);
+              outcome.build = generatedChecks.build;
+              outcome.lint = generatedChecks.lint;
+              outcome.test = generatedChecks.test;
+            }
           }
           if (head.commit?.conclusion === "merge_conflict") {
             if (!base?.commit?.conclusion) continue;
