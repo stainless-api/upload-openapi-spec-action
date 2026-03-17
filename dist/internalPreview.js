@@ -16479,7 +16479,8 @@ function Result({
               text: "here",
               href: "https://www.stainless.com/docs/guides/add-custom-code"
             })}.`
-          )
+          ),
+          StatusLine(base, head)
         ].join("\n")
       };
     }
@@ -18887,6 +18888,7 @@ async function* pollBuild({
   build,
   projectName,
   label,
+  fetchGeneratedChecks = false,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
@@ -18925,6 +18927,12 @@ async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
+      if (fetchGeneratedChecks && buildOutput.commit.status === "completed" && buildOutput.commit.conclusion === "merge_conflict") {
+        const generatedChecks = await stainless.get(`/api/builds/${buildId}/language/${language}/generated-checks`);
+        outcomes[language].build = generatedChecks.build;
+        outcomes[language].lint = generatedChecks.lint;
+        outcomes[language].test = generatedChecks.test;
+      }
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
         log.info(
@@ -19124,8 +19132,6 @@ async function main() {
     }
     const projectStates = targetGroups.map((group) => ({
       group,
-      headBuildId: null,
-      baseBuildId: null,
       outcomes: null,
       baseOutcomes: null,
       // Keyed by lang. Populated once on first encounter of merge_conflict so
@@ -19162,14 +19168,13 @@ async function main() {
     for (let i = 0; i < compareResults.length; i++) {
       const { base, head } = compareResults[i];
       const projectName = targetGroups[i].project;
-      projectStates[i].headBuildId = head.id;
-      projectStates[i].baseBuildId = base.id;
       pollIterators.push({
         iterator: pollBuild({
           stainless,
           build: base,
           projectName,
-          label: "base"
+          label: "base",
+          fetchGeneratedChecks: true
         }),
         projectIndex: i,
         isBase: true
@@ -19179,7 +19184,8 @@ async function main() {
           stainless,
           build: head,
           projectName,
-          label: "head"
+          label: "head",
+          fetchGeneratedChecks: true
         }),
         projectIndex: i,
         isBase: false
@@ -19218,17 +19224,6 @@ async function main() {
           const base = state.baseOutcomes[lang];
           if (head.commit?.conclusion && conclusions.fatal.includes(head.commit?.conclusion) || base.commit?.conclusion && conclusions.fatal.includes(base.commit?.conclusion)) {
             continue;
-          }
-          for (const { outcome, buildId } of [
-            { outcome: head, buildId: state.headBuildId },
-            { outcome: base, buildId: state.baseBuildId }
-          ]) {
-            if (outcome.commit?.conclusion === "merge_conflict" && buildId && !outcome.build && !outcome.lint && !outcome.test) {
-              const generatedChecks = await stainless.get(`/api/builds/${buildId}/language/${lang}/generated-checks`);
-              outcome.build = generatedChecks.build;
-              outcome.lint = generatedChecks.lint;
-              outcome.test = generatedChecks.test;
-            }
           }
           if (head.commit?.conclusion === "merge_conflict") {
             if (!base?.commit?.conclusion) continue;

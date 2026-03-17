@@ -16595,7 +16595,8 @@ function Result({
               text: "here",
               href: "https://www.stainless.com/docs/guides/add-custom-code"
             })}.`
-          )
+          ),
+          StatusLine(base, head)
         ].join("\n")
       };
     }
@@ -20343,6 +20344,7 @@ async function* pollBuild({
   build,
   projectName,
   label,
+  fetchGeneratedChecks = false,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS
 }) {
@@ -20381,6 +20383,12 @@ async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics
       };
+      if (fetchGeneratedChecks && buildOutput.commit.status === "completed" && buildOutput.commit.conclusion === "merge_conflict") {
+        const generatedChecks = await stainless.get(`/api/builds/${buildId}/language/${language}/generated-checks`);
+        outcomes[language].build = generatedChecks.build;
+        outcomes[language].lint = generatedChecks.lint;
+        outcomes[language].test = generatedChecks.test;
+      }
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;
         log.info(

@@ -306,6 +306,7 @@ export async function* pollBuild({
   build,
   projectName,
   label,
+  fetchGeneratedChecks = false,
   pollingIntervalSeconds = POLLING_INTERVAL_SECONDS,
   maxPollingSeconds = MAX_POLLING_SECONDS,
 }: {
@@ -313,6 +314,7 @@ export async function* pollBuild({
   build: Build;
   projectName: string;
   label: "base" | "head";
+  fetchGeneratedChecks?: boolean;
   pollingIntervalSeconds?: number;
   maxPollingSeconds?: number;
 }): AsyncGenerator<{
@@ -365,6 +367,22 @@ export async function* pollBuild({
         commit: existing.commit,
         diagnostics: existing.diagnostics,
       };
+
+      // When a build concludes with merge_conflict the API may not return
+      // checks on the build target. Fetch them from the generated-checks
+      // endpoint instead so they participate in normal polling.
+      if (
+        fetchGeneratedChecks &&
+        buildOutput.commit.status === "completed" &&
+        buildOutput.commit.conclusion === "merge_conflict"
+      ) {
+        const generatedChecks = await stainless.get<
+          Record<"lint" | "test" | "build", Stainless.Builds.CheckStep>
+        >(`/api/builds/${buildId}/language/${language}/generated-checks`);
+        outcomes[language].build = generatedChecks.build;
+        outcomes[language].lint = generatedChecks.lint;
+        outcomes[language].test = generatedChecks.test;
+      }
 
       if (!existing?.status || existing.status !== buildOutput.status) {
         hasChange = true;

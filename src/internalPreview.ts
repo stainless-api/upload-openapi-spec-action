@@ -1,4 +1,3 @@
-import type { Stainless } from "@stainless-api/sdk";
 import type { Target } from "@stainless-api/sdk/resources/shared";
 import { execFileSync } from "child_process";
 import { commentThrottler, printInternalComment } from "./comment";
@@ -184,8 +183,6 @@ async function main() {
 
     const projectStates = targetGroups.map((group) => ({
       group,
-      headBuildId: null as string | null,
-      baseBuildId: null as string | null,
       outcomes: null as Outcomes | null,
       baseOutcomes: null as Outcomes | null,
       // Keyed by lang. Populated once on first encounter of merge_conflict so
@@ -240,14 +237,13 @@ async function main() {
     for (let i = 0; i < compareResults.length; i++) {
       const { base, head } = compareResults[i];
       const projectName = targetGroups[i].project;
-      projectStates[i].headBuildId = head.id;
-      projectStates[i].baseBuildId = base.id;
       pollIterators.push({
         iterator: pollBuild({
           stainless,
           build: base,
           projectName,
           label: "base",
+          fetchGeneratedChecks: true,
         }),
         projectIndex: i,
         isBase: true,
@@ -258,6 +254,7 @@ async function main() {
           build: head,
           projectName,
           label: "head",
+          fetchGeneratedChecks: true,
         }),
         projectIndex: i,
         isBase: false,
@@ -314,29 +311,6 @@ async function main() {
           ) {
             // diff is indeterminate if either build failed fatally
             continue;
-          }
-
-          // When a build concludes with merge_conflict the API doesn't
-          // return checks on the build target. Fetch them from the
-          // generated-checks endpoint instead.
-          for (const { outcome, buildId } of [
-            { outcome: head, buildId: state.headBuildId },
-            { outcome: base, buildId: state.baseBuildId },
-          ] as const) {
-            if (
-              outcome.commit?.conclusion === "merge_conflict" &&
-              buildId &&
-              !outcome.build &&
-              !outcome.lint &&
-              !outcome.test
-            ) {
-              const generatedChecks = await stainless.get<
-                Record<"lint" | "test" | "build", Stainless.Builds.CheckStep>
-              >(`/api/builds/${buildId}/language/${lang}/generated-checks`);
-              outcome.build = generatedChecks.build;
-              outcome.lint = generatedChecks.lint;
-              outcome.test = generatedChecks.test;
-            }
           }
 
           if (head.commit?.conclusion === "merge_conflict") {
