@@ -130,10 +130,10 @@ export function categorizeOutcome({
   }
 
   const baseChecks =
-    baseOutcome && baseOutcome.commit?.commit
+    baseOutcome && baseOutcome.commit
       ? getChecks(baseOutcome)
       : ({} as Record<string, Stainless.Builds.CheckStep>);
-  const headChecks = outcome.commit?.commit
+  const headChecks = outcome.commit
     ? getChecks(outcome)
     : ({} as Record<string, Stainless.Builds.CheckStep>);
 

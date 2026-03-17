@@ -16258,8 +16258,8 @@ function categorizeOutcome({
   if (!headConclusion || baseOutcome && !baseConclusion) {
     return { isPending: true };
   }
-  const baseChecks = baseOutcome && baseOutcome.commit?.commit ? getChecks(baseOutcome) : {};
-  const headChecks = outcome.commit?.commit ? getChecks(outcome) : {};
+  const baseChecks = baseOutcome && baseOutcome.commit ? getChecks(baseOutcome) : {};
+  const headChecks = outcome.commit ? getChecks(outcome) : {};
   const checkRegressionIsPossible = outcome.hasDiff !== false;
   const checkIsPending = [
     ...Object.values(headChecks),
