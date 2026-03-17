@@ -250,7 +250,6 @@ export function Result({
                 href: "https://www.stainless.com/docs/guides/add-custom-code",
               })}.`,
           ),
-          StatusLine(base, head),
         ].join("\n"),
       };
     }

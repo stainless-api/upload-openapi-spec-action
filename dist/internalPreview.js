@@ -16479,8 +16479,7 @@ function Result({
               text: "here",
               href: "https://www.stainless.com/docs/guides/add-custom-code"
             })}.`
-          ),
-          StatusLine(base, head)
+          )
         ].join("\n")
       };
     }
