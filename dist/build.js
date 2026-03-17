@@ -27660,7 +27660,7 @@ function StatusStep(base, head, step) {
   return `${headLink} (prev: ${baseLink})`;
 }
 function StatusSymbol(outcome, step) {
-  if (!outcome.commit?.completed?.commit) {
+  if (!outcome.commit?.completed) {
     return null;
   }
   if (step === "generate") {

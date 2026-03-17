@@ -370,7 +370,7 @@ function StatusSymbol(
   outcome: Outcomes[string],
   step: "generate" | "lint" | "test" | "build",
 ) {
-  if (!outcome.commit?.completed?.commit) {
+  if (!outcome.commit?.completed) {
     return null;
   }
 
