@@ -16331,8 +16331,8 @@ function categorizeOutcome({
       checkFailureOutcome
     ].filter((r) => r !== null).sort(
       (a, b) => (
-        // sort by severity then rank
-        conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
+        // sort by regression status then severity then rank
+        (!(a.severity === "fatal" || b.severity === "fatal") ? [true, null, false].indexOf(a.isRegression) - [true, null, false].indexOf(b.isRegression) : 0) || conclusions.diagnostic.indexOf(a.severity) - conclusions.diagnostic.indexOf(b.severity) || a.rank - b.rank
       )
     )[0];
     return {
