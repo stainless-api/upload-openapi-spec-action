@@ -79,7 +79,10 @@ class GitHubClient implements APIClient {
         data.filter((c) => c.merged_at || c.state !== "closed"),
       )
       .catch((err) => {
-        if (err instanceof APIError && err.status === 404) {
+        if (
+          err instanceof APIError &&
+          (err.status === 401 || err.status === 403 || err.status === 404)
+        ) {
           return [];
         }
         throw err;
