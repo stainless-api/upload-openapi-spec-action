@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.1...v1.13.2) (2026-03-20)
+
+
+### Bug Fixes
+
+* catch more expected getPullRequestForCommit errors ([#217](https://github.com/stainless-api/upload-openapi-spec-action/issues/217)) ([30a19a7](https://github.com/stainless-api/upload-openapi-spec-action/commit/30a19a747712b69ce39444e554d7ddd95f79c65a))
+* sort regressions first when determining worst outcome ([#214](https://github.com/stainless-api/upload-openapi-spec-action/issues/214)) ([202724b](https://github.com/stainless-api/upload-openapi-spec-action/commit/202724b6cc35cd15f1b0188f70397387645b73ff))
+
 ## [1.13.1](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.0...v1.13.1) (2026-03-16)
 
 
