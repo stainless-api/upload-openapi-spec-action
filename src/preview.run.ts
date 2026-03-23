@@ -16,6 +16,7 @@ import {
   readConfig,
   saveConfig,
 } from "./config";
+import { isOnlyStatsChanged } from "./diffCheck";
 import { logger } from "./logger";
 import { FailRunOn, shouldFailRun } from "./outcomes";
 import type { RunResult } from "./runBuilds";
@@ -272,7 +273,7 @@ export async function runPreview(
         throw new Error("No latest run found after build finish");
       }
 
-      const { outcomes, baseOutcomes, documentedSpec } = latestRun!;
+      const { outcomes, baseOutcomes, headBuildId, documentedSpec } = latestRun;
 
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
@@ -286,6 +287,29 @@ export async function runPreview(
 
       if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
         process.exit(1);
+      }
+
+      if (makeComment && headBuildId && baseOutcomes) {
+        const onlyStats = await isOnlyStatsChanged({
+          stainless,
+          outcomes,
+          baseOutcomes,
+          headBuildId,
+        });
+
+        if (onlyStats) {
+          logger.info("Only .stats.yml changed across all targets");
+
+          if (!shouldFailRun({ failRunOn: "note", outcomes, baseOutcomes })) {
+            break;
+          }
+          const commentBody = printComment({ noChanges: true });
+          await upsertComment(prNumber, {
+            body: commentBody,
+            skipCreate: true,
+          });
+          return;
+        }
       }
 
       break;
