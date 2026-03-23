@@ -5,6 +5,7 @@
 
 import { getInput } from "./compat/input";
 import { logging, type Logging } from "./compat/logging";
+import { ActionError } from "./error";
 
 export type LogLevel = "debug" | "info" | "warn" | "error" | "off";
 
@@ -135,9 +136,12 @@ function createLoggerImpl(logContext: LogContext): Logger {
 
     fatal(message: string, ...args: unknown[]): void {
       errorFn(message, ...args);
-      process.stderr.write(
-        `\nThis is a bug. Please report it at ${BUG_REPORT_URL}\n`,
-      );
+      const isActionError = args.some((arg) => arg instanceof ActionError);
+      if (!isActionError) {
+        process.stderr.write(
+          `\nThis is a bug. Please report it at ${BUG_REPORT_URL}\n`,
+        );
+      }
     },
 
     child(childContext: string): Logger {
