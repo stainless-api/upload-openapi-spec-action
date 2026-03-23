@@ -27000,6 +27000,7 @@ async function* runBuilds({
       label: "head"
     })) {
       yield {
+        headBuildId: build.id,
         baseOutcomes: null,
         outcomes,
         documentedSpec
@@ -27141,6 +27142,7 @@ async function* runBuilds({
     }
     if (lastOutcome) {
       yield {
+        headBuildId: head.id,
         baseOutcomes: lastBaseOutcome,
         outcomes: lastOutcome,
         documentedSpec: lastDocumentedSpec
@@ -27971,6 +27973,89 @@ async function runMerge(stainless, params) {
 
 // src/preview.run.ts
 var fs7 = __toESM(require("node:fs"));
+
+// src/diffCheck.ts
+async function isOnlyStatsChanged({
+  stainless,
+  outcomes,
+  baseOutcomes,
+  headBuildId
+}) {
+  for (const lang of Object.keys(baseOutcomes)) {
+    if (!(lang in outcomes)) {
+      return false;
+    }
+  }
+  for (const [lang, head] of Object.entries(outcomes)) {
+    if (!(lang in baseOutcomes)) {
+      return false;
+    }
+    const base = baseOutcomes[lang];
+    const headConclusion = head.commit?.conclusion;
+    if (headConclusion === "noop") {
+      continue;
+    }
+    if (!base.commit?.completed?.commit || !head.commit?.completed?.commit) {
+      return false;
+    }
+    const baseSha = base.commit.completed.commit.sha;
+    const headSha = head.commit.completed.commit.sha;
+    const { owner, name } = head.commit.completed.commit.repo;
+    let token;
+    try {
+      const output = await stainless.builds.targetOutputs.retrieve({
+        build_id: headBuildId,
+        target: lang,
+        type: "source",
+        output: "git"
+      });
+      if (output.output !== "git") {
+        logger.debug(
+          `targetOutputs for ${lang} returned non-git output, skipping stats check`
+        );
+        return false;
+      }
+      token = output.token;
+    } catch (e) {
+      logger.debug(
+        `Could not get git access for ${lang}, skipping stats check`,
+        e
+      );
+      return false;
+    }
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${name}/compare/${baseSha}...${headSha}`,
+        {
+          headers: {
+            Authorization: `token ${token}`,
+            Accept: "application/vnd.github.v3+json"
+          }
+        }
+      );
+      if (!response.ok) {
+        logger.debug(
+          `GitHub compare API returned ${response.status} for ${lang}, skipping stats check`
+        );
+        return false;
+      }
+      const data = await response.json();
+      const files = data.files ?? [];
+      if (!files.every((f) => f.filename === ".stats.yml")) {
+        return false;
+      }
+    } catch (e) {
+      logger.debug(
+        `Error comparing commits for ${lang}, skipping stats check`,
+        e
+      );
+      return false;
+    }
+  }
+  return true;
+}
+
+// src/preview.run.ts
 async function runPreview(stainless, params) {
   const {
     orgName,
@@ -28143,7 +28228,7 @@ async function runPreview(stainless, params) {
       if (!latestRun) {
         throw new Error("No latest run found after build finish");
       }
-      const { outcomes, baseOutcomes, documentedSpec } = latestRun;
+      const { outcomes, baseOutcomes, headBuildId, documentedSpec } = latestRun;
       setOutput("outcomes", outcomes);
       setOutput("base_outcomes", baseOutcomes);
       if (documentedSpec && outputDir) {
@@ -28154,6 +28239,26 @@ async function runPreview(stainless, params) {
       }
       if (!shouldFailRun({ failRunOn, outcomes, baseOutcomes })) {
         process.exit(1);
+      }
+      if (makeComment && headBuildId && baseOutcomes) {
+        const onlyStats = await isOnlyStatsChanged({
+          stainless,
+          outcomes,
+          baseOutcomes,
+          headBuildId
+        });
+        if (onlyStats) {
+          logger.info("Only .stats.yml changed across all targets");
+          if (!shouldFailRun({ failRunOn: "note", outcomes, baseOutcomes })) {
+            break;
+          }
+          const commentBody = printComment({ noChanges: true });
+          await upsertComment(prNumber, {
+            body: commentBody,
+            skipCreate: true
+          });
+          return;
+        }
       }
       break;
     }
