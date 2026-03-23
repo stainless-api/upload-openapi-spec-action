@@ -1,11 +1,14 @@
 import spawn from "nano-spawn";
 import { getInput } from "./compat";
 import { getMergeBase, saveConfig } from "./config";
+import { ActionError } from "./error";
 import { logger } from "./logger";
 
 function assertRef(ref: string): asserts ref is "base" | "head" {
   if (ref !== "base" && ref !== "head") {
-    throw new Error(`Expected ref to be 'base' or 'head', but was ${ref}`);
+    throw new ActionError(
+      `Expected ref to be 'base' or 'head', but was ${ref}`,
+    );
   }
 }
 
@@ -32,7 +35,7 @@ async function main() {
     // Callers come in from checkout-pr-ref against base; save the config.
     const { hasOAS, savedSha } = await saveConfig({ oasPath, configPath });
     if (!hasOAS) {
-      throw new Error(`Expected OpenAPI spec at ${oasPath}.`);
+      throw new ActionError(`Expected OpenAPI spec at ${oasPath}.`);
     }
     if (savedSha !== null && savedSha !== mergeBaseSha) {
       logger.warn(

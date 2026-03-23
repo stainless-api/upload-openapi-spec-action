@@ -1,6 +1,7 @@
 import Stainless from "@stainless-api/sdk";
 import { getInput } from "./compat/input";
 import { getStainlessAuth } from "./compat";
+import { maybeToActionError } from "./error";
 import {
   addFetch401Retries,
   createAutoRefreshFetch,
@@ -49,7 +50,8 @@ export function wrapAction(
         actionType,
         successOrError: { result: "success" },
       });
-    } catch (error) {
+    } catch (rawError) {
+      const error = maybeToActionError(rawError);
       logger.fatal("Error in action:", error);
       if (stainless) {
         await maybeReportResult({

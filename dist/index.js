@@ -18420,6 +18420,20 @@ function logging() {
   return cachedLogging;
 }
 
+// src/error.ts
+var ActionError = class extends Error {
+  constructor(message, options) {
+    super(message, options);
+    this.name = "ActionError";
+  }
+};
+function maybeToActionError(error) {
+  if (error instanceof Stainless.BadRequestError || error instanceof Stainless.AuthenticationError || error instanceof Stainless.PermissionDeniedError || error instanceof Stainless.NotFoundError || error instanceof Stainless.UnprocessableEntityError) {
+    return new ActionError(error.message, { cause: error });
+  }
+  return error;
+}
+
 // src/logger.ts
 var LOG_LEVELS = {
   debug: 0,
@@ -18504,11 +18518,14 @@ function createLoggerImpl(logContext) {
     error: errorFn,
     fatal(message, ...args) {
       errorFn(message, ...args);
-      process.stderr.write(
-        `
+      const isActionError = args.some((arg) => arg instanceof ActionError);
+      if (!isActionError) {
+        process.stderr.write(
+          `
 This is a bug. Please report it at ${BUG_REPORT_URL}
 `
-      );
+        );
+      }
     },
     child(childContext) {
       const { context, ...rest } = logContext;
@@ -18743,12 +18760,12 @@ async function main() {
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     const errorMsg = "Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/";
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
   if (!projectName) {
     const stainless = getStainlessClient("index", {
@@ -18758,7 +18775,7 @@ async function main() {
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
       logger.error(errorMsg);
-      throw Error(errorMsg);
+      throw new ActionError(errorMsg);
     }
     projectName = projects.data[0].slug;
     if (projects.data.length > 1) {
@@ -18784,14 +18801,14 @@ async function main() {
       response.errors
     )} See more details in the Stainless Studio.`;
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
   logger.info("Uploaded!");
   if (outputPath) {
     if (!response.decoratedSpec) {
       const errorMsg = "Failed to get decorated spec";
       logger.error(errorMsg);
-      throw Error(errorMsg);
+      throw new ActionError(errorMsg);
     }
     if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
       response.decoratedSpec = JSON.stringify(
@@ -18876,7 +18893,8 @@ async function uploadSpecAndConfig(specPath, configPath, token, projectName, com
   return { ok, errors, decoratedSpec };
 }
 if (require.main === module) {
-  main().catch((err) => {
+  main().catch((rawErr) => {
+    const err = maybeToActionError(rawErr);
     logger.fatal("Fatal error:", err);
     process.exit(1);
   });
