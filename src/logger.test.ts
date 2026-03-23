@@ -8,6 +8,7 @@ import {
   type Mock,
 } from "vitest";
 import { logging, type Logging } from "./compat/logging";
+import { ActionError } from "./error";
 import { createLogger, type LogLevel } from "./logger";
 
 vi.mock("./compat/logging", async () => {
@@ -240,7 +241,7 @@ describe("logger", () => {
   });
 
   describe("fatal", () => {
-    it("logs error and bug report URL", () => {
+    it("logs error and bug report URL for unexpected errors", () => {
       const { logger } = setupLogger("error");
 
       logger.fatal("Something broke", new Error("test error"));
@@ -251,6 +252,16 @@ describe("logger", () => {
       expect(output).toContain(
         "https://github.com/stainless-api/upload-openapi-spec-action/issues",
       );
+    });
+
+    it("does not show bug report URL for ActionError", () => {
+      const { logger } = setupLogger("error");
+
+      logger.fatal("Something broke", new ActionError("expected failure"));
+
+      const output = stderrSpy.mock.calls.map((c) => c[0]).join("");
+      expect(output).toContain("Something broke");
+      expect(output).not.toContain("This is a bug");
     });
 
     it("calls provider error annotation", () => {

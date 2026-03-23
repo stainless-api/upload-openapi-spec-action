@@ -3,6 +3,7 @@ import { getStainlessClient } from "./stainless";
 import { readFileSync, writeFileSync } from "node:fs";
 import YAML from "yaml";
 import { getBooleanInput, getInput, getStainlessAuth } from "./compat";
+import { ActionError, maybeToActionError } from "./error";
 import { logger } from "./logger";
 
 // https://www.conventionalcommits.org/en/v1.0.0/
@@ -30,14 +31,14 @@ export async function main() {
   if (configPath && guessConfig) {
     const errorMsg = "Can't set both configPath and guessConfig";
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
 
   if (commitMessage && !isValidConventionalCommitMessage(commitMessage)) {
     const errorMsg =
       "Invalid commit message format. Please follow the Conventional Commits format: https://www.conventionalcommits.org/en/v1.0.0/";
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
 
   if (!projectName) {
@@ -48,7 +49,7 @@ export async function main() {
     if (projects.data.length === 0) {
       const errorMsg = "No projects found. Please create a project first.";
       logger.error(errorMsg);
-      throw Error(errorMsg);
+      throw new ActionError(errorMsg);
     }
     projectName = projects.data[0]!.slug;
     if (projects.data.length > 1) {
@@ -77,7 +78,7 @@ export async function main() {
       response.errors,
     )} See more details in the Stainless Studio.`;
     logger.error(errorMsg);
-    throw Error(errorMsg);
+    throw new ActionError(errorMsg);
   }
   logger.info("Uploaded!");
 
@@ -85,7 +86,7 @@ export async function main() {
     if (!response.decoratedSpec) {
       const errorMsg = "Failed to get decorated spec";
       logger.error(errorMsg);
-      throw Error(errorMsg);
+      throw new ActionError(errorMsg);
     }
     // Decorated spec is currently always YAML, so convert it to JSON if needed.
     if (!(outputPath.endsWith(".yml") || outputPath.endsWith(".yaml"))) {
@@ -206,7 +207,8 @@ async function uploadSpecAndConfig(
 }
 
 if (require.main === module) {
-  main().catch((err) => {
+  main().catch((rawErr) => {
+    const err = maybeToActionError(rawErr);
     logger.fatal("Fatal error:", err);
     process.exit(1);
   });

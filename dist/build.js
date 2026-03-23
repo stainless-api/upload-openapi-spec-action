@@ -18424,6 +18424,20 @@ function logging() {
   return cachedLogging;
 }
 
+// src/error.ts
+var ActionError = class extends Error {
+  constructor(message, options) {
+    super(message, options);
+    this.name = "ActionError";
+  }
+};
+function maybeToActionError(error) {
+  if (error instanceof Stainless.BadRequestError || error instanceof Stainless.AuthenticationError || error instanceof Stainless.PermissionDeniedError || error instanceof Stainless.NotFoundError || error instanceof Stainless.UnprocessableEntityError) {
+    return new ActionError(error.message, { cause: error });
+  }
+  return error;
+}
+
 // src/logger.ts
 var LOG_LEVELS = {
   debug: 0,
@@ -18508,11 +18522,14 @@ function createLoggerImpl(logContext) {
     error: errorFn,
     fatal(message, ...args) {
       errorFn(message, ...args);
-      process.stderr.write(
-        `
+      const isActionError = args.some((arg) => arg instanceof ActionError);
+      if (!isActionError) {
+        process.stderr.write(
+          `
 This is a bug. Please report it at ${BUG_REPORT_URL}
 `
-      );
+        );
+      }
     },
     child(childContext) {
       const { context, ...rest } = logContext;
@@ -26871,7 +26888,8 @@ function wrapAction(actionType, fn) {
         actionType,
         successOrError: { result: "success" }
       });
-    } catch (error) {
+    } catch (rawError) {
+      const error = maybeToActionError(rawError);
       logger.fatal("Error in action:", error);
       if (stainless) {
         await maybeReportResult({
