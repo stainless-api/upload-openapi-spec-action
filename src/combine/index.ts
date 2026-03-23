@@ -2,7 +2,7 @@
  * GitHub Action entry point for combining OpenAPI specs.
  */
 
-import { getInput } from "../compat/input";
+import { getBooleanInput, getInput } from "../compat/input";
 import { setOutput } from "../compat/output";
 import { logger } from "../logger";
 import { combineOpenAPISpecs, type ServerUrlStrategy } from "./combine";
@@ -13,6 +13,8 @@ async function main() {
     const inputFiles = getInput("input_files", { required: true });
     const outputPath = getInput("output_path") || "./combined-openapi.yaml";
     const serverStrategyInput = getInput("server_url_strategy");
+    const prefixWithInfo =
+      getBooleanInput("prefix_with_info", { required: false }) ?? false;
 
     logger.info(`Input patterns: ${inputFiles}`);
     logger.info(`Output path: ${outputPath}`);
@@ -32,6 +34,7 @@ async function main() {
       inputFiles,
       outputPath,
       serverStrategy,
+      prefixWithInfo,
     );
 
     logger.info(`Total paths before combine: ${result.pathCountBefore}`);

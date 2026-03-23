@@ -1,0 +1,21 @@
+openapi: "3.0.0"
+info:
+  title: Service A
+  version: "1.0.0"
+servers:
+  - url: https://api.example.com/service-a
+paths:
+  /tenants:
+    get:
+      operationId: listTenants
+      summary: List tenants
+      responses:
+        "200":
+          description: Success
+  /tenants/{id}:
+    get:
+      operationId: getTenant
+      summary: Get tenant
+      responses:
+        "200":
+          description: Success

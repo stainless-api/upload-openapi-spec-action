@@ -27,6 +27,13 @@ inputs:
           - <url2>
       URLs not listed are ignored (removed, will use global server)
     required: false
+  prefix_with_info:
+    description: >-
+      When true, prefixes tags and component names with the spec's info.title
+      to avoid collisions across specs. Uses Redocly's
+      --prefix-tags-with-info-prop and --prefix-components-with-info-prop flags.
+    required: false
+    default: "false"
   log_level:
     description: >-
       Log verbosity level. Options: 'debug', 'info', 'warn', 'error', 'off'.
