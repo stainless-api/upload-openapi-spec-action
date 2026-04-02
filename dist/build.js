@@ -26798,7 +26798,7 @@ var package_default = {
     vitest: "^3.2.4"
   },
   dependencies: {
-    "@redocly/cli": "^1.25.0",
+    "@redocly/cli": "^2.25.3",
     "@stainless-api/github-internal": "^0.25.1",
     "@stainless-api/gitlab-internal": "^0.3.0",
     "@stainless-api/sdk": "^0.5.0",
