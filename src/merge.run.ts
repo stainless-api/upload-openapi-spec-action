@@ -117,7 +117,7 @@ export async function runMerge(
   }
 
   const comment =
-    makeComment && prNumber ? await retrieveComment(prNumber) : null;
+    makeComment && prNumber ? await retrieveComment(prNumber, projectName) : null;
   const commitMessage =
     comment?.commitMessage ??
     makeCommitMessageConventional(defaultCommitMessage);

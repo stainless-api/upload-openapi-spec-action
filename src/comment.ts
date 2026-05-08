@@ -11,8 +11,8 @@ import {
   sortDiagnostics,
 } from "./outcomes";
 
-const COMMENT_TITLE = MD.Heading(
-  `${MD.Symbol.HeavyAsterisk} Stainless preview builds`,
+const COMMENT_TITLE = (projectName: string | null) => MD.Heading(
+  `${MD.Symbol.HeavyAsterisk} Stainless preview builds${projectName ? ` for ${projectName}` : ""}`,
 );
 
 const COMMENT_FOOTER_DIVIDER = MD.Comment("stainless-preview-footer");
@@ -41,8 +41,8 @@ export function printComment({
   outcomes,
 }:
   | ({ noChanges?: never } & Omit<PrintCommentOptions, "noChanges">)
-  | ({ noChanges: true } & {
-      [K in keyof Omit<PrintCommentOptions, "noChanges">]?: never;
+  | ({ noChanges: true; projectName: string } & {
+      [K in keyof Omit<Omit<PrintCommentOptions, "noChanges">, "projectName">]?: never;
     })) {
   const Blocks = (() => {
     if (noChanges) {
@@ -84,7 +84,7 @@ export function printComment({
     .replace(/\.\d+Z$/, " UTC");
 
   const fullComment = MD.Dedent`
-    ${COMMENT_TITLE}
+    ${COMMENT_TITLE(projectName)}
 
     ${Blocks}
 
@@ -564,12 +564,15 @@ export function parseCommitMessages(body?: string | null): {
     : {};
 }
 
-export async function retrieveComment(prNumber: number) {
+export async function retrieveComment(prNumber: number, projectName: string) {
   const comments = await api().listComments(prNumber);
 
   const existingComment = comments.find((comment) =>
-    comment.body?.includes(COMMENT_TITLE),
-  );
+    comment.body?.includes(COMMENT_TITLE(projectName)) || (
+    // backwards compatibility for comments that don't include the project name
+    // TODO: remove this fallback eventually
+      !comment.body?.includes(COMMENT_TITLE(null) + ' for') && comment.body?.includes(COMMENT_TITLE(null))
+  ));
 
   if (!existingComment) {
     return null;

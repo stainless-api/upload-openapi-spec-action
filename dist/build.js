@@ -27419,8 +27419,8 @@ var Link = ({ text, href }) => `<a href="${href}">${text}</a>`;
 var Rule = () => `<hr />`;
 
 // src/comment.ts
-var COMMENT_TITLE = Heading(
-  `${Symbol2.HeavyAsterisk} Stainless preview builds`
+var COMMENT_TITLE = (projectName) => Heading(
+  `${Symbol2.HeavyAsterisk} Stainless preview builds${projectName ? ` for ${projectName}` : ""}`
 );
 var COMMENT_FOOTER_DIVIDER = Comment("stainless-preview-footer");
 function printComment({
@@ -27459,7 +27459,7 @@ function printComment({
   })();
   const dateString = (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").replace(/\.\d+Z$/, " UTC");
   const fullComment = Dedent`
-    ${COMMENT_TITLE}
+    ${COMMENT_TITLE(projectName)}
 
     ${Blocks4}
 
@@ -27794,11 +27794,11 @@ function parseCommitMessages(body) {
   const message = body?.match(/(?<!\\)```([\s\S]*?)(?<!\\)```/)?.[1].trim();
   return message ? { commitMessage: makeCommitMessageConventional(message) } : {};
 }
-async function retrieveComment(prNumber) {
+async function retrieveComment(prNumber, projectName) {
   const comments = await api().listComments(prNumber);
-  const existingComment = comments.find(
-    (comment) => comment.body?.includes(COMMENT_TITLE)
-  );
+  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE(projectName)) || // backwards compatibility for comments that don't include the project name
+  // TODO: remove this fallback eventually
+  !comment.body?.includes(COMMENT_TITLE(null) + " for") && comment.body?.includes(COMMENT_TITLE(null)));
   if (!existingComment) {
     return null;
   }
@@ -27911,7 +27911,7 @@ async function runMerge(stainless, params) {
     logger.info("No config files changed, skipping merge");
     return;
   }
-  const comment = makeComment && prNumber ? await retrieveComment(prNumber) : null;
+  const comment = makeComment && prNumber ? await retrieveComment(prNumber, projectName) : null;
   const commitMessage = comment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
   const targetCommitMessages = multipleCommitMessages ? comment?.targetCommitMessages ?? {} : void 0;
   if (targetCommitMessages) {
@@ -28047,7 +28047,7 @@ async function runPreview(stainless, params) {
     logger.info("No config files changed, skipping preview");
     if (makeComment) {
       logger.group("Updating comment");
-      const commentBody = printComment({ noChanges: true });
+      const commentBody = printComment({ noChanges: true, projectName });
       await upsertComment(prNumber, {
         body: commentBody,
         skipCreate: true
@@ -28065,7 +28065,7 @@ async function runPreview(stainless, params) {
     configPath
   });
   logger.groupEnd();
-  const initialComment = makeComment ? await retrieveComment(prNumber) : null;
+  const initialComment = makeComment ? await retrieveComment(prNumber, projectName) : null;
   let commitMessage = initialComment?.commitMessage ?? makeCommitMessageConventional(defaultCommitMessage);
   let targetCommitMessages = multipleCommitMessages ? initialComment?.targetCommitMessages ?? {} : void 0;
   if (targetCommitMessages) {
@@ -28099,7 +28099,7 @@ async function runPreview(stainless, params) {
     }
     if (makeComment && latestRun) {
       const { outcomes, baseOutcomes } = latestRun;
-      const comment = await retrieveComment(prNumber);
+      const comment = await retrieveComment(prNumber, projectName);
       commitMessage = comment?.commitMessage ?? commitMessage;
       targetCommitMessages = comment?.targetCommitMessages ?? targetCommitMessages;
       if (shouldGenerateAiCommitMessages) {
