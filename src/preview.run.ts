@@ -139,7 +139,7 @@ export async function runPreview(
     if (makeComment) {
       logger.group("Updating comment");
 
-      const commentBody = printComment({ noChanges: true });
+      const commentBody = printComment({ noChanges: true, projectName });
 
       await upsertComment(prNumber, {
         body: commentBody,
@@ -163,7 +163,9 @@ export async function runPreview(
 
   logger.groupEnd();
 
-  const initialComment = makeComment ? await retrieveComment(prNumber) : null;
+  const initialComment = makeComment
+    ? await retrieveComment(prNumber, projectName)
+    : null;
   let commitMessage =
     initialComment?.commitMessage ??
     makeCommitMessageConventional(defaultCommitMessage);
@@ -215,7 +217,7 @@ export async function runPreview(
       const { outcomes, baseOutcomes } = latestRun;
 
       // In case the comment was updated between polls:
-      const comment = await retrieveComment(prNumber);
+      const comment = await retrieveComment(prNumber, projectName);
       commitMessage = comment?.commitMessage ?? commitMessage;
       targetCommitMessages =
         comment?.targetCommitMessages ?? targetCommitMessages;
