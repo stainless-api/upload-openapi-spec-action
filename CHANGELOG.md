@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.3](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.2...v1.13.3) (2026-05-08)
+
+
+### Bug Fixes
+
+* disambiguate project name in comment title ([#225](https://github.com/stainless-api/upload-openapi-spec-action/issues/225)) ([f077159](https://github.com/stainless-api/upload-openapi-spec-action/commit/f077159cfaf553a34fe2bf28bc536e9e38d456d3))
+
 ## [1.13.2](https://github.com/stainless-api/upload-openapi-spec-action/compare/v1.13.1...v1.13.2) (2026-03-20)
 
 
