@@ -26775,7 +26775,7 @@ function getNewChecks(headChecks, baseChecks) {
 // package.json
 var package_default = {
   name: "upload-openapi-spec-action",
-  version: "1.13.2",
+  version: "1.13.3",
   main: "dist/index.js",
   scripts: {
     build: "./scripts/build",
