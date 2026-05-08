@@ -27796,9 +27796,11 @@ function parseCommitMessages(body) {
 }
 async function retrieveComment(prNumber, projectName) {
   const comments = await api().listComments(prNumber);
-  const existingComment = comments.find((comment) => comment.body?.includes(COMMENT_TITLE(projectName)) || // backwards compatibility for comments that don't include the project name
-  // TODO: remove this fallback eventually
-  !comment.body?.includes(COMMENT_TITLE(null) + " for") && comment.body?.includes(COMMENT_TITLE(null)));
+  const existingComment = comments.find(
+    (comment) => comment.body?.includes(COMMENT_TITLE(projectName)) || // backwards compatibility for comments that don't include the project name
+    // TODO: remove this fallback eventually
+    !comment.body?.includes(COMMENT_TITLE(null) + " for") && comment.body?.includes(COMMENT_TITLE(null))
+  );
   if (!existingComment) {
     return null;
   }
