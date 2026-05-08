@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`printComment > should print comment 1`] = `
-"<h3>✱ Stainless preview builds</h3>
+"<h3>✱ Stainless preview builds for test-project</h3>
 
 This PR will update the <code>test-project</code> SDKs with the following commit message.
 
