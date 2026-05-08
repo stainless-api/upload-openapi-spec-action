@@ -163,7 +163,9 @@ export async function runPreview(
 
   logger.groupEnd();
 
-  const initialComment = makeComment ? await retrieveComment(prNumber, projectName) : null;
+  const initialComment = makeComment
+    ? await retrieveComment(prNumber, projectName)
+    : null;
   let commitMessage =
     initialComment?.commitMessage ??
     makeCommitMessageConventional(defaultCommitMessage);

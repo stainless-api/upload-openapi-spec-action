@@ -17,7 +17,8 @@ describe("printComment", () => {
   });
 
   it("should print no changes comment", () => {
-    expect(printComment({ noChanges: true, projectName: 'fake project' })).toMatchInlineSnapshot(`
+    expect(printComment({ noChanges: true, projectName: "fake project" }))
+      .toMatchInlineSnapshot(`
       "<h3>✱ Stainless preview builds for fake project</h3>
 
       No changes were made to the SDKs.
