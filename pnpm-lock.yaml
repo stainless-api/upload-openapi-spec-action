@@ -1145,12 +1145,12 @@ packages:
   fast-xml-builder@1.1.4:
     resolution: {integrity: sha512-f2jhpN4Eccy0/Uz9csxh3Nu6q4ErKxf0XIsasomfOihuSUa3/xw6w8dnOtCDgEItQFJG8KyXPzQXzcODDrrbOg==}
 
-  fast-xml-parser@4.5.3:
-    resolution: {integrity: sha512-RKihhV+SHsIUGXObeVy9AXiBbFwkVk7Syp8XgwN5U3JV416+Gwp/GO9i0JYKmikykgz/UHRrrV4ROuZEo/T0ig==}
+  fast-xml-parser@4.5.6:
+    resolution: {integrity: sha512-Yd4vkROfJf8AuJrDIVMVmYfULKmIJszVsMv7Vo71aocsKgFxpdlpSHXSaInvyYfgw2PRuObQSW2GFpVMUjxu9A==}
     hasBin: true
 
-  fast-xml-parser@5.5.9:
-    resolution: {integrity: sha512-jldvxr1MC6rtiZKgrFnDSvT8xuH+eJqxqOBThUVjYrxssYTo1avZLGql5l0a0BAERR01CadYzZ83kVEkbyDg+g==}
+  fast-xml-parser@5.5.10:
+    resolution: {integrity: sha512-go2J2xODMc32hT+4Xr/bBGXMaIoiCwrwp2mMtAvKyvEFW6S/v5Gn2pBmE4nvbwNjGhpcAiOwEv7R6/GZ6XRa9w==}
     hasBin: true
 
   fdir@6.5.0:
@@ -1536,8 +1536,8 @@ packages:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
     engines: {node: '>=8'}
 
-  path-expression-matcher@1.2.0:
-    resolution: {integrity: sha512-DwmPWeFn+tq7TiyJ2CxezCAirXjFxvaiD03npak3cRjlP9+OjTmSy1EpIrEbh+l6JgUundniloMLDQ/6VTdhLQ==}
+  path-expression-matcher@1.2.1:
+    resolution: {integrity: sha512-d7gQQmLvAKXKXE2GeP9apIGbMYKz88zWdsn/BN2HRWVQsDFdUY36WSLTY0Jvd4HWi7Fb30gQ62oAOzdgJA6fZw==}
     engines: {node: '>=14.0.0'}
 
   path-key@3.1.1:
@@ -3037,16 +3037,16 @@ snapshots:
 
   fast-xml-builder@1.1.4:
     dependencies:
-      path-expression-matcher: 1.2.0
+      path-expression-matcher: 1.2.1
 
-  fast-xml-parser@4.5.3:
+  fast-xml-parser@4.5.6:
     dependencies:
       strnum: 1.1.2
 
-  fast-xml-parser@5.5.9:
+  fast-xml-parser@5.5.10:
     dependencies:
       fast-xml-builder: 1.1.4
-      path-expression-matcher: 1.2.0
+      path-expression-matcher: 1.2.1
       strnum: 2.2.2
 
   fdir@6.5.0(picomatch@4.0.3):
@@ -3364,13 +3364,13 @@ snapshots:
   openapi-sampler@1.6.2:
     dependencies:
       '@types/json-schema': 7.0.15
-      fast-xml-parser: 4.5.3
+      fast-xml-parser: 4.5.6
       json-pointer: 0.6.2
 
   openapi-sampler@1.7.2:
     dependencies:
       '@types/json-schema': 7.0.15
-      fast-xml-parser: 5.5.9
+      fast-xml-parser: 5.5.10
       json-pointer: 0.6.2
 
   optionator@0.9.4:
@@ -3402,7 +3402,7 @@ snapshots:
 
   path-exists@4.0.0: {}
 
-  path-expression-matcher@1.2.0: {}
+  path-expression-matcher@1.2.1: {}
 
   path-key@3.1.1: {}
 
