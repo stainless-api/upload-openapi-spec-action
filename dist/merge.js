@@ -20141,6 +20141,7 @@ async function* runBuilds({
       label: "head"
     })) {
       yield {
+        headBuildId: build.id,
         baseOutcomes: null,
         outcomes,
         documentedSpec
@@ -20282,6 +20283,7 @@ async function* runBuilds({
     }
     if (lastOutcome) {
       yield {
+        headBuildId: head.id,
         baseOutcomes: lastBaseOutcome,
         outcomes: lastOutcome,
         documentedSpec: lastDocumentedSpec

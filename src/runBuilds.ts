@@ -10,6 +10,7 @@ const POLLING_INTERVAL_SECONDS = 5;
 const MAX_POLLING_SECONDS = 10 * 60; // 10 minutes
 
 export type RunResult = {
+  headBuildId: string | null;
   baseOutcomes: Outcomes | null;
   outcomes: Outcomes;
   documentedSpec: string | null;
@@ -95,6 +96,7 @@ export async function* runBuilds({
       label: "head",
     })) {
       yield {
+        headBuildId: build.id,
         baseOutcomes: null,
         outcomes,
         documentedSpec,
@@ -265,6 +267,7 @@ export async function* runBuilds({
 
     if (lastOutcome) {
       yield {
+        headBuildId: head.id,
         baseOutcomes: lastBaseOutcome,
         outcomes: lastOutcome,
         documentedSpec: lastDocumentedSpec,
